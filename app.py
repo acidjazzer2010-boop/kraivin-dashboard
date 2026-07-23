@@ -53,6 +53,9 @@ st.sidebar.subheader("Факторинг")
 factoring_share = st.sidebar.slider("Доля выручки в факторинге (%)", 0, 100, 50, step=10)
 factoring_advance = st.sidebar.slider("Аванс от фактора (%)", 50, 100, 80, step=5)
 
+st.sidebar.subheader("Условия с покупателями")
+customer_delay_days = st.sidebar.slider("Отсрочка платежа покупателям (дней)", 0, 120, 70, step=5)
+
 # --- РАСЧЕТНАЯ ЧАСТЬ (МАТЕМАТИКА) ---
 
 # Генерация подписей для оси X (Месяц Год)
@@ -71,10 +74,7 @@ for i in range(period):
     if i == 0:
         orders[i] = start_orders
     else:
-        # Увеличиваем количество заказов на заданный процент
         orders[i] = orders[i-1] * (1 + (orders_growth / 100))
-    
-    # Выручка = кол-во заказов * средний чек
     rev[i] = orders[i] * aov
 
 cogs_pct = 1 - (margin_pct / 100)
@@ -82,24 +82,30 @@ cogs_no_vat = rev * cogs_pct
 cogs_vat = cogs_no_vat * 1.2
 
 # Симуляция выплат поставщикам
-delay_months = max(1, int(round(delay_days / 30))) if delay_days > 0 else 0
+delay_months_suppliers = max(1, int(round(delay_days / 30))) if delay_days > 0 else 0
 cogs_payments = np.zeros(period)
 
 for i in range(period):
-    # Предоплата
     cogs_payments[i] += cogs_vat[i] * (prepayment_pct / 100)
-    # Постоплата
-    if i + delay_months < period:
-        cogs_payments[i + delay_months] += cogs_vat[i] * ((100 - prepayment_pct) / 100)
+    if i + delay_months_suppliers < period:
+        cogs_payments[i + delay_months_suppliers] += cogs_vat[i] * ((100 - prepayment_pct) / 100)
 
-# Симуляция поступлений (Факторинг + Прямые платежи)
+# Перевод дней отсрочки покупателей в месяцы сдвига
+customer_delay_months = max(0, int(round(customer_delay_days / 30)))
+
+# Симуляция поступлений (Факторинг + Прямые платежи с учетом новой переменной отсрочки)
 inflows = np.zeros(period)
 for i in range(period):
+    # Аванс от фактора приходит сразу в месяц отгрузки
     inflows[i] += rev[i] * 1.2 * (factoring_share / 100) * (factoring_advance / 100)
     
-    if i + 2 < period:
-        inflows[i + 2] += rev[i] * 1.2 * ((100 - factoring_share) / 100)
-        inflows[i + 2] += rev[i] * 1.2 * (factoring_share / 100) * ((100 - factoring_advance) / 100)
+    # Остальные деньги (прямые клиенты + остаток фактора) приходят с задержкой, равной отсрочке покупателей
+    target_month = i + customer_delay_months
+    if target_month < period:
+        # Прямые клиенты
+        inflows[target_month] += rev[i] * 1.2 * ((100 - factoring_share) / 100)
+        # Остаток от фактора
+        inflows[target_month] += rev[i] * 1.2 * (factoring_share / 100) * ((100 - factoring_advance) / 100)
 
 # Операционные расходы
 opex = np.full(period, 650_000)
@@ -119,11 +125,9 @@ max_deficit = min(min(cum_cf), 0)
 net_profit = sum(rev * (margin_pct / 100)) - sum(opex) - sum(taxes_and_commissions)
 roi = (net_profit / sum(rev)) * 100 if sum(rev) > 0 else 0
 
-# Функция для пробелов в метриках
 def format_rub(val):
     return f"{val:,.0f}".replace(",", " ") + " руб."
 
-# Выводим 4 метрики
 col1, col2, col3, col4 = st.columns(4)
 col1.metric(f"Выручка (за {period} мес)", format_rub(sum(rev)))
 col2.metric("Макс. кассовый разрыв", format_rub(max_deficit))
@@ -141,9 +145,9 @@ fig1.add_trace(go.Scatter(
     y=cash_balance, 
     mode='lines+markers', 
     name='Остаток ДС',
-    line=dict(color='#642A38', width=3), # Уточненный фирменный винный
+    line=dict(color='#642A38', width=3),
     fill='tozeroy',
-    fillcolor='rgba(100, 42, 56, 0.1)', # Соответствующая полупрозрачная заливка
+    fillcolor='rgba(100, 42, 56, 0.1)',
     hovertemplate='%{y:,.0f} руб.<extra></extra>'
 ))
 fig1.add_hline(y=0, line_dash="dash", line_color="red", annotation_text="Дефицит")
@@ -160,15 +164,15 @@ st.plotly_chart(fig1, use_container_width=True)
 st.subheader("Структура месячного денежного потока")
 fig2 = go.Figure()
 fig2.add_trace(go.Bar(
-    x=x_labels, y=inflows, name='Поступления', marker_color='#E3C293', # Фирменный песочный
+    x=x_labels, y=inflows, name='Поступления', marker_color='#E3C293',
     hovertemplate='%{y:,.0f} руб.<extra></extra>'
 ))
 fig2.add_trace(go.Bar(
-    x=x_labels, y=-outflows, name='Выплаты', marker_color='#642A38', # Уточненный фирменный винный
+    x=x_labels, y=-outflows, name='Выплаты', marker_color='#642A38',
     hovertemplate='%{y:,.0f} руб.<extra></extra>'
 ))
 fig2.add_trace(go.Scatter(
-    x=x_labels, y=net_cf, name='Чистый поток', marker_color='#B88645', # Темно-песочный (бронза)
+    x=x_labels, y=net_cf, name='Чистый поток', marker_color='#B88645',
     mode='lines+markers',
     hovertemplate='%{y:,.0f} руб.<extra></extra>'
 ))
