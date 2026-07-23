@@ -12,7 +12,13 @@ st.markdown("Интерактивная финансовая модель для
 st.sidebar.header("Параметры модели")
 margin_pct = st.sidebar.slider("Маржинальность (%)", min_value=10, max_value=50, value=20, step=1)
 period = st.sidebar.selectbox("Горизонт планирования (мес)", [6, 12, 18, 24])
-initial_investment = st.sidebar.number_input("Доступный капитал / Инвестиции (руб)", value=7000000, step=500000)
+
+# В Python можно использовать _ для разделения нулей, это улучшает читаемость кода
+initial_investment = st.sidebar.number_input(
+    "Доступный капитал / Инвестиции (руб)", 
+    value=7_000_000, 
+    step=500_000
+)
 
 st.sidebar.subheader("Работа с поставщиками")
 prepayment_pct = st.sidebar.slider("Предоплата поставщикам (%)", 0, 100, 50, step=10)
@@ -23,8 +29,15 @@ factoring_share = st.sidebar.slider("Доля выручки в факторин
 factoring_advance = st.sidebar.slider("Аванс от фактора (%)", 50, 100, 80, step=5)
 
 # --- РАСЧЕТНАЯ ЧАСТЬ (МАТЕМАТИКА) ---
-# Базовая выручка с плавным ростом
-base_rev = [6000000, 8400000, 12000000, 14400000, 16800000, 18000000]
+# Базовая выручка с плавным ростом (цифры разделены _ для удобства)
+base_rev = [
+    6_000_000, 
+    8_400_000, 
+    12_000_000, 
+    14_400_000, 
+    16_800_000, 
+    18_000_000
+]
 rev = np.zeros(period)
 for i in range(period):
     if i < len(base_rev):
@@ -50,21 +63,17 @@ for i in range(period):
 # Симуляция поступлений (Факторинг + Прямые платежи)
 inflows = np.zeros(period)
 for i in range(period):
-    # Факторинговый аванс поступает сразу (в месяц отгрузки)
     inflows[i] += rev[i] * 1.2 * (factoring_share / 100) * (factoring_advance / 100)
     
-    # Поступления от клиентов и остаток факторинга приходят через ~70 дней (заложим 2 месяца)
     if i + 2 < period:
-        # Прямые клиенты
         inflows[i + 2] += rev[i] * 1.2 * ((100 - factoring_share) / 100)
-        # Остаток от фактора
         inflows[i + 2] += rev[i] * 1.2 * (factoring_share / 100) * ((100 - factoring_advance) / 100)
 
-# Операционные расходы (упрощенно)
-opex = np.full(period, 650000)
+# Операционные расходы
+opex = np.full(period, 650_000)
 for i in range(6, period):
-    opex[i] = 850000
-taxes_and_commissions = rev * 0.05 # Примерная нагрузка
+    opex[i] = 850_000
+taxes_and_commissions = rev * 0.05
 
 outflows = cogs_payments + opex + taxes_and_commissions
 net_cf = inflows - outflows
@@ -78,7 +87,7 @@ max_deficit = min(min(cum_cf), 0)
 net_profit = sum(rev * (margin_pct / 100)) - sum(opex) - sum(taxes_and_commissions)
 roi = (net_profit / sum(rev)) * 100 if sum(rev) > 0 else 0
 
-# Функция для красивого форматирования чисел (пробелы между тысячами)
+# Функция для пробелов в метриках
 def format_rub(val):
     return f"{val:,.0f}".replace(",", " ") + " руб."
 
@@ -92,7 +101,6 @@ st.divider()
 # --- ВИЗУАЛИЗАЦИЯ (ГРАФИКИ PLOTLY) ---
 st.subheader("Динамика ликвидности и остаток средств")
 
-# 1. Линейный график остатка ДС
 fig1 = go.Figure()
 fig1.add_trace(go.Scatter(
     x=list(range(1, period + 1)), 
@@ -101,30 +109,41 @@ fig1.add_trace(go.Scatter(
     name='Остаток ДС',
     line=dict(color='blue', width=3),
     fill='tozeroy',
-    fillcolor='rgba(0, 0, 255, 0.1)'
+    fillcolor='rgba(0, 0, 255, 0.1)',
+    hovertemplate='%{y:,.0f} руб.<extra></extra>' # Формат подсказки с пробелами
 ))
-# Красная линия нуля (порог выживаемости)
-fig1.add_hline(y=0, line_dash="dash", line_color="red", annotation_text="Дефицит (Требуются вливания)")
+fig1.add_hline(y=0, line_dash="dash", line_color="red", annotation_text="Дефицит")
 fig1.update_layout(
     xaxis_title="Месяц", 
     yaxis_title="Рубли", 
     hovermode="x unified",
-    separators=", " # Настройка Plotly: запятая для дробей, пробел для тысяч
+    separators=", " # Заменяет запятую на пробел для тысяч
 )
+fig1.update_yaxes(tickformat=",.0f") # Формат оси Y с пробелами
 st.plotly_chart(fig1, use_container_width=True)
 
-# 2. Столбчатая диаграмма потоков
+
 st.subheader("Структура месячного денежного потока")
 fig2 = go.Figure()
-fig2.add_trace(go.Bar(x=list(range(1, period + 1)), y=inflows, name='Поступления', marker_color='#2ca02c'))
-fig2.add_trace(go.Bar(x=list(range(1, period + 1)), y=-outflows, name='Выплаты', marker_color='#d62728'))
-fig2.add_trace(go.Scatter(x=list(range(1, period + 1)), y=net_cf, name='Чистый денежный поток', marker_color='orange', mode='lines+markers'))
+fig2.add_trace(go.Bar(
+    x=list(range(1, period + 1)), y=inflows, name='Поступления', marker_color='#2ca02c',
+    hovertemplate='%{y:,.0f} руб.<extra></extra>'
+))
+fig2.add_trace(go.Bar(
+    x=list(range(1, period + 1)), y=-outflows, name='Выплаты', marker_color='#d62728',
+    hovertemplate='%{y:,.0f} руб.<extra></extra>'
+))
+fig2.add_trace(go.Scatter(
+    x=list(range(1, period + 1)), y=net_cf, name='Чистый поток', marker_color='orange', mode='lines+markers',
+    hovertemplate='%{y:,.0f} руб.<extra></extra>'
+))
 
 fig2.update_layout(
     barmode='relative', 
     xaxis_title="Месяц", 
     yaxis_title="Рубли", 
     hovermode="x unified",
-    separators=", " # Настройка Plotly: запятая для дробей, пробел для тысяч
+    separators=", "
 )
+fig2.update_yaxes(tickformat=",.0f")
 st.plotly_chart(fig2, use_container_width=True)
