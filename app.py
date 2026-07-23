@@ -125,9 +125,9 @@ fig1.add_trace(go.Scatter(
     y=cash_balance, 
     mode='lines+markers', 
     name='Остаток ДС',
-    line=dict(color='#722F37', width=3), # Фирменный винный
+    line=dict(color='#642A38', width=3), # Уточненный фирменный винный
     fill='tozeroy',
-    fillcolor='rgba(114, 47, 55, 0.1)', # Полупрозрачная винная заливка
+    fillcolor='rgba(100, 42, 56, 0.1)', # Соответствующая полупрозрачная заливка
     hovertemplate='%{y:,.0f} руб.<extra></extra>'
 ))
 fig1.add_hline(y=0, line_dash="dash", line_color="red", annotation_text="Дефицит")
@@ -148,7 +148,7 @@ fig2.add_trace(go.Bar(
     hovertemplate='%{y:,.0f} руб.<extra></extra>'
 ))
 fig2.add_trace(go.Bar(
-    x=list(range(1, period + 1)), y=-outflows, name='Выплаты', marker_color='#722F37', # Фирменный винный
+    x=list(range(1, period + 1)), y=-outflows, name='Выплаты', marker_color='#642A38', # Уточненный фирменный винный
     hovertemplate='%{y:,.0f} руб.<extra></extra>'
 ))
 fig2.add_trace(go.Scatter(
