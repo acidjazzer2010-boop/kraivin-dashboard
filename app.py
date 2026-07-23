@@ -2,13 +2,27 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
+import os
 
 # Настройка страницы
-st.set_page_config(page_title="КРАЙВИН - анализ экономической эффективности", layout="wide")
+st.set_page_config(
+    page_title="КРАЙВИН - анализ экономической эффективности", 
+    page_icon="🍷", 
+    layout="wide"
+)
+
 st.title("КРАЙВИН: Анализ денежных потоков и рентабельности")
 st.markdown("Интерактивная финансовая модель для сценарного анализа кассовых разрывов.")
 
 # --- БОКОВАЯ ПАНЕЛЬ (ВВОД ДАННЫХ) ---
+
+# Добавление логотипа компании
+logo_path = "КРАЙВИН лого винный квадрат.png"
+if os.path.exists(logo_path):
+    st.sidebar.image(logo_path, use_container_width=True)
+else:
+    st.sidebar.info("💡 Загрузите файл 'КРАЙВИН лого винный квадрат.png' в папку с кодом для отображения логотипа.")
+
 st.sidebar.header("Параметры модели")
 margin_pct = st.sidebar.slider("Маржинальность (%)", min_value=10, max_value=50, value=20, step=1)
 period = st.sidebar.selectbox("Горизонт планирования (мес)", [6, 12, 18, 24])
@@ -93,7 +107,7 @@ roi = (net_profit / sum(rev)) * 100 if sum(rev) > 0 else 0
 def format_rub(val):
     return f"{val:,.0f}".replace(",", " ") + " руб."
 
-# Выводим 4 метрики вместо 3 (добавили общую выручку)
+# Выводим 4 метрики
 col1, col2, col3, col4 = st.columns(4)
 col1.metric(f"Выручка (за {period} мес)", format_rub(sum(rev)))
 col2.metric("Макс. кассовый разрыв", format_rub(max_deficit))
