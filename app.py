@@ -24,6 +24,13 @@ else:
     st.sidebar.info("💡 Загрузите файл 'КРАЙВИН лого винный квадрат.png' в папку с кодом для отображения логотипа.")
 
 st.sidebar.header("Параметры модели")
+
+# Календарные настройки
+ru_months_full = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
+col_m, col_y = st.sidebar.columns(2)
+start_month_idx = col_m.selectbox("Месяц старта", range(12), format_func=lambda x: ru_months_full[x])
+start_year = col_y.selectbox("Год старта", [2026, 2027])
+
 margin_pct = st.sidebar.slider("Маржинальность (%)", min_value=10, max_value=50, value=20, step=1)
 period = st.sidebar.selectbox("Горизонт планирования (мес)", [6, 12, 18, 24])
 
@@ -47,6 +54,15 @@ factoring_share = st.sidebar.slider("Доля выручки в факторин
 factoring_advance = st.sidebar.slider("Аванс от фактора (%)", 50, 100, 80, step=5)
 
 # --- РАСЧЕТНАЯ ЧАСТЬ (МАТЕМАТИКА) ---
+
+# Генерация подписей для оси X (Месяц Год)
+ru_months_short = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек']
+x_labels = []
+for i in range(period):
+    m_idx = (start_month_idx + i) % 12
+    y_offset = (start_month_idx + i) // 12
+    x_labels.append(f"{ru_months_short[m_idx]} {start_year + y_offset}")
+
 # Динамический расчет выручки через заказы и чек
 orders = np.zeros(period)
 rev = np.zeros(period)
@@ -121,7 +137,7 @@ st.subheader("Динамика ликвидности и остаток сред
 
 fig1 = go.Figure()
 fig1.add_trace(go.Scatter(
-    x=list(range(1, period + 1)), 
+    x=x_labels, 
     y=cash_balance, 
     mode='lines+markers', 
     name='Остаток ДС',
@@ -144,15 +160,15 @@ st.plotly_chart(fig1, use_container_width=True)
 st.subheader("Структура месячного денежного потока")
 fig2 = go.Figure()
 fig2.add_trace(go.Bar(
-    x=list(range(1, period + 1)), y=inflows, name='Поступления', marker_color='#E3C293', # Фирменный песочный
+    x=x_labels, y=inflows, name='Поступления', marker_color='#E3C293', # Фирменный песочный
     hovertemplate='%{y:,.0f} руб.<extra></extra>'
 ))
 fig2.add_trace(go.Bar(
-    x=list(range(1, period + 1)), y=-outflows, name='Выплаты', marker_color='#642A38', # Уточненный фирменный винный
+    x=x_labels, y=-outflows, name='Выплаты', marker_color='#642A38', # Уточненный фирменный винный
     hovertemplate='%{y:,.0f} руб.<extra></extra>'
 ))
 fig2.add_trace(go.Scatter(
-    x=list(range(1, period + 1)), y=net_cf, name='Чистый поток', marker_color='#B88645', # Темно-песочный (бронза)
+    x=x_labels, y=net_cf, name='Чистый поток', marker_color='#B88645', # Темно-песочный (бронза)
     mode='lines+markers',
     hovertemplate='%{y:,.0f} руб.<extra></extra>'
 ))
