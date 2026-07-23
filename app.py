@@ -125,9 +125,9 @@ fig1.add_trace(go.Scatter(
     y=cash_balance, 
     mode='lines+markers', 
     name='Остаток ДС',
-    line=dict(color='blue', width=3),
+    line=dict(color='#722F37', width=3), # Фирменный винный
     fill='tozeroy',
-    fillcolor='rgba(0, 0, 255, 0.1)',
+    fillcolor='rgba(114, 47, 55, 0.1)', # Полупрозрачная винная заливка
     hovertemplate='%{y:,.0f} руб.<extra></extra>'
 ))
 fig1.add_hline(y=0, line_dash="dash", line_color="red", annotation_text="Дефицит")
@@ -144,15 +144,16 @@ st.plotly_chart(fig1, use_container_width=True)
 st.subheader("Структура месячного денежного потока")
 fig2 = go.Figure()
 fig2.add_trace(go.Bar(
-    x=list(range(1, period + 1)), y=inflows, name='Поступления', marker_color='#2ca02c',
+    x=list(range(1, period + 1)), y=inflows, name='Поступления', marker_color='#E3C293', # Фирменный песочный
     hovertemplate='%{y:,.0f} руб.<extra></extra>'
 ))
 fig2.add_trace(go.Bar(
-    x=list(range(1, period + 1)), y=-outflows, name='Выплаты', marker_color='#d62728',
+    x=list(range(1, period + 1)), y=-outflows, name='Выплаты', marker_color='#722F37', # Фирменный винный
     hovertemplate='%{y:,.0f} руб.<extra></extra>'
 ))
 fig2.add_trace(go.Scatter(
-    x=list(range(1, period + 1)), y=net_cf, name='Чистый поток', marker_color='orange', mode='lines+markers',
+    x=list(range(1, period + 1)), y=net_cf, name='Чистый поток', marker_color='#B88645', # Темно-песочный (бронза)
+    mode='lines+markers',
     hovertemplate='%{y:,.0f} руб.<extra></extra>'
 ))
 
