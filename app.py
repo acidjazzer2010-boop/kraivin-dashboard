@@ -13,12 +13,16 @@ st.sidebar.header("Параметры модели")
 margin_pct = st.sidebar.slider("Маржинальность (%)", min_value=10, max_value=50, value=20, step=1)
 period = st.sidebar.selectbox("Горизонт планирования (мес)", [6, 12, 18, 24])
 
-# Оставляем точный ручной ввод для инвестиций
 initial_investment = st.sidebar.number_input(
     "Доступный капитал / Инвестиции (руб)", 
     value=7_000_000, 
     step=500_000
 )
+
+st.sidebar.subheader("Динамика продаж")
+aov = st.sidebar.number_input("Средняя сумма заказа (руб)", value=150_000, step=10_000)
+start_orders = st.sidebar.number_input("Заказов в 1-й месяц (шт)", value=40, step=1)
+orders_growth = st.sidebar.slider("Ежемесячный прирост заказов (%)", 0, 100, 15, step=1)
 
 st.sidebar.subheader("Работа с поставщиками")
 prepayment_pct = st.sidebar.slider("Предоплата поставщикам (%)", 0, 100, 50, step=10)
@@ -29,21 +33,19 @@ factoring_share = st.sidebar.slider("Доля выручки в факторин
 factoring_advance = st.sidebar.slider("Аванс от фактора (%)", 50, 100, 80, step=5)
 
 # --- РАСЧЕТНАЯ ЧАСТЬ (МАТЕМАТИКА) ---
-# Базовая выручка с плавным ростом
-base_rev = [
-    6_000_000, 
-    8_400_000, 
-    12_000_000, 
-    14_400_000, 
-    16_800_000, 
-    18_000_000
-]
+# Динамический расчет выручки через заказы и чек
+orders = np.zeros(period)
 rev = np.zeros(period)
+
 for i in range(period):
-    if i < len(base_rev):
-        rev[i] = base_rev[i]
+    if i == 0:
+        orders[i] = start_orders
     else:
-        rev[i] = rev[i-1] * 1.05 # Рост 5% в месяц после 6-го месяца
+        # Увеличиваем количество заказов на заданный процент
+        orders[i] = orders[i-1] * (1 + (orders_growth / 100))
+    
+    # Выручка = кол-во заказов * средний чек
+    rev[i] = orders[i] * aov
 
 cogs_pct = 1 - (margin_pct / 100)
 cogs_no_vat = rev * cogs_pct
@@ -91,10 +93,12 @@ roi = (net_profit / sum(rev)) * 100 if sum(rev) > 0 else 0
 def format_rub(val):
     return f"{val:,.0f}".replace(",", " ") + " руб."
 
-col1, col2, col3 = st.columns(3)
-col1.metric("Максимальный кассовый разрыв", format_rub(max_deficit))
-col2.metric(f"Чистая прибыль (за {period} мес)", format_rub(net_profit))
-col3.metric("Рентабельность по ЧП", f"{roi:.1f}%")
+# Выводим 4 метрики вместо 3 (добавили общую выручку)
+col1, col2, col3, col4 = st.columns(4)
+col1.metric(f"Выручка (за {period} мес)", format_rub(sum(rev)))
+col2.metric("Макс. кассовый разрыв", format_rub(max_deficit))
+col3.metric("Чистая прибыль", format_rub(net_profit))
+col4.metric("Рентабельность по ЧП", f"{roi:.1f}%")
 
 st.divider()
 
@@ -117,7 +121,7 @@ fig1.update_layout(
     xaxis_title="Месяц", 
     yaxis_title="Рубли", 
     hovermode="x unified",
-    separators=", " # Заменяет запятую на пробел для тысяч
+    separators=", "
 )
 fig1.update_yaxes(tickformat=",.0f")
 st.plotly_chart(fig1, use_container_width=True)
