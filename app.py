@@ -5,7 +5,7 @@ import numpy as np
 
 # Настройка страницы
 st.set_page_config(page_title="Kraivin Fin-Model", layout="wide")
-st.title("КРАЙВИН: Анализ денежных потоков и рентабельности")
+st.title("Kraivin: Анализ денежных потоков и рентабельности")
 st.markdown("Интерактивная финансовая модель для сценарного анализа кассовых разрывов.")
 
 # --- БОКОВАЯ ПАНЕЛЬ (ВВОД ДАННЫХ) ---
@@ -78,9 +78,13 @@ max_deficit = min(min(cum_cf), 0)
 net_profit = sum(rev * (margin_pct / 100)) - sum(opex) - sum(taxes_and_commissions)
 roi = (net_profit / sum(rev)) * 100 if sum(rev) > 0 else 0
 
+# Функция для красивого форматирования чисел (пробелы между тысячами)
+def format_rub(val):
+    return f"{val:,.0f}".replace(",", " ") + " руб."
+
 col1, col2, col3 = st.columns(3)
-col1.metric("Максимальный кассовый разрыв", f"{max_deficit:,.0f} руб.")
-col2.metric(f"Чистая прибыль (за {period} мес)", f"{net_profit:,.0f} руб.")
+col1.metric("Максимальный кассовый разрыв", format_rub(max_deficit))
+col2.metric(f"Чистая прибыль (за {period} мес)", format_rub(net_profit))
 col3.metric("Рентабельность по ЧП", f"{roi:.1f}%")
 
 st.divider()
@@ -94,22 +98,33 @@ fig1.add_trace(go.Scatter(
     x=list(range(1, period + 1)), 
     y=cash_balance, 
     mode='lines+markers', 
-    name='Остаток ДС (с учетом инвестиций)',
+    name='Остаток ДС',
     line=dict(color='blue', width=3),
     fill='tozeroy',
     fillcolor='rgba(0, 0, 255, 0.1)'
 ))
 # Красная линия нуля (порог выживаемости)
 fig1.add_hline(y=0, line_dash="dash", line_color="red", annotation_text="Дефицит (Требуются вливания)")
-fig1.update_layout(xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified")
+fig1.update_layout(
+    xaxis_title="Месяц", 
+    yaxis_title="Рубли", 
+    hovermode="x unified",
+    separators=", " # Настройка Plotly: запятая для дробей, пробел для тысяч
+)
 st.plotly_chart(fig1, use_container_width=True)
 
 # 2. Столбчатая диаграмма потоков
 st.subheader("Структура месячного денежного потока")
 fig2 = go.Figure()
-fig2.add_trace(go.Bar(x=list(range(1, period + 1)), y=inflows, name='Поступления (Inflows)', marker_color='#2ca02c'))
-fig2.add_trace(go.Bar(x=list(range(1, period + 1)), y=-outflows, name='Выплаты (Outflows)', marker_color='#d62728'))
-fig2.add_trace(go.Scatter(x=list(range(1, period + 1)), y=net_cf, name='Net Cash Flow', marker_color='orange', mode='lines+markers'))
+fig2.add_trace(go.Bar(x=list(range(1, period + 1)), y=inflows, name='Поступления', marker_color='#2ca02c'))
+fig2.add_trace(go.Bar(x=list(range(1, period + 1)), y=-outflows, name='Выплаты', marker_color='#d62728'))
+fig2.add_trace(go.Scatter(x=list(range(1, period + 1)), y=net_cf, name='Чистый денежный поток', marker_color='orange', mode='lines+markers'))
 
-fig2.update_layout(barmode='relative', xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified")
+fig2.update_layout(
+    barmode='relative', 
+    xaxis_title="Месяц", 
+    yaxis_title="Рубли", 
+    hovermode="x unified",
+    separators=", " # Настройка Plotly: запятая для дробей, пробел для тысяч
+)
 st.plotly_chart(fig2, use_container_width=True)
