@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 import numpy as np
 
 # Настройка страницы
-st.set_page_config(page_title="Kraivin Fin-Model", layout="wide")
+st.set_page_config(page_title="КРАЙВИН - анализ экономической эффективности", layout="wide")
 st.title("КРАЙВИН: Анализ денежных потоков и рентабельности")
 st.markdown("Интерактивная финансовая модель для сценарного анализа кассовых разрывов.")
 
