@@ -5,7 +5,7 @@ import numpy as np
 
 # Настройка страницы
 st.set_page_config(page_title="Kraivin Fin-Model", layout="wide")
-st.title("КРАЙВИН: Анализ денежных потоков и рентабельности")
+st.title("Kraivin: Анализ денежных потоков и рентабельности")
 st.markdown("Интерактивная финансовая модель для сценарного анализа кассовых разрывов.")
 
 # --- БОКОВАЯ ПАНЕЛЬ (ВВОД ДАННЫХ) ---
@@ -13,7 +13,7 @@ st.sidebar.header("Параметры модели")
 margin_pct = st.sidebar.slider("Маржинальность (%)", min_value=10, max_value=50, value=20, step=1)
 period = st.sidebar.selectbox("Горизонт планирования (мес)", [6, 12, 18, 24])
 
-# В Python можно использовать _ для разделения нулей, это улучшает читаемость кода
+# Оставляем точный ручной ввод для инвестиций
 initial_investment = st.sidebar.number_input(
     "Доступный капитал / Инвестиции (руб)", 
     value=7_000_000, 
@@ -29,7 +29,7 @@ factoring_share = st.sidebar.slider("Доля выручки в факторин
 factoring_advance = st.sidebar.slider("Аванс от фактора (%)", 50, 100, 80, step=5)
 
 # --- РАСЧЕТНАЯ ЧАСТЬ (МАТЕМАТИКА) ---
-# Базовая выручка с плавным ростом (цифры разделены _ для удобства)
+# Базовая выручка с плавным ростом
 base_rev = [
     6_000_000, 
     8_400_000, 
@@ -110,7 +110,7 @@ fig1.add_trace(go.Scatter(
     line=dict(color='blue', width=3),
     fill='tozeroy',
     fillcolor='rgba(0, 0, 255, 0.1)',
-    hovertemplate='%{y:,.0f} руб.<extra></extra>' # Формат подсказки с пробелами
+    hovertemplate='%{y:,.0f} руб.<extra></extra>'
 ))
 fig1.add_hline(y=0, line_dash="dash", line_color="red", annotation_text="Дефицит")
 fig1.update_layout(
@@ -119,7 +119,7 @@ fig1.update_layout(
     hovermode="x unified",
     separators=", " # Заменяет запятую на пробел для тысяч
 )
-fig1.update_yaxes(tickformat=",.0f") # Формат оси Y с пробелами
+fig1.update_yaxes(tickformat=",.0f")
 st.plotly_chart(fig1, use_container_width=True)
 
 
