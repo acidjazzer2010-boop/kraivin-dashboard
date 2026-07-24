@@ -45,6 +45,9 @@ aov = st.sidebar.number_input("Средняя сумма заказа (руб)",
 start_orders = st.sidebar.number_input("Заказов в 1-й месяц (шт)", value=40, step=1)
 orders_growth = st.sidebar.slider("Ежемесячный прирост заказов (%)", 0, 100, 15, step=1)
 
+st.sidebar.subheader("Команда и расходы")
+monthly_fot = st.sidebar.number_input("ФОТ в месяц (руб)", value=500_000, step=50_000)
+
 st.sidebar.subheader("Работа с поставщиками")
 prepayment_pct = st.sidebar.slider("Предоплата поставщикам (%)", 0, 100, 50, step=10)
 delay_days = st.sidebar.slider("Отсрочка на остаток (дней)", 0, 90, 40, step=5)
@@ -90,27 +93,26 @@ for i in range(period):
     if i + delay_months_suppliers < period:
         cogs_payments[i + delay_months_suppliers] += cogs_vat[i] * ((100 - prepayment_pct) / 100)
 
-# Перевод дней отсрочки покупателей в месяцы сдвига
 customer_delay_months = max(0, int(round(customer_delay_days / 30)))
 
-# Симуляция поступлений (Факторинг + Прямые платежи с учетом новой переменной отсрочки)
+# Симуляция поступлений
 inflows = np.zeros(period)
 for i in range(period):
-    # Аванс от фактора приходит сразу в месяц отгрузки
     inflows[i] += rev[i] * 1.2 * (factoring_share / 100) * (factoring_advance / 100)
     
-    # Остальные деньги (прямые клиенты + остаток фактора) приходят с задержкой, равной отсрочке покупателей
     target_month = i + customer_delay_months
     if target_month < period:
-        # Прямые клиенты
         inflows[target_month] += rev[i] * 1.2 * ((100 - factoring_share) / 100)
-        # Остаток от фактора
         inflows[target_month] += rev[i] * 1.2 * (factoring_share / 100) * ((100 - factoring_advance) / 100)
 
-# Операционные расходы
-opex = np.full(period, 650_000)
+# Операционные расходы (Аренда, софт, прочее + ФОТ)
+base_other_opex = 150_000  # Прочие постоянные расходы (офис, связь и т.д.)
+opex = np.full(period, base_other_opex + monthly_fot)
+
+# Со временем (после 6 месяцев) прочие расходы могут немного расти при масштабировании
 for i in range(6, period):
-    opex[i] = 850_000
+    opex[i] = (base_other_opex * 1.2) + monthly_fot
+
 taxes_and_commissions = rev * 0.05
 
 outflows = cogs_payments + opex + taxes_and_commissions
