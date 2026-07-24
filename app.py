@@ -45,6 +45,9 @@ aov = st.sidebar.number_input("Средняя сумма заказа (руб)",
 start_orders = st.sidebar.number_input("Заказов в 1-й месяц (шт)", value=40, step=1)
 orders_growth = st.sidebar.slider("Ежемесячный прирост заказов (%)", 0, 100, 15, step=1)
 
+# Добавляем ползунок масштабирования для роста чистой прибыли
+scale_factor = st.sidebar.slider("Коэффициент масштабирования продаж", 0.5, 3.0, 1.0, 0.1)
+
 st.sidebar.subheader("Команда и расходы")
 monthly_fot = st.sidebar.number_input("ФОТ в месяц (руб)", value=500_000, step=50_000)
 
@@ -69,13 +72,13 @@ for i in range(period):
     y_offset = (start_month_idx + i) // 12
     x_labels.append(f"{ru_months_short[m_idx]} {start_year + y_offset}")
 
-# Динамический расчет выручки через заказы и чек
+# Динамический расчет выручки с учетом коэффициента масштабирования
 orders = np.zeros(period)
 rev = np.zeros(period)
 
 for i in range(period):
     if i == 0:
-        orders[i] = start_orders
+        orders[i] = start_orders * scale_factor
     else:
         orders[i] = orders[i-1] * (1 + (orders_growth / 100))
     rev[i] = orders[i] * aov
@@ -105,11 +108,9 @@ for i in range(period):
         inflows[target_month] += rev[i] * 1.2 * ((100 - factoring_share) / 100)
         inflows[target_month] += rev[i] * 1.2 * (factoring_share / 100) * ((100 - factoring_advance) / 100)
 
-# Операционные расходы (Аренда, софт, прочее + ФОТ)
-base_other_opex = 150_000  # Прочие постоянные расходы (офис, связь и т.д.)
+# Операционные расходы
+base_other_opex = 150_000
 opex = np.full(period, base_other_opex + monthly_fot)
-
-# Со временем (после 6 месяцев) прочие расходы могут немного расти при масштабировании
 for i in range(6, period):
     opex[i] = (base_other_opex * 1.2) + monthly_fot
 
