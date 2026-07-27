@@ -142,34 +142,14 @@ col4.metric("Рентабельность по ЧП", f"{roi:.1f}%")
 
 st.divider()
 
-# --- ПОСТРОЕНИЕ ГРАФИКОВ (PLOTLY) ДЛЯ ПРИЛОЖЕНИЯ И ЭКСПОРТА ---
-
-fig1 = go.Figure()
-fig1.add_trace(go.Scatter(
-    x=x_labels, y=cash_balance, mode='lines+markers', name='Остаток ДС',
-    line=dict(color='#642A38', width=3), fill='tozeroy', fillcolor='rgba(100, 42, 56, 0.1)',
-    hovertemplate='%{y:,.0f} руб.<extra></extra>'
-))
-fig1.add_hline(y=0, line_dash="dash", line_color="red", annotation_text="Дефицит")
-fig1.update_layout(xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified", separators=", ")
-fig1.update_yaxes(tickformat=",.0f")
-
-fig2 = go.Figure()
-fig2.add_trace(go.Bar(x=x_labels, y=inflows, name='Поступления', marker_color='#E3C293', hovertemplate='%{y:,.0f} руб.<extra></extra>'))
-fig2.add_trace(go.Bar(x=x_labels, y=-outflows, name='Выплаты', marker_color='#642A38', hovertemplate='%{y:,.0f} руб.<extra></extra>'))
-fig2.add_trace(go.Scatter(x=x_labels, y=net_cf, name='Чистый поток', marker_color='#B88645', mode='lines+markers', hovertemplate='%{y:,.0f} руб.<extra></extra>'))
-fig2.update_layout(barmode='relative', xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified", separators=", ")
-fig2.update_yaxes(tickformat=",.0f")
-
-
-# --- ГЕНЕРАТОР ПРЕЗЕНТАЦИЙ С ЛОГОТИПОМ И ГРАФИКАМИ ---
-def generate_full_presentation():
+# --- ГЕНЕРАТОР ПРОФЕССИОНАЛЬНОЙ ПРЕЗЕНТАЦИИ (БЕЗ КАЛЕЙДО) ---
+def generate_stable_presentation():
     prs = Presentation()
     prs.slide_width = Inches(13.333)
     prs.slide_height = Inches(7.5)
     
-    c_wine = RGBColor(100, 42, 56)
-    c_sand = RGBColor(227, 194, 147)
+    c_wine = RGBColor(100, 42, 56)      # #642A38
+    c_sand = RGBColor(227, 194, 147)   # #E3C293
     c_dark = RGBColor(30, 30, 30)
     c_light_bg = RGBColor(248, 246, 244)
     c_white = RGBColor(255, 255, 255)
@@ -177,12 +157,11 @@ def generate_full_presentation():
 
     blank_layout = prs.slide_layouts[6]
 
-    # Вспомогательная функция для добавления водяного знака / логотипа в угол слайда
     def add_corner_logo(slide):
         if os.path.exists(logo_path):
             slide.shapes.add_picture(logo_path, Inches(11.8), Inches(0.4), width=Inches(1.1))
 
-    # --- СЛАЙД 1: ТИТУЛЬНЫЙ ---
+    # СЛАЙД 1: ТИТУЛЬНЫЙ
     slide1 = prs.slides.add_slide(blank_layout)
     bg1 = slide1.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
     bg1.fill.solid()
@@ -194,7 +173,6 @@ def generate_full_presentation():
     accent1.fill.fore_color.rgb = c_sand
     accent1.line.fill.background()
 
-    # Логотип на титульном
     if os.path.exists(logo_path):
         slide1.shapes.add_picture(logo_path, Inches(1.2), Inches(0.8), width=Inches(1.8))
 
@@ -223,8 +201,7 @@ def generate_full_presentation():
     p3.font.name = "Arial"
     p3.space_before = Pt(35)
 
-
-    # --- СЛАЙД 2: KPI КАРТОЧКИ ---
+    # СЛАЙД 2: KPI КАРТОЧКИ
     slide2 = prs.slides.add_slide(blank_layout)
     bg2 = slide2.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
     bg2.fill.solid()
@@ -233,12 +210,10 @@ def generate_full_presentation():
     add_corner_logo(slide2)
 
     title_box2 = slide2.shapes.add_textbox(Inches(0.8), Inches(0.5), Inches(10.0), Inches(0.8))
-    tf2 = title_box2.text_frame
-    p_t2 = tf2.paragraphs[0]
-    p_t2.text = "Ключевые финансовые результаты"
-    p_t2.font.size = Pt(28)
-    p_t2.font.bold = True
-    p_t2.font.color.rgb = c_wine
+    title_box2.text_frame.paragraphs[0].text = "Ключевые финансовые результаты"
+    title_box2.text_frame.paragraphs[0].font.size = Pt(28)
+    title_box2.text_frame.paragraphs[0].font.bold = True
+    title_box2.text_frame.paragraphs[0].font.color.rgb = c_wine
 
     kpis = [
         ("Суммарная выручка", format_rub(sum(rev))),
@@ -283,8 +258,7 @@ def generate_full_presentation():
         p_val.font.bold = True
         p_val.space_before = Pt(8)
 
-
-    # --- СЛАЙД 3: ГРАФИК ЛИКВИДНОСТИ ---
+    # СЛАЙД 3: ТАБЛИЦА ДЕТАЛИЗАЦИИ
     slide3 = prs.slides.add_slide(blank_layout)
     bg3 = slide3.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
     bg3.fill.solid()
@@ -292,55 +266,15 @@ def generate_full_presentation():
     bg3.line.fill.background()
     add_corner_logo(slide3)
 
-    tbox3 = slide3.shapes.add_textbox(Inches(0.8), Inches(0.5), Inches(10.0), Inches(0.8))
-    tbox3.text_frame.paragraphs[0].text = "Динамика ликвидности и остаток средств"
-    tbox3.text_frame.paragraphs[0].font.size = Pt(28)
-    tbox3.text_frame.paragraphs[0].font.bold = True
-    tbox3.text_frame.paragraphs[0].font.color.rgb = c_wine
-
-    # Экспорт графика 1 в картинку
-    img1_bytes = fig1.to_image(format="png", width=1200, height=600, scale=2)
-    img1_stream = io.BytesIO(img1_bytes)
-    slide3.shapes.add_picture(img1_stream, Inches(0.8), Inches(1.5), width=Inches(11.7))
-
-
-    # --- СЛАЙД 4: СТРУКТУРА ДЕНЕЖНОГО ПОТОКА ---
-    slide4 = prs.slides.add_slide(blank_layout)
-    bg4 = slide4.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
-    bg4.fill.solid()
-    bg4.fill.fore_color.rgb = c_light_bg
-    bg4.line.fill.background()
-    add_corner_logo(slide4)
-
-    tbox4 = slide4.shapes.add_textbox(Inches(0.8), Inches(0.5), Inches(10.0), Inches(0.8))
-    tbox4.text_frame.paragraphs[0].text = "Структура месячного денежного потока"
-    tbox4.text_frame.paragraphs[0].font.size = Pt(28)
-    tbox4.text_frame.paragraphs[0].font.bold = True
-    tbox4.text_frame.paragraphs[0].font.color.rgb = c_wine
-
-    # Экспорт графика 2 в картинку
-    img2_bytes = fig2.to_image(format="png", width=1200, height=600, scale=2)
-    img2_stream = io.BytesIO(img2_bytes)
-    slide4.shapes.add_picture(img2_stream, Inches(0.8), Inches(1.5), width=Inches(11.7))
-
-
-    # --- СЛАЙД 5: ТАБЛИЦА ДЕТАЛИЗАЦИИ ---
-    slide5 = prs.slides.add_slide(blank_layout)
-    bg5 = slide5.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
-    bg5.fill.solid()
-    bg5.fill.fore_color.rgb = c_light_bg
-    bg5.line.fill.background()
-    add_corner_logo(slide5)
-
-    title_box5 = slide5.shapes.add_textbox(Inches(0.8), Inches(0.5), Inches(10.0), Inches(0.8))
-    title_box5.text_frame.paragraphs[0].text = "Детализация денежных потоков по месяцам"
-    title_box5.text_frame.paragraphs[0].font.size = Pt(28)
-    title_box5.text_frame.paragraphs[0].font.bold = True
-    title_box5.text_frame.paragraphs[0].font.color.rgb = c_wine
+    title_box3 = slide3.shapes.add_textbox(Inches(0.8), Inches(0.5), Inches(10.0), Inches(0.8))
+    title_box3.text_frame.paragraphs[0].text = "Детализация денежных потоков по месяцам"
+    title_box3.text_frame.paragraphs[0].font.size = Pt(28)
+    title_box3.text_frame.paragraphs[0].font.bold = True
+    title_box3.text_frame.paragraphs[0].font.color.rgb = c_wine
 
     rows = min(period + 1, 13)
     cols = 5
-    table_shape = slide5.shapes.add_table(rows, cols, Inches(0.8), Inches(1.5), Inches(11.7), Inches(5.2))
+    table_shape = slide3.shapes.add_table(rows, cols, Inches(0.8), Inches(1.5), Inches(11.7), Inches(5.2))
     table = table_shape.table
     
     table.columns[0].width = Inches(2.2)
@@ -387,9 +321,8 @@ def generate_full_presentation():
 # Кнопка скачивания презентации
 st.sidebar.divider()
 st.sidebar.subheader("Экспорт отчета")
-if st.sidebar.button("📥 Скачать презентацию с лого и графиками"):
-    with st.spinner("Генерация слайдов и экспорт графиков высокого разрешения..."):
-        pptx_data = generate_full_presentation()
+if st.sidebar.button("📥 Скачать презентацию отчета"):
+    pptx_data = generate_stable_presentation()
     st.sidebar.download_button(
         label="💾 Нажмите для сохранения файла",
         data=pptx_data,
@@ -399,7 +332,22 @@ if st.sidebar.button("📥 Скачать презентацию с лого и 
 
 # --- ВИЗУАЛИЗАЦИЯ НА ЭКРАНЕ ---
 st.subheader("Динамика ликвидности и остаток средств")
+fig1 = go.Figure()
+fig1.add_trace(go.Scatter(
+    x=x_labels, y=cash_balance, mode='lines+markers', name='Остаток ДС',
+    line=dict(color='#642A38', width=3), fill='tozeroy', fillcolor='rgba(100, 42, 56, 0.1)',
+    hovertemplate='%{y:,.0f} руб.<extra></extra>'
+))
+fig1.add_hline(y=0, line_dash="dash", line_color="red", annotation_text="Дефицит")
+fig1.update_layout(xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified", separators=", ")
+fig1.update_yaxes(tickformat=",.0f")
 st.plotly_chart(fig1, use_container_width=True)
 
 st.subheader("Структура месячного денежного потока")
+fig2 = go.Figure()
+fig2.add_trace(go.Bar(x=x_labels, y=inflows, name='Поступления', marker_color='#E3C293', hovertemplate='%{y:,.0f} руб.<extra></extra>'))
+fig2.add_trace(go.Bar(x=x_labels, y=-outflows, name='Выплаты', marker_color='#642A38', hovertemplate='%{y:,.0f} руб.<extra></extra>'))
+fig2.add_trace(go.Scatter(x=x_labels, y=net_cf, name='Чистый поток', marker_color='#B88645', mode='lines+markers', hovertemplate='%{y:,.0f} руб.<extra></extra>'))
+fig2.update_layout(barmode='relative', xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified", separators=", ")
+fig2.update_yaxes(tickformat=",.0f")
 st.plotly_chart(fig2, use_container_width=True)
