@@ -4,7 +4,8 @@ import plotly.graph_objects as go
 import numpy as np
 import os
 
-from exporter import generate_pptx_bytes, send_report_to_email
+# Импортируем актуальные функции для HTML-лонгрида и отправки
+from exporter import generate_html_report_bytes, send_report_to_email
 
 # Настройка страницы
 st.set_page_config(
@@ -17,7 +18,6 @@ st.title("КРАЙВИН: Анализ денежных потоков и рен
 st.markdown("Интерактивная финансовая модель для сценарного анализа кассовых разрывов.")
 
 # --- БОКОВАЯ ПАНЕЛЬ (ВВОД ДАННЫХ) ---
-
 logo_path = "КРАЙВИН лого винный квадрат.png"
 if os.path.exists(logo_path):
     st.sidebar.image(logo_path, use_container_width=True)
@@ -59,7 +59,6 @@ st.sidebar.subheader("Условия с покупателями")
 customer_delay_days = st.sidebar.slider("Отсрочка платежа покупателям (дней)", 0, 120, 70, step=5)
 
 # --- РАСЧЕТНАЯ ЧАСТЬ (МАТЕМАТИКА) ---
-
 ru_months_short = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек']
 x_labels = []
 for i in range(period):
@@ -120,7 +119,7 @@ net_cf = inflows - outflows
 cum_cf = np.cumsum(net_cf)
 cash_balance = cum_cf + initial_cash_buffer
 
-# Сводные расходы для круговой диаграммы
+# Сводные расходы
 sum_purchases = sum(cogs_payments)
 total_fot = sum(np.full(period, monthly_fot))
 total_taxes = sum(taxes_and_commissions)
@@ -142,10 +141,8 @@ col4.metric("Рентабельность по ЧП", f"{roi:.1f}%")
 
 st.divider()
 
-# --- ПАНЕЛЬ ЭКСПОРТА (ПРЕМИУМ HTML-ЛОНГРИД) ---
-st.subheader("📄 Экспорт премиального инвестиционного отчета (HTML / PDF Лонгрид)")
-
-from exporter import generate_html_report_bytes, send_report_to_email
+# --- ПАНЕЛЬ ЭКСПОРТА (HTML-ЛОНГРИД) ---
+st.subheader("📄 Экспорт премиального инвестиционного отчета (HTML Лонгрид)")
 
 html_data = generate_html_report_bytes(
     period=period,
@@ -168,16 +165,16 @@ html_data = generate_html_report_bytes(
     cum_cf=cum_cf,
     factoring_share=factoring_share,
     margin_pct=margin_pct,
-    sum_purchases=sum(cogs_payments),
-    total_fot=sum(np.full(period, monthly_fot)),
-    total_taxes=sum(taxes_and_commissions),
-    total_other_opex=sum(np.full(period, 150_000))
+    sum_purchases=sum_purchases,
+    total_fot=total_fot,
+    total_taxes=total_taxes,
+    total_other_opex=total_other_opex
 )
 
 tab1, tab2 = st.tabs(["📥 Скачать HTML-отчет", "✉️ Отправить HTML на email"])
 
 with tab1:
-    st.write("Получите безупречно сверстанный инвестиционный отчет в формате HTML с карточным дизайном и графиками (его можно открыть в любом браузере и сохранить в PDF через `Ctrl + P`):")
+    st.write("Получите безупречно сверстанный инвестиционный отчет в формате HTML с карточным дизайном и графиками (откройте в браузере и нажмите `Ctrl + P` для сохранения в PDF):")
     st.download_button(
         label="💾 Скачать HTML-отчет",
         data=html_data,
@@ -195,9 +192,10 @@ with tab2:
             st.success(f"HTML-отчет успешно отправлен на адрес {email_input}!")
         else:
             st.error("Ошибка при отправке письма. Проверьте настройки SMTP в секретах.")
-            
-# --- ВИЗУАЛИЗАЦИЯ НА ЭКРАНЕ (ВСЕ ГРАФИКИ) ---
 
+st.divider()
+
+# --- ВИЗУАЛИЗАЦИЯ НА ЭКРАНЕ ---
 st.subheader("1. Динамика ликвидности и остаток средств")
 fig1 = go.Figure()
 fig1.add_trace(go.Scatter(x=x_labels, y=cash_balance, mode='lines+markers', name='Остаток ДС', line=dict(color='#642A38', width=3), fill='tozeroy', fillcolor='rgba(100, 42, 56, 0.1)'))
@@ -246,11 +244,15 @@ fig5.update_layout(xaxis_title="Месяц", yaxis_title="Рубли", hovermode
 fig5.update_yaxes(tickformat=",.0f")
 st.plotly_chart(fig5, use_container_width=True)
 
-st.subheader("6. Круговая диаграмма структуры совокупных расходов")
-fig6 = go.Figure(data=[go.Pie(
-    labels=['Закупки товара', 'ФОТ (Команда)', 'Налоги и сборы', 'Операционные расходы'],
-    values=[sum(cogs_payments), total_fot, total_taxes, total_other_opex],
-    marker_colors=['#642A38', '#E3C293', '#B88645', '#D0C2B8']
+st.subheader("6. Структура совокупных расходов")
+fig6 = go.Figure(data=[go.Bar(
+    y=['Операционные расходы', 'Налоги и сборы', 'ФОТ (Команда)', 'Закупки товара'],
+    x=[total_other_opex/(sum([sum_purchases, total_fot, total_taxes, total_other_opex]) or 1)*100, 
+       total_taxes/(sum([sum_purchases, total_fot, total_taxes, total_other_opex]) or 1)*100, 
+       total_fot/(sum([sum_purchases, total_fot, total_taxes, total_other_opex]) or 1)*100, 
+       sum_purchases/(sum([sum_purchases, total_fot, total_taxes, total_other_opex]) or 1)*100],
+    orientation='h',
+    marker_color=['#D0C2B8', '#B88645', '#E3C293', '#642A38']
 )])
-fig6.update_layout(margin=dict(t=0, b=0, l=0, r=0))
+fig6.update_layout(xaxis_title="Доля в расходах (%)", yaxis=dict(autorange="reversed"), margin=dict(t=10, b=0, l=0, r=0))
 st.plotly_chart(fig6, use_container_width=True)
