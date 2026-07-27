@@ -4,6 +4,8 @@ import plotly.graph_objects as go
 import numpy as np
 import os
 import io
+import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
 
 # Импорт библиотек для генерации PowerPoint
 from pptx import Presentation
@@ -152,7 +154,7 @@ fig1.add_trace(go.Scatter(
 fig1.add_hline(y=0, line_dash="dash", line_color="red", annotation_text="Дефицит")
 fig1.update_layout(
     xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified", separators=", ",
-    font=dict(family="ua-BRAND-regular, sans-serif", color="#333333")
+    font=dict(family="sans-serif", color="#333333")
 )
 fig1.update_yaxes(tickformat=",.0f")
 
@@ -162,12 +164,54 @@ fig2.add_trace(go.Bar(x=x_labels, y=-outflows, name='Выплаты', marker_col
 fig2.add_trace(go.Scatter(x=x_labels, y=net_cf, name='Чистый поток', marker_color='#B88645', mode='lines+markers', hovertemplate='%{y:,.0f} руб.<extra></extra>'))
 fig2.update_layout(
     barmode='relative', xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified", separators=", ",
-    font=dict(family="ua-BRAND-regular, sans-serif", color="#333333")
+    font=dict(family="sans-serif", color="#333333")
 )
 fig2.update_yaxes(tickformat=",.0f")
 
 
-# --- ГЕНЕРАТОР ПРОФЕССИОНАЛЬНОЙ ПРЕЗЕНТАЦИИ (БЕЗ ОШИБОК KALEIDO) ---
+# --- ФУНКЦИЯ ГЕНЕРАЦИИ ГРАФИКОВ ЧЕРЕЗ MATPLOTLIB ДЛЯ СЛАЙДОВ ---
+def create_matplotlib_chart_1():
+    fig, ax = plt.subplots(figsize=(10, 4.5), dpi=200)
+    ax.plot(x_labels, cash_balance, color='#642A38', linewidth=3, marker='o', markersize=6)
+    ax.fill_between(x_labels, cash_balance, 0, color='#642A38', alpha=0.1)
+    ax.axhline(0, color='red', linestyle='--', linewidth=1.5)
+    ax.set_title("Динамика ликвидности и остаток средств", fontsize=14, fontweight='bold', color='#642A38', pad=15)
+    ax.set_ylabel("Рубли", fontsize=11, color='#333333')
+    plt.xticks(rotation=30, ha='right', fontsize=10)
+    plt.grid(axis='y', linestyle=':', alpha=0.5)
+    plt.tight_layout()
+    
+    img_io = io.BytesIO()
+    plt.savefig(img_io, format='png', bbox_inches='tight')
+    plt.close(fig)
+    img_io.seek(0)
+    return img_io
+
+def create_matplotlib_chart_2():
+    fig, ax = plt.subplots(figsize=(10, 4.5), dpi=200)
+    x_indices = np.arange(len(x_labels))
+    width = 0.35
+    
+    ax.bar(x_indices - width/2, inflows, width, label='Поступления', color='#E3C293')
+    ax.bar(x_indices + width/2, -outflows, width, label='Выплаты', color='#642A38')
+    ax.plot(x_indices, net_cf, color='#B88645', linewidth=2.5, marker='o', label='Чистый поток')
+    
+    ax.set_xticks(x_indices)
+    ax.set_xticklabels(x_labels, rotation=30, ha='right', fontsize=10)
+    ax.set_title("Структура месячного денежного потока", fontsize=14, fontweight='bold', color='#642A38', pad=15)
+    ax.set_ylabel("Рубли", fontsize=11, color='#333333')
+    ax.legend(frameon=True, facecolor='white', edgecolor='none')
+    plt.grid(axis='y', linestyle=':', alpha=0.5)
+    plt.tight_layout()
+    
+    img_io = io.BytesIO()
+    plt.savefig(img_io, format='png', bbox_inches='tight')
+    plt.close(fig)
+    img_io.seek(0)
+    return img_io
+
+
+# --- ГЕНЕРАТОР ПРОФЕССИОНАЛЬНОЙ ПРЕЗЕНТАЦИИ С КАРТИНКАМИ ГРАФИКОВ ---
 def generate_full_presentation():
     prs = Presentation()
     prs.slide_width = Inches(13.333)
@@ -291,7 +335,7 @@ def generate_full_presentation():
         p_val.font.name = font_black
         p_val.space_before = Pt(8)
 
-    # СЛАЙД 3: СВОДКА ДИНАМИКИ ЛИКВИДНОСТИ (АЛЬТЕРНАТИВА ГРАФИКАМ ДЛЯ СТАБИЛЬНОСТИ)
+    # СЛАЙД 3: ГРАФИК ЛИКВИДНОСТИ
     slide3 = prs.slides.add_slide(blank_layout)
     bg3 = slide3.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
     bg3.fill.solid()
@@ -299,54 +343,18 @@ def generate_full_presentation():
     bg3.line.fill.background()
     add_corner_logo(slide3)
 
-    tbox3 = slide3.shapes.add_textbox(Inches(0.8), Inches(0.5), Inches(10.0), Inches(0.8))
-    tbox3.text_frame.paragraphs[0].text = "Анализ ликвидности и денежных потоков"
-    tbox3.text_frame.paragraphs[0].font.size = Pt(28)
+    tbox3 = slide3.shapes.add_textbox(Inches(0.8), Inches(0.4), Inches(10.0), Inches(0.8))
+    tbox3.text_frame.paragraphs[0].text = "Динамика ликвидности и остаток средств"
+    tbox3.text_frame.paragraphs[0].font.size = Pt(26)
     tbox3.text_frame.paragraphs[0].font.bold = True
     tbox3.text_frame.paragraphs[0].font.color.rgb = c_wine
     tbox3.text_frame.paragraphs[0].font.name = font_bold
 
-    # Карточка с аналитическими выводами
-    card_sum = slide3.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(1.6), Inches(11.7), Inches(5.0))
-    card_sum.fill.solid()
-    card_sum.fill.fore_color.rgb = c_white
-    card_sum.line.color.rgb = c_card_border
-    
-    tf_sum = card_sum.text_frame
-    tf_sum.word_wrap = True
-    tf_sum.margin_left = Inches(0.4)
-    tf_sum.margin_top = Inches(0.4)
+    # Вставка картинки первого графика
+    chart1_img = create_matplotlib_chart_1()
+    slide3.shapes.add_picture(chart1_img, Inches(0.8), Inches(1.3), width=Inches(11.7))
 
-    p_s1 = tf_sum.paragraphs[0]
-    p_s1.text = "• Управление кассовыми разрывами:"
-    p_s1.font.bold = True
-    p_s1.font.size = Pt(16)
-    p_s1.font.color.rgb = c_wine
-    p_s1.font.name = font_bold
-
-    p_s2 = tf_sum.add_paragraph()
-    p_s2.text = f"  Максимальный кассовый разрыв за выбранный период составляет {format_rub(max_deficit)}. Начальный буфер ликвидности заложен на уровне {format_rub(initial_cash_buffer)}."
-    p_s2.font.size = Pt(14)
-    p_s2.font.color.rgb = c_dark
-    p_s2.font.name = font_regular
-    p_s2.space_before = Pt(4)
-
-    p_s3 = tf_sum.add_paragraph()
-    p_s3.text = "• Операционный цикл и оборотный капитал:"
-    p_s3.font.bold = True
-    p_s3.font.size = Pt(16)
-    p_s3.font.color.rgb = c_wine
-    p_s3.font.name = font_bold
-    p_s3.space_before = Pt(16)
-
-    p_s4 = tf_sum.add_paragraph()
-    p_s4.text = f"  Установленная отсрочка платежа покупателям ({customer_delay_days} дней) и отсрочка поставщикам ({delay_days} дней) сбалансированы с учетом доли факторинга ({factoring_share}%)."
-    p_s4.font.size = Pt(14)
-    p_s4.font.color.rgb = c_dark
-    p_s4.font.name = font_regular
-    p_s4.space_before = Pt(4)
-
-    # СЛАЙД 4: ТАБЛИЦА ДЕТАЛИЗАЦИИ
+    # СЛАЙД 4: ГРАФИК ДЕНЕЖНОГО ПОТОКА
     slide4 = prs.slides.add_slide(blank_layout)
     bg4 = slide4.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
     bg4.fill.solid()
@@ -354,17 +362,36 @@ def generate_full_presentation():
     bg4.line.fill.background()
     add_corner_logo(slide4)
 
-    title_box4 = slide4.shapes.add_textbox(Inches(0.8), Inches(0.5), Inches(10.0), Inches(0.8))
-    p_t4 = title_box4.text_frame.paragraphs[0]
-    p_t4.text = "Детализация денежных потоков по месяцам"
-    p_t4.font.size = Pt(28)
-    p_t4.font.bold = True
-    p_t4.font.color.rgb = c_wine
-    p_t4.font.name = font_bold
+    tbox4 = slide4.shapes.add_textbox(Inches(0.8), Inches(0.4), Inches(10.0), Inches(0.8))
+    tbox4.text_frame.paragraphs[0].text = "Структура месячного денежного потока"
+    tbox4.text_frame.paragraphs[0].font.size = Pt(26)
+    tbox4.text_frame.paragraphs[0].font.bold = True
+    tbox4.text_frame.paragraphs[0].font.color.rgb = c_wine
+    tbox4.text_frame.paragraphs[0].font.name = font_bold
+
+    # Вставка картинки второго графика
+    chart2_img = create_matplotlib_chart_2()
+    slide4.shapes.add_picture(chart2_img, Inches(0.8), Inches(1.3), width=Inches(11.7))
+
+    # СЛАЙД 5: ТАБЛИЦА ДЕТАЛИЗАЦИИ
+    slide5 = prs.slides.add_slide(blank_layout)
+    bg5 = slide5.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
+    bg5.fill.solid()
+    bg5.fill.fore_color.rgb = c_light_bg
+    bg5.line.fill.background()
+    add_corner_logo(slide5)
+
+    title_box5 = slide5.shapes.add_textbox(Inches(0.8), Inches(0.5), Inches(10.0), Inches(0.8))
+    p_t5 = title_box5.text_frame.paragraphs[0]
+    p_t5.text = "Детализация денежных потоков по месяцам"
+    p_t5.font.size = Pt(28)
+    p_t5.font.bold = True
+    p_t5.font.color.rgb = c_wine
+    p_t5.font.name = font_bold
 
     rows = min(period + 1, 13)
     cols = 5
-    table_shape = slide4.shapes.add_table(rows, cols, Inches(0.8), Inches(1.5), Inches(11.7), Inches(5.2))
+    table_shape = slide5.shapes.add_table(rows, cols, Inches(0.8), Inches(1.5), Inches(11.7), Inches(5.2))
     table = table_shape.table
     
     table.columns[0].width = Inches(2.2)
