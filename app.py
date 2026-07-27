@@ -118,7 +118,6 @@ net_cf = inflows - outflows
 cum_cf = np.cumsum(net_cf)
 cash_balance = cum_cf + initial_cash_buffer
 
-# Сводные расходы
 sum_purchases = sum(cogs_payments)
 total_fot = sum(np.full(period, monthly_fot))
 total_taxes = sum(taxes_and_commissions)
@@ -140,8 +139,8 @@ col4.metric("Рентабельность по ЧП", f"{roi:.1f}%")
 
 st.divider()
 
-# --- ПАНЕЛЬ ЭКСПОРТА (HTML-ЛОНГРИД) ---
-st.subheader("📄 Экспорт отчета (HTML)")
+# --- ПАНЕЛЬ ЭКСПОРТА ---
+st.subheader("📤 Экспорт отчета в HTML")
 
 html_data = generate_html_report_bytes(
     period=period,
@@ -170,88 +169,94 @@ html_data = generate_html_report_bytes(
     total_other_opex=total_other_opex
 )
 
-tab1, tab2 = st.tabs(["📥 Скачать HTML-отчет", "✉️ Отправить HTML на email"])
+tab_ex1, tab_ex2 = st.tabs(["📥 Скачать HTML-отчет", "✉️ Отправить HTML на email"])
 
-with tab1:
-    st.write("Получить отчет в формате HTML с карточным дизайном и графиками (откройте в браузере и нажмите `Ctrl + P` для сохранения в PDF):")
+with tab_ex1:
     st.download_button(
-        label="💾 Скачать HTML-отчет",
+        label="💾 Скачать файл отчета",
         data=html_data,
         file_name="Kraivin_Financial_Report.html",
         mime="text/html",
         use_container_width=True
     )
 
-with tab2:
-    st.write("Введите адрес электронной почты партнера или коллеги для отправки готового HTML-документа:")
+with tab_ex2:
     email_input = st.text_input("Email получателя", "partner@krayvin.ru")
-    if st.button("🚀 Отправить HTML на email"):
-        success = send_report_to_email(email_input, html_data)
-        if success:
-            st.success(f"HTML-отчет успешно отправлен на адрес {email_input}!")
+    if st.button("🚀 Отправить отчет на email"):
+        if send_report_to_email(email_input, html_data):
+            st.success("Отчет успешно отправлен!")
         else:
-            st.error("Ошибка при отправке письма. Проверьте настройки SMTP в секретах.")
+            st.error("Ошибка при отправке.")
 
 st.divider()
 
-# --- ВИЗУАЛИЗАЦИЯ НА ЭКРАНЕ ---
-st.subheader("1. Динамика ликвидности и остаток средств")
-fig1 = go.Figure()
-fig1.add_trace(go.Scatter(x=x_labels, y=cash_balance, mode='lines+markers', name='Остаток ДС', line=dict(color='#642A38', width=3), fill='tozeroy', fillcolor='rgba(100, 42, 56, 0.1)'))
-fig1.add_hline(y=0, line_dash="dash", line_color="red", annotation_text="Дефицит")
-fig1.update_layout(xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified", separators=", ")
-fig1.update_yaxes(tickformat=",.0f")
-st.plotly_chart(fig1, use_container_width=True)
+# --- ВИЗУАЛИЗАЦИЯ НА ВКЛАДКАХ С ПОДПИСЯМИ ЗНАЧЕНИЙ ---
+st.subheader("📊 Аналитические панели и графики")
 
-st.subheader("2. Структура месячного денежного потока")
-fig2 = go.Figure()
-fig2.add_trace(go.Bar(x=x_labels, y=inflows, name='Поступления', marker_color='#E3C293'))
-fig2.add_trace(go.Bar(x=x_labels, y=-outflows, name='Выплаты', marker_color='#642A38'))
-fig2.add_trace(go.Scatter(x=x_labels, y=net_cf, name='Чистый поток', marker_color='#B88645', mode='lines+markers'))
-fig2.update_layout(barmode='relative', xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified", separators=", ")
-fig2.update_yaxes(tickformat=",.0f")
-st.plotly_chart(fig2, use_container_width=True)
+tab1, tab2, tab3 = st.tabs(["💰 Ликвидность и Денежный поток", "📈 Рентабельность и Источники", "📉 Накопленный итог и Расходы"])
 
-st.subheader("3. Динамика маржинальности и операционной прибыли (EBITDA)")
-fig3 = go.Figure()
-ebitda_vals = rev - opex - taxes_and_commissions - (cogs_payments * 0.3)
-fig3.add_trace(go.Bar(x=x_labels, y=ebitda_vals, name='EBITDA', marker_color='#642A38'))
-fig3.add_trace(go.Scatter(x=x_labels, y=[margin_pct]*period, name='Маржинальность (%)', yaxis='y2', line=dict(color='#E3C293', width=3)))
-fig3.update_layout(
-    xaxis_title="Месяц", yaxis_title="EBITDA (руб)", hovermode="x unified", separators=", ",
-    yaxis2=dict(title="Маржа (%)", overlaying='y', side='right', range=[0, 50])
-)
-st.plotly_chart(fig3, use_container_width=True)
+with tab1:
+    st.markdown("### Динамика ликвидности и остаток средств")
+    fig1 = go.Figure()
+    fig1.add_trace(go.Scatter(
+        x=x_labels, y=cash_balance, mode='lines+markers+text', name='Остаток ДС',
+        text=[f"{v:,.0f}".replace(",", " ") for v in cash_balance], textposition="top center",
+        line=dict(color='#642A38', width=3), fill='tozeroy', fillcolor='rgba(100, 42, 56, 0.1)'
+    ))
+    fig1.add_hline(y=0, line_dash="dash", line_color="red", annotation_text="Дефицит")
+    fig1.update_layout(xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified")
+    st.plotly_chart(fig1, use_container_width=True)
 
-st.subheader("4. Структура притока денежных средств по источникам")
-fig4 = go.Figure()
-dir_inf = rev * 1.2 * ((100 - factoring_share) / 100)
-fact_inf = rev * 1.2 * (factoring_share / 100)
-fig4.add_trace(go.Bar(x=x_labels, y=dir_inf, name='Оплата от клиентов', marker_color='#642A38'))
-fig4.add_trace(go.Bar(x=x_labels, y=fact_inf, name='Факторинг', marker_color='#E3C293'))
-fig4.update_layout(barmode='stack', xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified", separators=", ")
-fig4.update_yaxes(tickformat=",.0f")
-st.plotly_chart(fig4, use_container_width=True)
+    st.markdown("### Структура месячного денежного потока")
+    fig2 = go.Figure()
+    fig2.add_trace(go.Bar(x=x_labels, y=inflows, name='Поступления', marker_color='#E3C293', text=[f"{v:,.0f}" for v in inflows], textposition='auto'))
+    fig2.add_trace(go.Bar(x=x_labels, y=-outflows, name='Выплаты', marker_color='#642A38', text=[f"{v:,.0f}" for v in outflows], textposition='auto'))
+    fig2.add_trace(go.Scatter(x=x_labels, y=net_cf, name='Чистый поток', marker_color='#B88645', mode='lines+markers'))
+    fig2.update_layout(barmode='relative', xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified")
+    st.plotly_chart(fig2, use_container_width=True)
 
-st.subheader("5. Накопленный денежный поток (Cumulative Cash Flow)")
-fig5 = go.Figure()
-total_cash = cum_cf + initial_cash_buffer
-fig5.add_trace(go.Scatter(x=x_labels, y=total_cash, mode='lines+markers', name='Накопленный ДС', line=dict(color='#642A38', width=3), fill='tozeroy', fillcolor='rgba(227, 194, 147, 0.2)'))
-fig5.add_hline(y=initial_cash_buffer, line_dash="dash", line_color="#B88645", annotation_text="Стартовый буфер")
-fig5.add_hline(y=0, line_dash="dot", line_color="red", annotation_text="Нулевой баланс")
-fig5.update_layout(xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified", separators=", ")
-fig5.update_yaxes(tickformat=",.0f")
-st.plotly_chart(fig5, use_container_width=True)
+with tab2:
+    st.markdown("### Динамика маржинальности и операционной прибыли (EBITDA)")
+    fig3 = go.Figure()
+    ebitda_vals = rev - opex - taxes_and_commissions - (cogs_payments * 0.3)
+    fig3.add_trace(go.Bar(x=x_labels, y=ebitda_vals, name='EBITDA', marker_color='#642A38', text=[f"{v:,.0f}" for v in ebitda_vals], textposition='auto'))
+    fig3.add_trace(go.Scatter(x=x_labels, y=[margin_pct]*period, name='Маржинальность (%)', yaxis='y2', line=dict(color='#E3C293', width=3)))
+    fig3.update_layout(xaxis_title="Месяц", yaxis_title="EBITDA (руб)", yaxis2=dict(title="Маржа (%)", overlaying='y', side='right', range=[0, 50]))
+    st.plotly_chart(fig3, use_container_width=True)
 
-st.subheader("6. Структура совокупных расходов")
-fig6 = go.Figure(data=[go.Bar(
-    y=['Операционные расходы', 'Налоги и сборы', 'ФОТ (Команда)', 'Закупки товара'],
-    x=[total_other_opex/(sum([sum_purchases, total_fot, total_taxes, total_other_opex]) or 1)*100, 
-       total_taxes/(sum([sum_purchases, total_fot, total_taxes, total_other_opex]) or 1)*100, 
-       total_fot/(sum([sum_purchases, total_fot, total_taxes, total_other_opex]) or 1)*100, 
-       sum_purchases/(sum([sum_purchases, total_fot, total_taxes, total_other_opex]) or 1)*100],
-    orientation='h',
-    marker_color=['#D0C2B8', '#B88645', '#E3C293', '#642A38']
-)])
-fig6.update_layout(xaxis_title="Доля в расходах (%)", yaxis=dict(autorange="reversed"), margin=dict(t=10, b=0, l=0, r=0))
-st.plotly_chart(fig6, use_container_width=True)
+    st.markdown("### Структура притока денежных средств по источникам")
+    fig4 = go.Figure()
+    dir_inf = rev * 1.2 * ((100 - factoring_share) / 100)
+    fact_inf = rev * 1.2 * (factoring_share / 100)
+    fig4.add_trace(go.Bar(x=x_labels, y=dir_inf, name='Оплата от клиентов', marker_color='#642A38'))
+    fig4.add_trace(go.Bar(x=x_labels, y=fact_inf, name='Факторинг', marker_color='#E3C293'))
+    fig4.update_layout(barmode='stack', xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified")
+    st.plotly_chart(fig4, use_container_width=True)
+
+with tab3:
+    st.markdown("### Накопленный денежный поток (Cumulative Cash Flow)")
+    fig5 = go.Figure()
+    total_cash = cum_cf + initial_cash_buffer
+    fig5.add_trace(go.Scatter(
+        x=x_labels, y=total_cash, mode='lines+markers+text', name='Накопленный ДС',
+        text=[f"{v:,.0f}" for v in total_cash], textposition="top center",
+        line=dict(color='#642A38', width=3), fill='tozeroy', fillcolor='rgba(227, 194, 147, 0.2)'
+    ))
+    fig5.add_hline(y=initial_cash_buffer, line_dash="dash", line_color="#B88645", annotation_text="Стартовый буфер")
+    fig5.add_hline(y=0, line_dash="dot", line_color="red", annotation_text="Нулевой баланс")
+    fig5.update_layout(xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified")
+    st.plotly_chart(fig5, use_container_width=True)
+
+    st.markdown("### Структура совокупных расходов")
+    exp_labels = ['Операционные расходы', 'Nалоги и сборы', 'ФОТ (Команда)', 'Закупки товара']
+    exp_vals = [total_other_opex, total_taxes, total_fot, sum_purchases]
+    tot_exp = sum(exp_vals) or 1
+    exp_pcts = [v / tot_exp * 100 for v in exp_vals]
+    
+    fig6 = go.Figure(data=[go.Bar(
+        y=exp_labels, x=exp_pcts, orientation='h',
+        text=[f"{p:.1f}%" for p in exp_pcts], textposition='auto',
+        marker_color=['#D0C2B8', '#B88645', '#E3C293', '#642A38']
+    )])
+    fig6.update_layout(xaxis_title="Доля в расходах (%)", yaxis=dict(autorange="reversed"), margin=dict(t=10, b=0, l=0, r=0))
+    st.plotly_chart(fig6, use_container_width=True)
