@@ -68,7 +68,6 @@ customer_delay_days = st.sidebar.slider("Отсрочка платежа пок�
 
 # --- РАСЧЕТНАЯ ЧАСТЬ (МАТЕМАТИКА) ---
 
-# Генерация подписей для оси X (Месяц Год)
 ru_months_short = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек']
 x_labels = []
 for i in range(period):
@@ -76,7 +75,6 @@ for i in range(period):
     y_offset = (start_month_idx + i) // 12
     x_labels.append(f"{ru_months_short[m_idx]} {start_year + y_offset}")
 
-# Динамический расчет выручки
 orders = np.zeros(period)
 rev = np.zeros(period)
 
@@ -91,22 +89,26 @@ cogs_pct = 1 - (margin_pct / 100)
 cogs_no_vat = rev * cogs_pct
 cogs_vat = cogs_no_vat * 1.2
 
-# Симуляция выплат поставщикам (в 1-й месяц также закладывается первоначальная закупка товара)
 delay_months_suppliers = max(1, int(round(delay_days / 30))) if delay_days > 0 else 0
 cogs_payments = np.zeros(period)
 
+# 1. Сначала распределяем текущие закупки с учетом предоплаты и отсрочки
 for i in range(period):
-    # Текущие закупки
     cogs_payments[i] += cogs_vat[i] * (prepayment_pct / 100)
     if i + delay_months_suppliers < period:
         cogs_payments[i + delay_months_suppliers] += cogs_vat[i] * ((100 - prepayment_pct) / 100)
 
-# Добавляем затраты на первоначальную партию товара в 1-й месяц
-cogs_payments[0] += initial_purchase
+# 2. Корректно распределяем первоначальную закупку по условиям поставщика (предоплата сразу, остаток — по отсрочке)
+initial_prep = initial_purchase * (prepayment_pct / 100)
+initial_post = initial_purchase * ((100 - prepayment_pct) / 100)
+
+cogs_payments[0] += initial_prep
+if delay_months_suppliers < period:
+    cogs_payments[delay_months_suppliers] += initial_post
+# Если отсрочка уходит за горизонт планирования, в рамках периода модель ее не платит из текущего счета
 
 customer_delay_months = max(0, int(round(customer_delay_days / 30)))
 
-# Симуляция поступлений
 inflows = np.zeros(period)
 for i in range(period):
     inflows[i] += rev[i] * 1.2 * (factoring_share / 100) * (factoring_advance / 100)
@@ -116,7 +118,6 @@ for i in range(period):
         inflows[target_month] += rev[i] * 1.2 * ((100 - factoring_share) / 100)
         inflows[target_month] += rev[i] * 1.2 * (factoring_share / 100) * ((100 - factoring_advance) / 100)
 
-# Операционные расходы
 base_other_opex = 150_000
 opex = np.full(period, base_other_opex + monthly_fot)
 for i in range(6, period):
@@ -127,13 +128,12 @@ taxes_and_commissions = rev * 0.05
 outflows = cogs_payments + opex + taxes_and_commissions
 net_cf = inflows - outflows
 
-# Накопленный итог с учетом стартового буфера на счете
 cum_cf = np.cumsum(net_cf)
 cash_balance = cum_cf + initial_cash_buffer
 
 # --- KPI МЕТРИКИ ---
 max_deficit = min(min(cum_cf), 0)
-net_profit = sum(rev * (margin_pct / 100)) - sum(opex) - sum(taxes_and_commissions) - (initial_purchase * 0.15) # Условная чистая себестоимость первоначального стока
+net_profit = sum(rev * (margin_pct / 100)) - sum(opex) - sum(taxes_and_commissions) - (initial_purchase * 0.15)
 roi = (net_profit / sum(rev)) * 100 if sum(rev) > 0 else 0
 
 def format_rub(val):
@@ -179,7 +179,7 @@ fig2.add_trace(go.Bar(
     hovertemplate='%{y:,.0f} руб.<extra></extra>'
 ))
 fig2.add_trace(go.Bar(
-    x=x_labels, y=-outflows, name='Выплаты (вкл. закупку)', marker_color='#642A38',
+    x=x_labels, y=-outflows, name='Выплаты', marker_color='#642A38',
     hovertemplate='%{y:,.0f} руб.<extra></extra>'
 ))
 fig2.add_trace(go.Scatter(
