@@ -4,7 +4,6 @@ import plotly.graph_objects as go
 import numpy as np
 import os
 
-# Импортируем актуальные функции для HTML-лонгрида и отправки
 from exporter import generate_html_report_bytes, send_report_to_email
 
 # Настройка страницы
