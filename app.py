@@ -141,7 +141,7 @@ col4.metric("Рентабельность по ЧП", f"{roi:.1f}%")
 st.divider()
 
 # --- ПАНЕЛЬ ЭКСПОРТА (HTML-ЛОНГРИД) ---
-st.subheader("📄 Экспорт премиального инвестиционного отчета (HTML Лонгрид)")
+st.subheader("📄 Экспорт отчета (HTML)")
 
 html_data = generate_html_report_bytes(
     period=period,
@@ -173,7 +173,7 @@ html_data = generate_html_report_bytes(
 tab1, tab2 = st.tabs(["📥 Скачать HTML-отчет", "✉️ Отправить HTML на email"])
 
 with tab1:
-    st.write("Получите безупречно сверстанный инвестиционный отчет в формате HTML с карточным дизайном и графиками (откройте в браузере и нажмите `Ctrl + P` для сохранения в PDF):")
+    st.write("Получить отчет в формате HTML с карточным дизайном и графиками (откройте в браузере и нажмите `Ctrl + P` для сохранения в PDF):")
     st.download_button(
         label="💾 Скачать HTML-отчет",
         data=html_data,
