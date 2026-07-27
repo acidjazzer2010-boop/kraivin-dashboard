@@ -142,7 +142,7 @@ col4.metric("Рентабельность по ЧП", f"{roi:.1f}%")
 
 st.divider()
 
-# --- ГЕНЕРАТОР ПРОФЕССИОНАЛЬНОЙ ПРЕЗЕНТАЦИИ ---
+# --- ГЕНЕРАТОР ПРЕЗЕНТАЦИИ С ФИРМЕННЫМИ ШРИФТАМИ ---
 def generate_stable_presentation():
     prs = Presentation()
     prs.slide_width = Inches(13.333)
@@ -154,6 +154,11 @@ def generate_stable_presentation():
     c_light_bg = RGBColor(248, 246, 244)
     c_white = RGBColor(255, 255, 255)
     c_card_border = RGBColor(220, 210, 205)
+
+    # Имена фирменных шрифтов из файлов проекта
+    font_black = "ua-BRAND-black"
+    font_bold = "ua-BRAND-bold"
+    font_regular = "ua-BRAND-regular"
 
     blank_layout = prs.slide_layouts[6]
 
@@ -185,20 +190,20 @@ def generate_stable_presentation():
     p.font.size = Pt(54)
     p.font.bold = True
     p.font.color.rgb = c_white
-    p.font.name = "Arial"
+    p.font.name = font_black
 
     p2 = tf.add_paragraph()
     p2.text = "Финансовая модель и анализ денежных потоков"
     p2.font.size = Pt(26)
     p2.font.color.rgb = c_sand
-    p2.font.name = "Arial"
+    p2.font.name = font_bold
     p2.space_before = Pt(10)
 
     p3 = tf.add_paragraph()
     p3.text = f"Горизонт планирования: {period} мес.  |  Старт: {ru_months_full[start_month_idx]} {start_year}"
     p3.font.size = Pt(16)
     p3.font.color.rgb = c_white
-    p3.font.name = "Arial"
+    p3.font.name = font_regular
     p3.space_before = Pt(35)
 
     # СЛАЙД 2: KPI КАРТОЧКИ
@@ -210,10 +215,12 @@ def generate_stable_presentation():
     add_corner_logo(slide2)
 
     title_box2 = slide2.shapes.add_textbox(Inches(0.8), Inches(0.5), Inches(10.0), Inches(0.8))
-    title_box2.text_frame.paragraphs[0].text = "Ключевые финансовые результаты"
-    title_box2.text_frame.paragraphs[0].font.size = Pt(28)
-    title_box2.text_frame.paragraphs[0].font.bold = True
-    title_box2.text_frame.paragraphs[0].font.color.rgb = c_wine
+    p_t2 = title_box2.text_frame.paragraphs[0]
+    p_t2.text = "Ключевые финансовые результаты"
+    p_t2.font.size = Pt(28)
+    p_t2.font.bold = True
+    p_t2.font.color.rgb = c_wine
+    p_t2.font.name = font_bold
 
     kpis = [
         ("Суммарная выручка", format_rub(sum(rev))),
@@ -250,12 +257,14 @@ def generate_stable_presentation():
         p_lbl.font.size = Pt(11)
         p_lbl.font.color.rgb = RGBColor(120, 120, 120)
         p_lbl.font.bold = True
+        p_lbl.font.name = font_bold
 
         p_val = tf_card.add_paragraph()
         p_val.text = val
         p_val.font.size = Pt(20)
         p_val.font.color.rgb = c_wine
         p_val.font.bold = True
+        p_val.font.name = font_black
         p_val.space_before = Pt(8)
 
     # СЛАЙД 3: ТАБЛИЦА ДЕТАЛИЗАЦИИ
@@ -267,10 +276,12 @@ def generate_stable_presentation():
     add_corner_logo(slide3)
 
     title_box3 = slide3.shapes.add_textbox(Inches(0.8), Inches(0.5), Inches(10.0), Inches(0.8))
-    title_box3.text_frame.paragraphs[0].text = "Детализация денежных потоков по месяцам"
-    title_box3.text_frame.paragraphs[0].font.size = Pt(28)
-    title_box3.text_frame.paragraphs[0].font.bold = True
-    title_box3.text_frame.paragraphs[0].font.color.rgb = c_wine
+    p_t3 = title_box3.text_frame.paragraphs[0]
+    p_t3.text = "Детализация денежных потоков по месяцам"
+    p_t3.font.size = Pt(28)
+    p_t3.font.bold = True
+    p_t3.font.color.rgb = c_wine
+    p_t3.font.name = font_bold
 
     rows = min(period + 1, 13)
     cols = 5
@@ -293,6 +304,7 @@ def generate_stable_presentation():
             p.font.size = Pt(13)
             p.font.bold = True
             p.font.color.rgb = c_white
+            p.font.name = font_bold
             p.alignment = PP_ALIGN.CENTER
 
     for i in range(rows - 1):
@@ -311,6 +323,7 @@ def generate_stable_presentation():
             for p in cell.text_frame.paragraphs:
                 p.font.size = Pt(12)
                 p.font.color.rgb = c_dark
+                p.font.name = font_regular
                 p.alignment = PP_ALIGN.CENTER if col_idx == 0 else PP_ALIGN.RIGHT
 
     ppt_io = io.BytesIO()
@@ -318,7 +331,7 @@ def generate_stable_presentation():
     ppt_io.seek(0)
     return ppt_io
 
-# --- ГЛАВНАЯ КНОПКА СКАЧИВАНИЯ (В ЦЕНТРЕ ЭКРАНА) ---
+# --- ГЛАВНАЯ КНОПКА СКАЧИВАНИЯ ---
 st.markdown("### Экспорт отчета")
 pptx_data = generate_stable_presentation()
 st.download_button(
@@ -331,7 +344,7 @@ st.download_button(
 
 st.divider()
 
-# --- ВИЗУАЛИЗАЦИЯ НА ЭКРАНЕ ---
+# --- ВИЗУАЛИЗАЦИЯ НА ЭКРАНЕ С ШРИФТАМИ ---
 st.subheader("Динамика ликвидности и остаток средств")
 fig1 = go.Figure()
 fig1.add_trace(go.Scatter(
@@ -340,7 +353,13 @@ fig1.add_trace(go.Scatter(
     hovertemplate='%{y:,.0f} руб.<extra></extra>'
 ))
 fig1.add_hline(y=0, line_dash="dash", line_color="red", annotation_text="Дефицит")
-fig1.update_layout(xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified", separators=", ")
+fig1.update_layout(
+    xaxis_title="Месяц", 
+    yaxis_title="Рубли", 
+    hovermode="x unified", 
+    separators=", ",
+    font=dict(family="ua-BRAND-regular, sans-serif", color="#333333")
+)
 fig1.update_yaxes(tickformat=",.0f")
 st.plotly_chart(fig1, use_container_width=True)
 
@@ -349,6 +368,13 @@ fig2 = go.Figure()
 fig2.add_trace(go.Bar(x=x_labels, y=inflows, name='Поступления', marker_color='#E3C293', hovertemplate='%{y:,.0f} руб.<extra></extra>'))
 fig2.add_trace(go.Bar(x=x_labels, y=-outflows, name='Выплаты', marker_color='#642A38', hovertemplate='%{y:,.0f} руб.<extra></extra>'))
 fig2.add_trace(go.Scatter(x=x_labels, y=net_cf, name='Чистый поток', marker_color='#B88645', mode='lines+markers', hovertemplate='%{y:,.0f} руб.<extra></extra>'))
-fig2.update_layout(barmode='relative', xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified", separators=", ")
+fig2.update_layout(
+    barmode='relative', 
+    xaxis_title="Месяц", 
+    yaxis_title="Рубли", 
+    hovermode="x unified", 
+    separators=", ",
+    font=dict(family="ua-BRAND-regular, sans-serif", color="#333333")
+)
 fig2.update_yaxes(tickformat=",.0f")
 st.plotly_chart(fig2, use_container_width=True)
