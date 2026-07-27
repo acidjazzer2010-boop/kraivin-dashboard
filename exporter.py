@@ -18,13 +18,27 @@ def _fig_to_base64(fig):
     plt.close(fig)
     return encoded
 
+def format_val(val):
+    if abs(val) >= 1e6:
+        return f"{val/1e6:.1f} млн"
+    elif abs(val) >= 1e3:
+        return f"{val/1e3:.0f} тыс"
+    return f"{val:.0f}"
+
 def create_chart_liquidity_base64(x_labels, cash_balance):
     fig, ax = plt.subplots(figsize=(10, 4.2), dpi=200)
     fig.patch.set_facecolor('#FFFFFF')
     ax.set_facecolor('#FFFFFF')
-    ax.plot(x_labels, cash_balance, color='#642A38', linewidth=3, marker='o', markersize=5, markerfacecolor='#E3C293')
+    
+    ax.plot(x_labels, cash_balance, color='#642A38', linewidth=2.5, marker='o', markersize=5, markerfacecolor='#E3C293')
     ax.fill_between(x_labels, cash_balance, 0, color='#642A38', alpha=0.08)
     ax.axhline(0, color='#D32F2F', linestyle='--', linewidth=1.5, label='Критический порог (0)')
+    
+    # Подписи значений над точками
+    for x, y in zip(x_labels, cash_balance):
+        ax.text(x, y + (max(cash_balance)*0.03 if y >= 0 else -max(abs(cash_balance))*0.05), 
+                format_val(y), fontsize=8, ha='center', color='#333333', fontweight='bold')
+
     ax.set_ylabel("Остаток (руб.)", fontsize=10, fontweight='bold', color='#333333')
     plt.xticks(rotation=25, ha='right', fontsize=9, color='#555555')
     plt.yticks(fontsize=9, color='#555555')
@@ -40,9 +54,16 @@ def create_chart_cash_flow_base64(x_labels, inflows, outflows, net_cf):
     ax.set_facecolor('#FFFFFF')
     x_indices = np.arange(len(x_labels))
     width = 0.35
-    ax.bar(x_indices - width/2, inflows, width, label='Поступления', color='#E3C293', alpha=0.9)
-    ax.bar(x_indices + width/2, -outflows, width, label='Выплаты', color='#642A38', alpha=0.9)
-    ax.plot(x_indices, net_cf, color='#B88645', linewidth=2.5, marker='s', markersize=5, label='Чистый поток')
+    
+    bars1 = ax.bar(x_indices - width/2, inflows, width, label='Поступления', color='#E3C293', alpha=0.9)
+    bars2 = ax.bar(x_indices + width/2, -outflows, width, label='Выплаты', color='#642A38', alpha=0.9)
+    ax.plot(x_indices, net_cf, color='#B88645', linewidth=2, marker='s', markersize=4, label='Чистый поток')
+    
+    for bar in bars1:
+        y = bar.get_height()
+        if y > 0:
+            ax.text(bar.get_x() + bar.get_width()/2., y + (max(inflows)*0.02), format_val(y), fontsize=7, ha='center', color='#555555')
+            
     ax.set_xticks(x_indices)
     ax.set_xticklabels(x_labels, rotation=25, ha='right', fontsize=9, color='#555555')
     ax.set_ylabel("Сумма (руб.)", fontsize=10, fontweight='bold', color='#333333')
@@ -57,16 +78,24 @@ def create_chart_margin_ebitda_base64(x_labels, rev, opex, taxes_and_commissions
     fig, ax1 = plt.subplots(figsize=(10, 4.2), dpi=200)
     fig.patch.set_facecolor('#FFFFFF')
     ax1.set_facecolor('#FFFFFF')
+    
     ebitda = rev - opex - taxes_and_commissions - (cogs_payments * 0.3)
-    ax1.bar(x_labels, ebitda, color='#642A38', alpha=0.85, width=0.45, label='EBITDA')
+    bars = ax1.bar(x_labels, ebitda, color='#642A38', alpha=0.85, width=0.45, label='EBITDA')
+    
+    for bar, val in zip(bars, ebitda):
+        y = bar.get_height()
+        ax1.text(bar.get_x() + bar.get_width()/2., y + (max(ebitda)*0.02 if y>=0 else 0), format_val(val), fontsize=8, ha='center', color='#333333', fontweight='bold')
+
     ax1.set_ylabel("EBITDA (руб.)", color='#642A38', fontsize=10, fontweight='bold')
     ax1.tick_params(axis='y', labelcolor='#642A38', labelsize=9)
     plt.xticks(rotation=25, ha='right', fontsize=9, color='#555555')
+    
     ax2 = ax1.twinx()
     ax2.plot(x_labels, [margin_pct]*len(x_labels), color='#E3C293', linewidth=2.5, marker='o', markersize=5, label='Маржинальность (%)')
     ax2.set_ylabel("Маржа (%)", color='#B88645', fontsize=10, fontweight='bold')
     ax2.tick_params(axis='y', labelcolor='#B88645', labelsize=9)
     ax2.set_ylim(0, 50)
+    
     plt.grid(axis='y', linestyle=':', alpha=0.3, color='#CCCCCC')
     for spine in ['top']: 
         ax1.spines[spine].set_visible(False)
@@ -80,10 +109,13 @@ def create_chart_sources_base64(x_labels, rev, factoring_share):
     ax.set_facecolor('#FFFFFF')
     x_indices = np.arange(len(x_labels))
     width = 0.45
+    
     factoring_inflows = rev * 1.2 * (factoring_share / 100)
     direct_inflows = rev * 1.2 * ((100 - factoring_share) / 100)
+    
     ax.bar(x_indices, direct_inflows, width, label='Оплата от клиентов', color='#642A38', alpha=0.9)
     ax.bar(x_indices, factoring_inflows, width, bottom=direct_inflows, label='Факторинг', color='#E3C293', alpha=0.9)
+    
     ax.set_xticks(x_indices)
     ax.set_xticklabels(x_labels, rotation=25, ha='right', fontsize=9, color='#555555')
     ax.set_ylabel("Поступления (руб.)", fontsize=10, fontweight='bold', color='#333333')
@@ -99,10 +131,15 @@ def create_chart_cumulative_base64(x_labels, cum_cf, initial_cash_buffer):
     fig.patch.set_facecolor('#FFFFFF')
     ax.set_facecolor('#FFFFFF')
     total_cash_line = cum_cf + initial_cash_buffer
+    
     ax.plot(x_labels, total_cash_line, color='#642A38', linewidth=3, marker='o', markersize=5, label='Накопленный ДС')
     ax.axhline(initial_cash_buffer, color='#B88645', linestyle='--', linewidth=1.5, label='Стартовый буфер')
     ax.axhline(0, color='#D32F2F', linestyle=':', linewidth=1.5, label='Нулевой уровень')
     ax.fill_between(x_labels, total_cash_line, initial_cash_buffer, where=(total_cash_line >= initial_cash_buffer), color='#642A38', alpha=0.08, interpolate=True)
+    
+    for x, y in zip(x_labels, total_cash_line):
+        ax.text(x, y + (max(total_cash_line)*0.03 if y >= 0 else -1e5), format_val(y), fontsize=8, ha='center', color='#333333', fontweight='bold')
+
     ax.set_ylabel("Баланс (руб.)", fontsize=10, fontweight='bold', color='#333333')
     plt.xticks(rotation=25, ha='right', fontsize=9, color='#555555')
     plt.yticks(fontsize=9, color='#555555')
@@ -123,13 +160,16 @@ def create_chart_expenses_bar_base64(sum_purchases, total_fot, total_taxes, tota
     colors = ['#D0C2B8', '#B88645', '#E3C293', '#642A38']
     y_pos = np.arange(len(categories))
     bars = ax.barh(y_pos, percentages, color=colors, height=0.55)
+    
     ax.set_yticks(y_pos)
     ax.set_yticklabels(categories, fontsize=10, fontweight='bold', color='#333333')
     ax.set_xlabel("Доля в расходах (%)", fontsize=10, fontweight='bold', color='#333333')
-    ax.set_xlim(0, 100)
+    ax.set_xlim(0, 115)
+    
     for bar, pct in zip(bars, percentages):
         width = bar.get_width()
-        ax.text(width + 2, bar.get_y() + bar.get_height()/2, f'{pct:.1f}%', va='center', ha='left', fontsize=9, fontweight='bold', color='#333333')
+        ax.text(width + 3, bar.get_y() + bar.get_height()/2, f'{pct:.1f}%', va='center', ha='left', fontsize=9, fontweight='bold', color='#333333')
+        
     plt.grid(axis='x', linestyle=':', alpha=0.6, color='#CCCCCC')
     for spine in ['top', 'right', 'left']: ax.spines[spine].set_visible(False)
     plt.tight_layout()
@@ -184,103 +224,30 @@ def generate_html_report_bytes(**kwargs):
                 padding: 30px;
                 background-color: #FAFAF8;
             }}
-            .container {{
-                max-width: 950px;
-                margin: 0 auto;
-            }}
+            .container {{ max-width: 950px; margin: 0 auto; }}
             .header {{
                 background: linear-gradient(135deg, #642A38 0%, #451C26 100%);
-                color: white;
-                padding: 30px;
-                border-radius: 12px;
-                margin-bottom: 25px;
+                color: white; padding: 30px; border-radius: 12px; margin-bottom: 25px;
                 box-shadow: 0 4px 15px rgba(100, 42, 56, 0.15);
             }}
-            .header h1 {{
-                margin: 0 0 10px 0;
-                font-size: 28px;
-                font-weight: 700;
-                letter-spacing: 0.5px;
-            }}
-            .header p {{
-                margin: 0;
-                color: #E3C293;
-                font-size: 15px;
-            }}
+            .header h1 {{ margin: 0 0 10px 0; font-size: 28px; font-weight: 700; }}
+            .header p {{ margin: 0; color: #E3C293; font-size: 15px; }}
             .card {{
-                background: white;
-                border: 1px solid #E5E0DC;
-                border-radius: 12px;
-                padding: 25px;
-                margin-bottom: 25px;
-                box-shadow: 0 4px 12px rgba(100, 42, 56, 0.04);
+                background: white; border: 1px solid #E5E0DC; border-radius: 12px;
+                padding: 25px; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(100, 42, 56, 0.04);
             }}
-            .kpi-grid {{
-                display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 15px;
-            }}
-            .kpi-col {{
-                background: #FDFCFB;
-                border: 1px solid #E5E0DC;
-                border-radius: 8px;
-                padding: 15px;
-            }}
-            .kpi-label {{
-                font-size: 11px;
-                font-weight: 700;
-                color: #888888;
-                text-transform: uppercase;
-                margin-bottom: 5px;
-            }}
-            .kpi-value {{
-                font-size: 18px;
-                font-weight: 700;
-                color: #642A38;
-            }}
-            h2 {{
-                font-size: 18px;
-                color: #642A38;
-                margin-top: 0;
-                margin-bottom: 15px;
-                border-bottom: 2px solid #E3C293;
-                padding-bottom: 8px;
-            }}
-            .chart-container {{
-                text-align: center;
-                margin-top: 10px;
-            }}
-            .chart-container img {{
-                max-width: 100%;
-                height: auto;
-                border-radius: 8px;
-            }}
-            table.data-table {{
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 10px;
-                font-size: 12px;
-            }}
-            table.data-table th {{
-                background: #642A38;
-                color: white;
-                padding: 10px;
-                text-align: center;
-                font-weight: 600;
-            }}
-            table.data-table td {{
-                padding: 9px 10px;
-                border-bottom: 1px solid #E5E0DC;
-                text-align: right;
-                white-space: nowrap;
-            }}
-            table.data-table td:first-child {{
-                text-align: center;
-                font-weight: 600;
-            }}
-            table.data-table tr:nth-child(even) td {{
-                background: #F4F1EE;
-            }}
+            .kpi-grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }}
+            .kpi-col {{ background: #FDFCFB; border: 1px solid #E5E0DC; border-radius: 8px; padding: 15px; }}
+            .kpi-label {{ font-size: 11px; font-weight: 700; color: #888888; text-transform: uppercase; margin-bottom: 5px; }}
+            .kpi-value {{ font-size: 18px; font-weight: 700; color: #642A38; }}
+            h2 {{ font-size: 18px; color: #642A38; margin-top: 0; margin-bottom: 15px; border-bottom: 2px solid #E3C293; padding-bottom: 8px; }}
+            .chart-container {{ text-align: center; margin-top: 10px; }}
+            .chart-container img {{ max-width: 100%; height: auto; border-radius: 8px; }}
+            table.data-table {{ width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }}
+            table.data-table th {{ background: #642A38; color: white; padding: 10px; text-align: center; font-weight: 600; }}
+            table.data-table td {{ padding: 9px 10px; border-bottom: 1px solid #E5E0DC; text-align: right; white-space: nowrap; }}
+            table.data-table td:first-child {{ text-align: center; font-weight: 600; }}
+            table.data-table tr:nth-child(even) td {{ background: #F4F1EE; }}
         </style>
     </head>
     <body>
@@ -293,118 +260,56 @@ def generate_html_report_bytes(**kwargs):
             <div class="card">
                 <h2>Ключевые финансовые результаты (KPI)</h2>
                 <div class="kpi-grid">
-                    <div class="kpi-col">
-                        <div class="kpi-label">Суммарная выручка</div>
-                        <div class="kpi-value">{sum_rev}</div>
-                    </div>
-                    <div class="kpi-col">
-                        <div class="kpi-label">Макс. кассовый разрыв</div>
-                        <div class="kpi-value">{max_deficit}</div>
-                    </div>
-                    <div class="kpi-col">
-                        <div class="kpi-label">Чистая прибыль</div>
-                        <div class="kpi-value">{net_profit}</div>
-                    </div>
-                    <div class="kpi-col">
-                        <div class="kpi-label">Рентабельность по ЧП</div>
-                        <div class="kpi-value">{roi}</div>
-                    </div>
-                    <div class="kpi-col">
-                        <div class="kpi-label">Стартовый буфер ДС</div>
-                        <div class="kpi-value">{initial_cash_buffer}</div>
-                    </div>
-                    <div class="kpi-col">
-                        <div class="kpi-label">Первоначальная закупка</div>
-                        <div class="kpi-value">{initial_purchase}</div>
-                    </div>
+                    <div class="kpi-col"><div class="kpi-label">Суммарная выручка</div><div class="kpi-value">{sum_rev}</div></div>
+                    <div class="kpi-col"><div class="kpi-label">Макс. кассовый разрыв</div><div class="kpi-value">{max_deficit}</div></div>
+                    <div class="kpi-col"><div class="kpi-label">Чистая прибыль</div><div class="kpi-value">{net_profit}</div></div>
+                    <div class="kpi-col"><div class="kpi-label">Рентабельность по ЧП</div><div class="kpi-value">{roi}</div></div>
+                    <div class="kpi-col"><div class="kpi-label">Стартовый буфер ДС</div><div class="kpi-value">{initial_cash_buffer}</div></div>
+                    <div class="kpi-col"><div class="kpi-label">Первоначальная закупка</div><div class="kpi-value">{initial_purchase}</div></div>
                 </div>
             </div>
 
-            <div class="card">
-                <h2>1. Динамика ликвидности и остаток средств</h2>
-                <div class="chart-container"><img src="data:image/png;base64,{img_liq}" /></div>
-            </div>
-
-            <div class="card">
-                <h2>2. Структура месячного денежного потока</h2>
-                <div class="chart-container"><img src="data:image/png;base64,{img_cf}" /></div>
-            </div>
-
-            <div class="card">
-                <h2>3. Динамика маржинальности и EBITDA</h2>
-                <div class="chart-container"><img src="data:image/png;base64,{img_ebitda}" /></div>
-            </div>
-
-            <div class="card">
-                <h2>4. Структура притока ДС по источникам</h2>
-                <div class="chart-container"><img src="data:image/png;base64,{img_sources}" /></div>
-            </div>
-
-            <div class="card">
-                <h2>5. Накопленный денежный поток (Cumulative Cash Flow)</h2>
-                <div class="chart-container"><img src="data:image/png;base64,{img_cum}" /></div>
-            </div>
-
-            <div class="card">
-                <h2>6. Структура совокупных расходов</h2>
-                <div class="chart-container"><img src="data:image/png;base64,{img_exp}" /></div>
-            </div>
+            <div class="card"><h2>1. Динамика ликвидности и остаток средств</h2><div class="chart-container"><img src="data:image/png;base64,{img_liq}" /></div></div>
+            <div class="card"><h2>2. Структура месячного денежного потока</h2><div class="chart-container"><img src="data:image/png;base64,{img_cf}" /></div></div>
+            <div class="card"><h2>3. Динамика маржинальности и EBITDA</h2><div class="chart-container"><img src="data:image/png;base64,{img_ebitda}" /></div></div>
+            <div class="card"><h2>4. Структура притока ДС по источникам</h2><div class="chart-container"><img src="data:image/png;base64,{img_sources}" /></div></div>
+            <div class="card"><h2>5. Накопленный денежный поток (Cumulative Cash Flow)</h2><div class="chart-container"><img src="data:image/png;base64,{img_cum}" /></div></div>
+            <div class="card"><h2>6. Структура совокупных расходов</h2><div class="chart-container"><img src="data:image/png;base64,{img_exp}" /></div></div>
 
             <div class="card">
                 <h2>7. Детализация денежных потоков по месяцам</h2>
                 <table class="data-table">
-                    <tr>
-                        <th>Месяц</th>
-                        <th>Выручка (руб)</th>
-                        <th>Поступления (руб)</th>
-                        <th>Выплаты (руб)</th>
-                        <th>Остаток ДС (руб)</th>
-                    </tr>
+                    <tr><th>Месяц</th><th>Выручка (руб)</th><th>Поступления (руб)</th><th>Выплаты (руб)</th><th>Остаток ДС (руб)</th></tr>
     """
     
     rows_count = min(len(x_labels), period)
     for i in range(rows_count):
-        rev_str = f"{rev[i]:,.0f}".replace(",", " ")
-        inf_str = f"{inflows[i]:,.0f}".replace(",", " ")
-        out_str = f"{outflows[i]:,.0f}".replace(",", " ")
-        bal_str = f"{cash_balance[i]:,.0f}".replace(",", " ")
-        
         html_content += f"""
                     <tr>
                         <td>{x_labels[i]}</td>
-                        <td>{rev_str}</td>
-                        <td>{inf_str}</td>
-                        <td>{out_str}</td>
-                        <td>{bal_str}</td>
+                        <td>{f"{rev[i]:,.0f}".replace(",", " ")}</td>
+                        <td>{f"{inflows[i]:,.0f}".replace(",", " ")}</td>
+                        <td>{f"{outflows[i]:,.0f}".replace(",", " ")}</td>
+                        <td>{f"{cash_balance[i]:,.0f}".replace(",", " ")}</td>
                     </tr>
         """
         
-    html_content += """
-                </table>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-
+    html_content += "</table></div></div></body></html>"
     html_io = io.BytesIO(html_content.encode('utf-8'))
     html_io.seek(0)
     return html_io
 
-
 def send_report_to_email(to_email, html_bytes):
     smtp_server = os.getenv("SMTP_SERVER", "smtp.yandex.ru")
     smtp_port = int(os.getenv("SMTP_PORT", 465))
-    sender_email = os.getenv("SMTP_USER", "finance@kraivin.ru")
+    sender_email = os.getenv("SMTP_USER", "finance@krayvin.ru")
     sender_password = os.getenv("SMTP_PASSWORD", "ваш_пароль_приложения")
 
     msg = MIMEMultipart()
     msg['From'] = sender_email
     msg['To'] = to_email
-    msg['Subject'] = "🍷 КРАЙВИН: Премиальный финансовый отчёт (HTML Лонгрид)"
-
-    body = "Здравствуйте!\n\nВо вложении находится отчет компании КРАЙВИН в формате интерактивного HTML-лонгрида.\n\nС уважением,\nФинансовый департамент КРАЙВИН"
-    msg.attach(MIMEText(body, 'plain'))
+    msg['Subject'] = "🍷 КРАЙВИН: Премиальный финансовый отчёт"
+    msg.attach(MIMEText("Здравствуйте!\n\nВо вложении находится инвестиционный отчет компании КРАЙВИН.", 'plain'))
 
     attachment = MIMEBase('application', 'octet-stream')
     attachment.set_payload(html_bytes.getvalue())
