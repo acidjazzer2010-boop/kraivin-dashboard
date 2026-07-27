@@ -142,7 +142,7 @@ col4.metric("Рентабельность по ЧП", f"{roi:.1f}%")
 
 st.divider()
 
-# --- ГЕНЕРАТОР ПРОФЕССИОНАЛЬНОЙ ПРЕЗЕНТАЦИИ (БЕЗ КАЛЕЙДО) ---
+# --- ГЕНЕРАТОР ПРОФЕССИОНАЛЬНОЙ ПРЕЗЕНТАЦИИ ---
 def generate_stable_presentation():
     prs = Presentation()
     prs.slide_width = Inches(13.333)
@@ -318,17 +318,18 @@ def generate_stable_presentation():
     ppt_io.seek(0)
     return ppt_io
 
-# Кнопка скачивания презентации
-st.sidebar.divider()
-st.sidebar.subheader("Экспорт отчета")
-if st.sidebar.button("📥 Скачать презентацию отчета"):
-    pptx_data = generate_stable_presentation()
-    st.sidebar.download_button(
-        label="💾 Нажмите для сохранения файла",
-        data=pptx_data,
-        file_name="Kraivin_Investment_Report.pptx",
-        mime="application/vnd.openxmlformats-officedocument.presentationml.presentation"
-    )
+# --- ГЛАВНАЯ КНОПКА СКАЧИВАНИЯ (В ЦЕНТРЕ ЭКРАНА) ---
+st.markdown("### Экспорт отчета")
+pptx_data = generate_stable_presentation()
+st.download_button(
+    label="📥 Скачать готовую презентацию отчета (PPTX)",
+    data=pptx_data,
+    file_name="Kraivin_Investment_Report.pptx",
+    mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    use_container_width=True
+)
+
+st.divider()
 
 # --- ВИЗУАЛИЗАЦИЯ НА ЭКРАНЕ ---
 st.subheader("Динамика ликвидности и остаток средств")
