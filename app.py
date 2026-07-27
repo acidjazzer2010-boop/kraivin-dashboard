@@ -136,13 +136,8 @@ col4.metric("Рентабельность по ЧП", f"{roi:.1f}%")
 
 st.divider()
 
-# --- ПАНЕЛЬ ЭКСПОРТА С БРЕНДОВЫМ ЛОГОТИПОМ ---
-col_logo, col_header = st.columns([1, 8])
-with col_logo:
-    if os.path.exists(logo_path):
-        st.image(logo_path, width=80)
-with col_header:
-    st.subheader("Экспорт и отправка инвестиционного отчета КРАЙВИН")
+# --- ПАНЕЛЬ ЭКСПОРТА (БЕЗ ЛОГОТИПА НА ЭКРАНЕ) ---
+st.subheader("Экспорт и отправка инвестиционного отчета КРАЙВИН")
 
 pptx_data = generate_pptx_bytes(
     period, start_month_idx, start_year, ru_months_full, x_labels, 
