@@ -146,36 +146,12 @@ def create_chart_expenses_pie(sum_purchases, total_fot, total_taxes, total_other
     img_io.seek(0)
     return img_io
 
-def generate_pptx_bytes(**kwargs):
-    # Принимаем все параметры через **kwargs, чтобы избежать любых ошибок несовпадения аргументов
-    period = kwargs.get('period', 12)
-    start_month_idx = kwargs.get('start_month_idx', 0)
-    start_year = kwargs.get('start_year', 2026)
-    ru_months_full = kwargs.get('ru_months_full', [])
-    x_labels = kwargs.get('x_labels', [])
-    sum_rev = kwargs.get('sum_rev', 0)
-    max_deficit = kwargs.get('max_deficit', 0)
-    net_profit = kwargs.get('net_profit', 0)
-    roi = kwargs.get('roi', 0)
-    initial_cash_buffer = kwargs.get('initial_cash_buffer', 0)
-    initial_purchase = kwargs.get('initial_purchase', 0)
-    inflows = kwargs.get('inflows', [])
-    outflows = kwargs.get('outflows', [])
-    cash_balance = kwargs.get('cash_balance', [])
-    rev = kwargs.get('rev', [])
-    net_cf = kwargs.get('net_cf', [])
-    factoring_share = kwargs.get('factoring_share', 0)
-    logo_path = kwargs.get('logo_path', None)
-    
-    opex = kwargs.get('opex', [])
-    taxes_and_commissions = kwargs.get('taxes_and_commissions', [])
-    cogs_payments = kwargs.get('cogs_payments', [])
-    cum_cf = kwargs.get('cum_cf', [])
-    sum_purchases = kwargs.get('sum_purchases', 0)
-    total_fot = kwargs.get('total_fot', 0)
-    total_taxes = kwargs.get('total_taxes', 0)
-    total_other_opex = kwargs.get('total_other_opex', 0)
-    margin_pct = kwargs.get('margin_pct', 20)
+def generate_pptx_bytes(period, start_month_idx, start_year, ru_months_full, x_labels, 
+                        sum_rev, max_deficit, net_profit, roi, initial_cash_buffer, 
+                        initial_purchase, inflows, outflows, cash_balance, rev, net_cf,
+                        customer_delay_days, delay_days, factoring_share, logo_path,
+                        opex=None, taxes_and_commissions=None, cogs_payments=None, cum_cf=None, 
+                        sum_purchases=0, total_fot=0, total_taxes=0, total_other_opex=0, margin_pct=20):
 
     prs = Presentation()
     prs.slide_width = Inches(13.333)
