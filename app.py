@@ -3,6 +3,12 @@ import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
 import os
+import io
+
+# Импорт библиотеки для генерации PowerPoint
+from pptx import Presentation
+from pptx.util import Inches, Pt
+from pptx.dml.color import RGBColor
 
 # Настройка страницы
 st.set_page_config(
@@ -16,7 +22,6 @@ st.markdown("Интерактивная финансовая модель для
 
 # --- БОКОВАЯ ПАНЕЛЬ (ВВОД ДАННЫХ) ---
 
-# Добавление логотипа компании
 logo_path = "КРАЙВИН лого винный квадрат.png"
 if os.path.exists(logo_path):
     st.sidebar.image(logo_path, use_container_width=True)
@@ -25,7 +30,6 @@ else:
 
 st.sidebar.header("Параметры модели")
 
-# Календарные настройки
 ru_months_full = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
 col_m, col_y = st.sidebar.columns(2)
 start_month_idx = col_m.selectbox("Месяц старта", range(12), format_func=lambda x: ru_months_full[x])
@@ -35,16 +39,8 @@ margin_pct = st.sidebar.slider("Маржинальность (%)", min_value=10,
 period = st.sidebar.selectbox("Горизонт планирования (мес)", [6, 12, 18, 24])
 
 st.sidebar.subheader("Стартовый капитал и закупки")
-initial_purchase = st.sidebar.number_input(
-    "Первоначальная закупка товара (руб)", 
-    value=5_000_000, 
-    step=500_000
-)
-initial_cash_buffer = st.sidebar.number_input(
-    "Стартовый денежный буфер (на счете)", 
-    value=2_000_000, 
-    step=500_000
-)
+initial_purchase = st.sidebar.number_input("Первоначальная закупка товара (руб)", value=5_000_000, step=500_000)
+initial_cash_buffer = st.sidebar.number_input("Стартовый денежный буфер (на счете)", value=2_000_000, step=500_000)
 
 st.sidebar.subheader("Динамика продаж")
 aov = st.sidebar.number_input("Средняя сумма заказа (руб)", value=150_000, step=10_000)
@@ -92,20 +88,17 @@ cogs_vat = cogs_no_vat * 1.2
 delay_months_suppliers = max(1, int(round(delay_days / 30))) if delay_days > 0 else 0
 cogs_payments = np.zeros(period)
 
-# 1. Сначала распределяем текущие закупки с учетом предоплаты и отсрочки
 for i in range(period):
     cogs_payments[i] += cogs_vat[i] * (prepayment_pct / 100)
     if i + delay_months_suppliers < period:
         cogs_payments[i + delay_months_suppliers] += cogs_vat[i] * ((100 - prepayment_pct) / 100)
 
-# 2. Корректно распределяем первоначальную закупку по условиям поставщика (предоплата сразу, остаток — по отсрочке)
 initial_prep = initial_purchase * (prepayment_pct / 100)
 initial_post = initial_purchase * ((100 - prepayment_pct) / 100)
 
 cogs_payments[0] += initial_prep
 if delay_months_suppliers < period:
     cogs_payments[delay_months_suppliers] += initial_post
-# Если отсрочка уходит за горизонт планирования, в рамках периода модель ее не платит из текущего счета
 
 customer_delay_months = max(0, int(round(customer_delay_days / 30)))
 
@@ -146,6 +139,91 @@ col3.metric("Чистая прибыль", format_rub(net_profit))
 col4.metric("Рентабельность по ЧП", f"{roi:.1f}%")
 
 st.divider()
+
+# --- ФУНКЦИЯ ГЕНЕРАЦИИ ПРЕЗЕНТАЦИИ (POWERPOINT) ---
+def generate_pptx():
+    prs = Presentation()
+    
+    # Цвета бренда КРАЙВИН
+    wine_color = RGBColor(100, 42, 56)   # #642A38
+    sand_color = RGBColor(227, 194, 147) # #E3C293
+    dark_gray = RGBColor(50, 50, 50)
+    
+    # Слайд 1: Титульный
+    slide_layout = prs.slide_layouts[0] # Заголовочный слайд
+    slide1 = prs.slides.add_slide(slide_layout)
+    title = slide1.shapes.title
+    subtitle = slide1.placeholders[1]
+    
+    title.text = "КРАЙВИН"
+    subtitle.text = f"Анализ экономической эффективности и денежных потоков\nПериод планирования: {period} месяцев (Старт: {ru_months_full[start_month_idx]} {start_year})"
+    
+    # Слайд 2: Ключевые финансовые показатели
+    slide_layout_2 = prs.slide_layouts[1] # Заголовок и содержимое
+    slide2 = prs.slides.add_slide(slide_layout_2)
+    slide2.shapes.title.text = "Ключевые финансовые результаты"
+    
+    tf = slide2.placeholders[1].text_frame
+    tf.text = f"• Общая выручка за период: {format_rub(sum(rev))}"
+    
+    p2 = tf.add_paragraph()
+    p2.text = f"• Максимальный кассовый разрыв: {format_rub(max_deficit)}"
+    
+    p3 = tf.add_paragraph()
+    p3.text = f"• Чистая прибыль: {format_rub(net_profit)}"
+    
+    p4 = tf.add_paragraph()
+    p4.text = f"• Рентабельность по чистой прибыли: {roi:.1f}%"
+
+    p5 = tf.add_paragraph()
+    p5.text = f"• Начальный денежный буфер: {format_rub(initial_cash_buffer)}"
+
+    # Слайд 3: Таблица по месяцам
+    slide3 = prs.slides.add_slide(slide_layout_2)
+    slide3.shapes.title.text = "Детализация по месяцам"
+    
+    # Создаем таблицу в презентации
+    rows = period + 1
+    cols = 5
+    left = Inches(0.5)
+    top = Inches(1.5)
+    width = Inches(9.0)
+    height = Inches(4.5)
+    
+    table_shape = slide3.shapes.add_table(rows, cols, left, top, width, height)
+    table = table_shape.table
+    
+    # Шапка таблицы
+    headers = ["Месяц", "Выручка", "Поступления", "Выплаты", "Остаток ДС"]
+    for col_idx, text in enumerate(headers):
+        cell = table.cell(0, col_idx)
+        cell.text = text
+        
+    # Заполнение строк таблицы данными
+    for i in range(period):
+        table.cell(i+1, 0).text = str(x_labels[i])
+        table.cell(i+1, 1).text = f"{rev[i]:,.0f}".replace(",", " ")
+        table.cell(i+1, 2).text = f"{inflows[i]:,.0f}".replace(",", " ")
+        table.cell(i+1, 3).text = f"{outflows[i]:,.0f}".replace(",", " ")
+        table.cell(i+1, 4).text = f"{cash_balance[i]:,.0f}".replace(",", " ")
+
+    # Сохранение во временный буфер памяти
+    ppt_io = io.BytesIO()
+    prs.save(ppt_io)
+    ppt_io.seek(0)
+    return ppt_io
+
+# Кнопка скачивания презентации в интерфейсе
+st.sidebar.divider()
+st.sidebar.subheader("Экспорт отчета")
+if st.sidebar.button("📥 Скачать презентацию (PPTX)"):
+    pptx_data = generate_pptx()
+    st.sidebar.download_button(
+        label="💾 Нажмите для сохранения файла",
+        data=pptx_data,
+        file_name="Kraivin_Financial_Report.pptx",
+        mime="application/vnd.openxmlformats-officedocument.presentationml.presentation"
+    )
 
 # --- ВИЗУАЛИЗАЦИЯ (ГРАФИКИ PLOTLY) ---
 st.subheader("Динамика ликвидности и остаток средств")
