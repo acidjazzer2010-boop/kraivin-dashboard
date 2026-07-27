@@ -234,7 +234,7 @@ with tab2:
     st.plotly_chart(fig4, use_container_width=True)
 
 with tab3:
-    st.markdown("### Накопленный денежный поток (Cumulative Cash Flow)")
+    st.markdown("### Накопленный денежный поток")
     fig5 = go.Figure()
     total_cash = cum_cf + initial_cash_buffer
     fig5.add_trace(go.Scatter(
