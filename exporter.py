@@ -77,8 +77,9 @@ def generate_pptx_bytes(period, start_month_idx, start_year, ru_months_full, x_l
     blank_layout = prs.slide_layouts[6]
 
     def add_corner_logo(slide):
+        """Добавляет мини-логотип с винной символикой в верхний правый угол каждого слайда"""
         if logo_path and os.path.exists(logo_path):
-            slide.shapes.add_picture(logo_path, Inches(11.8), Inches(0.4), width=Inches(1.1))
+            slide.shapes.add_picture(logo_path, Inches(11.8), Inches(0.4), width=Inches(0.9))
 
     def format_rub(val):
         return f"{val:,.0f}".replace(",", " ") + " руб."
@@ -293,9 +294,9 @@ def send_report_to_email(to_email, pptx_bytes):
     msg = MIMEMultipart()
     msg['From'] = sender_email
     msg['To'] = to_email
-    msg['Subject'] = "КРАЙВИН: Финансовый отчёт и модель денежных потоков"
+    msg['Subject'] = "🍷 КРАЙВИН: Финансовый отчёт и модель денежных потоков"
 
-    body = "Здравствуйте!\n\nВо вложении находится актуальный финансовый отчет и сценарный анализ кассовых разрывов компании КРАЙВИН в формате PowerPoint.\n\nС уважением,\nФинансовый департамент КРАЙВИН"
+    body = "Здравствуйте!\n\nВо вложении находится актуальный финансовый отчет и сценарный анализ кассовых разрывов компании КРАЙВИН в формате PowerPoint (с фирменной символикой).\n\nС уважением,\nФинансовый департамент КРАЙВИН"
     msg.attach(MIMEText(body, 'plain'))
 
     attachment = MIMEBase('application', 'vnd.openxmlformats-officedocument.presentationml.presentation')
