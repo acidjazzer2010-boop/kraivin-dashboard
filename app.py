@@ -142,20 +142,44 @@ col4.metric("Рентабельность по ЧП", f"{roi:.1f}%")
 
 st.divider()
 
-# --- ГЕНЕРАТОР ПРЕЗЕНТАЦИИ С ФИРМЕННЫМИ ШРИФТАМИ ---
-def generate_stable_presentation():
+# --- ПОСТРОЕНИЕ ГРАФИКОВ (PLOTLY) ДЛЯ ЭКРАНА И ПРЕЗЕНТАЦИИ ---
+fig1 = go.Figure()
+fig1.add_trace(go.Scatter(
+    x=x_labels, y=cash_balance, mode='lines+markers', name='Остаток ДС',
+    line=dict(color='#642A38', width=3), fill='tozeroy', fillcolor='rgba(100, 42, 56, 0.1)',
+    hovertemplate='%{y:,.0f} руб.<extra></extra>'
+))
+fig1.add_hline(y=0, line_dash="dash", line_color="red", annotation_text="Дефицит")
+fig1.update_layout(
+    xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified", separators=", ",
+    font=dict(family="ua-BRAND-regular, sans-serif", color="#333333")
+)
+fig1.update_yaxes(tickformat=",.0f")
+
+fig2 = go.Figure()
+fig2.add_trace(go.Bar(x=x_labels, y=inflows, name='Поступления', marker_color='#E3C293', hovertemplate='%{y:,.0f} руб.<extra></extra>'))
+fig2.add_trace(go.Bar(x=x_labels, y=-outflows, name='Выплаты', marker_color='#642A38', hovertemplate='%{y:,.0f} руб.<extra></extra>'))
+fig2.add_trace(go.Scatter(x=x_labels, y=net_cf, name='Чистый поток', marker_color='#B88645', mode='lines+markers', hovertemplate='%{y:,.0f} руб.<extra></extra>'))
+fig2.update_layout(
+    barmode='relative', xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified", separators=", ",
+    font=dict(family="ua-BRAND-regular, sans-serif", color="#333333")
+)
+fig2.update_yaxes(tickformat=",.0f")
+
+
+# --- ГЕНЕРАТОР ПРЕЗЕНТАЦИЙ С ГРАФИКАМИ И ШРИФТАМИ ---
+def generate_full_presentation():
     prs = Presentation()
     prs.slide_width = Inches(13.333)
     prs.slide_height = Inches(7.5)
     
-    c_wine = RGBColor(100, 42, 56)      # #642A38
-    c_sand = RGBColor(227, 194, 147)   # #E3C293
+    c_wine = RGBColor(100, 42, 56)
+    c_sand = RGBColor(227, 194, 147)
     c_dark = RGBColor(30, 30, 30)
     c_light_bg = RGBColor(248, 246, 244)
     c_white = RGBColor(255, 255, 255)
     c_card_border = RGBColor(220, 210, 205)
 
-    # Имена фирменных шрифтов из файлов проекта
     font_black = "ua-BRAND-black"
     font_bold = "ua-BRAND-bold"
     font_regular = "ua-BRAND-regular"
@@ -267,7 +291,7 @@ def generate_stable_presentation():
         p_val.font.name = font_black
         p_val.space_before = Pt(8)
 
-    # СЛАЙД 3: ТАБЛИЦА ДЕТАЛИЗАЦИИ
+    # СЛАЙД 3: ГРАФИК ЛИКВИДНОСТИ
     slide3 = prs.slides.add_slide(blank_layout)
     bg3 = slide3.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
     bg3.fill.solid()
@@ -275,17 +299,62 @@ def generate_stable_presentation():
     bg3.line.fill.background()
     add_corner_logo(slide3)
 
-    title_box3 = slide3.shapes.add_textbox(Inches(0.8), Inches(0.5), Inches(10.0), Inches(0.8))
-    p_t3 = title_box3.text_frame.paragraphs[0]
-    p_t3.text = "Детализация денежных потоков по месяцам"
-    p_t3.font.size = Pt(28)
-    p_t3.font.bold = True
-    p_t3.font.color.rgb = c_wine
-    p_t3.font.name = font_bold
+    tbox3 = slide3.shapes.add_textbox(Inches(0.8), Inches(0.5), Inches(10.0), Inches(0.8))
+    tbox3.text_frame.paragraphs[0].text = "Динамика ликвидности и остаток средств"
+    tbox3.text_frame.paragraphs[0].font.size = Pt(28)
+    tbox3.text_frame.paragraphs[0].font.bold = True
+    tbox3.text_frame.paragraphs[0].font.color.rgb = c_wine
+    tbox3.text_frame.paragraphs[0].font.name = font_bold
+
+    try:
+        img1_bytes = fig1.to_image(format="png", width=1200, height=600, scale=2, engine="kaleido")
+        slide3.shapes.add_picture(io.BytesIO(img1_bytes), Inches(0.8), Inches(1.5), width=Inches(11.7))
+    except Exception:
+        # Резервный блок: если калейдо недоступно, добавляем текстовое уведомление на слайд
+        tb_err = slide3.shapes.add_textbox(Inches(0.8), Inches(3.0), Inches(10.0), Inches(1.0))
+        tb_err.text_frame.text = "[График доступен в интерактивной веб-версии дашборда]"
+
+    # СЛАЙД 4: СТРУКТУРА ДЕНЕЖНОГО ПОТОКА
+    slide4 = prs.slides.add_slide(blank_layout)
+    bg4 = slide4.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
+    bg4.fill.solid()
+    bg4.fill.fore_color.rgb = c_light_bg
+    bg4.line.fill.background()
+    add_corner_logo(slide4)
+
+    tbox4 = slide4.shapes.add_textbox(Inches(0.8), Inches(0.5), Inches(10.0), Inches(0.8))
+    tbox4.text_frame.paragraphs[0].text = "Структура месячного денежного потока"
+    tbox4.text_frame.paragraphs[0].font.size = Pt(28)
+    tbox4.text_frame.paragraphs[0].font.bold = True
+    tbox4.text_frame.paragraphs[0].font.color.rgb = c_wine
+    tbox4.text_frame.paragraphs[0].font.name = font_bold
+
+    try:
+        img2_bytes = fig2.to_image(format="png", width=1200, height=600, scale=2, engine="kaleido")
+        slide4.shapes.add_picture(io.BytesIO(img2_bytes), Inches(0.8), Inches(1.5), width=Inches(11.7))
+    except Exception:
+        tb_err2 = slide4.shapes.add_textbox(Inches(0.8), Inches(3.0), Inches(10.0), Inches(1.0))
+        tb_err2.text_frame.text = "[График доступен в интерактивной веб-версии дашборда]"
+
+    # СЛАЙД 5: ТАБЛИЦА ДЕТАЛИЗАЦИИ
+    slide5 = prs.slides.add_slide(blank_layout)
+    bg5 = slide5.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
+    bg5.fill.solid()
+    bg5.fill.fore_color.rgb = c_light_bg
+    bg5.line.fill.background()
+    add_corner_logo(slide5)
+
+    title_box5 = slide5.shapes.add_textbox(Inches(0.8), Inches(0.5), Inches(10.0), Inches(0.8))
+    p_t5 = title_box5.text_frame.paragraphs[0]
+    p_t5.text = "Детализация денежных потоков по месяцам"
+    p_t5.font.size = Pt(28)
+    p_t5.font.bold = True
+    p_t5.font.color.rgb = c_wine
+    p_t5.font.name = font_bold
 
     rows = min(period + 1, 13)
     cols = 5
-    table_shape = slide3.shapes.add_table(rows, cols, Inches(0.8), Inches(1.5), Inches(11.7), Inches(5.2))
+    table_shape = slide5.shapes.add_table(rows, cols, Inches(0.8), Inches(1.5), Inches(11.7), Inches(5.2))
     table = table_shape.table
     
     table.columns[0].width = Inches(2.2)
@@ -333,7 +402,7 @@ def generate_stable_presentation():
 
 # --- ГЛАВНАЯ КНОПКА СКАЧИВАНИЯ ---
 st.markdown("### Экспорт отчета")
-pptx_data = generate_stable_presentation()
+pptx_data = generate_full_presentation()
 st.download_button(
     label="📥 Скачать готовую презентацию отчета (PPTX)",
     data=pptx_data,
@@ -344,37 +413,9 @@ st.download_button(
 
 st.divider()
 
-# --- ВИЗУАЛИЗАЦИЯ НА ЭКРАНЕ С ШРИФТАМИ ---
+# --- ВИЗУАЛИЗАЦИЯ НА ЭКРАНЕ ---
 st.subheader("Динамика ликвидности и остаток средств")
-fig1 = go.Figure()
-fig1.add_trace(go.Scatter(
-    x=x_labels, y=cash_balance, mode='lines+markers', name='Остаток ДС',
-    line=dict(color='#642A38', width=3), fill='tozeroy', fillcolor='rgba(100, 42, 56, 0.1)',
-    hovertemplate='%{y:,.0f} руб.<extra></extra>'
-))
-fig1.add_hline(y=0, line_dash="dash", line_color="red", annotation_text="Дефицит")
-fig1.update_layout(
-    xaxis_title="Месяц", 
-    yaxis_title="Рубли", 
-    hovermode="x unified", 
-    separators=", ",
-    font=dict(family="ua-BRAND-regular, sans-serif", color="#333333")
-)
-fig1.update_yaxes(tickformat=",.0f")
 st.plotly_chart(fig1, use_container_width=True)
 
 st.subheader("Структура месячного денежного потока")
-fig2 = go.Figure()
-fig2.add_trace(go.Bar(x=x_labels, y=inflows, name='Поступления', marker_color='#E3C293', hovertemplate='%{y:,.0f} руб.<extra></extra>'))
-fig2.add_trace(go.Bar(x=x_labels, y=-outflows, name='Выплаты', marker_color='#642A38', hovertemplate='%{y:,.0f} руб.<extra></extra>'))
-fig2.add_trace(go.Scatter(x=x_labels, y=net_cf, name='Чистый поток', marker_color='#B88645', mode='lines+markers', hovertemplate='%{y:,.0f} руб.<extra></extra>'))
-fig2.update_layout(
-    barmode='relative', 
-    xaxis_title="Месяц", 
-    yaxis_title="Рубли", 
-    hovermode="x unified", 
-    separators=", ",
-    font=dict(family="ua-BRAND-regular, sans-serif", color="#333333")
-)
-fig2.update_yaxes(tickformat=",.0f")
 st.plotly_chart(fig2, use_container_width=True)
