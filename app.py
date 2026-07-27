@@ -34,9 +34,15 @@ start_year = col_y.selectbox("Год старта", [2026, 2027])
 margin_pct = st.sidebar.slider("Маржинальность (%)", min_value=10, max_value=50, value=20, step=1)
 period = st.sidebar.selectbox("Горизонт планирования (мес)", [6, 12, 18, 24])
 
-initial_investment = st.sidebar.number_input(
-    "Доступный капитал / Инвестиции (руб)", 
-    value=7_000_000, 
+st.sidebar.subheader("Стартовый капитал и закупки")
+initial_purchase = st.sidebar.number_input(
+    "Первоначальная закупка товара (руб)", 
+    value=5_000_000, 
+    step=500_000
+)
+initial_cash_buffer = st.sidebar.number_input(
+    "Стартовый денежный буфер (на счете)", 
+    value=2_000_000, 
     step=500_000
 )
 
@@ -44,8 +50,6 @@ st.sidebar.subheader("Динамика продаж")
 aov = st.sidebar.number_input("Средняя сумма заказа (руб)", value=150_000, step=10_000)
 start_orders = st.sidebar.number_input("Заказов в 1-й месяц (шт)", value=40, step=1)
 orders_growth = st.sidebar.slider("Ежемесячный прирост заказов (%)", 0, 100, 15, step=1)
-
-# Добавляем ползунок масштабирования для роста чистой прибыли
 scale_factor = st.sidebar.slider("Коэффициент масштабирования продаж", 0.5, 3.0, 1.0, 0.1)
 
 st.sidebar.subheader("Команда и расходы")
@@ -72,7 +76,7 @@ for i in range(period):
     y_offset = (start_month_idx + i) // 12
     x_labels.append(f"{ru_months_short[m_idx]} {start_year + y_offset}")
 
-# Динамический расчет выручки с учетом коэффициента масштабирования
+# Динамический расчет выручки
 orders = np.zeros(period)
 rev = np.zeros(period)
 
@@ -87,14 +91,18 @@ cogs_pct = 1 - (margin_pct / 100)
 cogs_no_vat = rev * cogs_pct
 cogs_vat = cogs_no_vat * 1.2
 
-# Симуляция выплат поставщикам
+# Симуляция выплат поставщикам (в 1-й месяц также закладывается первоначальная закупка товара)
 delay_months_suppliers = max(1, int(round(delay_days / 30))) if delay_days > 0 else 0
 cogs_payments = np.zeros(period)
 
 for i in range(period):
+    # Текущие закупки
     cogs_payments[i] += cogs_vat[i] * (prepayment_pct / 100)
     if i + delay_months_suppliers < period:
         cogs_payments[i + delay_months_suppliers] += cogs_vat[i] * ((100 - prepayment_pct) / 100)
+
+# Добавляем затраты на первоначальную партию товара в 1-й месяц
+cogs_payments[0] += initial_purchase
 
 customer_delay_months = max(0, int(round(customer_delay_days / 30)))
 
@@ -119,13 +127,13 @@ taxes_and_commissions = rev * 0.05
 outflows = cogs_payments + opex + taxes_and_commissions
 net_cf = inflows - outflows
 
-# Накопленный итог
+# Накопленный итог с учетом стартового буфера на счете
 cum_cf = np.cumsum(net_cf)
-cash_balance = cum_cf + initial_investment
+cash_balance = cum_cf + initial_cash_buffer
 
 # --- KPI МЕТРИКИ ---
 max_deficit = min(min(cum_cf), 0)
-net_profit = sum(rev * (margin_pct / 100)) - sum(opex) - sum(taxes_and_commissions)
+net_profit = sum(rev * (margin_pct / 100)) - sum(opex) - sum(taxes_and_commissions) - (initial_purchase * 0.15) # Условная чистая себестоимость первоначального стока
 roi = (net_profit / sum(rev)) * 100 if sum(rev) > 0 else 0
 
 def format_rub(val):
@@ -171,7 +179,7 @@ fig2.add_trace(go.Bar(
     hovertemplate='%{y:,.0f} руб.<extra></extra>'
 ))
 fig2.add_trace(go.Bar(
-    x=x_labels, y=-outflows, name='Выплаты', marker_color='#642A38',
+    x=x_labels, y=-outflows, name='Выплаты (вкл. закупку)', marker_color='#642A38',
     hovertemplate='%{y:,.0f} руб.<extra></extra>'
 ))
 fig2.add_trace(go.Scatter(
