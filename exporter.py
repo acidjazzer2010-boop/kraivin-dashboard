@@ -285,14 +285,9 @@ def generate_pptx_bytes(period, start_month_idx, start_year, ru_months_full, x_l
     return ppt_io
 
 def send_report_to_email(to_email, pptx_bytes):
-    """
-    Реальная отправка письма с презентацией через SMTP-сервер.
-    Настройки smtp (сервер, порт, логин, пароль) берутся из переменных окружения Streamlit Secrets.
-    """
-    # Читаем параметры из st.secrets или задаем дефолтные значения
     smtp_server = os.getenv("SMTP_SERVER", "smtp.yandex.ru")
     smtp_port = int(os.getenv("SMTP_PORT", 465))
-    sender_email = os.getenv("SMTP_USER", "finance@kraivin.ru")
+    sender_email = os.getenv("SMTP_USER", "finance@krayvin.ru")
     sender_password = os.getenv("SMTP_PASSWORD", "ваш_пароль_приложения")
 
     msg = MIMEMultipart()
@@ -300,10 +295,9 @@ def send_report_to_email(to_email, pptx_bytes):
     msg['To'] = to_email
     msg['Subject'] = "КРАЙВИН: Финансовый отчёт и модель денежных потоков"
 
-    body = "Здравствуйте!\n\nВо вложении находится актуальный финансовый отчет КРАЙВИН в формате PowerPoint.\n\nС уважением,\nФинансовый департамент КРАЙВИН"
+    body = "Здравствуйте!\n\nВо вложении находится актуальный финансовый отчет и сценарный анализ кассовых разрывов компании КРАЙВИН в формате PowerPoint.\n\nС уважением,\nФинансовый департамент КРАЙВИН"
     msg.attach(MIMEText(body, 'plain'))
 
-    # Прикрепляем файл презентации
     attachment = MIMEBase('application', 'vnd.openxmlformats-officedocument.presentationml.presentation')
     attachment.set_payload(pptx_bytes.getvalue())
     encoders.encode_base64(attachment)
@@ -311,7 +305,6 @@ def send_report_to_email(to_email, pptx_bytes):
     msg.attach(attachment)
 
     try:
-        # Подключение к SMTP-серверу по SSL
         server = smtplib.SMTP_SSL(smtp_server, smtp_port)
         server.login(sender_email, sender_password)
         server.sendmail(sender_email, to_email, msg.as_string())
@@ -320,7 +313,3 @@ def send_report_to_email(to_email, pptx_bytes):
     except Exception as e:
         print(f"SMTP Error: {e}")
         return False
-
-def send_report_to_max(chat_id, pptx_bytes):
-    # Заглушка под корпоративный мессенджер
-    return True
