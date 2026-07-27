@@ -56,10 +56,9 @@ def create_chart_cash_flow(x_labels, inflows, outflows, net_cf):
     img_io.seek(0)
     return img_io
 
-def create_chart_margin_ebitda(x_labels, rev, opex, taxes_and_commissions, cogs_payments):
+def create_chart_margin_ebitda(x_labels, rev, opex, taxes_and_commissions, cogs_payments, margin_pct):
     fig, ax1 = plt.subplots(figsize=(10, 4.2), dpi=200)
     
-    # Расчет операционной прибыли (EBITDA) приближенно по месяцам
     ebitda = rev - opex - taxes_and_commissions - (cogs_payments * 0.3)
     
     ax1.bar(x_labels, ebitda, color='#642A38', alpha=0.8, width=0.5, label='Операционная прибыль (EBITDA)')
@@ -68,7 +67,7 @@ def create_chart_margin_ebitda(x_labels, rev, opex, taxes_and_commissions, cogs_
     plt.xticks(rotation=25, ha='right', fontsize=9)
     
     ax2 = ax1.twinx()
-    margin_dynamics = [20.0] * len(x_labels) # Базовая маржинальность
+    margin_dynamics = [margin_pct] * len(x_labels)
     ax2.plot(x_labels, margin_dynamics, color='#E3C293', linewidth=2.5, marker='s', label='Маржинальность (%)')
     ax2.set_ylabel("Маржа (%)", color='#B88645', fontsize=10, fontweight='bold')
     ax2.tick_params(axis='y', labelcolor='#B88645')
@@ -147,12 +146,37 @@ def create_chart_expenses_pie(sum_purchases, total_fot, total_taxes, total_other
     img_io.seek(0)
     return img_io
 
-def generate_pptx_bytes(period, start_month_idx, start_year, ru_months_full, x_labels, 
-                        sum_rev, max_deficit, net_profit, roi, initial_cash_buffer, 
-                        initial_purchase, inflows, outflows, cash_balance, rev, net_cf,
-                        customer_delay_days, delay_days, factoring_share, logo_path,
-                        opex, taxes_and_commissions, cogs_payments, cum_cf, sum_purchases, total_fot, total_taxes, total_other_opex):
+def generate_pptx_bytes(**kwargs):
+    # Принимаем все параметры через **kwargs, чтобы избежать любых ошибок несовпадения аргументов
+    period = kwargs.get('period', 12)
+    start_month_idx = kwargs.get('start_month_idx', 0)
+    start_year = kwargs.get('start_year', 2026)
+    ru_months_full = kwargs.get('ru_months_full', [])
+    x_labels = kwargs.get('x_labels', [])
+    sum_rev = kwargs.get('sum_rev', 0)
+    max_deficit = kwargs.get('max_deficit', 0)
+    net_profit = kwargs.get('net_profit', 0)
+    roi = kwargs.get('roi', 0)
+    initial_cash_buffer = kwargs.get('initial_cash_buffer', 0)
+    initial_purchase = kwargs.get('initial_purchase', 0)
+    inflows = kwargs.get('inflows', [])
+    outflows = kwargs.get('outflows', [])
+    cash_balance = kwargs.get('cash_balance', [])
+    rev = kwargs.get('rev', [])
+    net_cf = kwargs.get('net_cf', [])
+    factoring_share = kwargs.get('factoring_share', 0)
+    logo_path = kwargs.get('logo_path', None)
     
+    opex = kwargs.get('opex', [])
+    taxes_and_commissions = kwargs.get('taxes_and_commissions', [])
+    cogs_payments = kwargs.get('cogs_payments', [])
+    cum_cf = kwargs.get('cum_cf', [])
+    sum_purchases = kwargs.get('sum_purchases', 0)
+    total_fot = kwargs.get('total_fot', 0)
+    total_taxes = kwargs.get('total_taxes', 0)
+    total_other_opex = kwargs.get('total_other_opex', 0)
+    margin_pct = kwargs.get('margin_pct', 20)
+
     prs = Presentation()
     prs.slide_width = Inches(13.333)
     prs.slide_height = Inches(7.5)
@@ -282,7 +306,7 @@ def generate_pptx_bytes(period, start_month_idx, start_year, ru_months_full, x_l
     slides_data = [
         ("Динамика ликвидности и остаток средств", create_chart_liquidity(x_labels, cash_balance)),
         ("Структура месячного денежного потока", create_chart_cash_flow(x_labels, inflows, outflows, net_cf)),
-        ("Динамика маржинальности и операционной прибыли (EBITDA)", create_chart_margin_ebitda(x_labels, rev, opex, taxes_and_commissions, cogs_payments)),
+        ("Динамика маржинальности и операционной прибыли (EBITDA)", create_chart_margin_ebitda(x_labels, rev, opex, taxes_and_commissions, cogs_payments, margin_pct)),
         ("Структура притока денежных средств по источникам", create_chart_sources(x_labels, rev, factoring_share)),
         ("Накопленный денежный поток и зона безопасного остатка", create_chart_cumulative(x_labels, cum_cf, initial_cash_buffer)),
         ("Структура совокупных расходов", create_chart_expenses_pie(sum_purchases, total_fot, total_taxes, total_other_opex))
@@ -303,8 +327,7 @@ def generate_pptx_bytes(period, start_month_idx, start_year, ru_months_full, x_l
         tbox.text_frame.paragraphs[0].font.color.rgb = c_wine
         tbox.text_frame.paragraphs[0].font.name = font_bold
 
-        img_stream = img_func
-        slide.shapes.add_picture(img_stream, Inches(0.8), Inches(1.3), width=Inches(11.7))
+        slide.shapes.add_picture(img_func, Inches(0.8), Inches(1.3), width=Inches(11.7))
 
     # СЛАЙД С ТАБЛИЦЕЙ ДЕТАЛИЗАЦИИ
     slide_table = prs.slides.add_slide(blank_layout)
