@@ -5,10 +5,12 @@ import numpy as np
 import os
 import io
 
-# Импорт библиотеки для генерации PowerPoint
+# Импорт библиотек для генерации PowerPoint
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
+from pptx.enum.text import PP_ALIGN
+from pptx.enum.shapes import MSO_SHAPE
 
 # Настройка страницы
 st.set_page_config(
@@ -140,74 +142,198 @@ col4.metric("Рентабельность по ЧП", f"{roi:.1f}%")
 
 st.divider()
 
-# --- ФУНКЦИЯ ГЕНЕРАЦИИ ПРЕЗЕНТАЦИИ (POWERPOINT) ---
-def generate_pptx():
+# --- ПРОФЕССИОНАЛЬНЫЙ ГЕНЕРАТОР ПРЕЗЕНТАЦИЙ (PPTX) ---
+def generate_professional_pptx():
     prs = Presentation()
+    prs.slide_width = Inches(13.333) # Широкий формат 16:9
+    prs.slide_height = Inches(7.5)
     
-    # Цвета бренда КРАЙВИН
-    wine_color = RGBColor(100, 42, 56)   # #642A38
-    sand_color = RGBColor(227, 194, 147) # #E3C293
-    dark_gray = RGBColor(50, 50, 50)
+    # Фирменная палитра
+    c_wine = RGBColor(100, 42, 56)      # #642A38 (Винный)
+    c_sand = RGBColor(227, 194, 147)   # #E3C293 (Песочный)
+    c_dark = RGBColor(30, 30, 30)      # Темно-серый текст
+    c_light_bg = RGBColor(248, 246, 244) # Светлый фон слайдов
+    c_white = RGBColor(255, 255, 255)
+    c_card_bg = RGBColor(255, 255, 255)
+    c_card_border = RGBColor(220, 210, 205)
+
+    blank_layout = prs.slide_layouts[6] # Пустой слайд для кастомной верстки
+
+    # --- СЛАЙД 1: ТИТУЛЬНЫЙ (ПРЕМИУМ СТИЛЬ) ---
+    slide1 = prs.slides.add_slide(blank_layout)
     
-    # Слайд 1: Титульный
-    slide_layout = prs.slide_layouts[0] # Заголовочный слайд
-    slide1 = prs.slides.add_slide(slide_layout)
-    title = slide1.shapes.title
-    subtitle = slide1.placeholders[1]
+    # Заливка фона титульного слайда винным цветом
+    bg1 = slide1.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
+    bg1.fill.solid()
+    bg1.fill.fore_color.rgb = c_wine
+    bg1.line.fill.background()
+
+    # Декоративный песочный акцент (плашка слева)
+    accent1 = slide1.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0.8), Inches(2.0), Inches(0.15), Inches(3.5))
+    accent1.fill.solid()
+    accent1.fill.fore_color.rgb = c_sand
+    accent1.line.fill.background()
+
+    # Текст заголовка
+    txBox = slide1.shapes.add_textbox(Inches(1.2), Inches(2.2), Inches(11.0), Inches(3.0))
+    tf = txBox.text_frame
+    tf.word_wrap = True
     
-    title.text = "КРАЙВИН"
-    subtitle.text = f"Анализ экономической эффективности и денежных потоков\nПериод планирования: {period} месяцев (Старт: {ru_months_full[start_month_idx]} {start_year})"
-    
-    # Слайд 2: Ключевые финансовые показатели
-    slide_layout_2 = prs.slide_layouts[1] # Заголовок и содержимое
-    slide2 = prs.slides.add_slide(slide_layout_2)
-    slide2.shapes.title.text = "Ключевые финансовые результаты"
-    
-    tf = slide2.placeholders[1].text_frame
-    tf.text = f"• Общая выручка за период: {format_rub(sum(rev))}"
-    
+    p = tf.paragraphs[0]
+    p.text = "КРАЙВИН"
+    p.font.size = Pt(54)
+    p.font.bold = True
+    p.font.color.rgb = c_white
+    p.font.name = "Arial"
+
     p2 = tf.add_paragraph()
-    p2.text = f"• Максимальный кассовый разрыв: {format_rub(max_deficit)}"
-    
+    p2.text = "Финансовая модель и анализ денежных потоков"
+    p2.font.size = Pt(28)
+    p2.font.color.rgb = c_sand
+    p2.font.name = "Arial"
+    p2.space_before = Pt(10)
+
     p3 = tf.add_paragraph()
-    p3.text = f"• Чистая прибыль: {format_rub(net_profit)}"
-    
-    p4 = tf.add_paragraph()
-    p4.text = f"• Рентабельность по чистой прибыли: {roi:.1f}%"
+    p3.text = f"Горизонт планирования: {period} мес.  |  Старт: {ru_months_full[start_month_idx]} {start_year}"
+    p3.font.size = Pt(16)
+    p3.font.color.rgb = c_white
+    p3.font.name = "Arial"
+    p3.space_before = Pt(40)
 
-    p5 = tf.add_paragraph()
-    p5.text = f"• Начальный денежный буфер: {format_rub(initial_cash_buffer)}"
 
-    # Слайд 3: Таблица по месяцам
-    slide3 = prs.slides.add_slide(slide_layout_2)
-    slide3.shapes.title.text = "Детализация по месяцам"
+    # --- СЛАЙД 2: КЛЮЧЕВЫЕ ПОКАЗАТЕЛИ (КАРТОЧКИ KPI) ---
+    slide2 = prs.slides.add_slide(blank_layout)
     
-    # Создаем таблицу в презентации
-    rows = period + 1
+    # Фоновая подложка
+    bg2 = slide2.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
+    bg2.fill.solid()
+    bg2.fill.fore_color.rgb = c_light_bg
+    bg2.line.fill.background()
+
+    # Шапка слайда
+    title_box = slide2.shapes.add_textbox(Inches(0.8), Inches(0.6), Inches(11.0), Inches(1.0))
+    tf2 = title_box.text_frame
+    p_t = tf2.paragraphs[0]
+    p_t.text = "Ключевые финансовые результаты"
+    p_t.font.size = Pt(32)
+    p_t.font.bold = True
+    p_t.font.color.rgb = c_wine
+    p_t.font.name = "Arial"
+
+    # Массив KPI для карточек
+    kpis = [
+        ("Суммарная выручка", format_rub(sum(rev))),
+        ("Макс. кассовый разрыв", format_rub(max_deficit)),
+        ("Чистая прибыль", format_rub(net_profit)),
+        ("Рентабельность по ЧП", f"{roi:.1f}%"),
+        ("Начальный буфер ДС", format_rub(initial_cash_buffer)),
+        ("Первоначальная закупка", format_rub(initial_purchase))
+    ]
+
+    # Рисуем сетку карточек 3х2
+    card_w, card_h = Inches(3.6), Inches(2.2)
+    start_x, start_y = Inches(0.8), Inches(1.8)
+    gap_x, gap_y = Inches(0.4), Inches(0.4)
+
+    for idx, (label, val) in enumerate(kpis):
+        col_idx = idx % 3
+        row_idx = idx // 3
+        x = start_x + col_idx * (card_w + gap_x)
+        y = start_y + row_idx * (card_h + gap_y)
+
+        # Подложка карточки
+        card = slide2.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, x, y, card_w, card_h)
+        card.fill.solid()
+        card.fill.fore_color.rgb = c_white
+        card.line.color.rgb = c_card_border
+        card.line.width = Pt(1)
+
+        # Текст внутри карточки
+        tf_card = card.text_frame
+        tf_card.word_wrap = True
+        tf_card.margin_left = Inches(0.2)
+        tf_card.margin_top = Inches(0.2)
+        
+        p_lbl = tf_card.paragraphs[0]
+        p_lbl.text = label.upper()
+        p_lbl.font.size = Pt(12)
+        p_lbl.font.color.rgb = RGBColor(120, 120, 120)
+        p_lbl.font.bold = True
+
+        p_val = tf_card.add_paragraph()
+        p_val.text = val
+        p_val.font.size = Pt(22)
+        p_val.font.color.rgb = c_wine
+        p_val.font.bold = True
+        p_val.space_before = Pt(10)
+
+
+    # --- СЛАЙД 3: ТАБЛИЦА ДЕТАЛИЗАЦИИ ---
+    slide3 = prs.slides.add_slide(blank_layout)
+    
+    bg3 = slide3.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
+    bg3.fill.solid()
+    bg3.fill.fore_color.rgb = c_light_bg
+    bg3.line.fill.background()
+
+    title_box3 = slide3.shapes.add_textbox(Inches(0.8), Inches(0.5), Inches(11.0), Inches(0.8))
+    tf3 = title_box3.text_frame
+    p_t3 = tf3.paragraphs[0]
+    p_t3.text = "Детализация денежных потоков по месяцам"
+    p_t3.font.size = Pt(28)
+    p_t3.font.bold = True
+    p_t3.font.color.rgb = c_wine
+
+    # Создание таблицы
+    rows = min(period + 1, 13) # Ограничим до 12 месяцев на слайд для читаемости
     cols = 5
-    left = Inches(0.5)
-    top = Inches(1.5)
-    width = Inches(9.0)
-    height = Inches(4.5)
+    t_left, t_top, t_width, t_height = Inches(0.8), Inches(1.5), Inches(11.7), Inches(5.2)
     
-    table_shape = slide3.shapes.add_table(rows, cols, left, top, width, height)
+    table_shape = slide3.shapes.add_table(rows, cols, t_left, t_top, t_width, t_height)
     table = table_shape.table
     
-    # Шапка таблицы
-    headers = ["Месяц", "Выручка", "Поступления", "Выплаты", "Остаток ДС"]
+    # Настройка ширины колонок
+    table.columns[0].width = Inches(2.2)
+    table.columns[1].width = Inches(2.4)
+    table.columns[2].width = Inches(2.4)
+    table.columns[3].width = Inches(2.4)
+    table.columns[4].width = Inches(2.3)
+
+    headers = ["Месяц", "Выручка (руб)", "Поступления (руб)", "Выплаты (руб)", "Остаток ДС (руб)"]
     for col_idx, text in enumerate(headers):
         cell = table.cell(0, col_idx)
         cell.text = text
-        
-    # Заполнение строк таблицы данными
-    for i in range(period):
-        table.cell(i+1, 0).text = str(x_labels[i])
-        table.cell(i+1, 1).text = f"{rev[i]:,.0f}".replace(",", " ")
-        table.cell(i+1, 2).text = f"{inflows[i]:,.0f}".replace(",", " ")
-        table.cell(i+1, 3).text = f"{outflows[i]:,.0f}".replace(",", " ")
-        table.cell(i+1, 4).text = f"{cash_balance[i]:,.0f}".replace(",", " ")
+        cell.fill.solid()
+        cell.fill.fore_color.rgb = c_wine
+        for p in cell.text_frame.paragraphs:
+            p.font.size = Pt(13)
+            p.font.bold = True
+            p.font.color.rgb = c_white
+            p.alignment = PP_ALIGN.CENTER
 
-    # Сохранение во временный буфер памяти
+    for i in range(rows - 1):
+        row_data = [
+            str(x_labels[i]),
+            f"{rev[i]:,.0f}".replace(",", " "),
+            f"{inflows[i]:,.0f}".replace(",", " "),
+            f"{outflows[i]:,.0f}".replace(",", " "),
+            f"{cash_balance[i]:,.0f}".replace(",", " ")
+        ]
+        for col_idx, val in enumerate(row_data):
+            cell = table.cell(i+1, col_idx)
+            cell.text = val
+            cell.fill.solid()
+            if i % 2 == 0:
+                cell.fill.fore_color.rgb = RGBColor(255, 255, 255)
+            else:
+                cell.fill.fore_color.rgb = RGBColor(240, 235, 230)
+                
+            for p in cell.text_frame.paragraphs:
+                p.font.size = Pt(12)
+                p.font.color.rgb = c_dark
+                p.alignment = PP_ALIGN.CENTER if col_idx == 0 else PP_ALIGN.RIGHT
+
+    # Сохранение в буфер
     ppt_io = io.BytesIO()
     prs.save(ppt_io)
     ppt_io.seek(0)
@@ -216,12 +342,12 @@ def generate_pptx():
 # Кнопка скачивания презентации в интерфейсе
 st.sidebar.divider()
 st.sidebar.subheader("Экспорт отчета")
-if st.sidebar.button("📥 Скачать презентацию (PPTX)"):
-    pptx_data = generate_pptx()
+if st.sidebar.button("📥 Скачать профессиональную презентацию (PPTX)"):
+    pptx_data = generate_professional_pptx()
     st.sidebar.download_button(
         label="💾 Нажмите для сохранения файла",
         data=pptx_data,
-        file_name="Kraivin_Financial_Report.pptx",
+        file_name="Kraivin_Professional_Report.pptx",
         mime="application/vnd.openxmlformats-officedocument.presentationml.presentation"
     )
 
