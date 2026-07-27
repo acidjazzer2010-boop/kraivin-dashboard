@@ -4,8 +4,7 @@ import plotly.graph_objects as go
 import numpy as np
 import os
 
-# Импортируем наш новый модуль экспорта
-from exporter import generate_pptx_bytes, send_report_to_email, send_report_to_max
+from exporter import generate_pptx_bytes, send_report_to_email
 
 # Настройка страницы
 st.set_page_config(
@@ -137,10 +136,14 @@ col4.metric("Рентабельность по ЧП", f"{roi:.1f}%")
 
 st.divider()
 
-# --- ЦЕНТР УПРАВЛЕНИЯ ЭКСПОРТОМ И ОТПРАВКОЙ ---
-st.subheader("📤 Экспорт и отправка отчета")
+# --- ПАНЕЛЬ ЭКСПОРТА С БРЕНДОВЫМ ЛОГОТИПОМ ---
+col_logo, col_header = st.columns([1, 8])
+with col_logo:
+    if os.path.exists(logo_path):
+        st.image(logo_path, width=80)
+with col_header:
+    st.subheader("Экспорт и отправка инвестиционного отчета КРАЙВИН")
 
-# Генерируем презентацию в байты
 pptx_data = generate_pptx_bytes(
     period, start_month_idx, start_year, ru_months_full, x_labels, 
     sum(rev), max_deficit, net_profit, roi, initial_cash_buffer, 
@@ -148,12 +151,12 @@ pptx_data = generate_pptx_bytes(
     customer_delay_days, delay_days, factoring_share, logo_path
 )
 
-tab1, tab2, tab3 = st.tabs(["📥 Скачать PPTX", "✉️ Отправить на почту", "💬 Отправить в MAX"])
+tab1, tab2 = st.tabs(["📥 Скачать презентацию (PPTX)", "✉️ Отправить на email"])
 
 with tab1:
-    st.write("Скачайте готовую профессиональную презентацию отчета в формате `.pptx` с графиками и фирменным стилем.")
+    st.write("Получите профессиональную презентацию отчета со всеми графиками, таблицами и фирменными шрифтами.")
     st.download_button(
-        label="💾 Скачать презентацию отчета",
+        label="💾 Скачать файл презентации",
         data=pptx_data,
         file_name="Kraivin_Investment_Report.pptx",
         mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
@@ -161,24 +164,14 @@ with tab1:
     )
 
 with tab2:
-    st.write("Введите email получателя для отправки финансового отчета:")
+    st.write("Введите адрес электронной почты партнера или коллеги для отправки отчета:")
     email_input = st.text_input("Email получателя", "partner@krayvin.ru")
     if st.button("🚀 Отправить отчет на email"):
         success = send_report_to_email(email_input, pptx_data)
         if success:
             st.success(f"Отчет успешно отправлен на адрес {email_input}!")
         else:
-            st.error("Ошибка при отправке письма.")
-
-with tab3:
-    st.write("Интеграция с корпоративным мессенджером MAX:")
-    max_chat = st.text_input("ID чата / Канал MAX", "@krayvin_finance")
-    if st.button("📤 Отправить отчет в MAX"):
-        success = send_report_to_max(max_chat, pptx_data)
-        if success:
-            st.success(f"Презентация успешно отправлена в чат {max_chat}!")
-        else:
-            st.error("Не удалось отправить сообщение в MAX.")
+            st.error("Ошибка при отправке письма. Проверьте настройки SMTP в секретах.")
 
 st.divider()
 
