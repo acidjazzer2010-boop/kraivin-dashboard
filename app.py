@@ -142,41 +142,60 @@ col4.metric("Рентабельность по ЧП", f"{roi:.1f}%")
 
 st.divider()
 
-# --- ПАНЕЛЬ ЭКСПОРТА ---
-st.subheader("Экспорт и отправка инвестиционного отчета КРАЙВИН")
+# --- ПАНЕЛЬ ЭКСПОРТА (ПРЕМИУМ PDF-ЛОНГРИД) ---
+st.subheader("📄 Экспорт премиального инвестиционного отчета (PDF Лонгрид)")
 
-pptx_data = generate_pptx_bytes(
-    period, start_month_idx, start_year, ru_months_full, x_labels, 
-    sum(rev), max_deficit, net_profit, roi, initial_cash_buffer, 
-    initial_purchase, inflows, outflows, cash_balance, rev, net_cf,
-    customer_delay_days, delay_days, factoring_share, logo_path,
-    opex, taxes_and_commissions, cogs_payments, cum_cf, sum_purchases, total_fot, total_taxes, total_other_opex
+from exporter import generate_html_report_bytes, send_report_to_email
+
+# Генерируем PDF в память
+pdf_data = generate_html_report_bytes(
+    period=period,
+    start_date=f"{ru_months_full[start_month_idx]} {start_year}",
+    sum_rev=format_rub(sum(rev)),
+    max_deficit=format_rub(max_deficit),
+    net_profit=format_rub(net_profit),
+    roi=f"{roi:.1f}%",
+    initial_cash_buffer=format_rub(initial_cash_buffer),
+    initial_purchase=format_rub(initial_purchase),
+    x_labels=x_labels,
+    cash_balance=cash_balance,
+    inflows=inflows,
+    outflows=outflows,
+    net_cf=net_cf,
+    rev=rev,
+    opex=opex,
+    taxes_and_commissions=taxes_and_commissions,
+    cogs_payments=cogs_payments,
+    cum_cf=cum_cf,
+    factoring_share=factoring_share,
+    margin_pct=margin_pct,
+    sum_purchases=sum(cogs_payments),
+    total_fot=sum(np.full(period, monthly_fot)),
+    total_taxes=sum(taxes_and_commissions),
+    total_other_opex=sum(np.full(period, 150_000))
 )
 
-tab1, tab2 = st.tabs(["📥 Скачать презентацию (PPTX)", "✉️ Отправить на email"])
+tab1, tab2 = st.tabs(["📥 Скачать PDF-отчет", "✉️ Отправить PDF на email"])
 
 with tab1:
-    st.write("Получите профессиональную презентацию отчета со всеми новыми графиками, таблицами и фирменными шрифтами.")
+    st.write("Получите безупречно сверстанный инвестиционный отчет в формате PDF с карточным дизайном, графиками и таблицами:")
     st.download_button(
-        label="💾 Скачать файл презентации",
-        data=pptx_data,
-        file_name="Kraivin_Investment_Report.pptx",
-        mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        label="💾 Скачать PDF-отчет",
+        data=pdf_data,
+        file_name="Kraivin_Financial_Report.pdf",
+        mime="application/pdf",
         use_container_width=True
     )
 
 with tab2:
-    st.write("Введите адрес электронной почты партнера или коллеги для отправки отчета:")
+    st.write("Введите адрес электронной почты партнера или коллеги для отправки готового PDF-документа:")
     email_input = st.text_input("Email получателя", "partner@krayvin.ru")
-    if st.button("🚀 Отправить отчет на email"):
-        success = send_report_to_email(email_input, pptx_data)
+    if st.button("🚀 Отправить PDF на email"):
+        success = send_report_to_email(email_input, pdf_data)
         if success:
-            st.success(f"Отчет успешно отправлен на адрес {email_input}!")
+            st.success(f"PDF-отчет успешно отправлен на адрес {email_input}!")
         else:
             st.error("Ошибка при отправке письма. Проверьте настройки SMTP в секретах.")
-
-st.divider()
-
 # --- ВИЗУАЛИЗАЦИЯ НА ЭКРАНЕ (ВСЕ ГРАФИКИ) ---
 
 st.subheader("1. Динамика ликвидности и остаток средств")
