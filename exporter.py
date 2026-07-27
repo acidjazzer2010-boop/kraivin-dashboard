@@ -15,14 +15,38 @@ from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
 from pptx.enum.shapes import MSO_SHAPE
 
-def create_matplotlib_chart_1(x_labels, cash_balance):
-    fig, ax = plt.subplots(figsize=(10, 4.5), dpi=200)
-    ax.plot(x_labels, cash_balance, color='#642A38', linewidth=3, marker='o', markersize=6)
+def create_chart_liquidity(x_labels, cash_balance):
+    fig, ax = plt.subplots(figsize=(10, 4.2), dpi=200)
+    ax.plot(x_labels, cash_balance, color='#642A38', linewidth=3, marker='o', markersize=5)
     ax.fill_between(x_labels, cash_balance, 0, color='#642A38', alpha=0.1)
-    ax.axhline(0, color='red', linestyle='--', linewidth=1.5)
-    ax.set_title("Динамика ликвидности и остаток средств", fontsize=14, fontweight='bold', color='#642A38', pad=15)
-    ax.set_ylabel("Рубли", fontsize=11, color='#333333')
-    plt.xticks(rotation=30, ha='right', fontsize=10)
+    ax.axhline(0, color='red', linestyle='--', linewidth=1.5, label='Критический уровень (0)')
+    ax.set_title("Динамика ликвидности и остаток средств", fontsize=13, fontweight='bold', color='#642A38', pad=12)
+    ax.set_ylabel("Рубли", fontsize=10, color='#333333')
+    plt.xticks(rotation=25, ha='right', fontsize=9)
+    plt.grid(axis='y', linestyle=':', alpha=0.5)
+    ax.legend(frameon=True, facecolor='white', edgecolor='none')
+    plt.tight_layout()
+    
+    img_io = io.BytesIO()
+    plt.savefig(img_io, format='png', bbox_inches='tight')
+    plt.close(fig)
+    img_io.seek(0)
+    return img_io
+
+def create_chart_cash_flow(x_labels, inflows, outflows, net_cf):
+    fig, ax = plt.subplots(figsize=(10, 4.2), dpi=200)
+    x_indices = np.arange(len(x_labels))
+    width = 0.35
+    
+    ax.bar(x_indices - width/2, inflows, width, label='Поступления', color='#E3C293')
+    ax.bar(x_indices + width/2, -outflows, width, label='Выплаты', color='#642A38')
+    ax.plot(x_indices, net_cf, color='#B88645', linewidth=2.5, marker='o', label='Чистый поток')
+    
+    ax.set_xticks(x_indices)
+    ax.set_xticklabels(x_labels, rotation=25, ha='right', fontsize=9)
+    ax.set_title("Структура месячного денежного потока", fontsize=13, fontweight='bold', color='#642A38', pad=12)
+    ax.set_ylabel("Рубли", fontsize=10, color='#333333')
+    ax.legend(frameon=True, facecolor='white', edgecolor='none')
     plt.grid(axis='y', linestyle=':', alpha=0.5)
     plt.tight_layout()
     
@@ -32,21 +56,89 @@ def create_matplotlib_chart_1(x_labels, cash_balance):
     img_io.seek(0)
     return img_io
 
-def create_matplotlib_chart_2(x_labels, inflows, outflows, net_cf):
-    fig, ax = plt.subplots(figsize=(10, 4.5), dpi=200)
-    x_indices = np.arange(len(x_labels))
-    width = 0.35
+def create_chart_margin_ebitda(x_labels, rev, opex, taxes_and_commissions, cogs_payments):
+    fig, ax1 = plt.subplots(figsize=(10, 4.2), dpi=200)
     
-    ax.bar(x_indices - width/2, inflows, width, label='Поступления', color='#E3C293')
-    ax.bar(x_indices + width/2, -outflows, width, label='Выплаты', color='#642A38')
-    ax.plot(x_indices, net_cf, color='#B88645', linewidth=2.5, marker='o', label='Чистый поток')
+    # Расчет операционной прибыли (EBITDA) приближенно по месяцам
+    ebitda = rev - opex - taxes_and_commissions - (cogs_payments * 0.3)
+    
+    ax1.bar(x_labels, ebitda, color='#642A38', alpha=0.8, width=0.5, label='Операционная прибыль (EBITDA)')
+    ax1.set_ylabel("EBITDA (руб)", color='#642A38', fontsize=10, fontweight='bold')
+    ax1.tick_params(axis='y', labelcolor='#642A38')
+    plt.xticks(rotation=25, ha='right', fontsize=9)
+    
+    ax2 = ax1.twinx()
+    margin_dynamics = [20.0] * len(x_labels) # Базовая маржинальность
+    ax2.plot(x_labels, margin_dynamics, color='#E3C293', linewidth=2.5, marker='s', label='Маржинальность (%)')
+    ax2.set_ylabel("Маржа (%)", color='#B88645', fontsize=10, fontweight='bold')
+    ax2.tick_params(axis='y', labelcolor='#B88645')
+    ax2.set_ylim(0, 50)
+    
+    plt.title("Динамика маржинальности и операционной прибыли (EBITDA)", fontsize=13, fontweight='bold', color='#642A38', pad=12)
+    plt.grid(axis='y', linestyle=':', alpha=0.3)
+    plt.tight_layout()
+    
+    img_io = io.BytesIO()
+    plt.savefig(img_io, format='png', bbox_inches='tight')
+    plt.close(fig)
+    img_io.seek(0)
+    return img_io
+
+def create_chart_sources(x_labels, rev, factoring_share):
+    fig, ax = plt.subplots(figsize=(10, 4.2), dpi=200)
+    x_indices = np.arange(len(x_labels))
+    width = 0.5
+    
+    factoring_inflows = rev * 1.2 * (factoring_share / 100)
+    direct_inflows = rev * 1.2 * ((100 - factoring_share) / 100)
+    
+    ax.bar(x_indices, direct_inflows, width, label='Оплата от клиентов', color='#642A38')
+    ax.bar(x_indices, factoring_inflows, width, bottom=direct_inflows, label='Факторинг', color='#E3C293')
     
     ax.set_xticks(x_indices)
-    ax.set_xticklabels(x_labels, rotation=30, ha='right', fontsize=10)
-    ax.set_title("Структура месячного денежного потока", fontsize=14, fontweight='bold', color='#642A38', pad=15)
-    ax.set_ylabel("Рубли", fontsize=11, color='#333333')
+    ax.set_xticklabels(x_labels, rotation=25, ha='right', fontsize=9)
+    ax.set_title("Структура притока денежных средств по источникам", fontsize=13, fontweight='bold', color='#642A38', pad=12)
+    ax.set_ylabel("Рубли", fontsize=10, color='#333333')
     ax.legend(frameon=True, facecolor='white', edgecolor='none')
     plt.grid(axis='y', linestyle=':', alpha=0.5)
+    plt.tight_layout()
+    
+    img_io = io.BytesIO()
+    plt.savefig(img_io, format='png', bbox_inches='tight')
+    plt.close(fig)
+    img_io.seek(0)
+    return img_io
+
+def create_chart_cumulative(x_labels, cum_cf, initial_cash_buffer):
+    fig, ax = plt.subplots(figsize=(10, 4.2), dpi=200)
+    total_cash_line = cum_cf + initial_cash_buffer
+    
+    ax.plot(x_labels, total_cash_line, color='#642A38', linewidth=3, marker='o', label='Накопленный ДС с буфером')
+    ax.axhline(initial_cash_buffer, color='#B88645', linestyle='--', linewidth=1.5, label='Стартовый буфер')
+    ax.axhline(0, color='red', linestyle=':', linewidth=1.5, label='Нулевой баланс')
+    ax.fill_between(x_labels, total_cash_line, initial_cash_buffer, where=(total_cash_line >= initial_cash_buffer), color='#642A38', alpha=0.1, interpolate=True)
+    
+    ax.set_title("Накопленный денежный поток (Cumulative Cash Flow) и зона безопасного остатка", fontsize=13, fontweight='bold', color='#642A38', pad=12)
+    ax.set_ylabel("Рубли", fontsize=10, color='#333333')
+    plt.xticks(rotation=25, ha='right', fontsize=9)
+    ax.legend(frameon=True, facecolor='white', edgecolor='none')
+    plt.grid(axis='y', linestyle=':', alpha=0.5)
+    plt.tight_layout()
+    
+    img_io = io.BytesIO()
+    plt.savefig(img_io, format='png', bbox_inches='tight')
+    plt.close(fig)
+    img_io.seek(0)
+    return img_io
+
+def create_chart_expenses_pie(sum_purchases, total_fot, total_taxes, total_other_opex):
+    fig, ax = plt.subplots(figsize=(8, 4.2), dpi=200)
+    labels = ['Закупки товара', 'ФОТ (Команда)', 'Налоги и сборы', 'Операционные расходы']
+    sizes = [sum_purchases, total_fot, total_taxes, total_other_opex]
+    colors = ['#642A38', '#E3C293', '#B88645', '#D0C2B8']
+    
+    ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=140, textprops={'fontsize': 9})
+    ax.set_title("Структура совокупных расходов", fontsize=13, fontweight='bold', color='#642A38', pad=12)
     plt.tight_layout()
     
     img_io = io.BytesIO()
@@ -58,7 +150,9 @@ def create_matplotlib_chart_2(x_labels, inflows, outflows, net_cf):
 def generate_pptx_bytes(period, start_month_idx, start_year, ru_months_full, x_labels, 
                         sum_rev, max_deficit, net_profit, roi, initial_cash_buffer, 
                         initial_purchase, inflows, outflows, cash_balance, rev, net_cf,
-                        customer_delay_days, delay_days, factoring_share, logo_path):
+                        customer_delay_days, delay_days, factoring_share, logo_path,
+                        opex, taxes_and_commissions, cogs_payments, cum_cf, sum_purchases, total_fot, total_taxes, total_other_opex):
+    
     prs = Presentation()
     prs.slide_width = Inches(13.333)
     prs.slide_height = Inches(7.5)
@@ -77,7 +171,6 @@ def generate_pptx_bytes(period, start_month_idx, start_year, ru_months_full, x_l
     blank_layout = prs.slide_layouts[6]
 
     def add_corner_logo(slide):
-        """Добавляет мини-логотип с винной символикой в верхний правый угол каждого слайда"""
         if logo_path and os.path.exists(logo_path):
             slide.shapes.add_picture(logo_path, Inches(11.8), Inches(0.4), width=Inches(0.9))
 
@@ -111,7 +204,7 @@ def generate_pptx_bytes(period, start_month_idx, start_year, ru_months_full, x_l
     p.font.name = font_black
 
     p2 = tf.add_paragraph()
-    p2.text = "Финансовая модель и анализ денежных потоков"
+    p2.text = "Финансовая модель и углубленный анализ денежных потоков"
     p2.font.size = Pt(26)
     p2.font.color.rgb = c_sand
     p2.font.name = font_bold
@@ -132,10 +225,10 @@ def generate_pptx_bytes(period, start_month_idx, start_year, ru_months_full, x_l
     bg2.line.fill.background()
     add_corner_logo(slide2)
 
-    title_box2 = slide2.shapes.add_textbox(Inches(0.8), Inches(0.5), Inches(10.0), Inches(0.8))
+    title_box2 = slide2.shapes.add_textbox(Inches(0.8), Inches(0.4), Inches(10.0), Inches(0.8))
     p_t2 = title_box2.text_frame.paragraphs[0]
     p_t2.text = "Ключевые финансовые результаты"
-    p_t2.font.size = Pt(28)
+    p_t2.font.size = Pt(26)
     p_t2.font.bold = True
     p_t2.font.color.rgb = c_wine
     p_t2.font.name = font_bold
@@ -150,7 +243,7 @@ def generate_pptx_bytes(period, start_month_idx, start_year, ru_months_full, x_l
     ]
 
     card_w, card_h = Inches(3.6), Inches(2.1)
-    start_x, start_y = Inches(0.8), Inches(1.6)
+    start_x, start_y = Inches(0.8), Inches(1.5)
     gap_x, gap_y = Inches(0.4), Inches(0.35)
 
     for idx, (label, val) in enumerate(kpis):
@@ -185,61 +278,52 @@ def generate_pptx_bytes(period, start_month_idx, start_year, ru_months_full, x_l
         p_val.font.name = font_black
         p_val.space_before = Pt(8)
 
-    # СЛАЙД 3: ГРАФИК ЛИКВИДНОСТИ
-    slide3 = prs.slides.add_slide(blank_layout)
-    bg3 = slide3.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
-    bg3.fill.solid()
-    bg3.fill.fore_color.rgb = c_light_bg
-    bg3.line.fill.background()
-    add_corner_logo(slide3)
+    # Добавление слайдов с графиками
+    slides_data = [
+        ("Динамика ликвидности и остаток средств", create_chart_liquidity(x_labels, cash_balance)),
+        ("Структура месячного денежного потока", create_chart_cash_flow(x_labels, inflows, outflows, net_cf)),
+        ("Динамика маржинальности и операционной прибыли (EBITDA)", create_chart_margin_ebitda(x_labels, rev, opex, taxes_and_commissions, cogs_payments)),
+        ("Структура притока денежных средств по источникам", create_chart_sources(x_labels, rev, factoring_share)),
+        ("Накопленный денежный поток и зона безопасного остатка", create_chart_cumulative(x_labels, cum_cf, initial_cash_buffer)),
+        ("Структура совокупных расходов", create_chart_expenses_pie(sum_purchases, total_fot, total_taxes, total_other_opex))
+    ]
 
-    tbox3 = slide3.shapes.add_textbox(Inches(0.8), Inches(0.4), Inches(10.0), Inches(0.8))
-    tbox3.text_frame.paragraphs[0].text = "Динамика ликвидности и остаток средств"
-    tbox3.text_frame.paragraphs[0].font.size = Pt(26)
-    tbox3.text_frame.paragraphs[0].font.bold = True
-    tbox3.text_frame.paragraphs[0].font.color.rgb = c_wine
-    tbox3.text_frame.paragraphs[0].font.name = font_bold
+    for title, img_func in slides_data:
+        slide = prs.slides.add_slide(blank_layout)
+        bg = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
+        bg.fill.solid()
+        bg.fill.fore_color.rgb = c_light_bg
+        bg.line.fill.background()
+        add_corner_logo(slide)
 
-    chart1_img = create_matplotlib_chart_1(x_labels, cash_balance)
-    slide3.shapes.add_picture(chart1_img, Inches(0.8), Inches(1.3), width=Inches(11.7))
+        tbox = slide.shapes.add_textbox(Inches(0.8), Inches(0.4), Inches(10.0), Inches(0.8))
+        tbox.text_frame.paragraphs[0].text = title
+        tbox.text_frame.paragraphs[0].font.size = Pt(24)
+        tbox.text_frame.paragraphs[0].font.bold = True
+        tbox.text_frame.paragraphs[0].font.color.rgb = c_wine
+        tbox.text_frame.paragraphs[0].font.name = font_bold
 
-    # СЛАЙД 4: ГРАФИК ДЕНЕЖНОГО ПОТОКА
-    slide4 = prs.slides.add_slide(blank_layout)
-    bg4 = slide4.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
-    bg4.fill.solid()
-    bg4.fill.fore_color.rgb = c_light_bg
-    bg4.line.fill.background()
-    add_corner_logo(slide4)
+        img_stream = img_func
+        slide.shapes.add_picture(img_stream, Inches(0.8), Inches(1.3), width=Inches(11.7))
 
-    tbox4 = slide4.shapes.add_textbox(Inches(0.8), Inches(0.4), Inches(10.0), Inches(0.8))
-    tbox4.text_frame.paragraphs[0].text = "Структура месячного денежного потока"
-    tbox4.text_frame.paragraphs[0].font.size = Pt(26)
-    tbox4.text_frame.paragraphs[0].font.bold = True
-    tbox4.text_frame.paragraphs[0].font.color.rgb = c_wine
-    tbox4.text_frame.paragraphs[0].font.name = font_bold
+    # СЛАЙД С ТАБЛИЦЕЙ ДЕТАЛИЗАЦИИ
+    slide_table = prs.slides.add_slide(blank_layout)
+    bg_t = slide_table.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
+    bg_t.fill.solid()
+    bg_t.fill.fore_color.rgb = c_light_bg
+    bg_t.line.fill.background()
+    add_corner_logo(slide_table)
 
-    chart2_img = create_matplotlib_chart_2(x_labels, inflows, outflows, net_cf)
-    slide4.shapes.add_picture(chart2_img, Inches(0.8), Inches(1.3), width=Inches(11.7))
-
-    # СЛАЙД 5: ТАБЛИЦА ДЕТАЛИЗАЦИИ
-    slide5 = prs.slides.add_slide(blank_layout)
-    bg5 = slide5.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
-    bg5.fill.solid()
-    bg5.fill.fore_color.rgb = c_light_bg
-    bg5.line.fill.background()
-    add_corner_logo(slide5)
-
-    title_box5 = slide5.shapes.add_textbox(Inches(0.8), Inches(0.5), Inches(10.0), Inches(0.8))
-    p_t5 = title_box5.text_frame.paragraphs[0]
-    p_t5.text = "Детализация денежных потоков по месяцам"
-    p_t5.font.size = Pt(28)
-    p_t5.font.bold = True
-    p_t5.font.color.rgb = c_wine
-    p_t5.font.name = font_bold
+    title_box_t = slide_table.shapes.add_textbox(Inches(0.8), Inches(0.4), Inches(10.0), Inches(0.8))
+    title_box_t.text_frame.paragraphs[0].text = "Детализация денежных потоков по месяцам"
+    title_box_t.text_frame.paragraphs[0].font.size = Pt(26)
+    title_box_t.text_frame.paragraphs[0].font.bold = True
+    title_box_t.text_frame.paragraphs[0].font.color.rgb = c_wine
+    title_box_t.text_frame.paragraphs[0].font.name = font_bold
 
     rows = min(period + 1, 13)
     cols = 5
-    table_shape = slide5.shapes.add_table(rows, cols, Inches(0.8), Inches(1.5), Inches(11.7), Inches(5.2))
+    table_shape = slide_table.shapes.add_table(rows, cols, Inches(0.8), Inches(1.3), Inches(11.7), Inches(5.4))
     table = table_shape.table
     
     table.columns[0].width = Inches(2.2)
@@ -255,7 +339,7 @@ def generate_pptx_bytes(period, start_month_idx, start_year, ru_months_full, x_l
         cell.fill.solid()
         cell.fill.fore_color.rgb = c_wine
         for p in cell.text_frame.paragraphs:
-            p.font.size = Pt(13)
+            p.font.size = Pt(12)
             p.font.bold = True
             p.font.color.rgb = c_white
             p.font.name = font_bold
@@ -275,7 +359,7 @@ def generate_pptx_bytes(period, start_month_idx, start_year, ru_months_full, x_l
             cell.fill.solid()
             cell.fill.fore_color.rgb = c_white if i % 2 == 0 else RGBColor(240, 235, 230)
             for p in cell.text_frame.paragraphs:
-                p.font.size = Pt(12)
+                p.font.size = Pt(11)
                 p.font.color.rgb = c_dark
                 p.font.name = font_regular
                 p.alignment = PP_ALIGN.CENTER if col_idx == 0 else PP_ALIGN.RIGHT
@@ -294,9 +378,9 @@ def send_report_to_email(to_email, pptx_bytes):
     msg = MIMEMultipart()
     msg['From'] = sender_email
     msg['To'] = to_email
-    msg['Subject'] = "🍷 КРАЙВИН: Финансовый отчёт и модель денежных потоков"
+    msg['Subject'] = "🍷 КРАЙВИН: Полный финансовый отчёт и модель денежных потоков"
 
-    body = "Здравствуйте!\n\nВо вложении находится актуальный финансовый отчет и сценарный анализ кассовых разрывов компании КРАЙВИН в формате PowerPoint (с фирменной символикой).\n\nС уважением,\nФинансовый департамент КРАЙВИН"
+    body = "Здравствуйте!\n\nВо вложении находится обновленный инвестиционный отчет компании КРАЙВИН в формате PowerPoint со всеми новыми аналитическими графиками.\n\nС уважением,\nФинансовый департамент КРАЙВИН"
     msg.attach(MIMEText(body, 'plain'))
 
     attachment = MIMEBase('application', 'vnd.openxmlformats-officedocument.presentationml.presentation')
