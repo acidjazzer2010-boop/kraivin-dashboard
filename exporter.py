@@ -9,7 +9,6 @@ from email import encoders
 
 import numpy as np
 import matplotlib.pyplot as plt
-from weasyprint import HTML
 
 def _fig_to_base64(fig):
     img_io = io.BytesIO()
@@ -164,7 +163,6 @@ def generate_html_report_bytes(**kwargs):
     total_taxes = kwargs.get('total_taxes', 0)
     total_other_opex = kwargs.get('total_other_opex', 0)
 
-    # Генерация графиков в base64
     img_liq = create_chart_liquidity_base64(x_labels, cash_balance)
     img_cf = create_chart_cash_flow_base64(x_labels, inflows, outflows, net_cf)
     img_ebitda = create_chart_margin_ebitda_base64(x_labels, rev, opex, taxes, cogs, margin_pct)
@@ -172,25 +170,23 @@ def generate_html_report_bytes(**kwargs):
     img_cum = create_chart_cumulative_base64(x_labels, cum_cf, initial_cash_buffer if isinstance(initial_cash_buffer, (int, float)) else 0)
     img_exp = create_chart_expenses_bar_base64(sum_purchases, total_fot, total_taxes, total_other_opex)
 
-    # Формирование HTML-структуры в стиле Notion / Gamma с Card UI
     html_content = f"""
     <!DOCTYPE html>
     <html lang="ru">
     <head>
         <meta charset="UTF-8">
+        <title>КРАЙВИН — Финансовый отчет</title>
         <style>
-            @page {{
-                size: A4;
-                margin: 15mm;
-                background-color: #FAFAF8;
-            }}
             body {{
                 font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
                 color: #2D2D2D;
                 margin: 0;
-                padding: 0;
-                line-height: 1.5;
+                padding: 30px;
                 background-color: #FAFAF8;
+            }}
+            .container {{
+                max-width: 900px;
+                margin: 0 auto;
             }}
             .header {{
                 background: linear-gradient(135deg, #642A38 0%, #451C26 100%);
@@ -198,43 +194,37 @@ def generate_html_report_bytes(**kwargs):
                 padding: 30px;
                 border-radius: 12px;
                 margin-bottom: 25px;
+                box-shadow: 0 4px 15px rgba(100, 42, 56, 0.15);
             }}
             .header h1 {{
                 margin: 0 0 10px 0;
-                font-size: 26px;
+                font-size: 28px;
                 font-weight: 700;
                 letter-spacing: 0.5px;
             }}
             .header p {{
                 margin: 0;
                 color: #E3C293;
-                font-size: 14px;
-            }}
-            .grid {{
-                display: table;
-                width: 100%;
-                table-layout: fixed;
-                margin-bottom: 20px;
+                font-size: 15px;
             }}
             .card {{
                 background: white;
                 border: 1px solid #E5E0DC;
-                border-radius: 10px;
-                padding: 20px;
-                margin-bottom: 20px;
+                border-radius: 12px;
+                padding: 25px;
+                margin-bottom: 25px;
                 box-shadow: 0 4px 12px rgba(100, 42, 56, 0.04);
-                page-break-inside: avoid;
             }}
-            .kpi-row {{
-                display: table-row;
+            .kpi-grid {{
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 15px;
             }}
             .kpi-col {{
-                display: table-cell;
-                width: 33.33%;
-                padding: 10px;
-                background: white;
+                background: #FDFCFB;
                 border: 1px solid #E5E0DC;
                 border-radius: 8px;
+                padding: 15px;
             }}
             .kpi-label {{
                 font-size: 11px;
@@ -249,12 +239,12 @@ def generate_html_report_bytes(**kwargs):
                 color: #642A38;
             }}
             h2 {{
-                font-size: 16px;
+                font-size: 18px;
                 color: #642A38;
                 margin-top: 0;
                 margin-bottom: 15px;
                 border-bottom: 2px solid #E3C293;
-                padding-bottom: 6px;
+                padding-bottom: 8px;
             }}
             .chart-container {{
                 text-align: center;
@@ -263,23 +253,23 @@ def generate_html_report_bytes(**kwargs):
             .chart-container img {{
                 max-width: 100%;
                 height: auto;
-                border-radius: 6px;
+                border-radius: 8px;
             }}
             table.data-table {{
                 width: 100%;
                 border-collapse: collapse;
                 margin-top: 10px;
-                font-size: 11px;
+                font-size: 12px;
             }}
             table.data-table th {{
                 background: #642A38;
                 color: white;
-                padding: 8px;
+                padding: 10px;
                 text-align: center;
                 font-weight: 600;
             }}
             table.data-table td {{
-                padding: 7px 8px;
+                padding: 9px 10px;
                 border-bottom: 1px solid #E5E0DC;
                 text-align: right;
             }}
@@ -290,119 +280,117 @@ def generate_html_report_bytes(**kwargs):
             table.data-table tr:nth-child(even) td {{
                 background: #F4F1EE;
             }}
+            @media print {{
+                body {{ background-color: white; padding: 0; }}
+                .card {{ border: none; box-shadow: none; padding: 10px 0; }}
+            }}
         </style>
     </head>
     <body>
+        <div class="container">
+            <div class="header">
+                <h1>КРАЙВИН — Финансовая модель</h1>
+                <p>Горизонт планирования: {period} мес. &nbsp;|&nbsp; Старт: {start_date} &nbsp;|&nbsp; Инвестиционный аналитический отчёт</p>
+            </div>
 
-        <div class="header">
-            <h1>КРАЙВИН — Финансовая модель</h1>
-            <p>Горизонт планирования: {period} мес. &nbsp;|&nbsp; Старт: {start_date} &nbsp;|&nbsp; Инвестиционный аналитический отчёт</p>
-        </div>
-
-        <div class="card">
-            <h2>Ключевые финансовые результаты (KPI)</h2>
-            <table style="width: 100%; border-spacing: 12px; border-collapse: separate; margin: -12px;">
-                <tr>
-                    <td class="kpi-col">
+            <div class="card">
+                <h2>Ключевые финансовые результаты (KPI)</h2>
+                <div class="kpi-grid">
+                    <div class="kpi-col">
                         <div class="kpi-label">Суммарная выручка</div>
                         <div class="kpi-value">{sum_rev}</div>
-                    </td>
-                    <td class="kpi-col">
+                    </div>
+                    <div class="kpi-col">
                         <div class="kpi-label">Макс. кассовый разрыв</div>
                         <div class="kpi-value">{max_deficit}</div>
-                    </td>
-                    <td class="kpi-col">
+                    </div>
+                    <div class="kpi-col">
                         <div class="kpi-label">Чистая прибыль</div>
                         <div class="kpi-value">{net_profit}</div>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="kpi-col">
+                    </div>
+                    <div class="kpi-col">
                         <div class="kpi-label">Рентабельность по ЧП</div>
                         <div class="kpi-value">{roi}</div>
-                    </td>
-                    <td class="kpi-col">
+                    </div>
+                    <div class="kpi-col">
                         <div class="kpi-label">Стартовый буфер ДС</div>
                         <div class="kpi-value">{initial_cash_buffer}</div>
-                    </td>
-                    <td class="kpi-col">
+                    </div>
+                    <div class="kpi-col">
                         <div class="kpi-label">Первоначальная закупка</div>
                         <div class="kpi-value">{initial_purchase}</div>
-                    </td>
-                </tr>
-            </table>
-        </div>
+                    </div>
+                </div>
+            </div>
 
-        <div class="card">
-            <h2>1. Динамика ликвидности и остаток средств</h2>
-            <div class="chart-container"><img src="data:image/png;base64,{img_liq}" /></div>
-        </div>
+            <div class="card">
+                <h2>1. Динамика ликвидности и остаток средств</h2>
+                <div class="chart-container"><img src="data:image/png;base64,{img_liq}" /></div>
+            </div>
 
-        <div class="card">
-            <h2>2. Структура месячного денежного потока</h2>
-            <div class="chart-container"><img src="data:image/png;base64,{img_cf}" /></div>
-        </div>
+            <div class="card">
+                <h2>2. Структура месячного денежного потока</h2>
+                <div class="chart-container"><img src="data:image/png;base64,{img_cf}" /></div>
+            </div>
 
-        <div class="card">
-            <h2>3. Динамика маржинальности и EBITDA</h2>
-            <div class="chart-container"><img src="data:image/png;base64,{img_ebitda}" /></div>
-        </div>
+            <div class="card">
+                <h2>3. Динамика маржинальности и EBITDA</h2>
+                <div class="chart-container"><img src="data:image/png;base64,{img_ebitda}" /></div>
+            </div>
 
-        <div class="card">
-            <h2>4. Структура притока ДС по источникам</h2>
-            <div class="chart-container"><img src="data:image/png;base64,{img_sources}" /></div>
-        </div>
+            <div class="card">
+                <h2>4. Структура притока ДС по источникам</h2>
+                <div class="chart-container"><img src="data:image/png;base64,{img_sources}" /></div>
+            </div>
 
-        <div class="card">
-            <h2>5. Накопленный денежный поток (Cumulative Cash Flow)</h2>
-            <div class="chart-container"><img src="data:image/png;base64,{img_cum}" /></div>
-        </div>
+            <div class="card">
+                <h2>5. Накопленный денежный поток (Cumulative Cash Flow)</h2>
+                <div class="chart-container"><img src="data:image/png;base64,{img_cum}" /></div>
+            </div>
 
-        <div class="card">
-            <h2>6. Структура совокупных расходов</h2>
-            <div class="chart-container"><img src="data:image/png;base64,{img_exp}" /></div>
-        </div>
+            <div class="card">
+                <h2>6. Структура совокупных расходов</h2>
+                <div class="chart-container"><img src="data:image/png;base64,{img_exp}" /></div>
+            </div>
 
-        <div class="card">
-            <h2>7. Детализация денежных потоков по месяцам</h2>
-            <table class="data-table">
-                <tr>
-                    <th>Месяц</th>
-                    <th>Выручка (руб)</th>
-                    <th>Поступления (руб)</th>
-                    <th>Выплаты (руб)</th>
-                    <th>Остаток ДС (руб)</th>
-                </tr>
+            <div class="card">
+                <h2>7. Детализация денежных потоков по месяцам</h2>
+                <table class="data-table">
+                    <tr>
+                        <th>Месяц</th>
+                        <th>Выручка (руб)</th>
+                        <th>Поступления (руб)</th>
+                        <th>Выплаты (руб)</th>
+                        <th>Остаток ДС (руб)</th>
+                    </tr>
     """
     
     rows_count = min(len(x_labels), 12)
     for i in range(rows_count):
         html_content += f"""
-                <tr>
-                    <td>{x_labels[i]}</td>
-                    <td>{rev[i]:,.0f}".replace(",", " ")</td>
-                    <td>{inflows[i]:,.0f}".replace(",", " ")</td>
-                    <td>{outflows[i]:,.0f}".replace(",", " ")</td>
-                    <td>{cash_balance[i]:,.0f}".replace(",", " ")</td>
-                </tr>
+                    <tr>
+                        <td>{x_labels[i]}</td>
+                        <td>{rev[i]:,.0f}".replace(",", " ")</td>
+                        <td>{inflows[i]:,.0f}".replace(",", " ")</td>
+                        <td>{outflows[i]:,.0f}".replace(",", " ")</td>
+                        <td>{cash_balance[i]:,.0f}".replace(",", " ")</td>
+                    </tr>
         """
         
     html_content += """
-            </table>
+                </table>
+            </div>
         </div>
-
     </body>
     </html>
     """
 
-    # Генерация PDF в память через Weasyprint
-    pdf_bytes = HTML(string=html_content).write_pdf()
-    pdf_io = io.BytesIO(pdf_bytes)
-    pdf_io.seek(0)
-    return pdf_io
+    html_io = io.BytesIO(html_content.encode('utf-8'))
+    html_io.seek(0)
+    return html_io
 
 
-def send_report_to_email(to_email, pdf_bytes):
+def send_report_to_email(to_email, html_bytes):
     smtp_server = os.getenv("SMTP_SERVER", "smtp.yandex.ru")
     smtp_port = int(os.getenv("SMTP_PORT", 465))
     sender_email = os.getenv("SMTP_USER", "finance@krayvin.ru")
@@ -411,15 +399,15 @@ def send_report_to_email(to_email, pdf_bytes):
     msg = MIMEMultipart()
     msg['From'] = sender_email
     msg['To'] = to_email
-    msg['Subject'] = "🍷 КРАЙВИН: Премиальный финансовый отчёт (PDF Лонгрид)"
+    msg['Subject'] = "🍷 КРАЙВИН: Премиальный финансовый отчёт (HTML Лонгрид)"
 
-    body = "Здравствуйте!\n\nВо вложении находится профессиональный инвестиционный отчет компании КРАЙВИН в формате премиального PDF-лонгрида.\n\nС уважением,\nФинансовый департамент КРАЙВИН"
+    body = "Здравствуйте!\n\nВо вложении находится профессиональный инвестиционный отчет компании КРАЙВИН в формате интерактивного HTML-лонгрида.\n\nС уважением,\nФинансовый департамент КРАЙВИН"
     msg.attach(MIMEText(body, 'plain'))
 
-    attachment = MIMEBase('application', 'pdf')
-    attachment.set_payload(pdf_bytes.getvalue())
+    attachment = MIMEBase('application', 'octet-stream')
+    attachment.set_payload(html_bytes.getvalue())
     encoders.encode_base64(attachment)
-    attachment.add_header('Content-Disposition', 'attachment', filename="Kraivin_Financial_Report.pdf")
+    attachment.add_header('Content-Disposition', 'attachment', filename="Kraivin_Financial_Report.html")
     msg.attach(attachment)
 
     try:
