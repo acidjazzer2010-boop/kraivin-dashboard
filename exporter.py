@@ -185,7 +185,7 @@ def generate_html_report_bytes(**kwargs):
                 background-color: #FAFAF8;
             }}
             .container {{
-                max-width: 900px;
+                max-width: 950px;
                 margin: 0 auto;
             }}
             .header {{
@@ -272,6 +272,7 @@ def generate_html_report_bytes(**kwargs):
                 padding: 9px 10px;
                 border-bottom: 1px solid #E5E0DC;
                 text-align: right;
+                white-space: nowrap;
             }}
             table.data-table td:first-child {{
                 text-align: center;
@@ -279,10 +280,6 @@ def generate_html_report_bytes(**kwargs):
             }}
             table.data-table tr:nth-child(even) td {{
                 background: #F4F1EE;
-            }}
-            @media print {{
-                body {{ background-color: white; padding: 0; }}
-                .card {{ border: none; box-shadow: none; padding: 10px 0; }}
             }}
         </style>
     </head>
@@ -365,15 +362,20 @@ def generate_html_report_bytes(**kwargs):
                     </tr>
     """
     
-    rows_count = min(len(x_labels), 12)
+    rows_count = min(len(x_labels), period)
     for i in range(rows_count):
+        rev_str = f"{rev[i]:,.0f}".replace(",", " ")
+        inf_str = f"{inflows[i]:,.0f}".replace(",", " ")
+        out_str = f"{outflows[i]:,.0f}".replace(",", " ")
+        bal_str = f"{cash_balance[i]:,.0f}".replace(",", " ")
+        
         html_content += f"""
                     <tr>
                         <td>{x_labels[i]}</td>
-                        <td>{rev[i]:,.0f}".replace(",", " ")</td>
-                        <td>{inflows[i]:,.0f}".replace(",", " ")</td>
-                        <td>{outflows[i]:,.0f}".replace(",", " ")</td>
-                        <td>{cash_balance[i]:,.0f}".replace(",", " ")</td>
+                        <td>{rev_str}</td>
+                        <td>{inf_str}</td>
+                        <td>{out_str}</td>
+                        <td>{bal_str}</td>
                     </tr>
         """
         
@@ -393,7 +395,7 @@ def generate_html_report_bytes(**kwargs):
 def send_report_to_email(to_email, html_bytes):
     smtp_server = os.getenv("SMTP_SERVER", "smtp.yandex.ru")
     smtp_port = int(os.getenv("SMTP_PORT", 465))
-    sender_email = os.getenv("SMTP_USER", "finance@krayvin.ru")
+    sender_email = os.getenv("SMTP_USER", "finance@kraivin.ru")
     sender_password = os.getenv("SMTP_PASSWORD", "ваш_пароль_приложения")
 
     msg = MIMEMultipart()
@@ -401,7 +403,7 @@ def send_report_to_email(to_email, html_bytes):
     msg['To'] = to_email
     msg['Subject'] = "🍷 КРАЙВИН: Премиальный финансовый отчёт (HTML Лонгрид)"
 
-    body = "Здравствуйте!\n\nВо вложении находится профессиональный инвестиционный отчет компании КРАЙВИН в формате интерактивного HTML-лонгрида.\n\nС уважением,\nФинансовый департамент КРАЙВИН"
+    body = "Здравствуйте!\n\nВо вложении находится отчет компании КРАЙВИН в формате интерактивного HTML-лонгрида.\n\nС уважением,\nФинансовый департамент КРАЙВИН"
     msg.attach(MIMEText(body, 'plain'))
 
     attachment = MIMEBase('application', 'octet-stream')
