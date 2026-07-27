@@ -142,40 +142,63 @@ col4.metric("Рентабельность по ЧП", f"{roi:.1f}%")
 
 st.divider()
 
-# --- ПРОФЕССИОНАЛЬНЫЙ ГЕНЕРАТОР ПРЕЗЕНТАЦИЙ (PPTX) ---
-def generate_professional_pptx():
+# --- ПОСТРОЕНИЕ ГРАФИКОВ (PLOTLY) ДЛЯ ПРИЛОЖЕНИЯ И ЭКСПОРТА ---
+
+fig1 = go.Figure()
+fig1.add_trace(go.Scatter(
+    x=x_labels, y=cash_balance, mode='lines+markers', name='Остаток ДС',
+    line=dict(color='#642A38', width=3), fill='tozeroy', fillcolor='rgba(100, 42, 56, 0.1)',
+    hovertemplate='%{y:,.0f} руб.<extra></extra>'
+))
+fig1.add_hline(y=0, line_dash="dash", line_color="red", annotation_text="Дефицит")
+fig1.update_layout(xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified", separators=", ")
+fig1.update_yaxes(tickformat=",.0f")
+
+fig2 = go.Figure()
+fig2.add_trace(go.Bar(x=x_labels, y=inflows, name='Поступления', marker_color='#E3C293', hovertemplate='%{y:,.0f} руб.<extra></extra>'))
+fig2.add_trace(go.Bar(x=x_labels, y=-outflows, name='Выплаты', marker_color='#642A38', hovertemplate='%{y:,.0f} руб.<extra></extra>'))
+fig2.add_trace(go.Scatter(x=x_labels, y=net_cf, name='Чистый поток', marker_color='#B88645', mode='lines+markers', hovertemplate='%{y:,.0f} руб.<extra></extra>'))
+fig2.update_layout(barmode='relative', xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified", separators=", ")
+fig2.update_yaxes(tickformat=",.0f")
+
+
+# --- ГЕНЕРАТОР ПРЕЗЕНТАЦИЙ С ЛОГОТИПОМ И ГРАФИКАМИ ---
+def generate_full_presentation():
     prs = Presentation()
-    prs.slide_width = Inches(13.333) # Широкий формат 16:9
+    prs.slide_width = Inches(13.333)
     prs.slide_height = Inches(7.5)
     
-    # Фирменная палитра
-    c_wine = RGBColor(100, 42, 56)      # #642A38 (Винный)
-    c_sand = RGBColor(227, 194, 147)   # #E3C293 (Песочный)
-    c_dark = RGBColor(30, 30, 30)      # Темно-серый текст
-    c_light_bg = RGBColor(248, 246, 244) # Светлый фон слайдов
+    c_wine = RGBColor(100, 42, 56)
+    c_sand = RGBColor(227, 194, 147)
+    c_dark = RGBColor(30, 30, 30)
+    c_light_bg = RGBColor(248, 246, 244)
     c_white = RGBColor(255, 255, 255)
-    c_card_bg = RGBColor(255, 255, 255)
     c_card_border = RGBColor(220, 210, 205)
 
-    blank_layout = prs.slide_layouts[6] # Пустой слайд для кастомной верстки
+    blank_layout = prs.slide_layouts[6]
 
-    # --- СЛАЙД 1: ТИТУЛЬНЫЙ (ПРЕМИУМ СТИЛЬ) ---
+    # Вспомогательная функция для добавления водяного знака / логотипа в угол слайда
+    def add_corner_logo(slide):
+        if os.path.exists(logo_path):
+            slide.shapes.add_picture(logo_path, Inches(11.8), Inches(0.4), width=Inches(1.1))
+
+    # --- СЛАЙД 1: ТИТУЛЬНЫЙ ---
     slide1 = prs.slides.add_slide(blank_layout)
-    
-    # Заливка фона титульного слайда винным цветом
     bg1 = slide1.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
     bg1.fill.solid()
     bg1.fill.fore_color.rgb = c_wine
     bg1.line.fill.background()
 
-    # Декоративный песочный акцент (плашка слева)
     accent1 = slide1.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0.8), Inches(2.0), Inches(0.15), Inches(3.5))
     accent1.fill.solid()
     accent1.fill.fore_color.rgb = c_sand
     accent1.line.fill.background()
 
-    # Текст заголовка
-    txBox = slide1.shapes.add_textbox(Inches(1.2), Inches(2.2), Inches(11.0), Inches(3.0))
+    # Логотип на титульном
+    if os.path.exists(logo_path):
+        slide1.shapes.add_picture(logo_path, Inches(1.2), Inches(0.8), width=Inches(1.8))
+
+    txBox = slide1.shapes.add_textbox(Inches(1.2), Inches(2.5), Inches(10.5), Inches(3.5))
     tf = txBox.text_frame
     tf.word_wrap = True
     
@@ -188,7 +211,7 @@ def generate_professional_pptx():
 
     p2 = tf.add_paragraph()
     p2.text = "Финансовая модель и анализ денежных потоков"
-    p2.font.size = Pt(28)
+    p2.font.size = Pt(26)
     p2.font.color.rgb = c_sand
     p2.font.name = "Arial"
     p2.space_before = Pt(10)
@@ -198,29 +221,25 @@ def generate_professional_pptx():
     p3.font.size = Pt(16)
     p3.font.color.rgb = c_white
     p3.font.name = "Arial"
-    p3.space_before = Pt(40)
+    p3.space_before = Pt(35)
 
 
-    # --- СЛАЙД 2: КЛЮЧЕВЫЕ ПОКАЗАТЕЛИ (КАРТОЧКИ KPI) ---
+    # --- СЛАЙД 2: KPI КАРТОЧКИ ---
     slide2 = prs.slides.add_slide(blank_layout)
-    
-    # Фоновая подложка
     bg2 = slide2.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
     bg2.fill.solid()
     bg2.fill.fore_color.rgb = c_light_bg
     bg2.line.fill.background()
+    add_corner_logo(slide2)
 
-    # Шапка слайда
-    title_box = slide2.shapes.add_textbox(Inches(0.8), Inches(0.6), Inches(11.0), Inches(1.0))
-    tf2 = title_box.text_frame
-    p_t = tf2.paragraphs[0]
-    p_t.text = "Ключевые финансовые результаты"
-    p_t.font.size = Pt(32)
-    p_t.font.bold = True
-    p_t.font.color.rgb = c_wine
-    p_t.font.name = "Arial"
+    title_box2 = slide2.shapes.add_textbox(Inches(0.8), Inches(0.5), Inches(10.0), Inches(0.8))
+    tf2 = title_box2.text_frame
+    p_t2 = tf2.paragraphs[0]
+    p_t2.text = "Ключевые финансовые результаты"
+    p_t2.font.size = Pt(28)
+    p_t2.font.bold = True
+    p_t2.font.color.rgb = c_wine
 
-    # Массив KPI для карточек
     kpis = [
         ("Суммарная выручка", format_rub(sum(rev))),
         ("Макс. кассовый разрыв", format_rub(max_deficit)),
@@ -230,10 +249,9 @@ def generate_professional_pptx():
         ("Первоначальная закупка", format_rub(initial_purchase))
     ]
 
-    # Рисуем сетку карточек 3х2
-    card_w, card_h = Inches(3.6), Inches(2.2)
-    start_x, start_y = Inches(0.8), Inches(1.8)
-    gap_x, gap_y = Inches(0.4), Inches(0.4)
+    card_w, card_h = Inches(3.6), Inches(2.1)
+    start_x, start_y = Inches(0.8), Inches(1.6)
+    gap_x, gap_y = Inches(0.4), Inches(0.35)
 
     for idx, (label, val) in enumerate(kpis):
         col_idx = idx % 3
@@ -241,58 +259,90 @@ def generate_professional_pptx():
         x = start_x + col_idx * (card_w + gap_x)
         y = start_y + row_idx * (card_h + gap_y)
 
-        # Подложка карточки
         card = slide2.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, x, y, card_w, card_h)
         card.fill.solid()
         card.fill.fore_color.rgb = c_white
         card.line.color.rgb = c_card_border
         card.line.width = Pt(1)
 
-        # Текст внутри карточки
         tf_card = card.text_frame
         tf_card.word_wrap = True
-        tf_card.margin_left = Inches(0.2)
+        tf_card.margin_left = Inches(0.25)
         tf_card.margin_top = Inches(0.2)
         
         p_lbl = tf_card.paragraphs[0]
         p_lbl.text = label.upper()
-        p_lbl.font.size = Pt(12)
+        p_lbl.font.size = Pt(11)
         p_lbl.font.color.rgb = RGBColor(120, 120, 120)
         p_lbl.font.bold = True
 
         p_val = tf_card.add_paragraph()
         p_val.text = val
-        p_val.font.size = Pt(22)
+        p_val.font.size = Pt(20)
         p_val.font.color.rgb = c_wine
         p_val.font.bold = True
-        p_val.space_before = Pt(10)
+        p_val.space_before = Pt(8)
 
 
-    # --- СЛАЙД 3: ТАБЛИЦА ДЕТАЛИЗАЦИИ ---
+    # --- СЛАЙД 3: ГРАФИК ЛИКВИДНОСТИ ---
     slide3 = prs.slides.add_slide(blank_layout)
-    
     bg3 = slide3.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
     bg3.fill.solid()
     bg3.fill.fore_color.rgb = c_light_bg
     bg3.line.fill.background()
+    add_corner_logo(slide3)
 
-    title_box3 = slide3.shapes.add_textbox(Inches(0.8), Inches(0.5), Inches(11.0), Inches(0.8))
-    tf3 = title_box3.text_frame
-    p_t3 = tf3.paragraphs[0]
-    p_t3.text = "Детализация денежных потоков по месяцам"
-    p_t3.font.size = Pt(28)
-    p_t3.font.bold = True
-    p_t3.font.color.rgb = c_wine
+    tbox3 = slide3.shapes.add_textbox(Inches(0.8), Inches(0.5), Inches(10.0), Inches(0.8))
+    tbox3.text_frame.paragraphs[0].text = "Динамика ликвидности и остаток средств"
+    tbox3.text_frame.paragraphs[0].font.size = Pt(28)
+    tbox3.text_frame.paragraphs[0].font.bold = True
+    tbox3.text_frame.paragraphs[0].font.color.rgb = c_wine
 
-    # Создание таблицы
-    rows = min(period + 1, 13) # Ограничим до 12 месяцев на слайд для читаемости
+    # Экспорт графика 1 в картинку
+    img1_bytes = fig1.to_image(format="png", width=1200, height=600, scale=2)
+    img1_stream = io.BytesIO(img1_bytes)
+    slide3.shapes.add_picture(img1_stream, Inches(0.8), Inches(1.5), width=Inches(11.7))
+
+
+    # --- СЛАЙД 4: СТРУКТУРА ДЕНЕЖНОГО ПОТОКА ---
+    slide4 = prs.slides.add_slide(blank_layout)
+    bg4 = slide4.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
+    bg4.fill.solid()
+    bg4.fill.fore_color.rgb = c_light_bg
+    bg4.line.fill.background()
+    add_corner_logo(slide4)
+
+    tbox4 = slide4.shapes.add_textbox(Inches(0.8), Inches(0.5), Inches(10.0), Inches(0.8))
+    tbox4.text_frame.paragraphs[0].text = "Структура месячного денежного потока"
+    tbox4.text_frame.paragraphs[0].font.size = Pt(28)
+    tbox4.text_frame.paragraphs[0].font.bold = True
+    tbox4.text_frame.paragraphs[0].font.color.rgb = c_wine
+
+    # Экспорт графика 2 в картинку
+    img2_bytes = fig2.to_image(format="png", width=1200, height=600, scale=2)
+    img2_stream = io.BytesIO(img2_bytes)
+    slide4.shapes.add_picture(img2_stream, Inches(0.8), Inches(1.5), width=Inches(11.7))
+
+
+    # --- СЛАЙД 5: ТАБЛИЦА ДЕТАЛИЗАЦИИ ---
+    slide5 = prs.slides.add_slide(blank_layout)
+    bg5 = slide5.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
+    bg5.fill.solid()
+    bg5.fill.fore_color.rgb = c_light_bg
+    bg5.line.fill.background()
+    add_corner_logo(slide5)
+
+    title_box5 = slide5.shapes.add_textbox(Inches(0.8), Inches(0.5), Inches(10.0), Inches(0.8))
+    title_box5.text_frame.paragraphs[0].text = "Детализация денежных потоков по месяцам"
+    title_box5.text_frame.paragraphs[0].font.size = Pt(28)
+    title_box5.text_frame.paragraphs[0].font.bold = True
+    title_box5.text_frame.paragraphs[0].font.color.rgb = c_wine
+
+    rows = min(period + 1, 13)
     cols = 5
-    t_left, t_top, t_width, t_height = Inches(0.8), Inches(1.5), Inches(11.7), Inches(5.2)
-    
-    table_shape = slide3.shapes.add_table(rows, cols, t_left, t_top, t_width, t_height)
+    table_shape = slide5.shapes.add_table(rows, cols, Inches(0.8), Inches(1.5), Inches(11.7), Inches(5.2))
     table = table_shape.table
     
-    # Настройка ширины колонок
     table.columns[0].width = Inches(2.2)
     table.columns[1].width = Inches(2.4)
     table.columns[2].width = Inches(2.4)
@@ -323,81 +373,33 @@ def generate_professional_pptx():
             cell = table.cell(i+1, col_idx)
             cell.text = val
             cell.fill.solid()
-            if i % 2 == 0:
-                cell.fill.fore_color.rgb = RGBColor(255, 255, 255)
-            else:
-                cell.fill.fore_color.rgb = RGBColor(240, 235, 230)
-                
+            cell.fill.fore_color.rgb = c_white if i % 2 == 0 else RGBColor(240, 235, 230)
             for p in cell.text_frame.paragraphs:
                 p.font.size = Pt(12)
                 p.font.color.rgb = c_dark
                 p.alignment = PP_ALIGN.CENTER if col_idx == 0 else PP_ALIGN.RIGHT
 
-    # Сохранение в буфер
     ppt_io = io.BytesIO()
     prs.save(ppt_io)
     ppt_io.seek(0)
     return ppt_io
 
-# Кнопка скачивания презентации в интерфейсе
+# Кнопка скачивания презентации
 st.sidebar.divider()
 st.sidebar.subheader("Экспорт отчета")
-if st.sidebar.button("📥 Скачать профессиональную презентацию (PPTX)"):
-    pptx_data = generate_professional_pptx()
+if st.sidebar.button("📥 Скачать презентацию с лого и графиками"):
+    with st.spinner("Генерация слайдов и экспорт графиков высокого разрешения..."):
+        pptx_data = generate_full_presentation()
     st.sidebar.download_button(
         label="💾 Нажмите для сохранения файла",
         data=pptx_data,
-        file_name="Kraivin_Professional_Report.pptx",
+        file_name="Kraivin_Investment_Report.pptx",
         mime="application/vnd.openxmlformats-officedocument.presentationml.presentation"
     )
 
-# --- ВИЗУАЛИЗАЦИЯ (ГРАФИКИ PLOTLY) ---
+# --- ВИЗУАЛИЗАЦИЯ НА ЭКРАНЕ ---
 st.subheader("Динамика ликвидности и остаток средств")
-
-fig1 = go.Figure()
-fig1.add_trace(go.Scatter(
-    x=x_labels, 
-    y=cash_balance, 
-    mode='lines+markers', 
-    name='Остаток ДС',
-    line=dict(color='#642A38', width=3),
-    fill='tozeroy',
-    fillcolor='rgba(100, 42, 56, 0.1)',
-    hovertemplate='%{y:,.0f} руб.<extra></extra>'
-))
-fig1.add_hline(y=0, line_dash="dash", line_color="red", annotation_text="Дефицит")
-fig1.update_layout(
-    xaxis_title="Месяц", 
-    yaxis_title="Рубли", 
-    hovermode="x unified",
-    separators=", "
-)
-fig1.update_yaxes(tickformat=",.0f")
 st.plotly_chart(fig1, use_container_width=True)
 
-
 st.subheader("Структура месячного денежного потока")
-fig2 = go.Figure()
-fig2.add_trace(go.Bar(
-    x=x_labels, y=inflows, name='Поступления', marker_color='#E3C293',
-    hovertemplate='%{y:,.0f} руб.<extra></extra>'
-))
-fig2.add_trace(go.Bar(
-    x=x_labels, y=-outflows, name='Выплаты', marker_color='#642A38',
-    hovertemplate='%{y:,.0f} руб.<extra></extra>'
-))
-fig2.add_trace(go.Scatter(
-    x=x_labels, y=net_cf, name='Чистый поток', marker_color='#B88645',
-    mode='lines+markers',
-    hovertemplate='%{y:,.0f} руб.<extra></extra>'
-))
-
-fig2.update_layout(
-    barmode='relative', 
-    xaxis_title="Месяц", 
-    yaxis_title="Рубли", 
-    hovermode="x unified",
-    separators=", "
-)
-fig2.update_yaxes(tickformat=",.0f")
 st.plotly_chart(fig2, use_container_width=True)
