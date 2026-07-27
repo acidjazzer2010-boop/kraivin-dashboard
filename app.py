@@ -142,7 +142,7 @@ col4.metric("Рентабельность по ЧП", f"{roi:.1f}%")
 
 st.divider()
 
-# --- ПОСТРОЕНИЕ ГРАФИКОВ (PLOTLY) ДЛЯ ЭКРАНА И ПРЕЗЕНТАЦИИ ---
+# --- ПОСТРОЕНИЕ ГРАФИКОВ (PLOTLY) ДЛЯ ЭКРАНА ---
 fig1 = go.Figure()
 fig1.add_trace(go.Scatter(
     x=x_labels, y=cash_balance, mode='lines+markers', name='Остаток ДС',
@@ -167,14 +167,14 @@ fig2.update_layout(
 fig2.update_yaxes(tickformat=",.0f")
 
 
-# --- ГЕНЕРАТОР ПРЕЗЕНТАЦИЙ С ГРАФИКАМИ И ШРИФТАМИ ---
+# --- ГЕНЕРАТОР ПРОФЕССИОНАЛЬНОЙ ПРЕЗЕНТАЦИИ (БЕЗ ОШИБОК KALEIDO) ---
 def generate_full_presentation():
     prs = Presentation()
     prs.slide_width = Inches(13.333)
     prs.slide_height = Inches(7.5)
     
-    c_wine = RGBColor(100, 42, 56)
-    c_sand = RGBColor(227, 194, 147)
+    c_wine = RGBColor(100, 42, 56)      # #642A38
+    c_sand = RGBColor(227, 194, 147)   # #E3C293
     c_dark = RGBColor(30, 30, 30)
     c_light_bg = RGBColor(248, 246, 244)
     c_white = RGBColor(255, 255, 255)
@@ -291,7 +291,7 @@ def generate_full_presentation():
         p_val.font.name = font_black
         p_val.space_before = Pt(8)
 
-    # СЛАЙД 3: ГРАФИК ЛИКВИДНОСТИ
+    # СЛАЙД 3: СВОДКА ДИНАМИКИ ЛИКВИДНОСТИ (АЛЬТЕРНАТИВА ГРАФИКАМ ДЛЯ СТАБИЛЬНОСТИ)
     slide3 = prs.slides.add_slide(blank_layout)
     bg3 = slide3.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
     bg3.fill.solid()
@@ -300,21 +300,53 @@ def generate_full_presentation():
     add_corner_logo(slide3)
 
     tbox3 = slide3.shapes.add_textbox(Inches(0.8), Inches(0.5), Inches(10.0), Inches(0.8))
-    tbox3.text_frame.paragraphs[0].text = "Динамика ликвидности и остаток средств"
+    tbox3.text_frame.paragraphs[0].text = "Анализ ликвидности и денежных потоков"
     tbox3.text_frame.paragraphs[0].font.size = Pt(28)
     tbox3.text_frame.paragraphs[0].font.bold = True
     tbox3.text_frame.paragraphs[0].font.color.rgb = c_wine
     tbox3.text_frame.paragraphs[0].font.name = font_bold
 
-    try:
-        img1_bytes = fig1.to_image(format="png", width=1200, height=600, scale=2, engine="kaleido")
-        slide3.shapes.add_picture(io.BytesIO(img1_bytes), Inches(0.8), Inches(1.5), width=Inches(11.7))
-    except Exception:
-        # Резервный блок: если калейдо недоступно, добавляем текстовое уведомление на слайд
-        tb_err = slide3.shapes.add_textbox(Inches(0.8), Inches(3.0), Inches(10.0), Inches(1.0))
-        tb_err.text_frame.text = "[График доступен в интерактивной веб-версии дашборда]"
+    # Карточка с аналитическими выводами
+    card_sum = slide3.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(1.6), Inches(11.7), Inches(5.0))
+    card_sum.fill.solid()
+    card_sum.fill.fore_color.rgb = c_white
+    card_sum.line.color.rgb = c_card_border
+    
+    tf_sum = card_sum.text_frame
+    tf_sum.word_wrap = True
+    tf_sum.margin_left = Inches(0.4)
+    tf_sum.margin_top = Inches(0.4)
 
-    # СЛАЙД 4: СТРУКТУРА ДЕНЕЖНОГО ПОТОКА
+    p_s1 = tf_sum.paragraphs[0]
+    p_s1.text = "• Управление кассовыми разрывами:"
+    p_s1.font.bold = True
+    p_s1.font.size = Pt(16)
+    p_s1.font.color.rgb = c_wine
+    p_s1.font.name = font_bold
+
+    p_s2 = tf_sum.add_paragraph()
+    p_s2.text = f"  Максимальный кассовый разрыв за выбранный период составляет {format_rub(max_deficit)}. Начальный буфер ликвидности заложен на уровне {format_rub(initial_cash_buffer)}."
+    p_s2.font.size = Pt(14)
+    p_s2.font.color.rgb = c_dark
+    p_s2.font.name = font_regular
+    p_s2.space_before = Pt(4)
+
+    p_s3 = tf_sum.add_paragraph()
+    p_s3.text = "• Операционный цикл и оборотный капитал:"
+    p_s3.font.bold = True
+    p_s3.font.size = Pt(16)
+    p_s3.font.color.rgb = c_wine
+    p_s3.font.name = font_bold
+    p_s3.space_before = Pt(16)
+
+    p_s4 = tf_sum.add_paragraph()
+    p_s4.text = f"  Установленная отсрочка платежа покупателям ({customer_delay_days} дней) и отсрочка поставщикам ({delay_days} дней) сбалансированы с учетом доли факторинга ({factoring_share}%)."
+    p_s4.font.size = Pt(14)
+    p_s4.font.color.rgb = c_dark
+    p_s4.font.name = font_regular
+    p_s4.space_before = Pt(4)
+
+    # СЛАЙД 4: ТАБЛИЦА ДЕТАЛИЗАЦИИ
     slide4 = prs.slides.add_slide(blank_layout)
     bg4 = slide4.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
     bg4.fill.solid()
@@ -322,39 +354,17 @@ def generate_full_presentation():
     bg4.line.fill.background()
     add_corner_logo(slide4)
 
-    tbox4 = slide4.shapes.add_textbox(Inches(0.8), Inches(0.5), Inches(10.0), Inches(0.8))
-    tbox4.text_frame.paragraphs[0].text = "Структура месячного денежного потока"
-    tbox4.text_frame.paragraphs[0].font.size = Pt(28)
-    tbox4.text_frame.paragraphs[0].font.bold = True
-    tbox4.text_frame.paragraphs[0].font.color.rgb = c_wine
-    tbox4.text_frame.paragraphs[0].font.name = font_bold
-
-    try:
-        img2_bytes = fig2.to_image(format="png", width=1200, height=600, scale=2, engine="kaleido")
-        slide4.shapes.add_picture(io.BytesIO(img2_bytes), Inches(0.8), Inches(1.5), width=Inches(11.7))
-    except Exception:
-        tb_err2 = slide4.shapes.add_textbox(Inches(0.8), Inches(3.0), Inches(10.0), Inches(1.0))
-        tb_err2.text_frame.text = "[График доступен в интерактивной веб-версии дашборда]"
-
-    # СЛАЙД 5: ТАБЛИЦА ДЕТАЛИЗАЦИИ
-    slide5 = prs.slides.add_slide(blank_layout)
-    bg5 = slide5.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
-    bg5.fill.solid()
-    bg5.fill.fore_color.rgb = c_light_bg
-    bg5.line.fill.background()
-    add_corner_logo(slide5)
-
-    title_box5 = slide5.shapes.add_textbox(Inches(0.8), Inches(0.5), Inches(10.0), Inches(0.8))
-    p_t5 = title_box5.text_frame.paragraphs[0]
-    p_t5.text = "Детализация денежных потоков по месяцам"
-    p_t5.font.size = Pt(28)
-    p_t5.font.bold = True
-    p_t5.font.color.rgb = c_wine
-    p_t5.font.name = font_bold
+    title_box4 = slide4.shapes.add_textbox(Inches(0.8), Inches(0.5), Inches(10.0), Inches(0.8))
+    p_t4 = title_box4.text_frame.paragraphs[0]
+    p_t4.text = "Детализация денежных потоков по месяцам"
+    p_t4.font.size = Pt(28)
+    p_t4.font.bold = True
+    p_t4.font.color.rgb = c_wine
+    p_t4.font.name = font_bold
 
     rows = min(period + 1, 13)
     cols = 5
-    table_shape = slide5.shapes.add_table(rows, cols, Inches(0.8), Inches(1.5), Inches(11.7), Inches(5.2))
+    table_shape = slide4.shapes.add_table(rows, cols, Inches(0.8), Inches(1.5), Inches(11.7), Inches(5.2))
     table = table_shape.table
     
     table.columns[0].width = Inches(2.2)
