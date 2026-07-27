@@ -292,7 +292,7 @@ def send_report_to_email(to_email, pptx_bytes):
     # Читаем параметры из st.secrets или задаем дефолтные значения
     smtp_server = os.getenv("SMTP_SERVER", "smtp.yandex.ru")
     smtp_port = int(os.getenv("SMTP_PORT", 465))
-    sender_email = os.getenv("SMTP_USER", "finance@krayvin.ru")
+    sender_email = os.getenv("SMTP_USER", "finance@kraivin.ru")
     sender_password = os.getenv("SMTP_PASSWORD", "ваш_пароль_приложения")
 
     msg = MIMEMultipart()
@@ -300,7 +300,7 @@ def send_report_to_email(to_email, pptx_bytes):
     msg['To'] = to_email
     msg['Subject'] = "КРАЙВИН: Финансовый отчёт и модель денежных потоков"
 
-    body = "Здравствуйте!\n\nВо вложении находится актуальный финансовый отчет и сценарный анализ кассовых разрывов компании КРАЙВИН в формате PowerPoint.\n\nС уважением,\nФинансовый департамент КРАЙВИН"
+    body = "Здравствуйте!\n\nВо вложении находится актуальный финансовый отчет КРАЙВИН в формате PowerPoint.\n\nС уважением,\nФинансовый департамент КРАЙВИН"
     msg.attach(MIMEText(body, 'plain'))
 
     # Прикрепляем файл презентации
