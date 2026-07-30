@@ -8,20 +8,17 @@ from exporter import generate_html_report_bytes, send_report_to_email
 
 # Настройка страницы
 st.set_page_config(
-    page_title="КРАЙВИН - анализ экономической эффективности", 
+    page_title="Анализ экономической эффективности", 
     page_icon="🍷", 
     layout="wide"
 )
 
-st.title("КРАЙВИН: Анализ денежных потоков и рентабельности")
+st.title("Анализ денежных потоков и рентабельности")
 st.markdown("Интерактивная финансовая модель для сценарного анализа кассовых разрывов.")
 
 # --- БОКОВАЯ ПАНЕЛЬ (ВВОД ДАННЫХ) ---
-logo_path = "КРАЙВИН лого винный квадрат.png"
-if os.path.exists(logo_path):
-    st.sidebar.image(logo_path, use_container_width=True)
-else:
-    st.sidebar.info("💡 Загрузите файл 'КРАЙВИН лого винный квадрат.png' в папку с кодом для отображения логотипа.")
+
+
 
 st.sidebar.header("Параметры модели")
 
