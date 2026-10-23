@@ -12,7 +12,7 @@ try:
 except ImportError:
     EXPORTER_AVAILABLE = False
     def generate_html_report_bytes(**kwargs):
-        return b"<html><body><h2>\xd0\x9e\xd1\x82\xd1\x87\xd0\xb5\xd1\x82 \xd1\x81\xd1\x84\xd0\xbe\xd1\x80\xd0\xbc\xd0\xb8\xd1\x80\xd0\xbe\xd0\xb2\xd0\xb0\xd0\xbd</h2></body></html>"
+        return "<html><body><h2>Отчет сформирован</h2></body></html>".encode("utf-8")
     def send_report_to_email(email, data):
         return False
 
@@ -515,4 +515,7 @@ with tab_debt:
     
     fig_debt = go.Figure()
     bar_color = "#3b82f6" if is_dark else "#2563eb"
-    line_color = "#f43f5e" if is
+    line_color = "#f43f5e" if is_dark else "#dc2626"
+    
+    fig_debt.add_trace(go.Bar(
+        x=x_labels, y=interest_payments,
