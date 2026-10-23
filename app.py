@@ -14,8 +14,8 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("Анализ денежных потоков и рентабельности")
-st.markdown("Интерактивная финансовая модель для сценарного анализа кассовых разрывов.")
+st.title("Анализ денежных потоков, рентабельности и инвестиций")
+st.markdown("Интерактивная финансовая модель: анализ кассовых разрывов и расчет графика необходимых инвестиций (дотаций).")
 
 # --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ФОРМАТИРОВАНИЯ ---
 def format_num_spaced(val: int) -> str:
@@ -47,7 +47,7 @@ st.sidebar.header("Параметры модели")
 ru_months_full = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
 col_m, col_y = st.sidebar.columns(2)
 
-# По умолчанию выбран Октябрь (индекс 9) 2026 года
+# Старт по умолчанию: Октябрь 2026
 start_month_idx = col_m.selectbox("Месяц старта", range(12), index=9, format_func=lambda x: ru_months_full[x])
 start_year = col_y.selectbox("Год старта", [2026, 2027], index=0)
 
@@ -176,7 +176,27 @@ outflows = cogs_payments + opex + taxes_and_commissions
 net_cf = inflows - outflows
 
 cum_cf = np.cumsum(net_cf)
-cash_balance = cum_cf + initial_cash_buffer
+cash_balance_raw = cum_cf + initial_cash_buffer
+
+# --- РАСЧЕТ ДОТАЦИЙ / ИНВЕСТИЦИЙ ДЛЯ ПОКРЫТИЯ ДЕФИЦИТА ---
+monthly_investments = np.zeros(period)
+funded_cash_balance = np.zeros(period)
+curr_balance = initial_cash_buffer
+
+for i in range(period):
+    # Доступные средства с учетом притоков и обязательств
+    potential_balance = curr_balance + net_cf[i]
+    if potential_balance < 0:
+        needed_injection = abs(potential_balance)
+        monthly_investments[i] = needed_injection
+        curr_balance = 0.0
+    else:
+        monthly_investments[i] = 0.0
+        curr_balance = potential_balance
+    funded_cash_balance[i] = curr_balance
+
+cum_investments = np.cumsum(monthly_investments)
+total_investments_required = cum_investments[-1]
 
 sum_purchases = sum(cogs_payments)
 total_fot = sum(np.full(period, monthly_fot))
@@ -193,11 +213,12 @@ roi = (net_profit / sum(rev)) * 100 if sum(rev) > 0 else 0
 def format_rub(val):
     return f"{val:,.0f}".replace(",", " ") + " руб."
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3, col4, col5 = st.columns(5)
 col1.metric(f"Выручка (за {period} мес)", format_rub(sum(rev)))
-col2.metric("Макс. кассовый разрыв", format_rub(max_deficit))
-col3.metric("Чистая прибыль", format_rub(net_profit))
-col4.metric("Рентабельность по ЧП", f"{roi:.1f}%")
+col2.metric("Объем требуемых инвестиций", format_rub(total_investments_required))
+col3.metric("Макс. кассовый разрыв", format_rub(max_deficit))
+col4.metric("Чистая прибыль", format_rub(net_profit))
+col5.metric("Рентабельность по ЧП", f"{roi:.1f}%")
 
 st.divider()
 
@@ -214,7 +235,7 @@ html_data = generate_html_report_bytes(
     initial_cash_buffer=format_rub(initial_cash_buffer),
     initial_purchase=format_rub(initial_purchase),
     x_labels=x_labels,
-    cash_balance=cash_balance,
+    cash_balance=funded_cash_balance,
     inflows=inflows,
     outflows=outflows,
     net_cf=net_cf,
@@ -255,29 +276,97 @@ st.divider()
 # --- ВИЗУАЛИЗАЦИЯ НА ВКЛАДКАХ С ПОДПИСЯМИ ЗНАЧЕНИЙ ---
 st.subheader("📊 Аналитические панели и графики")
 
-tab1, tab2, tab3 = st.tabs(["💰 Ликвидность и Денежный поток", "📈 Рентабельность и Источники", "📉 Накопленный итог и Расходы"])
+tab1, tab2, tab3, tab4 = st.tabs([
+    "💸 Необходимые Инвестиции и Дотации",
+    "💰 Ликвидность и Денежный поток", 
+    "📈 Рентабельность и Источники", 
+    "📉 Накопленный итог и Расходы"
+])
 
 with tab1:
-    st.markdown("### Динамика ликвидности и остаток средств")
+    st.markdown("### График потребности в инвестициях (дотациях)")
+    st.caption("Показывает, сколько именно свободных средств нужно влить в каждый конкретный месяц при дефиците собственных потоков от продаж.")
+    
+    fig_inv = go.Figure()
+    
+    # Помесячная потребность в дотациях (Столбцы)
+    fig_inv.add_trace(go.Bar(
+        x=x_labels, 
+        y=monthly_investments, 
+        name='Дотация в месяце (инвестиция)',
+        marker_color='#B88645',
+        text=[f"{v:,.0f}".replace(",", " ") if v > 0 else "" for v in monthly_investments],
+        textposition='outside'
+    ))
+    
+    # Накопленный объем инвестиций (Линия)
+    fig_inv.add_trace(go.Scatter(
+        x=x_labels, 
+        y=cum_investments, 
+        name='Накопленный объем инвестиций',
+        yaxis='y2',
+        mode='lines+markers+text',
+        line=dict(color='#642A38', width=3),
+        text=[f"{v:,.0f}".replace(",", " ") if v > 0 else "" for v in cum_investments],
+        textposition='top left'
+    ))
+    
+    fig_inv.update_layout(
+        xaxis_title="Месяц",
+        yaxis_title="Сумма дотации за месяц (руб)",
+        yaxis2=dict(
+            title="Накопленные инвестиции (руб)",
+            overlaying='y',
+            side='right',
+            showgrid=False
+        ),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        hovermode="x unified"
+    )
+    st.plotly_chart(fig_inv, use_container_width=True)
+    
+    # Сводная таблица по дотациям
+    inv_df = pd.DataFrame({
+        "Месяц": x_labels,
+        "Поступления от продаж (руб)": [format_num_spaced(v) for v in inflows],
+        "Выплаты (закупки + OPEX + налоги)": [format_num_spaced(v) for v in outflows],
+        "Чистый дефицит / профицит": [format_num_spaced(v) for v in net_cf],
+        "Требуемая дотация в месяце": [format_num_spaced(v) for v in monthly_investments],
+        "Всего инвестировано накопленно": [format_num_spaced(v) for v in cum_investments]
+    })
+    st.dataframe(inv_df, hide_index=True, use_container_width=True)
+
+with tab2:
+    st.markdown("### Динамика ликвидности (с учетом дотаций и без)")
     fig1 = go.Figure()
+    
+    # Чистый баланс без дотаций (с уходом в минус)
     fig1.add_trace(go.Scatter(
-        x=x_labels, y=cash_balance, mode='lines+markers+text', name='Остаток ДС',
-        text=[f"{v:,.0f}".replace(",", " ") for v in cash_balance], textposition="top center",
+        x=x_labels, y=cash_balance_raw, mode='lines+markers+text', name='Баланс без дотаций (дефицит)',
+        text=[f"{v:,.0f}".replace(",", " ") for v in cash_balance_raw], textposition="top center",
+        line=dict(color='#A27B5C', width=2, dash='dash')
+    ))
+    
+    # Баланс с учетом дотаций дефицита (всегда >= 0)
+    fig1.add_trace(go.Scatter(
+        x=x_labels, y=funded_cash_balance, mode='lines+markers+text', name='Баланс на счете с дотациями',
+        text=[f"{v:,.0f}".replace(",", " ") for v in funded_cash_balance], textposition="bottom center",
         line=dict(color='#642A38', width=3), fill='tozeroy', fillcolor='rgba(100, 42, 56, 0.1)'
     ))
-    fig1.add_hline(y=0, line_dash="dash", line_color="red", annotation_text="Дефицит")
+    
+    fig1.add_hline(y=0, line_dash="dot", line_color="red", annotation_text="Граница дефицита")
     fig1.update_layout(xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified")
     st.plotly_chart(fig1, use_container_width=True)
 
     st.markdown("### Структура месячного денежного потока")
     fig2 = go.Figure()
-    fig2.add_trace(go.Bar(x=x_labels, y=inflows, name='Поступления', marker_color='#E3C293', text=[f"{v:,.0f}".replace(",", " ") for v in inflows], textposition='auto'))
-    fig2.add_trace(go.Bar(x=x_labels, y=-outflows, name='Выплаты', marker_color='#642A38', text=[f"{v:,.0f}".replace(",", " ") for v in outflows], textposition='auto'))
+    fig2.add_trace(go.Bar(x=x_labels, y=inflows, name='Поступления от продаж', marker_color='#E3C293', text=[f"{v:,.0f}".replace(",", " ") for v in inflows], textposition='auto'))
+    fig2.add_trace(go.Bar(x=x_labels, y=-outflows, name='Выплаты (закупки + OPEX)', marker_color='#642A38', text=[f"{v:,.0f}".replace(",", " ") for v in outflows], textposition='auto'))
     fig2.add_trace(go.Scatter(x=x_labels, y=net_cf, name='Чистый поток', marker_color='#B88645', mode='lines+markers'))
     fig2.update_layout(barmode='relative', xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified")
     st.plotly_chart(fig2, use_container_width=True)
 
-with tab2:
+with tab3:
     st.markdown("### Динамика маржинальности и операционной прибыли (EBITDA)")
     fig3 = go.Figure()
     ebitda_vals = rev - opex - taxes_and_commissions - (cogs_payments * 0.3)
@@ -295,13 +384,12 @@ with tab2:
     fig4.update_layout(barmode='stack', xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified")
     st.plotly_chart(fig4, use_container_width=True)
 
-with tab3:
-    st.markdown("### Накопленный денежный поток")
+with tab4:
+    st.markdown("### Накопленный денежный поток (без внешних вливаний)")
     fig5 = go.Figure()
-    total_cash = cum_cf + initial_cash_buffer
     fig5.add_trace(go.Scatter(
-        x=x_labels, y=total_cash, mode='lines+markers+text', name='Накопленный ДС',
-        text=[f"{v:,.0f}".replace(",", " ") for v in total_cash], textposition="top center",
+        x=x_labels, y=cum_cf, mode='lines+markers+text', name='Накопленный чистый поток',
+        text=[f"{v:,.0f}".replace(",", " ") for v in cum_cf], textposition="top center",
         line=dict(color='#642A38', width=3), fill='tozeroy', fillcolor='rgba(227, 194, 147, 0.2)'
     ))
     fig5.add_hline(y=0, line_dash="dot", line_color="red", annotation_text="Нулевой баланс")
