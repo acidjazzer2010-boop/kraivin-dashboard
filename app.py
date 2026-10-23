@@ -47,8 +47,10 @@ start_orders = st.sidebar.number_input("Заказов в 1-й месяц (шт)
 orders_growth = st.sidebar.slider("Ежемесячный прирост заказов (%)", 0, 100, 15, step=1)
 scale_factor = st.sidebar.slider("Коэффициент масштабирования продаж", 0.5, 3.0, 1.0, 0.1)
 
-st.sidebar.subheader("Команда и расходы")
+st.sidebar.subheader("Команда и постоянные расходы")
 monthly_fot = st.sidebar.number_input("ФОТ в месяц (руб)", value=500_000, step=50_000)
+monthly_warehouse = st.sidebar.number_input("Аренда и обслуживание склада (руб)", value=200_000, step=20_000)
+monthly_office = st.sidebar.number_input("Аренда и расходы на офис (руб)", value=150_000, step=10_000)
 
 st.sidebar.subheader("Работа с поставщиками")
 prepayment_pct = st.sidebar.slider("Предоплата поставщикам (%)", 0, 100, 50, step=10)
@@ -109,10 +111,14 @@ for i in range(period):
         inflows[target_month] += rev[i] * vat_multiplier * ((100 - factoring_share) / 100)
         inflows[target_month] += rev[i] * vat_multiplier * (factoring_share / 100) * ((100 - factoring_advance) / 100)
 
+# Базовые прочие операционные расходы + склад и офис
 base_other_opex = 150_000
-opex = np.full(period, base_other_opex + monthly_fot)
+fixed_infrastructure_opex = monthly_warehouse + monthly_office
+base_total_non_fot_opex = base_other_opex + fixed_infrastructure_opex
+
+opex = np.full(period, base_total_non_fot_opex + monthly_fot)
 for i in range(6, period):
-    opex[i] = (base_other_opex * 1.2) + monthly_fot
+    opex[i] = (base_total_non_fot_opex * 1.2) + monthly_fot
 
 taxes_and_commissions = rev * 0.05
 
@@ -124,8 +130,10 @@ cash_balance = cum_cf + initial_cash_buffer
 
 sum_purchases = sum(cogs_payments)
 total_fot = sum(np.full(period, monthly_fot))
+total_warehouse = sum(np.full(period, monthly_warehouse))
+total_office = sum(np.full(period, monthly_office))
 total_taxes = sum(taxes_and_commissions)
-total_other_opex = sum(np.full(period, base_other_opex))
+total_other_opex = sum(opex) - total_fot - total_warehouse - total_office
 
 # --- KPI МЕТРИКИ ---
 max_deficit = min(min(cum_cf), 0)
@@ -252,15 +260,15 @@ with tab3:
     st.plotly_chart(fig5, use_container_width=True)
 
     st.markdown("### Структура совокупных расходов")
-    exp_labels = ['Операционные расходы', 'Налоги и сборы', 'ФОТ (Команда)', 'Закупки товара']
-    exp_vals = [total_other_opex, total_taxes, total_fot, sum_purchases]
+    exp_labels = ['Склад', 'Офис', 'ФОТ (Команда)', 'Прочие OPEX', 'Налоги и сборы', 'Закупки товара']
+    exp_vals = [total_warehouse, total_office, total_fot, total_other_opex, total_taxes, sum_purchases]
     tot_exp = sum(exp_vals) or 1
     exp_pcts = [v / tot_exp * 100 for v in exp_vals]
     
     fig6 = go.Figure(data=[go.Bar(
         y=exp_labels, x=exp_pcts, orientation='h',
         text=[f"{p:.1f}%" for p in exp_pcts], textposition='auto',
-        marker_color=['#D0C2B8', '#B88645', '#E3C293', '#642A38']
+        marker_color=['#8B5E3C', '#A27B5C', '#E3C293', '#D0C2B8', '#B88645', '#642A38']
     )])
     fig6.update_layout(xaxis_title="Доля в расходах (%)", yaxis=dict(autorange="reversed"), margin=dict(t=10, b=0, l=0, r=0))
     st.plotly_chart(fig6, use_container_width=True)
