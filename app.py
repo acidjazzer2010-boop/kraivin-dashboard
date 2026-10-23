@@ -9,7 +9,7 @@ from exporter import generate_html_report_bytes, send_report_to_email
 
 # --- НАСТРОЙКА СТРАНИЦЫ ---
 st.set_page_config(
-    page_title="Kraivin Financial Analytics", 
+    page_title="Аналитика", 
     page_icon="🍷", 
     layout="wide",
     initial_sidebar_state="expanded"
