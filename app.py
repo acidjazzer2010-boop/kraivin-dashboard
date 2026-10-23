@@ -8,7 +8,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Скрываем стандартные элементы оформления Streamlit для чистого отображения Alche Studio
+# Скрываем системные элементы Streamlit для кинематографичного монолита
 st.markdown("""
 <style>
     #MainMenu, header, footer, .stDeployButton {
@@ -35,7 +35,7 @@ html_code = """<!DOCTYPE html>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Архитектура Капитала // Финансовое Моделирование</title>
 
-  <!-- Типографика: Cormorant Garamond & JetBrains Mono -->
+  <!-- Типографика: Cormorant Garamond, JetBrains Mono, Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -66,41 +66,43 @@ html_code = """<!DOCTYPE html>
     }
   </script>
 
-  <!-- Three.js для 3D сцены армиллярной астролябии и Chart.js -->
+  <!-- Three.js & Chart.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
     :root {
       --bg-space: #070709;
-      --bg-panel: rgba(13, 13, 18, 0.82);
-      --bg-cell-hover: rgba(22, 22, 30, 0.95);
+      --bg-panel: rgba(13, 13, 18, 0.85);
+      --bg-cell-hover: rgba(24, 24, 34, 0.95);
       --text-main: #f4f1ea;
       --text-muted: #8e8a80;
       --border-line: rgba(212, 175, 55, 0.16);
-      --border-accent: rgba(212, 175, 55, 0.55);
+      --border-accent: rgba(212, 175, 55, 0.6);
       --accent-gold: #d4af37;
       --accent-vermilion: #e63946;
       --accent-jade: #2a9d8f;
       --input-bg: rgba(255, 255, 255, 0.025);
-      --cursor-glow: rgba(212, 175, 55, 0.15);
-      --table-header-bg: rgba(13, 13, 18, 0.95);
+      --cursor-glow: rgba(212, 175, 55, 0.18);
+      --table-header-bg: rgba(13, 13, 18, 0.98);
+      --grain-opacity: 0.035;
     }
 
     html:not(.dark) {
       --bg-space: #f4f1ea;
-      --bg-panel: rgba(255, 255, 255, 0.88);
-      --bg-cell-hover: rgba(248, 245, 238, 0.98);
+      --bg-panel: rgba(255, 255, 255, 0.92);
+      --bg-cell-hover: rgba(246, 243, 235, 0.98);
       --text-main: #141416;
       --text-muted: #6b665c;
       --border-line: rgba(184, 134, 11, 0.22);
-      --border-accent: rgba(184, 134, 11, 0.7);
+      --border-accent: rgba(184, 134, 11, 0.75);
       --accent-gold: #b8860b;
       --accent-vermilion: #c5221f;
       --accent-jade: #1d756b;
       --input-bg: rgba(0, 0, 0, 0.03);
-      --cursor-glow: rgba(184, 134, 11, 0.12);
+      --cursor-glow: rgba(184, 134, 11, 0.15);
       --table-header-bg: rgba(244, 241, 234, 0.98);
+      --grain-opacity: 0.02;
     }
 
     * {
@@ -118,6 +120,18 @@ html_code = """<!DOCTYPE html>
       transition: background-color 0.5s cubic-bezier(0.16, 1, 0.3, 1), color 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
+    /* Архитектурный аналоговый шум кинопленки (Film Grain) */
+    .film-grain {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 50;
+      opacity: var(--grain-opacity);
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    }
+
     #webgl-bg-canvas {
       position: fixed;
       top: 0;
@@ -126,7 +140,7 @@ html_code = """<!DOCTYPE html>
       height: 100vh;
       z-index: 0;
       pointer-events: none;
-      opacity: 0.42;
+      opacity: 0.45;
       transition: opacity 0.5s ease;
     }
     html:not(.dark) #webgl-bg-canvas {
@@ -136,13 +150,14 @@ html_code = """<!DOCTYPE html>
     .alche-block {
       position: relative;
       background: var(--bg-panel);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border-right: 1px solid var(--border-line);
       border-bottom: 1px solid var(--border-line);
       transition: background-color 0.3s ease, border-color 0.3s ease;
     }
 
+    /* Координатные перекрестия сетки */
     .cross-tl::before {
       content: '+';
       position: absolute;
@@ -168,36 +183,44 @@ html_code = """<!DOCTYPE html>
       z-index: 10;
     }
 
-    /* Интерактивный оптический рельеф через SVG фильтр */
+    /* Рельефная оптика через SVG feSpecularLighting */
     .specular-emboss {
       filter: url(#specular-glass-filter);
-      transition: filter 0.2s ease;
+      transition: filter 0.2s ease, transform 0.3s ease;
+    }
+    .specular-emboss:hover {
+      transform: scale(1.08) rotate(4deg);
     }
 
-    .spotlight-card {
+    /* 3D Tilt Карточки с динамическим курсорным бликом */
+    .tilt-card {
       position: relative;
       overflow: hidden;
+      transform-style: preserve-3d;
+      perspective: 900px;
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
     }
-    .spotlight-card::before {
+    .tilt-card::before {
       content: '';
       position: absolute;
       inset: 0;
       border: 1px solid transparent;
-      background: radial-gradient(400px circle at var(--mouse-x, 0px) var(--mouse-y, 0px), var(--cursor-glow), transparent 60%);
+      background: radial-gradient(350px circle at var(--mouse-x, 0px) var(--mouse-y, 0px), var(--cursor-glow), transparent 70%);
       opacity: 0;
       transition: opacity 0.35s ease;
       pointer-events: none;
-      z-index: 1;
+      z-index: 2;
     }
-    .spotlight-card:hover::before {
+    .tilt-card:hover::before {
       opacity: 1;
     }
 
+    /* Двухфазное раскрытие вкладок */
     @keyframes alcheTabEntrance {
       0% {
         opacity: 0;
         filter: blur(14px);
-        transform: translateY(12px) scale(0.99);
+        transform: translateY(12px) scale(0.992);
         clip-path: inset(0 0 100% 0);
       }
       45% {
@@ -212,7 +235,7 @@ html_code = """<!DOCTYPE html>
       }
     }
     .tab-view-enter {
-      animation: alcheTabEntrance 0.75s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+      animation: alcheTabEntrance 0.72s cubic-bezier(0.19, 1, 0.22, 1) forwards;
       will-change: transform, opacity, filter, clip-path;
     }
 
@@ -227,8 +250,8 @@ html_code = """<!DOCTYPE html>
     input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance: none;
       appearance: none;
-      width: 11px;
-      height: 11px;
+      width: 12px;
+      height: 12px;
       background: var(--accent-gold);
       cursor: pointer;
       border: 1px solid var(--bg-space);
@@ -236,7 +259,7 @@ html_code = """<!DOCTYPE html>
       transition: transform 0.2s ease, background-color 0.2s ease;
     }
     input[type="range"]::-webkit-slider-thumb:hover {
-      transform: rotate(45deg) scale(1.3);
+      transform: rotate(45deg) scale(1.35);
     }
 
     .mono-input {
@@ -253,7 +276,7 @@ html_code = """<!DOCTYPE html>
     .mono-input:focus {
       outline: none;
       border-color: var(--accent-gold);
-      background: rgba(212, 175, 55, 0.05);
+      background: rgba(212, 175, 55, 0.06);
     }
     select.mono-input option {
       background-color: #0d0d12;
@@ -264,6 +287,7 @@ html_code = """<!DOCTYPE html>
       color: #141416;
     }
 
+    /* Тактильный тумблер */
     .hw-slider-track {
       position: relative;
       width: 140px;
@@ -286,6 +310,20 @@ html_code = """<!DOCTYPE html>
       transition: transform 0.45s cubic-bezier(0.19, 1, 0.22, 1), background-color 0.3s ease;
     }
 
+    /* Индикатор пульса телеметрии */
+    .pulse-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 9999px;
+      background-color: var(--accent-gold);
+      animation: pulseAnim 2s infinite ease-in-out;
+    }
+    @keyframes pulseAnim {
+      0%, 100% { opacity: 0.4; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.2); }
+    }
+
     ::-webkit-scrollbar { width: 4px; height: 4px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border-line); }
@@ -294,24 +332,19 @@ html_code = """<!DOCTYPE html>
 </head>
 <body class="selection:bg-[#d4af37] selection:text-black">
 
-  <!-- Оптический стеклянно-металлический фильтр с живым источником света (feDiffuseLighting + feSpecularLighting) -->
+  <div class="film-grain"></div>
+
+  <!-- Оптический стеклянно-металлический фильтр SVG feSpecularLighting -->
   <svg width="0" height="0" class="absolute pointer-events-none" style="position: fixed;">
     <defs>
       <filter id="specular-glass-filter" x="-20%" y="-20%" width="140%" height="140%">
-        <!-- Размытие карты высот рельефа -->
         <feGaussianBlur in="SourceAlpha" stdDeviation="2.2" result="blurMap" />
-        
-        <!-- Рассеянное освещение (Diffuse Light) -->
         <feDiffuseLighting in="blurMap" surfaceScale="3" diffuseConstant="1.1" lighting-color="#ffffff" result="diffuseLight">
           <fePointLight id="svgCursorLightDiff" x="120" y="40" z="50" />
         </feDiffuseLighting>
-        
-        <!-- Зеркальный металлический/стеклянный блик (Specular Light) -->
-        <feSpecularLighting in="blurMap" surfaceScale="4.5" specularConstant="1.4" specularExponent="22" lighting-color="#d4af37" result="specularGlare">
+        <feSpecularLighting in="blurMap" surfaceScale="4.5" specularConstant="1.4" specularExponent="24" lighting-color="#d4af37" result="specularGlare">
           <fePointLight id="svgCursorLightSpec" x="120" y="40" z="70" />
         </feSpecularLighting>
-        
-        <!-- Композитинг: накладываем рассеянный свет и блик на исходную графику -->
         <feComposite in="SourceGraphic" in2="diffuseLight" operator="arithmetic" k1="0" k2="1" k3="0.35" k4="0" result="litGraphic" />
         <feComposite in="specularGlare" in2="SourceGraphic" operator="in" result="glareMasked" />
         <feBlend in="glareMasked" in2="litGraphic" mode="screen" />
@@ -323,11 +356,10 @@ html_code = """<!DOCTYPE html>
 
   <div class="relative z-10 min-h-screen flex flex-col border-t border-l" style="border-color: var(--border-line);">
 
-    <!-- Верхняя телеметрия и заголовок -->
+    <!-- ВЕРХНИЙ HUD И ПАНЕЛЬ ТЕЛЕМЕТРИИ -->
     <header class="alche-block px-5 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-6">
         <div class="flex items-center gap-3">
-          <!-- Витрувианская сакральная геометрия да Винчи с оптическим рельефом feSpecularLighting -->
           <svg class="w-7 h-7 text-[#d4af37] specular-emboss cursor-pointer" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.2">
             <circle cx="16" cy="16" r="14" />
             <rect x="6" y="6" width="20" height="20" />
@@ -350,10 +382,12 @@ html_code = """<!DOCTYPE html>
       </div>
 
       <div class="flex items-center gap-4">
-        <button id="downloadReportBtn" type="button" class="px-3 py-1.5 border font-mono text-[10px] uppercase tracking-widest hover:border-[#d4af37] transition flex items-center gap-2">
+        <!-- Кнопка мгновенного скачивания отчета (без перезагрузки страницы) -->
+        <button id="downloadReportBtn" onclick="exportDataToCsv()" type="button" class="px-3.5 py-1.5 border font-mono text-[10px] uppercase tracking-widest hover:border-[#d4af37] hover:bg-[#d4af37]/10 transition flex items-center gap-2">
           <span>↓ Скачать отчет</span>
         </button>
 
+        <!-- Аппаратный ползунок "День / Ночь" -->
         <div id="themeSlider" class="hw-slider-track" onclick="toggleTheme()" title="Переключить режим: Ночь / День">
           <div id="sliderThumb" class="hw-slider-thumb" style="transform: translateX(0px);"></div>
           <span id="lblNight" class="relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold text-black">Ночь</span>
@@ -362,10 +396,10 @@ html_code = """<!DOCTYPE html>
       </div>
     </header>
 
-    <!-- Основная сетка -->
+    <!-- Основная рабочая сетка -->
     <div class="flex-1 grid grid-cols-1 lg:grid-cols-12">
 
-      <!-- ЛЕВАЯ ПАНЕЛЬ: ПАРАМЕТРЫ МОДЕЛИ -->
+      <!-- ЛЕВАЯ ПАНЕЛЬ ПАРАМЕТРОВ -->
       <aside class="lg:col-span-3 flex flex-col">
         <div class="alche-block cross-tl px-5 py-3.5 flex items-center justify-between">
           <span class="font-mono text-[10px] uppercase tracking-[0.2em] text-[#d4af37] font-bold">[00] Параметры Модели</span>
@@ -373,6 +407,7 @@ html_code = """<!DOCTYPE html>
         </div>
 
         <form id="financialInputsForm" class="flex-1 flex flex-col" onsubmit="event.preventDefault();">
+          <!-- Секция I: Горизонт и маржинальность -->
           <div class="alche-block p-5 space-y-4">
             <div class="flex justify-between items-baseline">
               <span class="font-serif italic text-base font-semibold">I. Временной горизонт и маржа</span>
@@ -382,7 +417,7 @@ html_code = """<!DOCTYPE html>
             <div class="grid grid-cols-2 gap-2.5">
               <div>
                 <label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Месяц старта</label>
-                <select id="paramStartMonth" class="mono-input" onchange="runCalculation()">
+                <select id="paramStartMonth" class="mono-input" onchange="playClickSound(); runCalculation();">
                   <option value="0">Январь</option>
                   <option value="1">Февраль</option>
                   <option value="2">Март</option>
@@ -399,7 +434,7 @@ html_code = """<!DOCTYPE html>
               </div>
               <div>
                 <label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Год старта</label>
-                <select id="paramStartYear" class="mono-input" onchange="runCalculation()">
+                <select id="paramStartYear" class="mono-input" onchange="playClickSound(); runCalculation();">
                   <option value="2026" selected>2026</option>
                   <option value="2027">2027</option>
                 </select>
@@ -409,7 +444,7 @@ html_code = """<!DOCTYPE html>
             <div class="grid grid-cols-2 gap-2.5">
               <div>
                 <label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Горизонт</label>
-                <select id="paramPeriod" class="mono-input" onchange="runCalculation()">
+                <select id="paramPeriod" class="mono-input" onchange="playClickSound(); runCalculation();">
                   <option value="6">6 месяцев</option>
                   <option value="12" selected>12 месяцев</option>
                   <option value="18">18 месяцев</option>
@@ -418,7 +453,7 @@ html_code = """<!DOCTYPE html>
               </div>
               <div>
                 <label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Ставка НДС</label>
-                <select id="paramVatRate" class="mono-input" onchange="runCalculation()">
+                <select id="paramVatRate" class="mono-input" onchange="playClickSound(); runCalculation();">
                   <option value="22" selected>22%</option>
                   <option value="20">20%</option>
                   <option value="10">10%</option>
@@ -436,6 +471,7 @@ html_code = """<!DOCTYPE html>
             </div>
           </div>
 
+          <!-- Секция II: Партионный склад и кредитная ставка -->
           <div class="alche-block p-5 space-y-4">
             <div class="flex justify-between items-baseline">
               <span class="font-serif italic text-base font-semibold">II. Партионный склад и капитал</span>
@@ -463,6 +499,7 @@ html_code = """<!DOCTYPE html>
             </div>
           </div>
 
+          <!-- Секция III: Масштабирование заказов -->
           <div class="alche-block p-5 space-y-4">
             <div class="flex justify-between items-baseline">
               <span class="font-serif italic text-base font-semibold">III. Масштабирование заказов</span>
@@ -502,6 +539,7 @@ html_code = """<!DOCTYPE html>
             </div>
           </div>
 
+          <!-- Секция IV: Постоянные затраты и факторинг -->
           <div class="alche-block p-5 space-y-4 flex-1">
             <div class="flex justify-between items-baseline">
               <span class="font-serif italic text-base font-semibold">IV. Постоянные затраты и факторинг</span>
@@ -543,42 +581,56 @@ html_code = """<!DOCTYPE html>
         </form>
       </aside>
 
-      <!-- ПРАВАЯ ПАНЕЛЬ: РАБОЧАЯ ОБЛАСТЬ ДАШБОРДА -->
+      <!-- ПРАВАЯ ЧАСТЬ: ДАШБОРД И АНАЛИТИКА -->
       <section class="lg:col-span-9 flex flex-col">
-        <!-- 5 Архитектурных KPI-карточек с эффектом скремблера и светотенью -->
+        <!-- 5 Архитектурных KPI-карточек с 3D Tilt и спарклайнами -->
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 border-b" style="border-color: var(--border-line);">
-          <div class="alche-block spotlight-card p-5">
-            <div class="font-mono text-[9px] uppercase tracking-widest opacity-60 mb-1">[01] Выручка</div>
+          <div class="alche-block tilt-card p-5">
+            <div class="flex justify-between items-center opacity-60 mb-1">
+              <span class="font-mono text-[9px] uppercase tracking-widest">[01] Выручка</span>
+              <svg class="w-8 h-3 text-[#d4af37]" viewBox="0 0 32 12" fill="none"><path d="M1 11L9 8L17 9L25 3L31 1" stroke="currentColor" stroke-width="1.2"/></svg>
+            </div>
             <div id="kpiRev" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#f4f1ea]">0 ₽</div>
             <div class="font-mono text-[9px] text-[#d4af37] mt-1.5 opacity-90" id="kpiRevSub">Маржа: 20%</div>
           </div>
 
-          <div class="alche-block spotlight-card p-5">
-            <div class="font-mono text-[9px] uppercase tracking-widest opacity-60 mb-1">[02] Дотации дефицита</div>
+          <div class="alche-block tilt-card p-5">
+            <div class="flex justify-between items-center opacity-60 mb-1">
+              <span class="font-mono text-[9px] uppercase tracking-widest">[02] Дефицит</span>
+              <svg class="w-8 h-3 text-[#e63946]" viewBox="0 0 32 12" fill="none"><path d="M1 2L9 2L17 8L25 10L31 11" stroke="currentColor" stroke-width="1.2"/></svg>
+            </div>
             <div id="kpiInjections" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#e63946]">0 ₽</div>
-            <div class="font-mono text-[9px] text-[#e63946] mt-1.5 opacity-90">Внешнее покрытие</div>
+            <div class="font-mono text-[9px] text-[#e63946] mt-1.5 opacity-90">Внешние дотации</div>
           </div>
 
-          <div class="alche-block spotlight-card p-5">
-            <div class="font-mono text-[9px] uppercase tracking-widest opacity-60 mb-1">[03] Стоимость денег</div>
+          <div class="alche-block tilt-card p-5">
+            <div class="flex justify-between items-center opacity-60 mb-1">
+              <span class="font-mono text-[9px] uppercase tracking-widest">[03] Проценты</span>
+              <span class="pulse-dot"></span>
+            </div>
             <div id="kpiInterest" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#d4af37]">0 ₽</div>
             <div id="kpiRateSub" class="font-mono text-[9px] text-[#d4af37] mt-1.5 opacity-90">Ставка 19.0%</div>
           </div>
 
-          <div class="alche-block spotlight-card p-5">
-            <div class="font-mono text-[9px] uppercase tracking-widest opacity-60 mb-1">[04] Пиковый долг</div>
+          <div class="alche-block tilt-card p-5">
+            <div class="flex justify-between items-center opacity-60 mb-1">
+              <span class="font-mono text-[9px] uppercase tracking-widest">[04] Пиковый долг</span>
+            </div>
             <div id="kpiMaxDebt" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#f4f1ea]">0 ₽</div>
             <div class="font-mono text-[9px] opacity-60 mt-1.5">Максимум тела</div>
           </div>
 
-          <div class="alche-block spotlight-card p-5 col-span-2 sm:col-span-1">
-            <div class="font-mono text-[9px] uppercase tracking-widest opacity-60 mb-1">[05] Чистая прибыль</div>
+          <div class="alche-block tilt-card p-5 col-span-2 sm:col-span-1">
+            <div class="flex justify-between items-center opacity-60 mb-1">
+              <span class="font-mono text-[9px] uppercase tracking-widest">[05] Прибыль</span>
+              <svg class="w-8 h-3 text-[#2a9d8f]" viewBox="0 0 32 12" fill="none"><path d="M1 10L10 9L18 6L24 5L31 1" stroke="currentColor" stroke-width="1.2"/></svg>
+            </div>
             <div id="kpiProfit" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#2a9d8f]">0 ₽</div>
             <div id="kpiRoiSub" class="font-mono text-[9px] text-[#2a9d8f] mt-1.5 opacity-90">Рентабельность: 0%</div>
           </div>
         </div>
 
-        <!-- Навигационная панель вкладок -->
+        <!-- Навигационные вкладки -->
         <div class="alche-block px-5 py-2.5 flex items-center justify-between border-b" style="border-color: var(--border-line);">
           <div class="flex flex-wrap items-center gap-1.5" id="navTabsContainer">
             <button type="button" onclick="selectTab(0)" class="tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest bg-[#d4af37] text-black font-bold transition shadow-md">[01] ОБСЛУЖИВАНИЕ КАПИТАЛА</button>
@@ -587,12 +639,12 @@ html_code = """<!DOCTYPE html>
             <button type="button" onclick="selectTab(3)" class="tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest opacity-70 hover:opacity-100 transition">[04] ЭКОНОМИКА И ЗАКАЗЫ</button>
           </div>
           <div class="hidden md:flex items-center gap-2 font-mono text-[9px] text-[#d4af37]">
-            <span class="inline-block w-1.5 h-1.5 bg-[#d4af37] rounded-full animate-ping"></span>
+            <span class="pulse-dot"></span>
             <span>THREE.JS & SVG LIGHTING</span>
           </div>
         </div>
 
-        <!-- Динамические секции с раскрытием clip-path и подбором букв -->
+        <!-- Динамические секции -->
         <div class="flex-1 p-5 lg:p-7 space-y-6">
           <!-- Секция 01: Долг и проценты -->
           <div id="viewTab0" class="tab-view-enter space-y-6">
@@ -682,6 +734,25 @@ html_code = """<!DOCTYPE html>
   </div>
 
   <script>
+    // --- 0. АУДИОСИНТЕЗАТОР ТАКТИЛЬНЫХ КЛИКОВ (Web Audio API) ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playClickSound(freq = 1200, duration = 0.02) {
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + duration);
+        gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
     // --- 1. THREE.JS RENAISSANCE ARMILLARY SPHERE ---
     const canvas = document.getElementById('webgl-bg-canvas');
     const scene = new THREE.Scene();
@@ -720,10 +791,10 @@ html_code = """<!DOCTYPE html>
       mouseY = (e.clientY - window.innerHeight / 2) * 0.0006;
       document.getElementById('cursorCoordDisplay').textContent = `X: ${e.clientX.toString().padStart(4, '0')} / Y: ${e.clientY.toString().padStart(4, '0')}`;
 
-      // Динамическое смещение источника света в SVG feSpecularLighting & feDiffuseLighting
+      // Динамическое смещение луча в SVG feSpecularLighting
       if (lightDiff && lightSpec) {
-        const lx = e.clientX % 300;
-        const ly = e.clientY % 200;
+        const lx = e.clientX % 320;
+        const ly = e.clientY % 220;
         lightDiff.setAttribute('x', lx);
         lightDiff.setAttribute('y', ly);
         lightSpec.setAttribute('x', lx);
@@ -731,11 +802,23 @@ html_code = """<!DOCTYPE html>
       }
     });
 
-    document.querySelectorAll('.spotlight-card').forEach(card => {
+    // 3D Tilt Карточки с магнитным наклоном
+    document.querySelectorAll('.tilt-card').forEach(card => {
       card.addEventListener('mousemove', e => {
         const rect = card.getBoundingClientRect();
-        card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
-        card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        card.style.setProperty('--mouse-x', `${x}px`);
+        card.style.setProperty('--mouse-y', `${y}px`);
+        
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotateX = ((y - centerY) / centerY) * -5;
+        const rotateY = ((x - centerX) / centerX) * 5;
+        card.style.transform = `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-2px)`;
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = 'perspective(900px) rotateX(0deg) rotateY(0deg) translateY(0px)';
       });
     });
 
@@ -765,6 +848,7 @@ html_code = """<!DOCTYPE html>
     // --- 2. HARDWARE DAY / NIGHT SWITCH ---
     let isDark = true;
     function toggleTheme() {
+      playClickSound(800, 0.04);
       isDark = !isDark;
       document.documentElement.classList.toggle('dark', isDark);
       const thumb = document.getElementById('sliderThumb');
@@ -834,6 +918,7 @@ html_code = """<!DOCTYPE html>
     ];
 
     function selectTab(index) {
+      playClickSound(1400, 0.025);
       currentCamPreset = camPresets[index];
       const buttons = document.querySelectorAll('#navTabsContainer .tab-btn');
       buttons.forEach((btn, idx) => {
@@ -854,7 +939,6 @@ html_code = """<!DOCTYPE html>
           void view.offsetWidth; // trigger reflow
           view.classList.add('tab-view-enter');
 
-          // Эффект подбора букв на заголовках открытой вкладки
           const headerTitles = view.querySelectorAll('h3');
           headerTitles.forEach(h => {
             const orig = h.getAttribute('data-original-text') || h.textContent;
@@ -870,6 +954,7 @@ html_code = """<!DOCTYPE html>
     // --- 5. FINANCIAL MODEL CORE ENGINE ---
     let growthMode = 'abs';
     function setGrowthMode(mode) {
+      playClickSound(950, 0.02);
       growthMode = mode;
       const btnAbs = document.getElementById('btnModeAbs');
       const btnPct = document.getElementById('btnModePct');
@@ -911,6 +996,8 @@ html_code = """<!DOCTYPE html>
     let chartCFInstance = null;
     let chartOrdersInstance = null;
     let chartPieInstance = null;
+
+    let latestCalculatedData = null;
 
     function runCalculation() {
       const startMonth = parseInt(document.getElementById('paramStartMonth').value);
@@ -973,12 +1060,10 @@ html_code = """<!DOCTYPE html>
       const cogsPayments = new Array(period).fill(0);
       const inventoryDeliveries = new Array(period).fill(0);
 
-      // Стартовая закупка на N месяцев
       cogsPayments[0] += initialPurchase * (prepPct / 100);
       if (1 < period) cogsPayments[1] += initialPurchase * ((100 - prepPct) / 100);
       inventoryDeliveries[0] = initialPurchase;
 
-      // Цикличные партии
       for (let b = batchCycle; b < period; b += batchCycle) {
         const bEnd = Math.min(b + batchCycle, period);
         let batchTotal = 0;
@@ -999,7 +1084,7 @@ html_code = """<!DOCTYPE html>
       for (let i = 0; i < period; i++) {
         const invVat = rev[i] * vatMultiplier;
         inflows[i] += invVat * (factShare / 100) * factAdvance;
-        const targetM = i + 2; // 70 дней отсрочки
+        const targetM = i + 2;
         if (targetM < period) {
           inflows[targetM] += invVat * ((100 - factShare) / 100);
           inflows[targetM] += invVat * (factShare / 100) * (1 - factAdvance);
@@ -1018,7 +1103,6 @@ html_code = """<!DOCTYPE html>
         baseOutflows.push(cogsPayments[i] + opex[i] + taxes[i]);
       }
 
-      // Долг и фондирование
       const monthlyInvestments = new Array(period).fill(0);
       const interestPayments = new Array(period).fill(0);
       const debtRepayments = new Array(period).fill(0);
@@ -1061,7 +1145,10 @@ html_code = """<!DOCTYPE html>
       const netProfit = sumRev * (marginPct / 100) - sumOpex - sumTaxes - sumInterest;
       const roi = sumRev > 0 ? (netProfit / sumRev) * 100 : 0;
 
-      // Обновление цифр через скремблер
+      latestCalculatedData = {
+        xLabels, monthlyInvestments, interestPayments, debtRepayments, debtBalance, cashBalance, sumRev, netProfit, roi
+      };
+
       scrambleNumber(document.getElementById('kpiRev'), `${formatSpaced(sumRev)} ₽`);
       scrambleNumber(document.getElementById('kpiInjections'), `${formatSpaced(sumInvestments)} ₽`);
       scrambleNumber(document.getElementById('kpiInterest'), `${formatSpaced(sumInterest)} ₽`);
@@ -1069,7 +1156,6 @@ html_code = """<!DOCTYPE html>
       scrambleNumber(document.getElementById('kpiProfit'), `${formatSpaced(netProfit)} ₽`);
       document.getElementById('kpiRoiSub').textContent = `Рентабельность: ${roi.toFixed(1)}%`;
 
-      // Таблица ведомости
       const tbody = document.getElementById('tableDebtBody');
       tbody.innerHTML = '';
       for (let i = 0; i < period; i++) {
@@ -1089,7 +1175,6 @@ html_code = """<!DOCTYPE html>
       const chartText = isDark ? '#8e8a80' : '#6b665c';
       const chartGrid = isDark ? 'rgba(212, 175, 55, 0.08)' : 'rgba(184, 134, 11, 0.12)';
 
-      // График 01: Долг и проценты
       if (chartDebtInstance) chartDebtInstance.destroy();
       chartDebtInstance = new Chart(document.getElementById('chartDebt').getContext('2d'), {
         type: 'bar',
@@ -1111,7 +1196,6 @@ html_code = """<!DOCTYPE html>
         }
       });
 
-      // График 02: Складской цикл
       if (chartStockInstance) chartStockInstance.destroy();
       chartStockInstance = new Chart(document.getElementById('chartStock').getContext('2d'), {
         type: 'bar',
@@ -1133,7 +1217,6 @@ html_code = """<!DOCTYPE html>
         }
       });
 
-      // График 03: Денежный поток
       const totalOutflows = baseOutflows.map((b, idx) => b + interestPayments[idx]);
       if (chartCFInstance) chartCFInstance.destroy();
       chartCFInstance = new Chart(document.getElementById('chartCF').getContext('2d'), {
@@ -1149,14 +1232,12 @@ html_code = """<!DOCTYPE html>
           responsive: true, maintainAspectRatio: false,
           scales: {
             x: { grid: { display: false }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } },
-            y: { grid: { color: chartGrid }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } },
-            y1: { position: 'right', grid: { display: false }, ticks: { color: '#e63946', font: { family: 'JetBrains Mono', size: 10 } } }
+            y: { grid: { color: chartGrid }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } }
           },
           plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } }
         }
       });
 
-      // График 04: Заказы и выручка
       if (chartOrdersInstance) chartOrdersInstance.destroy();
       chartOrdersInstance = new Chart(document.getElementById('chartOrders').getContext('2d'), {
         type: 'bar',
@@ -1178,7 +1259,6 @@ html_code = """<!DOCTYPE html>
         }
       });
 
-      // График 05: Структура расходов
       const sumPurchases = cogsPayments.reduce((a, b) => a + b, 0);
       if (chartPieInstance) chartPieInstance.destroy();
       chartPieInstance = new Chart(document.getElementById('chartPie').getContext('2d'), {
@@ -1197,6 +1277,28 @@ html_code = """<!DOCTYPE html>
       });
     }
 
+    // Мгновенный экспорт в CSV прямо в браузере без обращения к бэкенду
+    function exportDataToCsv() {
+      playClickSound(1600, 0.05);
+      if (!latestCalculatedData) return;
+      const { xLabels, monthlyInvestments, interestPayments, debtRepayments, debtBalance, cashBalance } = latestCalculatedData;
+      
+      let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+      csvContent += "Период;Дотация (дефицит);Проценты по долгу;Погашение долга;Остаток тела долга;Свободный остаток счета\\n";
+
+      for (let i = 0; i < xLabels.length; i++) {
+        csvContent += `${xLabels[i]};${Math.round(monthlyInvestments[i])};${Math.round(interestPayments[i])};${Math.round(debtRepayments[i])};${Math.round(debtBalance[i])};${Math.round(cashBalance[i])}\\n`;
+      }
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "Finansovaya_Model_Kapital.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
     // Часы в HUD
     setInterval(() => {
       const now = new Date();
@@ -1204,13 +1306,10 @@ html_code = """<!DOCTYPE html>
     }, 1000);
 
     function resetDefaults() {
+      playClickSound(600, 0.05);
       document.getElementById('financialInputsForm').reset();
       runCalculation();
     }
-
-    document.getElementById('downloadReportBtn').addEventListener('click', () => {
-      alert('Формирование отчета... Экспорт данных модели и графиков.');
-    });
 
     window.onload = () => {
       runCalculation();
