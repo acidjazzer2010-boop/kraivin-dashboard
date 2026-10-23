@@ -34,9 +34,13 @@ html_code = """<!DOCTYPE html>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Архитектура Капитала // Финансовое Моделирование</title>
+
+  <!-- Typography: Cormorant Garamond & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -61,8 +65,11 @@ html_code = """<!DOCTYPE html>
       }
     }
   </script>
+
+  <!-- Three.js for 3D Armillary Scene & Chart.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
     :root {
       --bg-space: #070709;
@@ -79,6 +86,7 @@ html_code = """<!DOCTYPE html>
       --cursor-glow: rgba(212, 175, 55, 0.15);
       --table-header-bg: rgba(13, 13, 18, 0.95);
     }
+
     html:not(.dark) {
       --bg-space: #f4f1ea;
       --bg-panel: rgba(255, 255, 255, 0.88);
@@ -94,20 +102,37 @@ html_code = """<!DOCTYPE html>
       --cursor-glow: rgba(184, 134, 11, 0.12);
       --table-header-bg: rgba(244, 241, 234, 0.98);
     }
-    * { box-sizing: border-box; border-color: var(--border-line); }
+
+    * {
+      box-sizing: border-box;
+      border-color: var(--border-line);
+    }
+
     body {
       background-color: var(--bg-space);
       color: var(--text-main);
       font-family: 'JetBrains Mono', monospace;
       overflow-x: hidden;
-      margin: 0; padding: 0;
+      margin: 0;
+      padding: 0;
       transition: background-color 0.5s cubic-bezier(0.16, 1, 0.3, 1), color 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     }
+
     #webgl-bg-canvas {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      z-index: 0; pointer-events: none; opacity: 0.42; transition: opacity 0.5s ease;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.42;
+      transition: opacity 0.5s ease;
     }
-    html:not(.dark) #webgl-bg-canvas { opacity: 0.18; }
+    html:not(.dark) #webgl-bg-canvas {
+      opacity: 0.18;
+    }
+
     .alche-block {
       position: relative;
       background: var(--bg-panel);
@@ -117,65 +142,144 @@ html_code = """<!DOCTYPE html>
       border-bottom: 1px solid var(--border-line);
       transition: background-color 0.3s ease, border-color 0.3s ease;
     }
+
     .cross-tl::before {
-      content: '+'; position: absolute; top: -6px; left: -4px;
-      font-family: 'JetBrains Mono', monospace; font-size: 10px; line-height: 1;
-      color: var(--accent-gold); pointer-events: none; z-index: 10;
+      content: '+';
+      position: absolute;
+      top: -6px;
+      left: -4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      line-height: 1;
+      color: var(--accent-gold);
+      pointer-events: none;
+      z-index: 10;
     }
     .cross-br::after {
-      content: '+'; position: absolute; bottom: -6px; right: -4px;
-      font-family: 'JetBrains Mono', monospace; font-size: 10px; line-height: 1;
-      color: var(--accent-gold); pointer-events: none; z-index: 10;
+      content: '+';
+      position: absolute;
+      bottom: -6px;
+      right: -4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      line-height: 1;
+      color: var(--accent-gold);
+      pointer-events: none;
+      z-index: 10;
     }
-    .spotlight-card { position: relative; overflow: hidden; }
+
+    .spotlight-card {
+      position: relative;
+      overflow: hidden;
+    }
     .spotlight-card::before {
-      content: ''; position: absolute; inset: 0; border: 1px solid transparent;
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 1px solid transparent;
       background: radial-gradient(400px circle at var(--mouse-x, 0px) var(--mouse-y, 0px), var(--cursor-glow), transparent 60%);
-      opacity: 0; transition: opacity 0.35s ease; pointer-events: none; z-index: 1;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+      pointer-events: none;
+      z-index: 1;
     }
-    .spotlight-card:hover::before { opacity: 1; }
+    .spotlight-card:hover::before {
+      opacity: 1;
+    }
+
     @keyframes alcheTabEntrance {
-      0% { opacity: 0; filter: blur(14px); transform: translateY(12px) scale(0.99); clip-path: inset(0 0 100% 0); }
-      45% { opacity: 0.85; clip-path: inset(0 0 0% 0); }
-      100% { opacity: 1; filter: blur(0px); transform: translateY(0) scale(1); clip-path: inset(0 0 0% 0); }
+      0% {
+        opacity: 0;
+        filter: blur(14px);
+        transform: translateY(12px) scale(0.99);
+        clip-path: inset(0 0 100% 0);
+      }
+      45% {
+        opacity: 0.85;
+        clip-path: inset(0 0 0% 0);
+      }
+      100% {
+        opacity: 1;
+        filter: blur(0px);
+        transform: translateY(0) scale(1);
+        clip-path: inset(0 0 0% 0);
+      }
     }
     .tab-view-enter {
       animation: alcheTabEntrance 0.75s cubic-bezier(0.19, 1, 0.22, 1) forwards;
       will-change: transform, opacity, filter, clip-path;
     }
+
     input[type="range"] {
-      -webkit-appearance: none; appearance: none; width: 100%; height: 2px;
-      background: var(--border-line); outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 2px;
+      background: var(--border-line);
+      outline: none;
     }
     input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none; appearance: none; width: 11px; height: 11px;
-      background: var(--accent-gold); cursor: pointer; border: 1px solid var(--bg-space);
-      transform: rotate(45deg); transition: transform 0.2s ease, background-color 0.2s ease;
+      -webkit-appearance: none;
+      appearance: none;
+      width: 11px;
+      height: 11px;
+      background: var(--accent-gold);
+      cursor: pointer;
+      border: 1px solid var(--bg-space);
+      transform: rotate(45deg);
+      transition: transform 0.2s ease, background-color 0.2s ease;
     }
-    input[type="range"]::-webkit-slider-thumb:hover { transform: rotate(45deg) scale(1.3); }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: rotate(45deg) scale(1.3);
+    }
+
     .mono-input {
-      background: var(--input-bg); border: 1px solid var(--border-line);
-      color: var(--text-main); font-family: 'JetBrains Mono', monospace;
-      font-size: 12px; padding: 7px 10px; width: 100%; border-radius: 0;
+      background: var(--input-bg);
+      border: 1px solid var(--border-line);
+      color: var(--text-main);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      padding: 7px 10px;
+      width: 100%;
+      border-radius: 0;
       transition: border-color 0.2s ease, background 0.2s ease;
     }
     .mono-input:focus {
-      outline: none; border-color: var(--accent-gold);
+      outline: none;
+      border-color: var(--accent-gold);
       background: rgba(212, 175, 55, 0.05);
     }
-    select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
-    html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #141416; }
+    select.mono-input option {
+      background-color: #0d0d12;
+      color: #f4f1ea;
+    }
+    html:not(.dark) select.mono-input option {
+      background-color: #f4f1ea;
+      color: #141416;
+    }
+
     .hw-slider-track {
-      position: relative; width: 140px; height: 30px;
-      border: 1px solid var(--border-line); background: var(--input-bg);
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 10px; cursor: pointer; user-select: none;
+      position: relative;
+      width: 140px;
+      height: 30px;
+      border: 1px solid var(--border-line);
+      background: var(--input-bg);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      cursor: pointer;
+      user-select: none;
     }
     .hw-slider-thumb {
-      position: absolute; top: 2px; bottom: 2px; width: 66px;
+      position: absolute;
+      top: 2px;
+      bottom: 2px;
+      width: 66px;
       background: var(--accent-gold);
       transition: transform 0.45s cubic-bezier(0.19, 1, 0.22, 1), background-color 0.3s ease;
     }
+
     ::-webkit-scrollbar { width: 4px; height: 4px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border-line); }
@@ -183,9 +287,12 @@ html_code = """<!DOCTYPE html>
   </style>
 </head>
 <body class="selection:bg-[#d4af37] selection:text-black">
+
   <canvas id="webgl-bg-canvas"></canvas>
 
   <div class="relative z-10 min-h-screen flex flex-col border-t border-l" style="border-color: var(--border-line);">
+
+    <!-- Top Telemetry & HUD Header -->
     <header class="alche-block px-5 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-6">
         <div class="flex items-center gap-3">
@@ -223,7 +330,10 @@ html_code = """<!DOCTYPE html>
       </div>
     </header>
 
+    <!-- Workspace Main Grid -->
     <div class="flex-1 grid grid-cols-1 lg:grid-cols-12">
+
+      <!-- LEFT SIDEBAR: PARAMETERS MATRIX -->
       <aside class="lg:col-span-3 flex flex-col">
         <div class="alche-block cross-tl px-5 py-3.5 flex items-center justify-between">
           <span class="font-mono text-[10px] uppercase tracking-[0.2em] text-[#d4af37] font-bold">[00] Параметры Модели</span>
@@ -401,7 +511,9 @@ html_code = """<!DOCTYPE html>
         </form>
       </aside>
 
+      <!-- RIGHT DASHBOARD WORKSPACE -->
       <section class="lg:col-span-9 flex flex-col">
+        <!-- 5 Architectural Hero KPI Tiles -->
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 border-b" style="border-color: var(--border-line);">
           <div class="alche-block spotlight-card p-5">
             <div class="font-mono text-[9px] uppercase tracking-widest opacity-60 mb-1">[01] Выручка</div>
@@ -434,6 +546,7 @@ html_code = """<!DOCTYPE html>
           </div>
         </div>
 
+        <!-- Navigation Tabs HUD -->
         <div class="alche-block px-5 py-2.5 flex items-center justify-between border-b" style="border-color: var(--border-line);">
           <div class="flex flex-wrap items-center gap-1.5" id="navTabsContainer">
             <button type="button" onclick="selectTab(0)" class="tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest bg-[#d4af37] text-black font-bold transition">[01] ОБСЛУЖИВАНИЕ КАПИТАЛА</button>
@@ -447,7 +560,9 @@ html_code = """<!DOCTYPE html>
           </div>
         </div>
 
+        <!-- Dynamic Views Container with Cinematic Blur & Clip-path Reveal -->
         <div class="flex-1 p-5 lg:p-7 space-y-6">
+          <!-- View 01: Capital & Debt -->
           <div id="viewTab0" class="tab-view-enter space-y-6">
             <div class="alche-block p-5 border">
               <div class="flex justify-between items-center mb-4">
@@ -461,6 +576,7 @@ html_code = """<!DOCTYPE html>
               </div>
             </div>
 
+            <!-- Ledger Table -->
             <div class="alche-block border overflow-x-auto">
               <table class="w-full text-left font-mono text-[11px]">
                 <thead class="border-b" style="background-color: var(--table-header-bg); border-color: var(--border-line);">
@@ -478,6 +594,7 @@ html_code = """<!DOCTYPE html>
             </div>
           </div>
 
+          <!-- View 02: Stock Cycles -->
           <div id="viewTab1" class="hidden space-y-6">
             <div class="alche-block p-5 border">
               <div class="flex justify-between items-center mb-4">
@@ -492,6 +609,7 @@ html_code = """<!DOCTYPE html>
             </div>
           </div>
 
+          <!-- View 03: Cash Flow -->
           <div id="viewTab2" class="hidden space-y-6">
             <div class="alche-block p-5 border">
               <div class="flex justify-between items-center mb-4">
@@ -506,6 +624,7 @@ html_code = """<!DOCTYPE html>
             </div>
           </div>
 
+          <!-- View 04: PnL & Orders -->
           <div id="viewTab3" class="hidden space-y-6">
             <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
               <div class="alche-block p-5 border">
@@ -531,6 +650,7 @@ html_code = """<!DOCTYPE html>
   </div>
 
   <script>
+    // --- 1. THREE.JS RENAISSANCE ARMILLARY SPHERE ---
     const canvas = document.getElementById('webgl-bg-canvas');
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -566,6 +686,7 @@ html_code = """<!DOCTYPE html>
       document.getElementById('cursorCoordDisplay').textContent = `X: ${e.clientX.toString().padStart(4, '0')} / Y: ${e.clientY.toString().padStart(4, '0')}`;
     });
 
+    // Spotlight cursor effect
     document.querySelectorAll('.spotlight-card').forEach(card => {
       card.addEventListener('mousemove', e => {
         const rect = card.getBoundingClientRect();
@@ -597,6 +718,7 @@ html_code = """<!DOCTYPE html>
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
+    // --- 2. HARDWARE DAY / NIGHT SWITCH ---
     let isDark = true;
     function toggleTheme() {
       isDark = !isDark;
@@ -619,14 +741,64 @@ html_code = """<!DOCTYPE html>
       runCalculation();
     }
 
+    // --- 3. MATRIX CIPHER / ПОДБОР БУКВ И ЦИФР ДЛЯ СЛОЖЕНИЯ СЛОВА ---
+    const CYRILLIC_CIPHER_GLYPHS = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ0123456789§$%*#@!/[]:;';
+    const NUMERIC_CIPHER_GLYPHS = '0123456789 ';
+
+    function scrambleElementText(el, finalText, duration = 460, useAlphabet = true) {
+      if (!el) return;
+      const glyphs = useAlphabet ? CYRILLIC_CIPHER_GLYPHS : NUMERIC_CIPHER_GLYPHS;
+      const start = performance.now();
+      const len = finalText.length;
+
+      if (el._scrambleTimer) cancelAnimationFrame(el._scrambleTimer);
+
+      function update(now) {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const revealIdx = Math.floor(progress * len);
+        let out = '';
+        for (let i = 0; i < len; i++) {
+          const char = finalText[i];
+          if (i < revealIdx || char === ' ' || char === '₽' || char === '%' || char === '.' || char === ',' || char === '(' || char === ')' || char === '/' || char === '[' || char === ']' || char === ':') {
+            out += char;
+          } else {
+            out += glyphs[Math.floor(Math.random() * glyphs.length)];
+          }
+        }
+        el.textContent = out;
+        if (progress < 1) {
+          el._scrambleTimer = requestAnimationFrame(update);
+        } else {
+          el.textContent = finalText;
+          el._scrambleTimer = null;
+        }
+      }
+      el._scrambleTimer = requestAnimationFrame(update);
+    }
+
+    function scrambleNumber(el, finalStr, duration = 400) {
+      scrambleElementText(el, finalStr, duration, false);
+    }
+
+    // --- 4. TAB CONTROLLER WITH CINEMATIC REVEAL & CIPHER SCRAMBLE ---
+    const TAB_BUTTON_NAMES = [
+      '[01] ОБСЛУЖИВАНИЕ КАПИТАЛА',
+      '[02] СКЛАДСКОЙ ЦИКЛ',
+      '[03] ДЕНЕЖНЫЙ ПОТОК',
+      '[04] ЭКОНОМИКА И ЗАКАЗЫ'
+    ];
+
     function selectTab(index) {
       currentCamPreset = camPresets[index];
       const buttons = document.querySelectorAll('#navTabsContainer .tab-btn');
       buttons.forEach((btn, idx) => {
         if (idx === index) {
-          btn.className = 'tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest bg-[#d4af37] text-black font-bold transition';
+          btn.className = 'tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest bg-[#d4af37] text-black font-bold transition shadow-md';
+          scrambleElementText(btn, TAB_BUTTON_NAMES[idx], 420, true);
         } else {
           btn.className = 'tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest opacity-70 hover:opacity-100 transition';
+          btn.textContent = TAB_BUTTON_NAMES[idx];
         }
       });
 
@@ -635,37 +807,23 @@ html_code = """<!DOCTYPE html>
         if (i === index) {
           view.classList.remove('hidden');
           view.classList.remove('tab-view-enter');
-          void view.offsetWidth;
+          void view.offsetWidth; // trigger reflow
           view.classList.add('tab-view-enter');
+
+          // Эффект подбора букв на основном заголовке открытой вкладки
+          const headerTitles = view.querySelectorAll('h3');
+          headerTitles.forEach(h => {
+            const orig = h.getAttribute('data-original-text') || h.textContent;
+            h.setAttribute('data-original-text', orig);
+            scrambleElementText(h, orig, 520, true);
+          });
         } else {
           view.classList.add('hidden');
         }
       }
     }
 
-    function scrambleNumber(el, finalStr, duration = 400) {
-      const chars = '0123456789 ';
-      const start = performance.now();
-      const len = finalStr.length;
-
-      function update(now) {
-        const progress = Math.min((now - start) / duration, 1);
-        const revealIdx = Math.floor(progress * len);
-        let out = '';
-        for (let i = 0; i < len; i++) {
-          if (i < revealIdx || finalStr[i] === ' ' || finalStr[i] === '₽' || finalStr[i] === '%') {
-            out += finalStr[i];
-          } else {
-            out += chars[Math.floor(Math.random() * chars.length)];
-          }
-        }
-        el.textContent = out;
-        if (progress < 1) requestAnimationFrame(update);
-        else el.textContent = finalStr;
-      }
-      requestAnimationFrame(update);
-    }
-
+    // --- 5. FINANCIAL MODEL CORE ENGINE ---
     let growthMode = 'abs';
     function setGrowthMode(mode) {
       growthMode = mode;
@@ -771,10 +929,12 @@ html_code = """<!DOCTYPE html>
       const cogsPayments = new Array(period).fill(0);
       const inventoryDeliveries = new Array(period).fill(0);
 
+      // Стартовая закупка на N месяцев
       cogsPayments[0] += initialPurchase * (prepPct / 100);
       if (1 < period) cogsPayments[1] += initialPurchase * ((100 - prepPct) / 100);
       inventoryDeliveries[0] = initialPurchase;
 
+      // Цикличные партии
       for (let b = batchCycle; b < period; b += batchCycle) {
         const bEnd = Math.min(b + batchCycle, period);
         let batchTotal = 0;
@@ -795,7 +955,7 @@ html_code = """<!DOCTYPE html>
       for (let i = 0; i < period; i++) {
         const invVat = rev[i] * vatMultiplier;
         inflows[i] += invVat * (factShare / 100) * factAdvance;
-        const targetM = i + 2;
+        const targetM = i + 2; // 70 дней отсрочки
         if (targetM < period) {
           inflows[targetM] += invVat * ((100 - factShare) / 100);
           inflows[targetM] += invVat * (factShare / 100) * (1 - factAdvance);
@@ -814,6 +974,7 @@ html_code = """<!DOCTYPE html>
         baseOutflows.push(cogsPayments[i] + opex[i] + taxes[i]);
       }
 
+      // Долг и фондирование
       const monthlyInvestments = new Array(period).fill(0);
       const interestPayments = new Array(period).fill(0);
       const debtRepayments = new Array(period).fill(0);
@@ -856,6 +1017,7 @@ html_code = """<!DOCTYPE html>
       const netProfit = sumRev * (marginPct / 100) - sumOpex - sumTaxes - sumInterest;
       const roi = sumRev > 0 ? (netProfit / sumRev) * 100 : 0;
 
+      // Scramble counter updates
       scrambleNumber(document.getElementById('kpiRev'), `${formatSpaced(sumRev)} ₽`);
       scrambleNumber(document.getElementById('kpiInjections'), `${formatSpaced(sumInvestments)} ₽`);
       scrambleNumber(document.getElementById('kpiInterest'), `${formatSpaced(sumInterest)} ₽`);
@@ -863,6 +1025,7 @@ html_code = """<!DOCTYPE html>
       scrambleNumber(document.getElementById('kpiProfit'), `${formatSpaced(netProfit)} ₽`);
       document.getElementById('kpiRoiSub').textContent = `Рентабельность: ${roi.toFixed(1)}%`;
 
+      // Render Table
       const tbody = document.getElementById('tableDebtBody');
       tbody.innerHTML = '';
       for (let i = 0; i < period; i++) {
@@ -879,9 +1042,11 @@ html_code = """<!DOCTYPE html>
         tbody.appendChild(tr);
       }
 
+      // Chart.js Theme Colors
       const chartText = isDark ? '#8e8a80' : '#6b665c';
       const chartGrid = isDark ? 'rgba(212, 175, 55, 0.08)' : 'rgba(184, 134, 11, 0.12)';
 
+      // Chart 01: Debt & Interest
       if (chartDebtInstance) chartDebtInstance.destroy();
       chartDebtInstance = new Chart(document.getElementById('chartDebt').getContext('2d'), {
         type: 'bar',
@@ -903,6 +1068,7 @@ html_code = """<!DOCTYPE html>
         }
       });
 
+      // Chart 02: Stock Cycles
       if (chartStockInstance) chartStockInstance.destroy();
       chartStockInstance = new Chart(document.getElementById('chartStock').getContext('2d'), {
         type: 'bar',
@@ -924,6 +1090,7 @@ html_code = """<!DOCTYPE html>
         }
       });
 
+      // Chart 03: Cash Flow
       const totalOutflows = baseOutflows.map((b, idx) => b + interestPayments[idx]);
       if (chartCFInstance) chartCFInstance.destroy();
       chartCFInstance = new Chart(document.getElementById('chartCF').getContext('2d'), {
@@ -945,6 +1112,7 @@ html_code = """<!DOCTYPE html>
         }
       });
 
+      // Chart 04: Orders & PnL
       if (chartOrdersInstance) chartOrdersInstance.destroy();
       chartOrdersInstance = new Chart(document.getElementById('chartOrders').getContext('2d'), {
         type: 'bar',
@@ -966,6 +1134,7 @@ html_code = """<!DOCTYPE html>
         }
       });
 
+      // Chart 05: Pie Breakdown
       const sumPurchases = cogsPayments.reduce((a, b) => a + b, 0);
       if (chartPieInstance) chartPieInstance.destroy();
       chartPieInstance = new Chart(document.getElementById('chartPie').getContext('2d'), {
@@ -984,6 +1153,7 @@ html_code = """<!DOCTYPE html>
       });
     }
 
+    // Telemetry Clock
     setInterval(() => {
       const now = new Date();
       document.getElementById('telemetryClock').textContent = `[${now.toTimeString().split(' ')[0]}]`;
@@ -994,6 +1164,7 @@ html_code = """<!DOCTYPE html>
       runCalculation();
     }
 
+    // CSV Download
     document.getElementById('downloadReportBtn').addEventListener('click', () => {
       alert('Формирование отчета... Экспорт данных модели и графиков.');
     });
