@@ -5,7 +5,7 @@ import numpy as np
 import os
 import re
 
-# Безопасный импорт функций экспорта (если модуль exporter.py отсутствует в репозитории, приложение не упадет)
+# Безопасный импорт функций экспорта
 try:
     from exporter import generate_html_report_bytes, send_report_to_email
     EXPORTER_AVAILABLE = True
@@ -414,6 +414,15 @@ max_debt_peak = np.max(debt_balance)
 net_profit = sum(rev * (margin_pct / 100)) - sum(opex) - sum(taxes_and_commissions) - total_interest_paid
 roi = (net_profit / sum(rev)) * 100 if sum(rev) > 0 else 0
 
+# ПОДГОТОВКА ВСЕХ ТЕКСТОВЫХ МЕТОК ДЛЯ ГРАФИКОВ (гарантирует отсутствие NameError)
+text_interest = [f"{v/1000:,.0f} тыс. ₽" if v > 0 else "" for v in interest_payments]
+text_debt = [f"{v/1_000_000:.1f} млн" if v > 0 else "" for v in debt_balance]
+text_cogs = [f"{v/1_000_000:.1f} млн ₽" if v > 0 else "" for v in cogs_payments]
+text_inventory = [f"{v/1_000_000:.1f} млн" for v in inventory_balance]
+text_inflows = [f"{v/1_000_000:.1f} млн" for v in inflows]
+text_outflows = [f"{v/1_000_000:.1f} млн" for v in total_outflows]
+text_orders = [f"{int(v)}" for v in orders]
+
 # --- СТИЛИЗАЦИЯ ГРАФИКОВ ПОД ТЕКУЩИЙ РЕЖИМ ---
 def apply_chart_layout(fig, height=440):
     fig.update_layout(
@@ -517,9 +526,11 @@ with tab_debt:
     bar_color = "#3b82f6" if is_dark else "#2563eb"
     line_color = "#f43f5e" if is_dark else "#dc2626"
     
-    fig_debt.add_trace(go.Bar(
-        x=x_labels, y=interest_payments,
-    name='Проценты за месяц', 
+    fig_debt.add_trace(
+        go.Bar(
+            x=x_labels, 
+            y=interest_payments, 
+            name='Проценты за месяц', 
             marker=dict(color=bar_color), 
             text=text_interest, 
             textposition='outside', 
@@ -563,9 +574,6 @@ with tab_stock:
     stock_bar_color = "#3f3f46" if is_dark else "#cbd5e1"
     stock_line_color = "#f59e0b" if is_dark else "#d97706"
     
-    text_cogs = [f"{v/1_000_000:.1f} млн ₽" if v > 0 else "" for v in cogs_payments]
-    text_inventory = [f"{v/1_000_000:.1f} млн" for v in inventory_balance]
-    
     fig_stock.add_trace(
         go.Bar(
             x=x_labels, 
@@ -604,9 +612,6 @@ with tab_cf:
     in_color = "#22c55e" if is_dark else "#16a34a"
     out_color = "#ef4444" if is_dark else "#dc2626"
     
-    text_inflows = [f"{v/1_000_000:.1f} млн" for v in inflows]
-    text_outflows = [f"{v/1_000_000:.1f} млн" for v in total_outflows]
-    
     fig_cf.add_trace(
         go.Bar(
             x=x_labels, 
@@ -638,7 +643,6 @@ with tab_pnl:
     with col_pnl1:
         st.markdown(f"<h4 style='font-size: 15px; font-weight: 700; color: {text_primary}; margin-bottom: 12px;'>Динамика заказов и выручки</h4>", unsafe_allow_html=True)
         fig_ord = go.Figure()
-        text_orders = [f"{int(v)}" for v in orders]
         
         fig_ord.add_trace(
             go.Bar(
