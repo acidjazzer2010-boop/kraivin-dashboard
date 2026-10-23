@@ -9,23 +9,23 @@ from exporter import generate_html_report_bytes, send_report_to_email
 
 # --- НАСТРОЙКА СТРАНИЦЫ ---
 st.set_page_config(
-    page_title="Аналитика", 
+    page_title="Kraivin Financial Analytics", 
     page_icon="🍷", 
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- ПЕРЕКЛЮЧАТЕЛЬ РЕЖИМА (ДЕНЬ / НОЧЬ) В САЙДБАРЕ ---
-st.sidebar.markdown("<h3 style='margin-bottom: 8px;'>Тема оформления</h3>", unsafe_allow_html=True)
-theme_mode = st.sidebar.radio(
-    "Выберите тему",
-    ["🌙 Ночь", "☀️ День"],
-    index=0,
-    horizontal=True,
-    label_visibility="collapsed"
+# --- ИНТЕРАКТИВНЫЙ ПОЛЗУНОК-ТУМБЛЕР (ДЕНЬ / НОЧЬ) ---
+st.sidebar.markdown("<div style='margin-bottom: 4px;'></div>", unsafe_allow_html=True)
+theme_toggle = st.sidebar.toggle(
+    "☀️ Дневной режим (Контрастный)",
+    value=False,
+    help="Сдвиньте ползунок: выключен — глубокая черная ночь, включен — чистый белый день с черными цифрами"
 )
 
-is_dark = (theme_mode == "🌙 Ночь")
+# Если тумблер выключен (False) — режим Ночь, если включен (True) — День
+is_dark = not theme_toggle
+theme_mode = "🌙 Ночь" if is_dark else "☀️ День"
 
 # --- ДИНАМИЧЕСКИЕ ЦВЕТОВЫЕ ТОКЕНЫ ---
 if is_dark:
@@ -59,7 +59,7 @@ else:
     chart_text = "#52525b"
     chart_tooltip_bg = "#ffffff"
 
-# --- ИНЪЕКЦИЯ КОНТРАСТНЫХ СТИЛЕЙ ПОД ВЫБРАННУЮ ТЕМУ ---
+# --- ИНЪЕКЦИЯ КОНТРАСТНЫХ СТИЛЕЙ ПОД ТЕКУЩИЙ РЕЖИМ ---
 st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -81,6 +81,12 @@ st.markdown(f"""
 
     section[data-testid="stSidebar"] * {{
         color: {text_primary} !important;
+    }}
+
+    /* Стилизация самого ползунка-тумблера */
+    div[data-testid="stToggle"] label span {{
+        font-weight: 700 !important;
+        font-size: 13px !important;
     }}
 
     /* Карточки KPI */
@@ -238,7 +244,7 @@ def money_input(label: str, default_val: int, key: str, help_text: str = None) -
     return parsed_int
 
 # --- БОКОВАЯ ПАНЕЛЬ (ВВОД ДАННЫХ) ---
-st.sidebar.markdown(f"<div style='height: 1px; background: {card_border}; margin: 12px 0 16px 0;'></div>", unsafe_allow_html=True)
+st.sidebar.markdown(f"<div style='height: 1px; background: {card_border}; margin: 8px 0 16px 0;'></div>", unsafe_allow_html=True)
 st.sidebar.markdown(f"<h2 style='font-size: 17px; font-weight: 700; color: {text_primary}; margin-bottom: 16px;'>Параметры модели</h2>", unsafe_allow_html=True)
 
 ru_months_full = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
