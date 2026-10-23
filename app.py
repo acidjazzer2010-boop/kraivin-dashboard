@@ -29,7 +29,6 @@ def money_input(label: str, default_val: int, key: str, help_text: str = None) -
     
     raw_val = st.sidebar.text_input(label, value=st.session_state[key], key=f"raw_{key}", help=help_text)
     
-    # Очищаем ввод от пробелов, запятых и букв
     clean_val = re.sub(r"[^\d]", "", raw_val)
     if not clean_val:
         clean_val = str(default_val)
@@ -37,10 +36,7 @@ def money_input(label: str, default_val: int, key: str, help_text: str = None) -
     parsed_int = int(clean_val)
     formatted_str = format_num_spaced(parsed_int)
     
-    # Обновляем состояние с пробелами
     st.session_state[key] = formatted_str
-    
-    # Визуальная подсказка под полем ввода с точным форматированием
     st.sidebar.caption(f"Выбрано: **{formatted_str} руб.**")
     return parsed_int
 
@@ -50,8 +46,10 @@ st.sidebar.header("Параметры модели")
 
 ru_months_full = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
 col_m, col_y = st.sidebar.columns(2)
-start_month_idx = col_m.selectbox("Месяц старта", range(12), format_func=lambda x: ru_months_full[x])
-start_year = col_y.selectbox("Год старта", [2026, 2027])
+
+# По умолчанию выбран Октябрь (индекс 9) 2026 года
+start_month_idx = col_m.selectbox("Месяц старта", range(12), index=9, format_func=lambda x: ru_months_full[x])
+start_year = col_y.selectbox("Год старта", [2026, 2027], index=0)
 
 margin_pct = st.sidebar.slider("Маржинальность (%)", min_value=10, max_value=50, value=20, step=1)
 period = st.sidebar.selectbox("Горизонт планирования (мес)", [6, 12, 18, 24])
@@ -72,13 +70,7 @@ initial_purchase = money_input(
     key="init_purchase_key",
     help_text="Введите сумму (можно с пробелами)"
 )
-
-initial_cash_buffer = money_input(
-    "Стартовый буфер на счете (руб)", 
-    default_val=2_000_000, 
-    key="init_buffer_key",
-    help_text="Остаток свободных ДС на старте"
-)
+initial_cash_buffer = 0
 
 st.sidebar.subheader("Динамика продаж")
 aov = money_input(
@@ -93,7 +85,6 @@ start_orders = st.sidebar.number_input(
     step=1
 )
 orders_growth = st.sidebar.slider("Ежемесячный прирост заказов (%)", 0, 100, 15, step=1)
-scale_factor = st.sidebar.slider("Коэффициент масштабирования продаж", 0.5, 3.0, 1.0, 0.1)
 
 st.sidebar.subheader("Команда и постоянные расходы")
 monthly_fot = money_input(
@@ -136,7 +127,7 @@ rev = np.zeros(period)
 
 for i in range(period):
     if i == 0:
-        orders[i] = start_orders * scale_factor
+        orders[i] = start_orders
     else:
         orders[i] = orders[i-1] * (1 + (orders_growth / 100))
     rev[i] = orders[i] * aov
@@ -313,7 +304,6 @@ with tab3:
         text=[f"{v:,.0f}".replace(",", " ") for v in total_cash], textposition="top center",
         line=dict(color='#642A38', width=3), fill='tozeroy', fillcolor='rgba(227, 194, 147, 0.2)'
     ))
-    fig5.add_hline(y=initial_cash_buffer, line_dash="dash", line_color="#B88645", annotation_text="Стартовый буфер")
     fig5.add_hline(y=0, line_dash="dot", line_color="red", annotation_text="Нулевой баланс")
     fig5.update_layout(xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified")
     st.plotly_chart(fig5, use_container_width=True)
