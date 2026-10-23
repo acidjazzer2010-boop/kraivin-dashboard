@@ -884,10 +884,30 @@ html_code = """<!DOCTYPE html>
   </div>
 
   <script>
+
+    // АБСОЛЮТНАЯ СТРАХОВКА: Этот блок выполнится самым первым и гарантированно снимет заставку, даже если дальше будет фатальная ошибка JS!
+    (function absoluteFailsafe() {
+      setTimeout(() => {
+        try {
+          const preloader = document.getElementById('alche-preloader');
+          if (preloader && preloader.style.display !== 'none') {
+             preloader.style.opacity = '0';
+             preloader.style.pointerEvents = 'none';
+             setTimeout(() => preloader.style.display = 'none', 1000);
+          }
+        } catch(e) {}
+      }, 5500);
+    })();
+
     // --- 0. АУДИОСИНТЕЗАТОР ТАКТИЛЬНЫХ КЛИКОВ (Web Audio API) ---
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let audioCtx = null;
     function playClickSound(freq = 1200, duration = 0.02) {
       try {
+        if (!audioCtx) {
+          const AudioCtor = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtor) return;
+          audioCtx = new AudioCtor();
+        }
         if (audioCtx.state === 'suspended') audioCtx.resume();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
@@ -904,17 +924,19 @@ html_code = """<!DOCTYPE html>
     }
 
     // --- 1. THREE.JS RENAISSANCE ARMILLARY SPHERE ---
-    const canvas = document.getElementById('webgl-bg-canvas');
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 24;
+    let scene, camera, renderer, armillaryGroup;
+    try {
+      const canvas = document.getElementById('webgl-bg-canvas');
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.z = 24;
 
-    const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-    const armillaryGroup = new THREE.Group();
-    scene.add(armillaryGroup);
+      armillaryGroup = new THREE.Group();
+      scene.add(armillaryGroup);
 
     let ringColor = 0xd4af37;
     const ringMat = new THREE.MeshBasicMaterial({ color: ringColor, wireframe: true, transparent: true, opacity: 0.32 });
@@ -981,6 +1003,7 @@ html_code = """<!DOCTYPE html>
     let currentCamPreset = camPresets[0];
 
     function animate() {
+      if (!scene || !renderer || !camera || !armillaryGroup) return;
       requestAnimationFrame(animate);
       armillaryGroup.rotation.x += 0.002 + (mouseY - armillaryGroup.rotation.x) * 0.04;
       armillaryGroup.rotation.y += 0.003 + (mouseX - armillaryGroup.rotation.y) * 0.04;
@@ -990,10 +1013,12 @@ html_code = """<!DOCTYPE html>
     animate();
 
     window.addEventListener('resize', () => {
+      if (!camera || !renderer) return;
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
+    } catch(e) { console.warn("WebGL BG failed:", e); }
 
     // --- 2. HARDWARE DAY / NIGHT SWITCH ---
     let isDark = true;
@@ -1434,12 +1459,10 @@ html_code = """<!DOCTYPE html>
       const { xLabels, monthlyInvestments, interestPayments, debtRepayments, debtBalance, cashBalance } = latestCalculatedData;
       
       let csvContent = "data:text/csv;charset=utf-8,﻿";
-      csvContent += "Период;Дотация (дефицит);Проценты по долгу;Погашение долга;Остаток тела долга;Свободный остаток счета
-";
+      csvContent += "Период;Дотация (дефицит);Проценты по долгу;Погашение долга;Остаток тела долга;Свободный остаток счета\n";
 
       for (let i = 0; i < xLabels.length; i++) {
-        csvContent += `${xLabels[i]};${Math.round(monthlyInvestments[i])};${Math.round(interestPayments[i])};${Math.round(debtRepayments[i])};${Math.round(debtBalance[i])};${Math.round(cashBalance[i])}
-`;
+        csvContent += `${xLabels[i]};${Math.round(monthlyInvestments[i])};${Math.round(interestPayments[i])};${Math.round(debtRepayments[i])};${Math.round(debtBalance[i])};${Math.round(cashBalance[i])}\n`;
       }
 
       const encodedUri = encodeURI(csvContent);
