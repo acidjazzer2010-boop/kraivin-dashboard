@@ -182,30 +182,40 @@ html_code = """<!DOCTYPE html>
       z-index: 10;
     }
 
-    /* Астрономические орбиты прелоадера с явными CSS-анимациями */
-    @keyframes orbitClockwise {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
+    /* АСТРОЛЯБИЯ ДА ВИНЧИ: НЕЗАВИСИМОЕ ВРАЩЕНИЕ КОЛЕЦ */
+    @keyframes spinClockwise {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
-    @keyframes orbitCounterClockwise {
-      from { transform: rotate(360deg); }
-      to { transform: rotate(0deg); }
+    @keyframes spinCounterClockwise {
+      0% { transform: rotate(360deg); }
+      100% { transform: rotate(0deg); }
     }
-    @keyframes scanLaser {
-      0% { top: -5%; opacity: 0; }
-      15% { opacity: 0.95; }
-      85% { opacity: 0.95; }
-      100% { top: 105%; opacity: 0; }
+    @keyframes laserVerticalScan {
+      0% { top: -6%; opacity: 0; }
+      15% { opacity: 0.9; }
+      85% { opacity: 0.9; }
+      100% { top: 104%; opacity: 0; }
     }
 
-    .orbit-ring-1 {
-      animation: orbitClockwise 15s linear infinite;
+    .astrolabe-orbit-outer {
+      animation: spinClockwise 20s linear infinite;
+      transform-origin: 250px 250px;
+      will-change: transform;
     }
-    .orbit-ring-2 {
-      animation: orbitCounterClockwise 24s linear infinite;
+    .astrolabe-orbit-middle {
+      animation: spinCounterClockwise 28s linear infinite;
+      transform-origin: 250px 250px;
+      will-change: transform;
     }
-    .orbit-ring-3 {
-      animation: orbitClockwise 38s linear infinite;
+    .astrolabe-orbit-inner {
+      animation: spinClockwise 42s linear infinite;
+      transform-origin: 250px 250px;
+      will-change: transform;
+    }
+    .laser-scanner-line {
+      animation: laserVerticalScan 3s ease-in-out infinite;
+      will-change: top, opacity;
     }
 
     .specular-emboss {
@@ -352,54 +362,81 @@ html_code = """<!DOCTYPE html>
 </head>
 <body class="selection:bg-[#d4af37] selection:text-black">
 
-  <!-- ЭКРАН ЗАГРУЗКИ (3 СЕКУНДЫ + РАСФОКУС) -->
+  <!-- ЭКРАН ЗАГРУЗКИ: ВИТРУВИАНСКИЙ ЧЕРТЕЖ ДА ВИНЧИ И НЕЗАВИСИМО ВРАЩАЮЩИЕСЯ КОЛЬЦА АСТРОЛЯБИИ (3 СЕКУНДЫ) -->
   <div id="alche-preloader" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#070709] select-none" style="transition: opacity 0.9s cubic-bezier(0.19, 1, 0.22, 1), filter 0.9s cubic-bezier(0.19, 1, 0.22, 1), transform 0.9s cubic-bezier(0.19, 1, 0.22, 1);">
     
     <div class="relative flex flex-col items-center max-w-xl mx-auto px-6 text-center">
       
-      <!-- Контейнер с видимыми вращающимися орбитами и рисками астролябии -->
+      <!-- Контейнер гравюры с независимо вращающимися кольцами астролябии -->
       <div class="relative w-72 h-72 sm:w-80 sm:h-80 mb-6 flex items-center justify-center">
         
-        <!-- Орбита 1: Внешняя с маркерами-спутниками (по часовой) -->
-        <svg class="absolute -inset-10 w-[calc(100%+80px)] h-[calc(100%+80px)] pointer-events-none orbit-ring-1 text-[#d4af37]" viewBox="0 0 300 300" fill="none">
-          <circle cx="150" cy="150" r="142" stroke="currentColor" stroke-width="0.8" stroke-dasharray="3 7" class="opacity-40" />
-          <circle cx="150" cy="8" r="4.5" fill="currentColor" class="filter drop-shadow-[0_0_8px_#d4af37]" />
-          <circle cx="292" cy="150" r="3" fill="currentColor" class="opacity-70" />
-          <circle cx="8" cy="150" r="3" fill="currentColor" class="opacity-70" />
-        </svg>
+        <!-- АСТРОЛЯБИЯ ДА ВИНЧИ: 3 НЕЗАВИСИМО ВРАЩАЮЩИХСЯ КОЛЬЦА -->
+        <div class="absolute -inset-10 sm:-inset-14 pointer-events-none flex items-center justify-center">
+          
+          <!-- КОЛЬЦО 1: Внешний лимб со шкалой румбов (по часовой стрелке, 20с) -->
+          <svg class="absolute inset-0 w-full h-full text-[#d4af37] astrolabe-orbit-outer" viewBox="0 0 500 500" fill="none">
+            <circle cx="250" cy="250" r="236" stroke="currentColor" stroke-width="1.2" class="opacity-60" />
+            <circle cx="250" cy="250" r="226" stroke="currentColor" stroke-width="0.8" stroke-dasharray="3 6" class="opacity-40" />
+            <circle cx="250" cy="250" r="216" stroke="currentColor" stroke-width="0.6" class="opacity-30" />
+            <g class="opacity-75" stroke="currentColor" stroke-width="1.5">
+              <line x1="250" y1="14" x2="250" y2="34" />
+              <line x1="250" y1="466" x2="250" y2="486" />
+              <line x1="14" y1="250" x2="34" y2="250" />
+              <line x1="466" y1="250" x2="486" y2="250" />
+              <line x1="83" y1="83" x2="97" y2="97" />
+              <line x1="403" y1="403" x2="417" y2="417" />
+              <line x1="403" y1="97" x2="417" y2="83" />
+              <line x1="83" y1="417" x2="97" y2="403" />
+            </g>
+            <circle cx="250" cy="14" r="5" fill="currentColor" class="filter drop-shadow-[0_0_10px_#d4af37]" />
+            <circle cx="486" cy="250" r="4" fill="currentColor" class="opacity-80 filter drop-shadow-[0_0_6px_#d4af37]" />
+            <circle cx="14" cy="250" r="4" fill="currentColor" class="opacity-80" />
+            <circle cx="250" cy="486" r="4" fill="currentColor" class="opacity-80" />
+            <circle cx="83" cy="83" r="3" fill="currentColor" class="opacity-90" />
+            <circle cx="417" cy="417" r="3" fill="currentColor" class="opacity-90" />
+          </svg>
 
-        <!-- Орбита 2: Средняя градуированная шкала (против часовой) -->
-        <svg class="absolute -inset-5 w-[calc(100%+40px)] h-[calc(100%+40px)] pointer-events-none orbit-ring-2 text-[#d4af37]" viewBox="0 0 240 240" fill="none">
-          <circle cx="120" cy="120" r="112" stroke="currentColor" stroke-width="1.2" stroke-dasharray="14 10" class="opacity-50" />
-          <line x1="120" y1="2" x2="120" y2="12" stroke="currentColor" stroke-width="1.8" />
-          <line x1="120" y1="228" x2="120" y2="238" stroke="currentColor" stroke-width="1.8" />
-          <line x1="2" y1="120" x2="12" y2="120" stroke="currentColor" stroke-width="1.8" />
-          <line x1="228" y1="120" x2="238" y2="120" stroke="currentColor" stroke-width="1.8" />
-          <circle cx="232" cy="120" r="4" fill="currentColor" class="filter drop-shadow-[0_0_8px_#d4af37]" />
-        </svg>
+          <!-- КОЛЬЦО 2: Эксцентрический зодиакальный круг (против часовой стрелки, 28с) -->
+          <svg class="absolute inset-2 w-[calc(100%-16px)] h-[calc(100%-16px)] text-[#d4af37] astrolabe-orbit-middle" viewBox="0 0 500 500" fill="none">
+            <ellipse cx="250" cy="235" rx="195" ry="175" stroke="currentColor" stroke-width="1.4" stroke-dasharray="16 8" class="opacity-70" />
+            <circle cx="250" cy="250" r="185" stroke="currentColor" stroke-width="0.8" stroke-dasharray="2 8" class="opacity-50" />
+            <polygon points="250,50 256,66 250,62 244,66" fill="currentColor" class="opacity-90 filter drop-shadow-[0_0_8px_#d4af37]" />
+            <polygon points="435,235 419,241 423,235 419,229" fill="currentColor" class="opacity-90 filter drop-shadow-[0_0_8px_#d4af37]" />
+            <polygon points="65,235 81,241 77,235 81,229" fill="currentColor" class="opacity-90 filter drop-shadow-[0_0_8px_#d4af37]" />
+            <polygon points="250,410 256,394 250,398 244,394" fill="currentColor" class="opacity-90 filter drop-shadow-[0_0_8px_#d4af37]" />
+            <circle cx="112" cy="112" r="4" fill="currentColor" class="opacity-80" />
+            <circle cx="388" cy="358" r="4" fill="currentColor" class="opacity-80" />
+          </svg>
 
-        <!-- Орбита 3: Внутреннее прецизионное кольцо (по часовой) -->
-        <svg class="absolute -inset-1 w-[calc(100%+8px)] h-[calc(100%+8px)] pointer-events-none orbit-ring-3 text-[#d4af37]" viewBox="0 0 200 200" fill="none">
-          <circle cx="100" cy="100" r="95" stroke="currentColor" stroke-width="0.75" stroke-dasharray="1 5" class="opacity-60" />
-          <circle cx="100" cy="5" r="3.5" fill="currentColor" class="opacity-90" />
-          <circle cx="33" cy="167" r="3.5" fill="currentColor" class="opacity-90" />
-          <circle cx="167" cy="167" r="3.5" fill="currentColor" class="opacity-90" />
-        </svg>
+          <!-- КОЛЬЦО 3: Внутреннее высотное кольцо альмукантаратов (по часовой стрелке, 42с) -->
+          <svg class="absolute inset-6 w-[calc(100%-48px)] h-[calc(100%-48px)] text-[#d4af37] astrolabe-orbit-inner" viewBox="0 0 500 500" fill="none">
+            <circle cx="250" cy="250" r="162" stroke="currentColor" stroke-width="1" class="opacity-50" />
+            <circle cx="250" cy="250" r="152" stroke="currentColor" stroke-width="0.75" stroke-dasharray="4 6" class="opacity-60" />
+            <path d="M250 88 A162 162 0 0 1 412 250" stroke="currentColor" stroke-width="1.2" stroke-dasharray="8 6" class="opacity-75" />
+            <path d="M88 250 A162 162 0 0 1 250 412" stroke="currentColor" stroke-width="1.2" stroke-dasharray="8 6" class="opacity-75" />
+            <circle cx="250" cy="88" r="4.5" fill="currentColor" class="filter drop-shadow-[0_0_10px_#d4af37]" />
+            <circle cx="412" cy="250" r="4.5" fill="currentColor" class="filter drop-shadow-[0_0_10px_#d4af37]" />
+            <circle cx="88" cy="250" r="3.5" fill="currentColor" class="opacity-80" />
+            <circle cx="250" cy="412" r="3.5" fill="currentColor" class="opacity-80" />
+          </svg>
 
-        <!-- Осевые линии сетки -->
+        </div>
+
+        <!-- Осевые координатные линии -->
         <div class="absolute inset-x-0 top-1/2 h-[1px] bg-gradient-to-r from-transparent via-[#d4af37]/40 to-transparent pointer-events-none"></div>
         <div class="absolute inset-y-0 left-1/2 w-[1px] bg-gradient-to-b from-transparent via-[#d4af37]/40 to-transparent pointer-events-none"></div>
 
-        <!-- Центральный чертеж пропорций -->
-        <div class="relative w-64 h-64 sm:w-72 sm:h-72 border border-[#d4af37]/50 rounded-sm overflow-hidden bg-[#0d0d12] shadow-[0_0_50px_rgba(212,175,55,0.25)] flex items-center justify-center p-3">
-          <svg class="w-full h-full text-[#d4af37] filter drop-shadow-[0_0_20px_rgba(212,175,55,0.4)]" viewBox="0 0 200 200" fill="none" stroke="currentColor">
-            <!-- Квадрат и круг пропорций -->
+        <!-- Центральный чертеж Витрувианского человека да Винчи -->
+        <div class="relative w-64 h-64 sm:w-72 sm:h-72 border border-[#d4af37]/60 rounded-sm overflow-hidden bg-[#0d0d12] shadow-[0_0_50px_rgba(212,175,55,0.3)] flex items-center justify-center p-3">
+          <svg class="w-full h-full text-[#d4af37] filter drop-shadow-[0_0_20px_rgba(212,175,55,0.45)]" viewBox="0 0 200 200" fill="none" stroke="currentColor">
             <circle cx="100" cy="100" r="92" stroke-width="1.2" stroke-dasharray="2 3" class="opacity-80" />
             <rect x="22" y="22" width="156" height="156" stroke-width="1" class="opacity-70" />
             <line x1="22" y1="22" x2="178" y2="178" stroke-width="0.5" stroke-dasharray="2 4" class="opacity-40" />
             <line x1="178" y1="22" x2="22" y2="178" stroke-width="0.5" stroke-dasharray="2 4" class="opacity-40" />
-            
-            <!-- Фигура человека -->
+            <line x1="100" y1="8" x2="100" y2="192" stroke-width="0.8" stroke-dasharray="2 2" class="opacity-60" />
+            <line x1="8" y1="100" x2="192" y2="100" stroke-width="0.8" stroke-dasharray="2 2" class="opacity-60" />
+
+            <!-- Пропорции человека по чертежам Леонардо -->
             <circle cx="100" cy="45" r="11" stroke-width="1.5" />
             <path d="M100 56 L100 116" stroke-width="1.8" />
             <path d="M88 68 L112 68 L106 116 L94 116 Z" stroke-width="1.2" stroke-dasharray="3 2" class="opacity-75" />
@@ -409,12 +446,12 @@ html_code = """<!DOCTYPE html>
             <path d="M94 116 L48 170 M106 116 L152 170" stroke-width="1.5" />
           </svg>
           
-          <!-- Сканирующий луч -->
-          <div class="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#d4af37] to-transparent opacity-85 shadow-[0_0_15px_#d4af37] animate-[scanLaser_3s_ease-in-out_infinite] pointer-events-none"></div>
+          <!-- Сканирующий луч телеметрии -->
+          <div class="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#d4af37] to-transparent opacity-85 shadow-[0_0_15px_#d4af37] laser-scanner-line pointer-events-none"></div>
         </div>
       </div>
 
-      <!-- Финансовый статус инициализации -->
+      <!-- Деловой финансовый статус -->
       <div class="space-y-2 z-10">
         <div class="font-mono text-[9px] uppercase tracking-[0.3em] text-[#d4af37] opacity-90">
           [ФИНАНСОВОЕ МОДЕЛИРОВАНИЕ // СИСТЕМА 2026]
@@ -1330,7 +1367,8 @@ html_code = """<!DOCTYPE html>
             responsive: true, maintainAspectRatio: false,
             scales: {
               x: { grid: { display: false }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } },
-              y: { grid: { color: chartGrid }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } }
+              y: { grid: { color: chartGrid }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } },
+              y1: { position: 'right', grid: { display: false }, ticks: { color: '#e63946', font: { family: 'JetBrains Mono', size: 10 } } }
             },
             plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } }
           }
