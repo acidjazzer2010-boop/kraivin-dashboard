@@ -18,8 +18,6 @@ st.markdown("Интерактивная финансовая модель для
 
 # --- БОКОВАЯ ПАНЕЛЬ (ВВОД ДАННЫХ) ---
 
-
-
 st.sidebar.header("Параметры модели")
 
 ru_months_full = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
@@ -29,6 +27,15 @@ start_year = col_y.selectbox("Год старта", [2026, 2027])
 
 margin_pct = st.sidebar.slider("Маржинальность (%)", min_value=10, max_value=50, value=20, step=1)
 period = st.sidebar.selectbox("Горизонт планирования (мес)", [6, 12, 18, 24])
+
+st.sidebar.subheader("Налоговые параметры")
+vat_rate_pct = st.sidebar.selectbox(
+    "Ставка НДС (%)", 
+    [22, 20, 10, 7, 5, 0], 
+    index=0, 
+    help="Основная ставка НДС в РФ с 2026 года составляет 22%"
+)
+vat_multiplier = 1 + (vat_rate_pct / 100)
 
 st.sidebar.subheader("Стартовый капитал и закупки")
 initial_purchase = st.sidebar.number_input("Первоначальная закупка товара (руб)", value=5_000_000, step=500_000)
@@ -74,7 +81,7 @@ for i in range(period):
 
 cogs_pct = 1 - (margin_pct / 100)
 cogs_no_vat = rev * cogs_pct
-cogs_vat = cogs_no_vat * 1.2
+cogs_vat = cogs_no_vat * vat_multiplier
 
 delay_months_suppliers = max(1, int(round(delay_days / 30))) if delay_days > 0 else 0
 cogs_payments = np.zeros(period)
@@ -95,12 +102,12 @@ customer_delay_months = max(0, int(round(customer_delay_days / 30)))
 
 inflows = np.zeros(period)
 for i in range(period):
-    inflows[i] += rev[i] * 1.2 * (factoring_share / 100) * (factoring_advance / 100)
+    inflows[i] += rev[i] * vat_multiplier * (factoring_share / 100) * (factoring_advance / 100)
     
     target_month = i + customer_delay_months
     if target_month < period:
-        inflows[target_month] += rev[i] * 1.2 * ((100 - factoring_share) / 100)
-        inflows[target_month] += rev[i] * 1.2 * (factoring_share / 100) * ((100 - factoring_advance) / 100)
+        inflows[target_month] += rev[i] * vat_multiplier * ((100 - factoring_share) / 100)
+        inflows[target_month] += rev[i] * vat_multiplier * (factoring_share / 100) * ((100 - factoring_advance) / 100)
 
 base_other_opex = 150_000
 opex = np.full(period, base_other_opex + monthly_fot)
@@ -223,8 +230,8 @@ with tab2:
 
     st.markdown("### Структура притока денежных средств по источникам")
     fig4 = go.Figure()
-    dir_inf = rev * 1.2 * ((100 - factoring_share) / 100)
-    fact_inf = rev * 1.2 * (factoring_share / 100)
+    dir_inf = rev * vat_multiplier * ((100 - factoring_share) / 100)
+    fact_inf = rev * vat_multiplier * (factoring_share / 100)
     fig4.add_trace(go.Bar(x=x_labels, y=dir_inf, name='Оплата от клиентов', marker_color='#642A38'))
     fig4.add_trace(go.Bar(x=x_labels, y=fact_inf, name='Факторинг', marker_color='#E3C293'))
     fig4.update_layout(barmode='stack', xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified")
@@ -245,7 +252,7 @@ with tab3:
     st.plotly_chart(fig5, use_container_width=True)
 
     st.markdown("### Структура совокупных расходов")
-    exp_labels = ['Операционные расходы', 'Nалоги и сборы', 'ФОТ (Команда)', 'Закупки товара']
+    exp_labels = ['Операционные расходы', 'Налоги и сборы', 'ФОТ (Команда)', 'Закупки товара']
     exp_vals = [total_other_opex, total_taxes, total_fot, sum_purchases]
     tot_exp = sum(exp_vals) or 1
     exp_pcts = [v / tot_exp * 100 for v in exp_vals]
