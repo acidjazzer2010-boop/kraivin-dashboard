@@ -519,3 +519,237 @@ with tab_debt:
     
     fig_debt.add_trace(go.Bar(
         x=x_labels, y=interest_payments,
+    name='Проценты за месяц', 
+            marker=dict(color=bar_color), 
+            text=text_interest, 
+            textposition='outside', 
+            textfont=dict(color=text_primary)
+        )
+    )
+    fig_debt.add_trace(
+        go.Scatter(
+            x=x_labels, 
+            y=debt_balance, 
+            name='Остаток тела долга', 
+            yaxis='y2', 
+            mode='lines+markers+text', 
+            line=dict(color=line_color, width=3, shape='spline'), 
+            marker=dict(size=7, color=line_color), 
+            text=text_debt, 
+            textposition='top center', 
+            textfont=dict(color=line_color)
+        )
+    )
+    fig_debt.update_layout(
+        yaxis2=dict(overlaying='y', side='right', showgrid=False, tickfont=dict(color=line_color))
+    )
+    st.plotly_chart(apply_chart_layout(fig_debt), use_container_width=True)
+    
+    debt_df = pd.DataFrame({
+        "Период": x_labels,
+        "Дотация": [f"{format_num_spaced(v)} ₽" for v in monthly_investments],
+        "Проценты": [f"{format_num_spaced(v)} ₽" for v in interest_payments],
+        "Погашено тела долга": [f"{format_num_spaced(v)} ₽" for v in debt_repayments],
+        "Остаток долга на конец месяца": [f"{format_num_spaced(v)} ₽" for v in debt_balance],
+        "Свободный остаток счета": [f"{format_num_spaced(v)} ₽" for v in funded_cash_balance]
+    })
+    st.dataframe(debt_df, hide_index=True, use_container_width=True)
+
+with tab_stock:
+    st.markdown(f"<h3 style='font-size: 17px; font-weight: 700; color: {text_primary}; margin-bottom: 4px;'>Транши поставок и списание запасов</h3>", unsafe_allow_html=True)
+    st.markdown(f"<p style='font-size: 13px; color: {text_secondary}; margin-bottom: 18px;'>Закупки производятся дискретными циклами каждые 5 месяцев без ежемесячного дублирования.</p>", unsafe_allow_html=True)
+    
+    fig_stock = go.Figure()
+    stock_bar_color = "#3f3f46" if is_dark else "#cbd5e1"
+    stock_line_color = "#f59e0b" if is_dark else "#d97706"
+    
+    text_cogs = [f"{v/1_000_000:.1f} млн ₽" if v > 0 else "" for v in cogs_payments]
+    text_inventory = [f"{v/1_000_000:.1f} млн" for v in inventory_balance]
+    
+    fig_stock.add_trace(
+        go.Bar(
+            x=x_labels, 
+            y=cogs_payments, 
+            name='Оплата партии поставщику', 
+            marker=dict(color=stock_bar_color), 
+            text=text_cogs, 
+            textposition='outside', 
+            textfont=dict(color=text_primary)
+        )
+    )
+    fig_stock.add_trace(
+        go.Scatter(
+            x=x_labels, 
+            y=inventory_balance, 
+            name='Остаток склада', 
+            yaxis='y2', 
+            mode='lines+markers+text', 
+            line=dict(color=stock_line_color, width=3, shape='spline'), 
+            marker=dict(size=7, color=stock_line_color), 
+            text=text_inventory, 
+            textposition='top center', 
+            textfont=dict(color=stock_line_color)
+        )
+    )
+    fig_stock.update_layout(
+        yaxis2=dict(overlaying='y', side='right', showgrid=False, tickfont=dict(color=stock_line_color))
+    )
+    st.plotly_chart(apply_chart_layout(fig_stock), use_container_width=True)
+
+with tab_cf:
+    st.markdown(f"<h3 style='font-size: 17px; font-weight: 700; color: {text_primary}; margin-bottom: 4px;'>Структура помесячного денежного потока</h3>", unsafe_allow_html=True)
+    st.markdown(f"<p style='font-size: 13px; color: {text_secondary}; margin-bottom: 18px;'>Сопоставление входящих потоков от продаж и полных выплат за закупки, постоянные расходы и проценты.</p>", unsafe_allow_html=True)
+    
+    fig_cf = go.Figure()
+    in_color = "#22c55e" if is_dark else "#16a34a"
+    out_color = "#ef4444" if is_dark else "#dc2626"
+    
+    text_inflows = [f"{v/1_000_000:.1f} млн" for v in inflows]
+    text_outflows = [f"{v/1_000_000:.1f} млн" for v in total_outflows]
+    
+    fig_cf.add_trace(
+        go.Bar(
+            x=x_labels, 
+            y=inflows, 
+            name='Притоки от продаж', 
+            marker=dict(color=in_color), 
+            text=text_inflows, 
+            textposition='auto', 
+            textfont=dict(color='#ffffff' if not is_dark else '#000000', size=11)
+        )
+    )
+    fig_cf.add_trace(
+        go.Bar(
+            x=x_labels, 
+            y=-total_outflows, 
+            name='Выплаты (закупки, расходы, проценты)', 
+            marker=dict(color=out_color), 
+            text=text_outflows, 
+            textposition='auto', 
+            textfont=dict(color='#ffffff', size=11)
+        )
+    )
+    fig_cf.update_layout(barmode='relative')
+    st.plotly_chart(apply_chart_layout(fig_cf), use_container_width=True)
+
+with tab_pnl:
+    col_pnl1, col_pnl2 = st.columns([1, 1])
+    
+    with col_pnl1:
+        st.markdown(f"<h4 style='font-size: 15px; font-weight: 700; color: {text_primary}; margin-bottom: 12px;'>Динамика заказов и выручки</h4>", unsafe_allow_html=True)
+        fig_ord = go.Figure()
+        text_orders = [f"{int(v)}" for v in orders]
+        
+        fig_ord.add_trace(
+            go.Bar(
+                x=x_labels, 
+                y=orders, 
+                name='Заказы, шт.', 
+                marker=dict(color="#3b82f6" if is_dark else "#2563eb", opacity=0.85), 
+                text=text_orders, 
+                textposition='outside', 
+                textfont=dict(color=text_primary)
+            )
+        )
+        fig_ord.add_trace(
+            go.Scatter(
+                x=x_labels, 
+                y=rev, 
+                name='Выручка, ₽', 
+                yaxis='y2', 
+                mode='lines+markers', 
+                line=dict(color="#10b981" if is_dark else "#059669", width=3, shape='spline'), 
+                marker=dict(size=6, color="#10b981" if is_dark else "#059669")
+            )
+        )
+        fig_ord.update_layout(yaxis2=dict(overlaying='y', side='right', showgrid=False, tickfont=dict(color=text_secondary)))
+        st.plotly_chart(apply_chart_layout(fig_ord, height=360), use_container_width=True)
+
+    with col_pnl2:
+        st.markdown(f"<h4 style='font-size: 15px; font-weight: 700; color: {text_primary}; margin-bottom: 12px;'>Структура затрат с учетом процентов</h4>", unsafe_allow_html=True)
+        exp_labels = ['Склад', 'Офис', 'ФОТ', 'Прочие расходы', 'Налоги 5%', 'Закупки товара', 'Проценты по долгу']
+        total_fot = sum(np.full(period, monthly_fot))
+        total_warehouse = sum(np.full(period, monthly_warehouse))
+        total_office = sum(np.full(period, monthly_office))
+        total_taxes = sum(taxes_and_commissions)
+        sum_purchases = sum(cogs_payments)
+        total_other_opex = sum(opex) - total_fot - total_warehouse - total_office
+        
+        exp_vals = [total_warehouse, total_office, total_fot, total_other_opex, total_taxes, sum_purchases, total_interest_paid]
+        
+        pie_colors = (
+            ['#52525b', '#71717a', '#3b82f6', '#6366f1', '#a855f7', '#f43f5e', '#fbbf24']
+            if is_dark else 
+            ['#94a3b8', '#64748b', '#2563eb', '#4f46e5', '#9333ea', '#e11d48', '#d97706']
+        )
+        
+        fig_pie = go.Figure(
+            data=[go.Pie(
+                labels=exp_labels, 
+                values=exp_vals, 
+                hole=0.62, 
+                textinfo='percent', 
+                textfont=dict(color='#ffffff', size=11), 
+                marker=dict(colors=pie_colors)
+            )]
+        )
+        fig_pie.update_layout(
+            height=360,
+            paper_bgcolor='rgba(0,0,0,0)',
+            margin=dict(t=10, b=10, l=10, r=10),
+            showlegend=True,
+            legend=dict(orientation="v", x=1.02, y=0.5, font=dict(color=text_primary, size=11))
+        )
+        st.plotly_chart(fig_pie, use_container_width=True)
+
+# --- ПАНЕЛЬ ЭКСПОРТА ---
+st.markdown(f"<div style='height: 1px; background: {card_border}; margin: 36px 0 24px 0;'></div>", unsafe_allow_html=True)
+
+tab_ex1, tab_ex2 = st.tabs(["Скачать отчет", "Отправить отчет на почту"])
+
+html_data = generate_html_report_bytes(
+    period=period,
+    start_date=f"{ru_months_full[start_month_idx]} {start_year}",
+    sum_rev=format_num_spaced(sum(rev)) + " ₽",
+    max_deficit=format_num_spaced(max_debt_peak) + " ₽",
+    net_profit=format_num_spaced(net_profit) + " ₽",
+    roi=f"{roi:.1f}%",
+    initial_cash_buffer="0 ₽",
+    initial_purchase=format_num_spaced(initial_purchase) + " ₽",
+    x_labels=x_labels,
+    cash_balance=funded_cash_balance,
+    inflows=inflows,
+    outflows=total_outflows,
+    net_cf=inflows - total_outflows,
+    rev=rev,
+    opex=opex,
+    taxes_and_commissions=taxes_and_commissions,
+    cogs_payments=cogs_payments,
+    cum_cf=debt_balance,
+    factoring_share=factoring_share,
+    margin_pct=margin_pct,
+    sum_purchases=sum_purchases,
+    total_fot=total_fot,
+    total_taxes=total_taxes,
+    total_other_opex=total_other_opex
+)
+
+with tab_ex1:
+    st.download_button(
+        label="Скачать сводный отчет",
+        data=html_data,
+        file_name="Finansoviy_Otchet.html",
+        mime="text/html",
+        use_container_width=True
+    )
+
+with tab_ex2:
+    email_input = st.text_input("Электронная почта получателя", "partner@company.ru")
+    if st.button("Отправить отчет"):
+        if send_report_to_email(email_input, html_data):
+            st.success("Отчет успешно отправлен!")
+        else:
+            if not EXPORTER_AVAILABLE:
+                st.warning("Модуль отправки почты exporter.py не обнаружен в репозитории.")
+            else:
+                st.error("Ошибка при отправке.")
