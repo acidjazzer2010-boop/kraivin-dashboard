@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
 import os
+import re
 
 from exporter import generate_html_report_bytes, send_report_to_email
 
@@ -15,6 +16,33 @@ st.set_page_config(
 
 st.title("Анализ денежных потоков и рентабельности")
 st.markdown("Интерактивная финансовая модель для сценарного анализа кассовых разрывов.")
+
+# --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ФОРМАТИРОВАНИЯ ---
+def format_num_spaced(val: int) -> str:
+    """Форматирует целое число с разделителями тысяч через пробел."""
+    return f"{int(val):,}".replace(",", " ")
+
+def money_input(label: str, default_val: int, key: str, help_text: str = None) -> int:
+    """Виджет ввода денежных сумм с автоматическим разделением тысяч пробелами."""
+    if key not in st.session_state:
+        st.session_state[key] = format_num_spaced(default_val)
+    
+    raw_val = st.sidebar.text_input(label, value=st.session_state[key], key=f"raw_{key}", help=help_text)
+    
+    # Очищаем ввод от пробелов, запятых и букв
+    clean_val = re.sub(r"[^\d]", "", raw_val)
+    if not clean_val:
+        clean_val = str(default_val)
+    
+    parsed_int = int(clean_val)
+    formatted_str = format_num_spaced(parsed_int)
+    
+    # Обновляем состояние с пробелами
+    st.session_state[key] = formatted_str
+    
+    # Визуальная подсказка под полем ввода с точным форматированием
+    st.sidebar.caption(f"Выбрано: **{formatted_str} руб.**")
+    return parsed_int
 
 # --- БОКОВАЯ ПАНЕЛЬ (ВВОД ДАННЫХ) ---
 
@@ -38,59 +66,50 @@ vat_rate_pct = st.sidebar.selectbox(
 vat_multiplier = 1 + (vat_rate_pct / 100)
 
 st.sidebar.subheader("Стартовый капитал и закупки")
-initial_purchase = st.sidebar.number_input(
+initial_purchase = money_input(
     "Первоначальная закупка товара (руб)", 
-    value=5_000_000, 
-    step=500_000, 
-    format="%d",
-    help="Базовое значение: 5 000 000 руб. (шаг: 500 000 руб.)"
+    default_val=5_000_000, 
+    key="init_purchase_key",
+    help_text="Введите сумму (можно с пробелами)"
 )
-initial_cash_buffer = st.sidebar.number_input(
-    "Стартовый денежный буфер на счете (руб)", 
-    value=2_000_000, 
-    step=500_000, 
-    format="%d",
-    help="Базовое значение: 2 000 000 руб. (шаг: 500 000 руб.)"
+
+initial_cash_buffer = money_input(
+    "Стартовый буфер на счете (руб)", 
+    default_val=2_000_000, 
+    key="init_buffer_key",
+    help_text="Остаток свободных ДС на старте"
 )
 
 st.sidebar.subheader("Динамика продаж")
-aov = st.sidebar.number_input(
-    "Средняя сумма заказа (руб)", 
-    value=150_000, 
-    step=10_000, 
-    format="%d",
-    help="Базовое значение: 150 000 руб. (шаг: 10 000 руб.)"
+aov = money_input(
+    "Средняя сумма заказа / AOV (руб)", 
+    default_val=150_000, 
+    key="aov_key"
 )
+
 start_orders = st.sidebar.number_input(
     "Заказов в 1-й месяц (шт)", 
     value=40, 
-    step=1, 
-    format="%d"
+    step=1
 )
 orders_growth = st.sidebar.slider("Ежемесячный прирост заказов (%)", 0, 100, 15, step=1)
 scale_factor = st.sidebar.slider("Коэффициент масштабирования продаж", 0.5, 3.0, 1.0, 0.1)
 
 st.sidebar.subheader("Команда и постоянные расходы")
-monthly_fot = st.sidebar.number_input(
+monthly_fot = money_input(
     "ФОТ в месяц (руб)", 
-    value=500_000, 
-    step=50_000, 
-    format="%d",
-    help="Базовое значение: 500 000 руб. (шаг: 50 000 руб.)"
+    default_val=500_000, 
+    key="fot_key"
 )
-monthly_warehouse = st.sidebar.number_input(
-    "Аренда и обслуживание склада (руб)", 
-    value=200_000, 
-    step=20_000, 
-    format="%d",
-    help="Базовое значение: 200 000 руб. (шаг: 20 000 руб.)"
+monthly_warehouse = money_input(
+    "Аренда и расходы на склад (руб)", 
+    default_val=200_000, 
+    key="wh_key"
 )
-monthly_office = st.sidebar.number_input(
+monthly_office = money_input(
     "Аренда и расходы на офис (руб)", 
-    value=150_000, 
-    step=10_000, 
-    format="%d",
-    help="Базовое значение: 150 000 руб. (шаг: 10 000 руб.)"
+    default_val=150_000, 
+    key="office_key"
 )
 
 st.sidebar.subheader("Работа с поставщиками")
