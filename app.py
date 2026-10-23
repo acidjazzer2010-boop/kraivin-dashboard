@@ -38,19 +38,60 @@ vat_rate_pct = st.sidebar.selectbox(
 vat_multiplier = 1 + (vat_rate_pct / 100)
 
 st.sidebar.subheader("Стартовый капитал и закупки")
-initial_purchase = st.sidebar.number_input("Первоначальная закупка товара (руб)", value=5_000_000, step=500_000)
-initial_cash_buffer = st.sidebar.number_input("Стартовый денежный буфер (на счете)", value=2_000_000, step=500_000)
+initial_purchase = st.sidebar.number_input(
+    "Первоначальная закупка товара (руб)", 
+    value=5_000_000, 
+    step=500_000, 
+    format="%d",
+    help="Базовое значение: 5 000 000 руб. (шаг: 500 000 руб.)"
+)
+initial_cash_buffer = st.sidebar.number_input(
+    "Стартовый денежный буфер на счете (руб)", 
+    value=2_000_000, 
+    step=500_000, 
+    format="%d",
+    help="Базовое значение: 2 000 000 руб. (шаг: 500 000 руб.)"
+)
 
 st.sidebar.subheader("Динамика продаж")
-aov = st.sidebar.number_input("Средняя сумма заказа (руб)", value=150_000, step=10_000)
-start_orders = st.sidebar.number_input("Заказов в 1-й месяц (шт)", value=40, step=1)
+aov = st.sidebar.number_input(
+    "Средняя сумма заказа (руб)", 
+    value=150_000, 
+    step=10_000, 
+    format="%d",
+    help="Базовое значение: 150 000 руб. (шаг: 10 000 руб.)"
+)
+start_orders = st.sidebar.number_input(
+    "Заказов в 1-й месяц (шт)", 
+    value=40, 
+    step=1, 
+    format="%d"
+)
 orders_growth = st.sidebar.slider("Ежемесячный прирост заказов (%)", 0, 100, 15, step=1)
 scale_factor = st.sidebar.slider("Коэффициент масштабирования продаж", 0.5, 3.0, 1.0, 0.1)
 
 st.sidebar.subheader("Команда и постоянные расходы")
-monthly_fot = st.sidebar.number_input("ФОТ в месяц (руб)", value=500_000, step=50_000)
-monthly_warehouse = st.sidebar.number_input("Аренда и обслуживание склада (руб)", value=200_000, step=20_000)
-monthly_office = st.sidebar.number_input("Аренда и расходы на офис (руб)", value=150_000, step=10_000)
+monthly_fot = st.sidebar.number_input(
+    "ФОТ в месяц (руб)", 
+    value=500_000, 
+    step=50_000, 
+    format="%d",
+    help="Базовое значение: 500 000 руб. (шаг: 50 000 руб.)"
+)
+monthly_warehouse = st.sidebar.number_input(
+    "Аренда и обслуживание склада (руб)", 
+    value=200_000, 
+    step=20_000, 
+    format="%d",
+    help="Базовое значение: 200 000 руб. (шаг: 20 000 руб.)"
+)
+monthly_office = st.sidebar.number_input(
+    "Аренда и расходы на офис (руб)", 
+    value=150_000, 
+    step=10_000, 
+    format="%d",
+    help="Базовое значение: 150 000 руб. (шаг: 10 000 руб.)"
+)
 
 st.sidebar.subheader("Работа с поставщиками")
 prepayment_pct = st.sidebar.slider("Предоплата поставщикам (%)", 0, 100, 50, step=10)
@@ -111,7 +152,6 @@ for i in range(period):
         inflows[target_month] += rev[i] * vat_multiplier * ((100 - factoring_share) / 100)
         inflows[target_month] += rev[i] * vat_multiplier * (factoring_share / 100) * ((100 - factoring_advance) / 100)
 
-# Базовые прочие операционные расходы + склад и офис
 base_other_opex = 150_000
 fixed_infrastructure_opex = monthly_warehouse + monthly_office
 base_total_non_fot_opex = base_other_opex + fixed_infrastructure_opex
@@ -221,8 +261,8 @@ with tab1:
 
     st.markdown("### Структура месячного денежного потока")
     fig2 = go.Figure()
-    fig2.add_trace(go.Bar(x=x_labels, y=inflows, name='Поступления', marker_color='#E3C293', text=[f"{v:,.0f}" for v in inflows], textposition='auto'))
-    fig2.add_trace(go.Bar(x=x_labels, y=-outflows, name='Выплаты', marker_color='#642A38', text=[f"{v:,.0f}" for v in outflows], textposition='auto'))
+    fig2.add_trace(go.Bar(x=x_labels, y=inflows, name='Поступления', marker_color='#E3C293', text=[f"{v:,.0f}".replace(",", " ") for v in inflows], textposition='auto'))
+    fig2.add_trace(go.Bar(x=x_labels, y=-outflows, name='Выплаты', marker_color='#642A38', text=[f"{v:,.0f}".replace(",", " ") for v in outflows], textposition='auto'))
     fig2.add_trace(go.Scatter(x=x_labels, y=net_cf, name='Чистый поток', marker_color='#B88645', mode='lines+markers'))
     fig2.update_layout(barmode='relative', xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified")
     st.plotly_chart(fig2, use_container_width=True)
@@ -231,7 +271,7 @@ with tab2:
     st.markdown("### Динамика маржинальности и операционной прибыли (EBITDA)")
     fig3 = go.Figure()
     ebitda_vals = rev - opex - taxes_and_commissions - (cogs_payments * 0.3)
-    fig3.add_trace(go.Bar(x=x_labels, y=ebitda_vals, name='EBITDA', marker_color='#642A38', text=[f"{v:,.0f}" for v in ebitda_vals], textposition='auto'))
+    fig3.add_trace(go.Bar(x=x_labels, y=ebitda_vals, name='EBITDA', marker_color='#642A38', text=[f"{v:,.0f}".replace(",", " ") for v in ebitda_vals], textposition='auto'))
     fig3.add_trace(go.Scatter(x=x_labels, y=[margin_pct]*period, name='Маржинальность (%)', yaxis='y2', line=dict(color='#E3C293', width=3)))
     fig3.update_layout(xaxis_title="Месяц", yaxis_title="EBITDA (руб)", yaxis2=dict(title="Маржа (%)", overlaying='y', side='right', range=[0, 50]))
     st.plotly_chart(fig3, use_container_width=True)
@@ -251,7 +291,7 @@ with tab3:
     total_cash = cum_cf + initial_cash_buffer
     fig5.add_trace(go.Scatter(
         x=x_labels, y=total_cash, mode='lines+markers+text', name='Накопленный ДС',
-        text=[f"{v:,.0f}" for v in total_cash], textposition="top center",
+        text=[f"{v:,.0f}".replace(",", " ") for v in total_cash], textposition="top center",
         line=dict(color='#642A38', width=3), fill='tozeroy', fillcolor='rgba(227, 194, 147, 0.2)'
     ))
     fig5.add_hline(y=initial_cash_buffer, line_dash="dash", line_color="#B88645", annotation_text="Стартовый буфер")
