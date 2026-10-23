@@ -15,7 +15,7 @@ st.set_page_config(
 )
 
 st.title("Анализ денежных потоков, рентабельности и инвестиций")
-st.markdown("Интерактивная финансовая модель: анализ кассовых разрывов и расчет графика необходимых инвестиций (дотаций).")
+st.markdown("Интерактивная финансовая модель: партионные закупки товара, анализ кассовых разрывов и график дотаций.")
 
 # --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ФОРМАТИРОВАНИЯ ---
 def format_num_spaced(val: int) -> str:
@@ -63,12 +63,20 @@ vat_rate_pct = st.sidebar.selectbox(
 )
 vat_multiplier = 1 + (vat_rate_pct / 100)
 
-st.sidebar.subheader("Стартовый капитал и закупки")
+st.sidebar.subheader("Товарный запас и цикл поставок")
 initial_purchase = money_input(
     "Первоначальная закупка товара (руб)", 
-    default_val=5_000_000, 
+    default_val=25_000_000, 
     key="init_purchase_key",
-    help_text="Введите сумму (можно с пробелами)"
+    help_text="Стартовая партия товара (обеспечивает первые N месяцев)"
+)
+batch_cycle_months = st.sidebar.number_input(
+    "На сколько месяцев хватает партии (мес)",
+    value=5,
+    min_value=1,
+    max_value=12,
+    step=1,
+    help="В течение этого срока новые закупки не производятся — товар списывается со склада"
 )
 initial_cash_buffer = 0
 
@@ -86,12 +94,11 @@ start_orders = st.sidebar.number_input(
     min_value=1
 )
 
-# Выбор понятного механизма роста
 growth_type = st.sidebar.radio(
     "Логика прироста заказов",
     ["В штуках (+N заказов/мес)", "В процентах (% в месяц)"],
     index=0,
-    help="В штуках — линейный и понятный рост. В процентах — сложный экспоненциальный прирост."
+    help="В штуках — линейный рост. В процентах — сложный экспоненциальный прирост."
 )
 
 if growth_type == "В штуках (+N заказов/мес)":
@@ -100,8 +107,7 @@ if growth_type == "В штуках (+N заказов/мес)":
         min_value=0, 
         max_value=100, 
         value=5, 
-        step=1,
-        help="Например, при 5 шт: 40 -> 45 -> 50 -> 55..."
+        step=1
     )
     orders_growth_pct = 0
 else:
@@ -114,12 +120,11 @@ else:
     )
     orders_growth_abs = 0
 
-# Ограничитель сверху (реалистичный потолок емкости)
 max_orders_cap = st.sidebar.number_input(
     "Потолок продаж / лимит в месяц (шт)",
     value=300,
     step=10,
-    help="Максимальное число заказов, выше которого продажи не растут (ограничение склада/рынка)"
+    help="Предельное число заказов в месяц с учетом емкости рынка/склада"
 )
 
 st.sidebar.subheader("Команда и постоянные расходы")
@@ -170,31 +175,51 @@ for i in range(period):
         else:
             calculated_orders = orders[i-1] * (1 + (orders_growth_pct / 100))
     
-    # Применение потолка продаж
     orders[i] = min(calculated_orders, float(max_orders_cap))
     rev[i] = orders[i] * aov
 
+# Себестоимость проданного товара (COGS)
 cogs_pct = 1 - (margin_pct / 100)
 cogs_no_vat = rev * cogs_pct
 cogs_vat = cogs_no_vat * vat_multiplier
 
 delay_months_suppliers = max(1, int(round(delay_days / 30))) if delay_days > 0 else 0
+
+# --- РАСЧЕТ ПЛАТЕЖЕЙ ЗА ПАРТИОННЫЕ ЗАКУПКИ (БЕЗ ЕЖЕМЕСЯЧНОГО ДУБЛИРОВАНИЯ) ---
 cogs_payments = np.zeros(period)
+inventory_deliveries = np.zeros(period)  # Поступление партий на склад
 
-for i in range(period):
-    cogs_payments[i] += cogs_vat[i] * (prepayment_pct / 100)
-    if i + delay_months_suppliers < period:
-        cogs_payments[i + delay_months_suppliers] += cogs_vat[i] * ((100 - prepayment_pct) / 100)
-
+# 1. Стартовая партия (25 млн руб.) обеспечивает первые batch_cycle_months месяцев
 initial_prep = initial_purchase * (prepayment_pct / 100)
 initial_post = initial_purchase * ((100 - prepayment_pct) / 100)
 
 cogs_payments[0] += initial_prep
 if delay_months_suppliers < period:
     cogs_payments[delay_months_suppliers] += initial_post
+inventory_deliveries[0] = initial_purchase
 
+# 2. Следующие партии закупаются раз в batch_cycle_months (например, в мес. 5/6, мес. 10/11)
+for batch_start in range(batch_cycle_months, period, batch_cycle_months):
+    batch_end = min(batch_start + batch_cycle_months, period)
+    # Суммарная себестоимость товаров, необходимых на следующие N месяцев
+    needed_batch_cogs = float(np.sum(cogs_vat[batch_start:batch_end]))
+    inventory_deliveries[batch_start] = needed_batch_cogs
+    
+    # Оплата новой партии: аванс + остаток через отсрочку
+    cogs_payments[batch_start] += needed_batch_cogs * (prepayment_pct / 100)
+    post_pay_m = batch_start + delay_months_suppliers
+    if post_pay_m < period:
+        cogs_payments[post_pay_m] += needed_batch_cogs * ((100 - prepayment_pct) / 100)
+
+# Динамика складского остатка в рублях себестоимости
+inventory_balance = np.zeros(period)
+curr_inv = 0.0
+for i in range(period):
+    curr_inv += inventory_deliveries[i] - cogs_vat[i]
+    inventory_balance[i] = max(curr_inv, 0.0)
+
+# --- ПРИТОКИ С УЧЕТОМ ФАКТОРИНГА И ОТСРОЧЕК КЛИЕНТАМ ---
 customer_delay_months = max(0, int(round(customer_delay_days / 30)))
-
 inflows = np.zeros(period)
 for i in range(period):
     inflows[i] += rev[i] * vat_multiplier * (factoring_share / 100) * (factoring_advance / 100)
@@ -204,6 +229,7 @@ for i in range(period):
         inflows[target_month] += rev[i] * vat_multiplier * ((100 - factoring_share) / 100)
         inflows[target_month] += rev[i] * vat_multiplier * (factoring_share / 100) * ((100 - factoring_advance) / 100)
 
+# Постоянные расходы
 base_other_opex = 150_000
 fixed_infrastructure_opex = monthly_warehouse + monthly_office
 base_total_non_fot_opex = base_other_opex + fixed_infrastructure_opex
@@ -220,7 +246,7 @@ net_cf = inflows - outflows
 cum_cf = np.cumsum(net_cf)
 cash_balance_raw = cum_cf + initial_cash_buffer
 
-# Расчет потребности в инвестициях (дотациях)
+# --- РАСЧЕТ ДОТАЦИЙ ДЛЯ ПОКРЫТИЯ КАЖДОГО РАЗРЫВА ---
 monthly_investments = np.zeros(period)
 funded_cash_balance = np.zeros(period)
 curr_balance = initial_cash_buffer
@@ -251,14 +277,11 @@ max_deficit = min(min(cum_cf), 0)
 net_profit = sum(rev * (margin_pct / 100)) - sum(opex) - sum(taxes_and_commissions) - (initial_purchase * 0.15)
 roi = (net_profit / sum(rev)) * 100 if sum(rev) > 0 else 0
 
-def format_rub(val):
-    return f"{val:,.0f}".replace(",", " ") + " руб."
-
 col1, col2, col3, col4, col5 = st.columns(5)
-col1.metric(f"Выручка (за {period} мес)", format_rub(sum(rev)))
-col2.metric("Объем требуемых инвестиций", format_rub(total_investments_required))
-col3.metric("Макс. кассовый разрыв", format_rub(max_deficit))
-col4.metric("Чистая прибыль", format_rub(net_profit))
+col1.metric(f"Выручка (за {period} мес)", format_num_spaced(sum(rev)) + " руб.")
+col2.metric("Сумма дотаций (инвестиций)", format_num_spaced(total_investments_required) + " руб.")
+col3.metric("Макс. кассовый разрыв", format_num_spaced(max_deficit) + " руб.")
+col4.metric("Чистая прибыль", format_num_spaced(net_profit) + " руб.")
 col5.metric("Рентабельность по ЧП", f"{roi:.1f}%")
 
 st.divider()
@@ -269,12 +292,12 @@ st.subheader("📤 Экспорт отчета в HTML")
 html_data = generate_html_report_bytes(
     period=period,
     start_date=f"{ru_months_full[start_month_idx]} {start_year}",
-    sum_rev=format_rub(sum(rev)),
-    max_deficit=format_rub(max_deficit),
-    net_profit=format_rub(net_profit),
+    sum_rev=format_num_spaced(sum(rev)) + " руб.",
+    max_deficit=format_num_spaced(max_deficit) + " руб.",
+    net_profit=format_num_spaced(net_profit) + " руб.",
     roi=f"{roi:.1f}%",
-    initial_cash_buffer=format_rub(initial_cash_buffer),
-    initial_purchase=format_rub(initial_purchase),
+    initial_cash_buffer=format_num_spaced(initial_cash_buffer) + " руб.",
+    initial_purchase=format_num_spaced(initial_purchase) + " руб.",
     x_labels=x_labels,
     cash_balance=funded_cash_balance,
     inflows=inflows,
@@ -317,43 +340,48 @@ st.divider()
 # --- ВИЗУАЛИЗАЦИЯ НА ВКЛАДКАХ С ПОДПИСЯМИ ЗНАЧЕНИЙ ---
 st.subheader("📊 Аналитические панели и графики")
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "📦 Динамика заказов",
-    "💸 Необходимые Инвестиции и Дотации",
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+    "📦 Товарный цикл и Склад",
+    "💸 Необходимые Инвестиции (Дотации)",
     "💰 Ликвидность и Денежный поток", 
     "📈 Рентабельность и Источники", 
-    "📉 Накопленный итог и Расходы"
+    "📉 Накопленный итог и Расходы",
+    "📊 Заказы и Выручка"
 ])
 
 with tab1:
-    st.markdown("### Прогноз количества заказов и выручки")
-    fig_orders = go.Figure()
+    st.markdown("### График партионных закупок и динамика склада")
+    st.caption("Показывает моменты крупных оплат партий товара и постепенное списание складского остатка в течение 5 месяцев.")
     
-    fig_orders.add_trace(go.Bar(
+    fig_stock = go.Figure()
+    
+    # Оплаты партий товара
+    fig_stock.add_trace(go.Bar(
         x=x_labels,
-        y=orders,
-        name='Количество заказов (шт)',
+        y=cogs_payments,
+        name='Оплата партии поставщикам (руб)',
         marker_color='#642A38',
-        text=[f"{int(v)} шт" for v in orders],
+        text=[f"{v/1_000_000:.1f}М" if v > 0 else "" for v in cogs_payments],
         textposition='outside'
     ))
     
-    fig_orders.add_trace(go.Scatter(
+    # Остаток на складе
+    fig_stock.add_trace(go.Scatter(
         x=x_labels,
-        y=rev,
-        name='Выручка (руб)',
+        y=inventory_balance,
+        name='Остаток товара на складе (руб себестоимости)',
         yaxis='y2',
         mode='lines+markers+text',
-        line=dict(color='#E3C293', width=3),
-        text=[f"{v/1_000_000:.1f}М" for v in rev],
+        line=dict(color='#B88645', width=3),
+        text=[f"{v/1_000_000:.1f}М" for v in inventory_balance],
         textposition='top center'
     ))
     
-    fig_orders.update_layout(
+    fig_stock.update_layout(
         xaxis_title="Месяц",
-        yaxis_title="Заказов в месяц (шт)",
+        yaxis_title="Оплата закупки в месяце (руб)",
         yaxis2=dict(
-            title="Выручка (руб)",
+            title="Остаток склада (руб)",
             overlaying='y',
             side='right',
             showgrid=False
@@ -361,17 +389,17 @@ with tab1:
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         hovermode="x unified"
     )
-    st.plotly_chart(fig_orders, use_container_width=True)
+    st.plotly_chart(fig_stock, use_container_width=True)
 
 with tab2:
     st.markdown("### График потребности в инвестициях (дотациях)")
-    st.caption("Показывает, сколько именно свободных средств нужно влить в каждый конкретный месяц при дефиците собственных потоков от продаж.")
+    st.caption("Пики дотаций приходятся на месяцы финансирования крупных партий (1-й и 6-й месяцы).")
     
     fig_inv = go.Figure()
     fig_inv.add_trace(go.Bar(
         x=x_labels, 
         y=monthly_investments, 
-        name='Дотация в месяце (инвестиция)',
+        name='Дотация в месяце (руб)',
         marker_color='#B88645',
         text=[f"{v:,.0f}".replace(",", " ") if v > 0 else "" for v in monthly_investments],
         textposition='outside'
@@ -380,7 +408,7 @@ with tab2:
     fig_inv.add_trace(go.Scatter(
         x=x_labels, 
         y=cum_investments, 
-        name='Накопленный объем инвестиций',
+        name='Накопленный объем дотаций',
         yaxis='y2',
         mode='lines+markers+text',
         line=dict(color='#642A38', width=3),
@@ -392,7 +420,7 @@ with tab2:
         xaxis_title="Месяц",
         yaxis_title="Сумма дотации за месяц (руб)",
         yaxis2=dict(
-            title="Накопленные инвестиции (руб)",
+            title="Накопленные дотации (руб)",
             overlaying='y',
             side='right',
             showgrid=False
@@ -404,10 +432,11 @@ with tab2:
     
     inv_df = pd.DataFrame({
         "Месяц": x_labels,
-        "Заказы (шт)": [int(v) for v in orders],
-        "Поступления от продаж (руб)": [format_num_spaced(v) for v in inflows],
-        "Выплаты (закупки + OPEX + налоги)": [format_num_spaced(v) for v in outflows],
-        "Чистый дефицит / профицит": [format_num_spaced(v) for v in net_cf],
+        "Выручка (руб)": [format_num_spaced(v) for v in rev],
+        "Оплата товара (руб)": [format_num_spaced(v) for v in cogs_payments],
+        "Поступления от клиентов/фактора": [format_num_spaced(v) for v in inflows],
+        "Все выплаты (закупка + OPEX)": [format_num_spaced(v) for v in outflows],
+        "Чистое сальдо месяца": [format_num_spaced(v) for v in net_cf],
         "Требуемая дотация в месяце": [format_num_spaced(v) for v in monthly_investments],
         "Всего инвестировано накопленно": [format_num_spaced(v) for v in cum_investments]
     })
@@ -418,7 +447,7 @@ with tab3:
     fig1 = go.Figure()
     
     fig1.add_trace(go.Scatter(
-        x=x_labels, y=cash_balance_raw, mode='lines+markers+text', name='Баланс без дотаций (дефицит)',
+        x=x_labels, y=cash_balance_raw, mode='lines+markers+text', name='Баланс без дотаций (кассовый разрыв)',
         text=[f"{v:,.0f}".replace(",", " ") for v in cash_balance_raw], textposition="top center",
         line=dict(color='#A27B5C', width=2, dash='dash')
     ))
@@ -442,9 +471,9 @@ with tab3:
     st.plotly_chart(fig2, use_container_width=True)
 
 with tab4:
-    st.markdown("### Динамика маржинальности и операционной прибыли (EBITDA)")
+    st.markdown("### Динамика EBITDA")
     fig3 = go.Figure()
-    ebitda_vals = rev - opex - taxes_and_commissions - (cogs_payments * 0.3)
+    ebitda_vals = rev - opex - taxes_and_commissions - cogs_vat
     fig3.add_trace(go.Bar(x=x_labels, y=ebitda_vals, name='EBITDA', marker_color='#642A38', text=[f"{v:,.0f}".replace(",", " ") for v in ebitda_vals], textposition='auto'))
     fig3.add_trace(go.Scatter(x=x_labels, y=[margin_pct]*period, name='Маржинальность (%)', yaxis='y2', line=dict(color='#E3C293', width=3)))
     fig3.update_layout(xaxis_title="Месяц", yaxis_title="EBITDA (руб)", yaxis2=dict(title="Маржа (%)", overlaying='y', side='right', range=[0, 50]))
@@ -484,3 +513,23 @@ with tab5:
     )])
     fig6.update_layout(xaxis_title="Доля в расходах (%)", yaxis=dict(autorange="reversed"), margin=dict(t=10, b=0, l=0, r=0))
     st.plotly_chart(fig6, use_container_width=True)
+
+with tab6:
+    st.markdown("### Прогноз количества заказов и выручки")
+    fig_orders = go.Figure()
+    fig_orders.add_trace(go.Bar(
+        x=x_labels, y=orders, name='Заказы (шт)', marker_color='#642A38',
+        text=[f"{int(v)} шт" for v in orders], textposition='outside'
+    ))
+    fig_orders.add_trace(go.Scatter(
+        x=x_labels, y=rev, name='Выручка (руб)', yaxis='y2',
+        mode='lines+markers+text', line=dict(color='#E3C293', width=3),
+        text=[f"{v/1_000_000:.1f}М" for v in rev], textposition='top center'
+    ))
+    fig_orders.update_layout(
+        xaxis_title="Месяц", yaxis_title="Заказов в месяц (шт)",
+        yaxis2=dict(title="Выручка (руб)", overlaying='y', side='right', showgrid=False),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        hovermode="x unified"
+    )
+    st.plotly_chart(fig_orders, use_container_width=True)
