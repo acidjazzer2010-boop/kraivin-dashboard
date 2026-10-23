@@ -7,131 +7,254 @@ import re
 
 from exporter import generate_html_report_bytes, send_report_to_email
 
-# Настройка страницы
+# --- НАСТРОЙКА СТРАНИЦЫ ---
 st.set_page_config(
-    page_title="Анализ экономической эффективности", 
-    page_icon="🍷", 
-    layout="wide"
+    page_title="Kraivin Capital & Liquidity Suite", 
+    page_icon="", 
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-st.title("Анализ денежных потоков, рентабельности и инвестиций")
-st.markdown("Интерактивная финансовая модель: партионные закупки, анализ дефицита и расчет стоимости заемного капитала.")
+# --- ИНЪЕКЦИЯ ДИЗАЙН-СИСТЕМЫ APPLE / SF PRO + ПЛАВНЫЕ ПЕРЕХОДЫ ---
+st.markdown("""
+<style>
+    @import url('https://fonts.cdnfonts.com/css/sf-pro-display');
+
+    /* Базовая типографика Apple */
+    html, body, [class*="css"], .stMarkdown {
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif !important;
+        color: #1d1d1f;
+        -webkit-font-smoothing: antialiased;
+        letter-spacing: -0.015em;
+    }
+
+    /* Фон приложения */
+    .stApp {
+        background-color: #f5f5f7;
+    }
+
+    /* Боковая панель с эффектом Frosted Glass */
+    section[data-testid="stSidebar"] {
+        background-color: rgba(255, 255, 255, 0.72) !important;
+        backdrop-filter: blur(25px) saturate(180%);
+        -webkit-backdrop-filter: blur(25px) saturate(180%);
+        border-right: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    /* Карточки KPI в стиле Apple Glass */
+    .apple-kpi-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 28px;
+    }
+
+    .apple-card {
+        background: rgba(255, 255, 255, 0.82);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        border-radius: 18px;
+        padding: 22px 24px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.02);
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .apple-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+    }
+
+    .apple-card-label {
+        font-size: 13px;
+        font-weight: 500;
+        color: #86868b;
+        letter-spacing: -0.01em;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+    }
+
+    .apple-card-value {
+        font-size: 26px;
+        font-weight: 600;
+        letter-spacing: -0.03em;
+        color: #1d1d1f;
+    }
+
+    .apple-card-sub {
+        font-size: 12px;
+        font-weight: 500;
+        color: #0071e3;
+        margin-top: 4px;
+    }
+
+    /* --- КИНЕМАТИЧЕСКАЯ АНИМАЦИЯ ПЕРЕКЛЮЧЕНИЯ ВКЛАДОК --- */
+    @keyframes appleTabEnter {
+        0% {
+            opacity: 0;
+            transform: translateY(8px) scale(0.995);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    /* Контейнер активной вкладки */
+    div[data-baseweb="tab-panel"] {
+        animation: appleTabEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+        will-change: opacity, transform;
+    }
+
+    /* Навигационная панель табов (Apple Segmented Control) */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 6px;
+        background-color: rgba(0, 0, 0, 0.05);
+        padding: 4px;
+        border-radius: 12px;
+        border-bottom: none !important;
+        margin-bottom: 24px;
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 8px;
+        padding: 8px 18px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #6e6e73 !important;
+        background-color: transparent !important;
+        border: none !important;
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+
+    .stTabs [data-baseweb="tab"]:hover {
+        color: #1d1d1f !important;
+    }
+
+    .stTabs [aria-selected="true"] {
+        background-color: #ffffff !important;
+        color: #1d1d1f !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 0.5px 2px rgba(0, 0, 0, 0.04);
+    }
+
+    /* Поля ввода и кнопки */
+    .stTextInput input, .stSelectbox select, .stNumberInput input {
+        border-radius: 12px !important;
+        border: 1px solid rgba(0, 0, 0, 0.12) !important;
+        background: #ffffff !important;
+        padding: 10px 14px !important;
+        font-size: 14px !important;
+        box-shadow: none !important;
+        transition: all 0.2s ease !important;
+    }
+
+    .stTextInput input:focus, .stSelectbox select:focus {
+        border-color: #0071e3 !important;
+        box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15) !important;
+    }
+
+    .stButton button, .stDownloadButton button {
+        background-color: #0071e3 !important;
+        color: #ffffff !important;
+        border-radius: 980px !important;
+        border: none !important;
+        padding: 10px 22px !important;
+        font-weight: 500 !important;
+        font-size: 14px !important;
+        letter-spacing: -0.01em !important;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        box-shadow: 0 2px 8px rgba(0, 113, 227, 0.25) !important;
+    }
+
+    .stButton button:hover, .stDownloadButton button:hover {
+        background-color: #0077ed !important;
+        transform: scale(1.01);
+    }
+
+    /* Скрытие стандартных футеров */
+    #MainMenu, footer, header {
+        visibility: hidden;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ФОРМАТИРОВАНИЯ ---
 def format_num_spaced(val: float) -> str:
-    """Форматирует число с разделителями тысяч через пробел."""
-    return f"{int(round(val)):,}".replace(",", " ")
+    """Форматирует число с разделителями тысяч через неразрывный пробел."""
+    return f"{int(round(val)):,}".replace(",", "\u00A0")
 
 def money_input(label: str, default_val: int, key: str, help_text: str = None) -> int:
-    """Виджет ввода денежных сумм с автоматическим разделением тысяч пробелами."""
+    """Элегантный инпут с динамической микро-подписью."""
     if key not in st.session_state:
         st.session_state[key] = format_num_spaced(default_val)
     
     raw_val = st.sidebar.text_input(label, value=st.session_state[key], key=f"raw_{key}", help=help_text)
-    
     clean_val = re.sub(r"[^\d]", "", raw_val)
     if not clean_val:
         clean_val = str(default_val)
     
     parsed_int = int(clean_val)
     formatted_str = format_num_spaced(parsed_int)
-    
     st.session_state[key] = formatted_str
-    st.sidebar.caption(f"Выбрано: **{formatted_str} руб.**")
+    
+    st.sidebar.markdown(f"<div style='font-size: 11px; color: #86868b; margin-top: -12px; margin-bottom: 12px;'>Итог: <span style='color: #1d1d1f; font-weight: 500;'>{formatted_str} ₽</span></div>", unsafe_allow_html=True)
     return parsed_int
 
-# --- БОКОВАЯ ПАНЕЛЬ (ВВОД ДАННЫХ) ---
-
-st.sidebar.header("Параметры модели")
+# --- БОКОВАЯ ПАНЕЛЬ (ПАРАМЕТРЫ) ---
+st.sidebar.markdown("<h2 style='font-size: 18px; font-weight: 600; margin-bottom: 20px; letter-spacing: -0.02em;'>Конфигурация модели</h2>", unsafe_allow_html=True)
 
 ru_months_full = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
 col_m, col_y = st.sidebar.columns(2)
-
-# Старт по умолчанию: Октябрь 2026
 start_month_idx = col_m.selectbox("Месяц старта", range(12), index=9, format_func=lambda x: ru_months_full[x])
-start_year = col_y.selectbox("Год старта", [2026, 2027], index=0)
+start_year = col_y.selectbox("Год", [2026, 2027], index=0)
 
 margin_pct = st.sidebar.slider("Маржинальность (%)", min_value=10, max_value=50, value=20, step=1)
-period = st.sidebar.selectbox("Горизонт планирования (мес)", [6, 12, 18, 24])
+period = st.sidebar.selectbox("Горизонт моделирования", [6, 12, 18, 24], format_func=lambda x: f"{x} месяцев")
 
-st.sidebar.subheader("Стоимость заемного капитала")
+st.sidebar.markdown("<div style='height: 1px; background: rgba(0,0,0,0.06); margin: 20px 0;'></div>", unsafe_allow_html=True)
+st.sidebar.markdown("<div style='font-size: 12px; font-weight: 600; text-transform: uppercase; color: #86868b; margin-bottom: 12px;'>Капитал & Закупки</div>", unsafe_allow_html=True)
+
+initial_purchase = money_input("Стартовая закупка (₽)", default_val=25_000_000, key="init_purchase_key")
+batch_cycle_months = st.sidebar.number_input("Цикл склада (мес)", value=5, min_value=1, max_value=12, step=1)
+
 col_cb, col_comm = st.sidebar.columns(2)
-cb_rate = col_cb.number_input("Ставка ЦБ РФ (%)", value=17.0, step=0.5, help="Ключевая ставка ЦБ РФ на октябрь 2026 г.")
-comm_margin = col_comm.number_input("Комиссия (%)", value=2.0, step=0.5, help="Коммерческая маржа кредитора")
+cb_rate = col_cb.number_input("Ставка ЦБ (%)", value=17.0, step=0.5)
+comm_margin = col_comm.number_input("Маржа (%)", value=2.0, step=0.5)
 total_interest_rate_annual = cb_rate + comm_margin
-st.sidebar.info(f"Итоговая ставка: **{total_interest_rate_annual:.1f}% годовых** ({total_interest_rate_annual/12:.2f}% в мес)")
 
-st.sidebar.subheader("Налоговые параметры")
-vat_rate_pct = st.sidebar.selectbox(
-    "Ставка НДС (%)", 
-    [22, 20, 10, 7, 5, 0], 
-    index=0, 
-    help="Основная ставка НДС в РФ с 2026 года составляет 22%"
-)
-vat_multiplier = 1 + (vat_rate_pct / 100)
+st.sidebar.markdown("<div style='height: 1px; background: rgba(0,0,0,0.06); margin: 20px 0;'></div>", unsafe_allow_html=True)
+st.sidebar.markdown("<div style='font-size: 12px; font-weight: 600; text-transform: uppercase; color: #86868b; margin-bottom: 12px;'>Динамика заказов</div>", unsafe_allow_html=True)
 
-st.sidebar.subheader("Товарный запас и цикл поставок")
-initial_purchase = money_input(
-    "Первоначальная закупка товара (руб)", 
-    default_val=25_000_000, 
-    key="init_purchase_key",
-    help_text="Стартовая партия товара (обеспечивает первые N месяцев)"
-)
-batch_cycle_months = st.sidebar.number_input(
-    "На сколько месяцев хватает партии (мес)",
-    value=5,
-    min_value=1,
-    max_value=12,
-    step=1
-)
-initial_cash_buffer = 0
+aov = money_input("Средний чек AOV (₽)", default_val=150_000, key="aov_key")
+start_orders = st.sidebar.number_input("Заказов в 1-й месяц", value=40, step=1, min_value=1)
+growth_type = st.sidebar.radio("Логика масштабирования", ["В штуках (+N/мес)", "В процентах (%/мес)"], index=0)
 
-st.sidebar.subheader("Динамика продаж")
-aov = money_input(
-    "Средняя сумма заказа / AOV (руб)", 
-    default_val=150_000, 
-    key="aov_key"
-)
-
-start_orders = st.sidebar.number_input(
-    "Заказов в 1-й месяц (шт)", 
-    value=40, 
-    step=1,
-    min_value=1
-)
-
-growth_type = st.sidebar.radio(
-    "Логика прироста заказов",
-    ["В штуках (+N заказов/мес)", "В процентах (% в месяц)"],
-    index=0
-)
-
-if growth_type == "В штуках (+N заказов/мес)":
-    orders_growth_abs = st.sidebar.slider("Прирост заказов в месяц (шт)", 0, 100, 5, 1)
+if growth_type == "В штуках (+N/мес)":
+    orders_growth_abs = st.sidebar.slider("Прирост заказов", 0, 100, 5, 1)
     orders_growth_pct = 0
 else:
-    orders_growth_pct = st.sidebar.slider("Ежемесячный прирост заказов (%)", 0, 100, 10, 1)
+    orders_growth_pct = st.sidebar.slider("Прирост заказов (%)", 0, 100, 10, 1)
     orders_growth_abs = 0
 
-max_orders_cap = st.sidebar.number_input("Потолок продаж / лимит в месяц (шт)", value=300, step=10)
+max_orders_cap = st.sidebar.number_input("Лимит емкости в месяц", value=300, step=10)
 
-st.sidebar.subheader("Команда и постоянные расходы")
-monthly_fot = money_input("ФОТ в месяц (руб)", default_val=500_000, key="fot_key")
-monthly_warehouse = money_input("Аренда и расходы на склад (руб)", default_val=200_000, key="wh_key")
-monthly_office = money_input("Аренда и расходы на офис (руб)", default_val=150_000, key="office_key")
+st.sidebar.markdown("<div style='height: 1px; background: rgba(0,0,0,0.06); margin: 20px 0;'></div>", unsafe_allow_html=True)
+st.sidebar.markdown("<div style='font-size: 12px; font-weight: 600; text-transform: uppercase; color: #86868b; margin-bottom: 12px;'>Операционные расходы</div>", unsafe_allow_html=True)
 
-st.sidebar.subheader("Работа с поставщиками")
-prepayment_pct = st.sidebar.slider("Предоплата поставщикам (%)", 0, 100, 50, step=10)
-delay_days = st.sidebar.slider("Отсрочка на остаток (дней)", 0, 90, 40, step=5)
+monthly_fot = money_input("ФОТ команды (₽)", default_val=500_000, key="fot_key")
+monthly_warehouse = money_input("Складской комплекс (₽)", default_val=200_000, key="wh_key")
+monthly_office = money_input("Офис и администрация (₽)", default_val=150_000, key="office_key")
 
-st.sidebar.subheader("Факторинг")
-factoring_share = st.sidebar.slider("Доля выручки в факторинге (%)", 0, 100, 50, step=10)
-factoring_advance = st.sidebar.slider("Аванс от фактора (%)", 50, 100, 80, step=5)
+vat_rate_pct = 22
+vat_multiplier = 1 + (vat_rate_pct / 100)
+prepayment_pct = 50
+delay_days = 40
+factoring_share = 50
+factoring_advance = 80
+customer_delay_days = 70
+initial_cash_buffer = 0
 
-st.sidebar.subheader("Условия с покупателями")
-customer_delay_days = st.sidebar.slider("Отсрочка платежа покупателям (дней)", 0, 120, 70, step=5)
-
-# --- РАСЧЕТНАЯ ЧАСТЬ (МАТЕМАТИКА) ---
+# --- РАСЧЕТНАЯ ЧАСТЬ ---
 ru_months_short = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек']
 x_labels = []
 for i in range(period):
@@ -146,7 +269,7 @@ for i in range(period):
     if i == 0:
         calculated_orders = float(start_orders)
     else:
-        if growth_type == "В штуках (+N заказов/мес)":
+        if growth_type == "В штуках (+N/мес)":
             calculated_orders = orders[i-1] + orders_growth_abs
         else:
             calculated_orders = orders[i-1] * (1 + (orders_growth_pct / 100))
@@ -158,8 +281,6 @@ cogs_no_vat = rev * cogs_pct
 cogs_vat = cogs_no_vat * vat_multiplier
 
 delay_months_suppliers = max(1, int(round(delay_days / 30))) if delay_days > 0 else 0
-
-# Партионные закупки
 cogs_payments = np.zeros(period)
 inventory_deliveries = np.zeros(period)
 
@@ -186,7 +307,6 @@ for i in range(period):
     curr_inv += inventory_deliveries[i] - cogs_vat[i]
     inventory_balance[i] = max(curr_inv, 0.0)
 
-# Притоки
 customer_delay_months = max(0, int(round(customer_delay_days / 30)))
 inflows = np.zeros(period)
 for i in range(period):
@@ -207,36 +327,30 @@ for i in range(6, period):
 taxes_and_commissions = rev * 0.05
 base_outflows = cogs_payments + opex + taxes_and_commissions
 
-# --- РАСЧЕТ ДОТАЦИЙ, ДОЛГА И СТОИМОСТИ ДЕНЕГ (ПРОЦЕНТОВ) ---
+# Логика долгового фондирования
 monthly_interest_rate = (total_interest_rate_annual / 100.0) / 12.0
-
-monthly_investments = np.zeros(period)    # Новые транши финансирования
-interest_payments = np.zeros(period)      # Выплата процентов в месяц
-debt_repayments = np.zeros(period)        # Погашение тела долга из профицита
-debt_balance = np.zeros(period)           # Остаток непогашенного тела долга
+monthly_investments = np.zeros(period)
+interest_payments = np.zeros(period)
+debt_repayments = np.zeros(period)
+debt_balance = np.zeros(period)
 funded_cash_balance = np.zeros(period)
 
 current_debt = 0.0
-curr_cash = float(initial_cash_buffer)
+curr_cash = 0.0
 
 for i in range(period):
-    # 1. Проценты на остаток долга на начало месяца
     interest_due = current_debt * monthly_interest_rate
     interest_payments[i] = interest_due
-    
-    # 2. Операционное сальдо с учетом начисленных процентов
     net_before_financing = inflows[i] - (base_outflows[i] + interest_due)
     potential_cash = curr_cash + net_before_financing
     
     if potential_cash < 0:
-        # Кассовый разрыв -> привлекаем дотацию
         needed_injection = abs(potential_cash)
         monthly_investments[i] = needed_injection
         current_debt += needed_injection
         curr_cash = 0.0
         debt_repayments[i] = 0.0
     else:
-        # Профицит денег -> свободные средства направляем на гашение долга
         monthly_investments[i] = 0.0
         repay_amount = min(potential_cash, current_debt)
         debt_repayments[i] = repay_amount
@@ -247,221 +361,259 @@ for i in range(period):
     funded_cash_balance[i] = curr_cash
 
 total_outflows = base_outflows + interest_payments
-net_cf_raw = inflows - base_outflows
-cum_cf_raw = np.cumsum(net_cf_raw)
-max_deficit = min(min(cum_cf_raw), 0)
-
 total_interest_paid = np.sum(interest_payments)
 total_investments_injected = np.sum(monthly_investments)
 max_debt_peak = np.max(debt_balance)
 
-# Чистая прибыль за вычетом всех расходов и процентов за кредит
 net_profit = sum(rev * (margin_pct / 100)) - sum(opex) - sum(taxes_and_commissions) - total_interest_paid
 roi = (net_profit / sum(rev)) * 100 if sum(rev) > 0 else 0
 
-sum_purchases = sum(cogs_payments)
-total_fot = sum(np.full(period, monthly_fot))
-total_warehouse = sum(np.full(period, monthly_warehouse))
-total_office = sum(np.full(period, monthly_office))
-total_taxes = sum(taxes_and_commissions)
-total_other_opex = sum(opex) - total_fot - total_warehouse - total_office
+# --- ШАБЛОН ДИЗАЙНА ДЛЯ ГРАФИКОВ (APPLE MINIMALISM) ---
+def apply_apple_chart_layout(fig, height=440):
+    fig.update_layout(
+        height=height,
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        margin=dict(t=20, b=30, l=10, r=10),
+        font=dict(family='-apple-system, BlinkMacSystemFont, "SF Pro Text"', color='#86868b', size=12),
+        hoverlabel=dict(
+            bgcolor="rgba(255, 255, 255, 0.95)",
+            bordercolor="rgba(0,0,0,0.08)",
+            font=dict(family='-apple-system, BlinkMacSystemFont, "SF Pro Text"', color='#1d1d1f', size=12)
+        ),
+        xaxis=dict(
+            showgrid=False,
+            zeroline=False,
+            linecolor='rgba(0,0,0,0.06)',
+            tickfont=dict(color='#86868b')
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor='rgba(0,0,0,0.04)',
+            zeroline=False,
+            tickfont=dict(color='#86868b')
+        ),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.03,
+            xanchor="left",
+            x=0,
+            font=dict(color='#1d1d1f', size=13)
+        )
+    )
+    return fig
 
-# --- ВЫВОД KPI ---
-col1, col2, col3, col4, col5 = st.columns(5)
-col1.metric("Сумма дотаций (тело долга)", format_num_spaced(total_investments_injected) + " руб.")
-col2.metric(f"Уплаченные проценты ({total_interest_rate_annual:.1f}%)", format_num_spaced(total_interest_paid) + " руб.")
-col3.metric("Пиковый остаток долга", format_num_spaced(max_debt_peak) + " руб.")
-col4.metric("Чистая прибыль (с %)", format_num_spaced(net_profit) + " руб.")
-col5.metric("Рентабельность по ЧП", f"{roi:.1f}%")
+# --- ЗАГОЛОВОК СТРАНИЦЫ ---
+st.markdown("""
+<div style="margin-top: 10px; margin-bottom: 28px;">
+    <div style="display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #0071e3; background: rgba(0, 113, 227, 0.08); padding: 5px 12px; border-radius: 980px; margin-bottom: 8px;">
+        Financial Model Suite 2026
+    </div>
+    <h1 style="font-size: 38px; font-weight: 700; letter-spacing: -0.035em; color: #1d1d1f; margin: 0 0 6px 0;">
+        Ликвидность & Долговая нагрузка
+    </h1>
+    <p style="font-size: 16px; color: #86868b; margin: 0; font-weight: 400;">
+        Моделирование кассовых разрывов, складского цикла и стоимости фондирования по ставке ЦБ РФ 17.0% + 2.0%
+    </p>
+</div>
+""", unsafe_allow_html=True)
 
-st.divider()
+# --- БЛОК KPI КАРТОЧЕК APPLE GLASS ---
+st.markdown(f"""
+<div class="apple-kpi-container">
+    <div class="apple-card">
+        <div class="apple-card-label">Выручка за {period} мес</div>
+        <div class="apple-card-value">{format_num_spaced(sum(rev))} ₽</div>
+        <div class="apple-card-sub">С маржинальностью {margin_pct}%</div>
+    </div>
+    <div class="apple-card">
+        <div class="apple-card-label">Объем дотаций</div>
+        <div class="apple-card-value">{format_num_spaced(total_investments_injected)} ₽</div>
+        <div class="apple-card-sub" style="color: #ff3b30;">Кассовый дефицит</div>
+    </div>
+    <div class="apple-card">
+        <div class="apple-card-label">Стоимость денег ({total_interest_rate_annual:.1f}%)</div>
+        <div class="apple-card-value">{format_num_spaced(total_interest_paid)} ₽</div>
+        <div class="apple-card-sub">Проценты кредитору</div>
+    </div>
+    <div class="apple-card">
+        <div class="apple-card-label">Пиковый долг</div>
+        <div class="apple-card-value">{format_num_spaced(max_debt_peak)} ₽</div>
+        <div class="apple-card-sub">Максимум на балансе</div>
+    </div>
+    <div class="apple-card">
+        <div class="apple-card-label">Чистая прибыль</div>
+        <div class="apple-card-value">{format_num_spaced(net_profit)} ₽</div>
+        <div class="apple-card-sub" style="color: #34c759;">Рентабельность {roi:.1f}%</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
-# --- ПАНЕЛЬ ЭКСПОРТА ---
-st.subheader("📤 Экспорт отчета в HTML")
-html_data = generate_html_report_bytes(
-    period=period,
-    start_date=f"{ru_months_full[start_month_idx]} {start_year}",
-    sum_rev=format_num_spaced(sum(rev)) + " руб.",
-    max_deficit=format_num_spaced(max_deficit) + " руб.",
-    net_profit=format_num_spaced(net_profit) + " руб.",
-    roi=f"{roi:.1f}%",
-    initial_cash_buffer=format_num_spaced(initial_cash_buffer) + " руб.",
-    initial_purchase=format_num_spaced(initial_purchase) + " руб.",
-    x_labels=x_labels,
-    cash_balance=funded_cash_balance,
-    inflows=inflows,
-    outflows=total_outflows,
-    net_cf=inflows - total_outflows,
-    rev=rev,
-    opex=opex,
-    taxes_and_commissions=taxes_and_commissions,
-    cogs_payments=cogs_payments,
-    cum_cf=cum_cf_raw,
-    factoring_share=factoring_share,
-    margin_pct=margin_pct,
-    sum_purchases=sum_purchases,
-    total_fot=total_fot,
-    total_taxes=total_taxes,
-    total_other_opex=total_other_opex
-)
-
-tab_ex1, tab_ex2 = st.tabs(["📥 Скачать HTML-отчет", "✉️ Отправить HTML на email"])
-with tab_ex1:
-    st.download_button("💾 Скачать файл отчета", data=html_data, file_name="Kraivin_Financial_Report.html", mime="text/html", use_container_width=True)
-with tab_ex2:
-    email_input = st.text_input("Email получателя", "partner@krayvin.ru")
-    if st.button("🚀 Отправить отчет на email"):
-        if send_report_to_email(email_input, html_data):
-            st.success("Отчет успешно отправлен!")
-        else:
-            st.error("Ошибка при отправке.")
-
-st.divider()
-
-# --- ВИЗУАЛИЗАЦИЯ НА ВКЛАДКАХ ---
-st.subheader("📊 Аналитические панели и графики")
-
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
-    "💳 Стоимость долга и Проценты",
-    "📦 Товарный цикл и Склад",
-    "💰 Ликвидность и Денежный поток", 
-    "📈 Рентабельность и EBITDA", 
-    "📉 Структура расходов с учетом %",
-    "📊 Заказы и Выручка"
+# --- АНАЛИТИЧЕСКИЕ СЕКЦИИ НА ТАБАХ (С АНИМАЦИЕЙ ПЕРЕХОДА) ---
+tab_debt, tab_stock, tab_cf, tab_pnl = st.tabs([
+    "Обслуживание капитала",
+    "Складской цикл",
+    "Денежный поток",
+    "Экономика и заказы"
 ])
 
-with tab1:
-    st.markdown("### Обслуживание долга и начисленные проценты")
-    st.caption(f"Проценты начисляются по ставке {total_interest_rate_annual:.1f}% годовых на остаток непогашенного долга.")
+with tab_debt:
+    st.markdown("<h3 style='font-size: 18px; font-weight: 600; margin-bottom: 4px;'>График обслуживания долга и начисления процентов</h3>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size: 13px; color: #86868b; margin-bottom: 20px;'>Столбцы отражают ежемесячные выплаты процентов; линия показывает динамику непогашенного тела долга.</p>", unsafe_allow_html=True)
     
     fig_debt = go.Figure()
-    
-    # Начисленные проценты (столбцы)
     fig_debt.add_trace(go.Bar(
         x=x_labels, y=interest_payments,
-        name='Проценты к уплате (руб)',
-        marker_color='#B88645',
-        text=[f"{format_num_spaced(v)} руб" if v > 0 else "" for v in interest_payments],
+        name='Проценты за месяц',
+        marker=dict(color='#0071e3', opacity=0.85, line=dict(width=0)),
+        text=[f"{v/1000:,.0f}k ₽" if v > 0 else "" for v in interest_payments],
         textposition='outside'
     ))
-    
-    # Остаток тела долга (линия)
     fig_debt.add_trace(go.Scatter(
         x=x_labels, y=debt_balance,
-        name='Остаток долга (тело)',
+        name='Остаток долга',
         yaxis='y2',
-        mode='lines+markers+text',
-        line=dict(color='#642A38', width=3),
-        text=[f"{v/1_000_000:.1f}М" if v > 0 else "0" for v in debt_balance],
-        textposition='top center'
+        mode='lines+markers',
+        line=dict(color='#1d1d1f', width=3, shape='spline'),
+        marker=dict(size=6, color='#1d1d1f')
     ))
-    
     fig_debt.update_layout(
-        xaxis_title="Месяц",
-        yaxis_title="Проценты в месяц (руб)",
-        yaxis2=dict(title="Остаток долга (руб)", overlaying='y', side='right', showgrid=False),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        hovermode="x unified"
+        yaxis2=dict(overlaying='y', side='right', showgrid=False, tickfont=dict(color='#86868b'))
     )
-    st.plotly_chart(fig_debt, use_container_width=True)
+    st.plotly_chart(apply_apple_chart_layout(fig_debt), use_container_width=True)
     
-    # Детальная таблица движения долга
+    # Элегантная таблица
     debt_df = pd.DataFrame({
-        "Месяц": x_labels,
-        "Привлечено дотаций": [format_num_spaced(v) for v in monthly_investments],
-        "Проценты за месяц": [format_num_spaced(v) for v in interest_payments],
-        "Погашено тела долга": [format_num_spaced(v) for v in debt_repayments],
-        "Остаток долга на конец месяца": [format_num_spaced(v) for v in debt_balance],
-        "Свободный остаток денег на счете": [format_num_spaced(v) for v in funded_cash_balance]
+        "Период": x_labels,
+        "Дотация (вход)": [f"{format_num_spaced(v)} ₽" for v in monthly_investments],
+        "Проценты (19%)": [f"{format_num_spaced(v)} ₽" for v in interest_payments],
+        "Погашение долга": [f"{format_num_spaced(v)} ₽" for v in debt_repayments],
+        "Остаток долга": [f"{format_num_spaced(v)} ₽" for v in debt_balance],
+        "Свободный кэш": [f"{format_num_spaced(v)} ₽" for v in funded_cash_balance]
     })
     st.dataframe(debt_df, hide_index=True, use_container_width=True)
 
-with tab2:
-    st.markdown("### График партионных закупок и динамика склада")
-    st.caption("Показывает моменты крупных оплат партий товара и постепенное списание складского остатка в течение 5 месяцев.")
+with tab_stock:
+    st.markdown("<h3 style='font-size: 18px; font-weight: 600; margin-bottom: 4px;'>Транши поставок и списание запасов</h3>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size: 13px; color: #86868b; margin-bottom: 20px;'>Закупки производятся дискретными циклами каждые 5 месяцев без ложного ежемесячного дублирования.</p>", unsafe_allow_html=True)
     
     fig_stock = go.Figure()
     fig_stock.add_trace(go.Bar(
-        x=x_labels, y=cogs_payments, name='Оплата партии поставщикам (руб)', marker_color='#642A38',
-        text=[f"{v/1_000_000:.1f}М" if v > 0 else "" for v in cogs_payments], textposition='outside'
+        x=x_labels, y=cogs_payments,
+        name='Оплата партии поставщику',
+        marker=dict(color='#e5e5ea', line=dict(color='rgba(0,0,0,0.1)', width=1)),
+        text=[f"{v/1_000_000:.1f}M ₽" if v > 0 else "" for v in cogs_payments],
+        textposition='outside'
     ))
     fig_stock.add_trace(go.Scatter(
-        x=x_labels, y=inventory_balance, name='Остаток товара на складе (руб)', yaxis='y2',
-        mode='lines+markers+text', line=dict(color='#B88645', width=3),
-        text=[f"{v/1_000_000:.1f}М" for v in inventory_balance], textposition='top center'
+        x=x_labels, y=inventory_balance,
+        name='Остаток склада',
+        yaxis='y2',
+        mode='lines+markers',
+        line=dict(color='#ff9500', width=3, shape='spline'),
+        marker=dict(size=6, color='#ff9500')
     ))
     fig_stock.update_layout(
-        xaxis_title="Месяц", yaxis_title="Оплата партии (руб)",
-        yaxis2=dict(title="Остаток склада (руб)", overlaying='y', side='right', showgrid=False),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        hovermode="x unified"
+        yaxis2=dict(overlaying='y', side='right', showgrid=False, tickfont=dict(color='#86868b'))
     )
-    st.plotly_chart(fig_stock, use_container_width=True)
+    st.plotly_chart(apply_apple_chart_layout(fig_stock), use_container_width=True)
 
-with tab3:
-    st.markdown("### Динамика ликвидности (с учетом обслуживания долга)")
-    fig1 = go.Figure()
-    fig1.add_trace(go.Scatter(
-        x=x_labels, y=cum_cf_raw, mode='lines+markers+text', name='Баланс без дотаций (чистый разрыв)',
-        text=[f"{v:,.0f}".replace(",", " ") for v in cum_cf_raw], textposition="top center",
-        line=dict(color='#A27B5C', width=2, dash='dash')
-    ))
-    fig1.add_trace(go.Scatter(
-        x=x_labels, y=funded_cash_balance, mode='lines+markers+text', name='Остаток на счете (с фондированием)',
-        text=[f"{v:,.0f}".replace(",", " ") for v in funded_cash_balance], textposition="bottom center",
-        line=dict(color='#642A38', width=3), fill='tozeroy', fillcolor='rgba(100, 42, 56, 0.1)'
-    ))
-    fig1.add_hline(y=0, line_dash="dot", line_color="red", annotation_text="Граница дефицита")
-    fig1.update_layout(xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified")
-    st.plotly_chart(fig1, use_container_width=True)
-
-    st.markdown("### Структура помесячного денежного потока")
-    fig2 = go.Figure()
-    fig2.add_trace(go.Bar(x=x_labels, y=inflows, name='Притоки от продаж', marker_color='#E3C293', text=[f"{v:,.0f}".replace(",", " ") for v in inflows], textposition='auto'))
-    fig2.add_trace(go.Bar(x=x_labels, y=-total_outflows, name='Выплаты (закупки + OPEX + %)', marker_color='#642A38', text=[f"{v:,.0f}".replace(",", " ") for v in total_outflows], textposition='auto'))
-    fig2.update_layout(barmode='relative', xaxis_title="Месяц", yaxis_title="Рубли", hovermode="x unified")
-    st.plotly_chart(fig2, use_container_width=True)
-
-with tab4:
-    st.markdown("### Динамика EBITDA")
-    fig3 = go.Figure()
-    ebitda_vals = rev - opex - taxes_and_commissions - cogs_vat
-    fig3.add_trace(go.Bar(x=x_labels, y=ebitda_vals, name='EBITDA', marker_color='#642A38', text=[f"{v:,.0f}".replace(",", " ") for v in ebitda_vals], textposition='auto'))
-    fig3.add_trace(go.Scatter(x=x_labels, y=[margin_pct]*period, name='Маржинальность (%)', yaxis='y2', line=dict(color='#E3C293', width=3)))
-    fig3.update_layout(xaxis_title="Месяц", yaxis_title="EBITDA (руб)", yaxis2=dict(title="Маржа (%)", overlaying='y', side='right', range=[0, 50]))
-    st.plotly_chart(fig3, use_container_width=True)
-
-with tab5:
-    st.markdown("### Структура совокупных расходов (с процентами по кредиту)")
-    exp_labels = ['Склад', 'Офис', 'ФОТ (Команда)', 'Прочие OPEX', 'Налоги и сборы', 'Закупки товара', 'Проценты по долгу']
-    exp_vals = [total_warehouse, total_office, total_fot, total_other_opex, total_taxes, sum_purchases, total_interest_paid]
-    tot_exp = sum(exp_vals) or 1
-    exp_pcts = [v / tot_exp * 100 for v in exp_vals]
+with tab_cf:
+    st.markdown("<h3 style='font-size: 18px; font-weight: 600; margin-bottom: 4px;'>Структура помесячного денежного потока</h3>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size: 13px; color: #86868b; margin-bottom: 20px;'>Сравнение входящей выручки с обязательными платежами (закупки, аренда, ФОТ и налоги).</p>", unsafe_allow_html=True)
     
-    fig6 = go.Figure(data=[go.Bar(
-        y=exp_labels, x=exp_pcts, orientation='h',
-        text=[f"{p:.1f}% ({format_num_spaced(v)} руб)" for p, v in zip(exp_pcts, exp_vals)], textposition='auto',
-        marker_color=['#8B5E3C', '#A27B5C', '#E3C293', '#D0C2B8', '#B88645', '#642A38', '#C0392B']
-    )])
-    fig6.update_layout(xaxis_title="Доля в расходах (%)", yaxis=dict(autorange="reversed"), margin=dict(t=10, b=0, l=0, r=0))
-    st.plotly_chart(fig6, use_container_width=True)
+    fig_cf = go.Figure()
+    fig_cf.add_trace(go.Bar(
+        x=x_labels, y=inflows,
+        name='Поступления от продаж',
+        marker=dict(color='#34c759', opacity=0.85)
+    ))
+    fig_cf.add_trace(go.Bar(
+        x=x_labels, y=-total_outflows,
+        name='Совокупные выплаты',
+        marker=dict(color='#1d1d1f', opacity=0.85)
+    ))
+    st.plotly_chart(apply_apple_chart_layout(fig_cf), use_container_width=True)
 
-with tab6:
-    st.markdown("### Прогноз количества заказов и выручки")
-    fig_orders = go.Figure()
-    fig_orders.add_trace(go.Bar(
-        x=x_labels, y=orders, name='Заказы (шт)', marker_color='#642A38',
-        text=[f"{int(v)} шт" for v in orders], textposition='outside'
-    ))
-    fig_orders.add_trace(go.Scatter(
-        x=x_labels, y=rev, name='Выручка (руб)', yaxis='y2',
-        mode='lines+markers+text', line=dict(color='#E3C293', width=3),
-        text=[f"{v/1_000_000:.1f}М" for v in rev], textposition='top center'
-    ))
-    fig_orders.update_layout(
-        xaxis_title="Месяц", yaxis_title="Заказов в месяц (шт)",
-        yaxis2=dict(title="Выручка (руб)", overlaying='y', side='right', showgrid=False),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        hovermode="x unified"
+with tab_pnl:
+    col_pnl1, col_pnl2 = st.columns([1, 1])
+    
+    with col_pnl1:
+        st.markdown("<h4 style='font-size: 16px; font-weight: 600; margin-bottom: 12px;'>Динамика заказов и выручки</h4>", unsafe_allow_html=True)
+        fig_ord = go.Figure()
+        fig_ord.add_trace(go.Bar(
+            x=x_labels, y=orders, name='Заказы (шт)',
+            marker=dict(color='#0071e3', opacity=0.7)
+        ))
+        fig_ord.add_trace(go.Scatter(
+            x=x_labels, y=rev, name='Выручка (₽)', yaxis='y2',
+            mode='lines', line=dict(color='#1d1d1f', width=2, shape='spline')
+        ))
+        fig_ord.update_layout(yaxis2=dict(overlaying='y', side='right', showgrid=False))
+        st.plotly_chart(apply_apple_chart_layout(fig_ord, height=360), use_container_width=True)
+
+    with col_pnl2:
+        st.markdown("<h4 style='font-size: 16px; font-weight: 600; margin-bottom: 12px;'>Структура затрат с учетом процентов</h4>", unsafe_allow_html=True)
+        exp_labels = ['Склад', 'Офис', 'ФОТ', 'Прочие OPEX', 'Налоги 5%', 'Закупки', 'Проценты по долгу']
+        total_fot = sum(np.full(period, monthly_fot))
+        total_warehouse = sum(np.full(period, monthly_warehouse))
+        total_office = sum(np.full(period, monthly_office))
+        total_taxes = sum(taxes_and_commissions)
+        sum_purchases = sum(cogs_payments)
+        total_other_opex = sum(opex) - total_fot - total_warehouse - total_office
+        
+        exp_vals = [total_warehouse, total_office, total_fot, total_other_opex, total_taxes, sum_purchases, total_interest_paid]
+        
+        fig_pie = go.Figure(data=[go.Pie(
+            labels=exp_labels,
+            values=exp_vals,
+            hole=0.68,
+            marker=dict(colors=['#d1d1d6', '#c7c7cc', '#aeaeb2', '#8e8e93', '#636366', '#1d1d1f', '#0071e3'])
+        )])
+        fig_pie.update_layout(
+            height=360,
+            paper_bgcolor='rgba(0,0,0,0)',
+            margin=dict(t=10, b=10, l=10, r=10),
+            showlegend=True,
+            legend=dict(orientation="v", x=1.05, y=0.5, font=dict(family='-apple-system', size=11))
+        )
+        st.plotly_chart(fig_pie, use_container_width=True)
+
+# --- ЭКСПОРТ (FOOTER ACTION) ---
+st.markdown("<div style='height: 1px; background: rgba(0,0,0,0.06); margin: 36px 0 24px 0;'></div>", unsafe_allow_html=True)
+col_down, col_space = st.columns([1, 2])
+with col_down:
+    html_data = generate_html_report_bytes(
+        period=period,
+        start_date=f"{ru_months_full[start_month_idx]} {start_year}",
+        sum_rev=format_num_spaced(sum(rev)) + " ₽",
+        max_deficit=format_num_spaced(max_debt_peak) + " ₽",
+        net_profit=format_num_spaced(net_profit) + " ₽",
+        roi=f"{roi:.1f}%",
+        initial_cash_buffer="0 ₽",
+        initial_purchase=format_num_spaced(initial_purchase) + " ₽",
+        x_labels=x_labels,
+        cash_balance=funded_cash_balance,
+        inflows=inflows,
+        outflows=total_outflows,
+        net_cf=inflows - total_outflows,
+        rev=rev,
+        opex=opex,
+        taxes_and_commissions=taxes_and_commissions,
+        cogs_payments=cogs_payments,
+        cum_cf=debt_balance,
+        factoring_share=factoring_share,
+        margin_pct=margin_pct,
+        sum_purchases=sum_purchases,
+        total_fot=total_fot,
+        total_taxes=total_taxes,
+        total_other_opex=total_other_opex
     )
-    st.plotly_chart(fig_orders, use_container_width=True)
+    st.download_button(
+        label="Скачать сводный Executive Report",
+        data=html_data,
+        file_name="Executive_Financial_Report.html",
+        mime="text/html",
+        use_container_width=True
+    )
