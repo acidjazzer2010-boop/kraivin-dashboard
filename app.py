@@ -3,12 +3,12 @@ import streamlit.components.v1 as components
 
 st.set_page_config(
     page_title="Архитектура Капитала // Финансовое Моделирование",
-    page_icon="⚜️",
+    page_icon="📊",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# Скрываем системные элементы Streamlit для кинематографичного монолита
+# Скрываем системные элементы Streamlit для чистого отображения монолита
 st.markdown("""
 <style>
     #MainMenu, header, footer, .stDeployButton {
@@ -25,117 +25,7 @@ st.markdown("""
     iframe {
         border: none !important;
     }
-
-    /* ТРЕХМЕРНАЯ АСТРОЛЯБИЯ ДА ВИНЧИ: ВРАЩЕНИЕ В 3D ПЛОСКОСТЯХ (X, Y, Z) */
-    .astrolabe-3d-stage {
-      position: relative;
-      perspective: 1200px;
-      transform-style: preserve-3d;
-    }
-
-    @keyframes rotate3D_Ring1 {
-      0% { transform: rotateX(68deg) rotateY(18deg) rotateZ(0deg); }
-      100% { transform: rotateX(68deg) rotateY(18deg) rotateZ(360deg); }
-    }
-    @keyframes rotate3D_Ring2 {
-      0% { transform: rotateX(-42deg) rotateY(65deg) rotateZ(0deg); }
-      100% { transform: rotateX(-42deg) rotateY(65deg) rotateZ(-360deg); }
-    }
-    @keyframes rotate3D_Ring3 {
-      0% { transform: rotateX(25deg) rotateY(-58deg) rotateZ(360deg); }
-      100% { transform: rotateX(25deg) rotateY(-58deg) rotateZ(0deg); }
-    }
-    @keyframes rotate3D_Ring4 {
-      0% { transform: rotateX(80deg) rotateY(-20deg) rotateZ(0deg); }
-      100% { transform: rotateX(80deg) rotateY(-20deg) rotateZ(360deg); }
-    }
-    @keyframes laserVerticalScan {
-      0% { top: -6%; opacity: 0; }
-      15% { opacity: 0.9; }
-      85% { opacity: 0.9; }
-      100% { top: 104%; opacity: 0; }
-    }
-
-    .ring-3d-1 {
-      position: absolute;
-      inset: -28px;
-      border: 1.5px solid rgba(212, 175, 55, 0.65);
-      border-radius: 50%;
-      transform-style: preserve-3d;
-      animation: rotate3D_Ring1 16s linear infinite;
-      box-shadow: 0 0 20px rgba(212, 175, 55, 0.25), inset 0 0 15px rgba(212, 175, 55, 0.15);
-      pointer-events: none;
-    }
-    .ring-3d-1::after {
-      content: '';
-      position: absolute;
-      top: -4px;
-      left: 50%;
-      width: 9px;
-      height: 9px;
-      background: #d4af37;
-      border-radius: 50%;
-      box-shadow: 0 0 12px #d4af37;
-    }
-
-    .ring-3d-2 {
-      position: absolute;
-      inset: -48px;
-      border: 1.5px dashed rgba(212, 175, 55, 0.5);
-      border-radius: 50%;
-      transform-style: preserve-3d;
-      animation: rotate3D_Ring2 24s linear infinite;
-      pointer-events: none;
-    }
-    .ring-3d-2::after {
-      content: '';
-      position: absolute;
-      bottom: -5px;
-      left: 50%;
-      width: 10px;
-      height: 10px;
-      background: #f4f1ea;
-      border-radius: 50%;
-      box-shadow: 0 0 14px #d4af37;
-    }
-
-    .ring-3d-3 {
-      position: absolute;
-      inset: -68px;
-      border: 1px solid rgba(212, 175, 55, 0.35);
-      border-radius: 50%;
-      transform-style: preserve-3d;
-      animation: rotate3D_Ring3 34s linear infinite;
-      pointer-events: none;
-    }
-    .ring-3d-3::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      right: -4px;
-      width: 8px;
-      height: 8px;
-      background: #d4af37;
-      border-radius: 50%;
-      box-shadow: 0 0 10px #d4af37;
-    }
-
-    .ring-3d-4 {
-      position: absolute;
-      inset: -10px;
-      border: 1px dotted rgba(212, 175, 55, 0.7);
-      border-radius: 50%;
-      transform-style: preserve-3d;
-      animation: rotate3D_Ring4 20s linear infinite;
-      pointer-events: none;
-    }
-
-    .laser-scanner-line {
-      animation: laserVerticalScan 3s ease-in-out infinite;
-      will-change: top, opacity;
-    }
-
-  </style>
+</style>
 """, unsafe_allow_html=True)
 
 html_code = """<!DOCTYPE html>
@@ -438,6 +328,105 @@ html_code = """<!DOCTYPE html>
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border-line); }
     ::-webkit-scrollbar-thumb:hover { background: var(--accent-gold); }
+  
+    /* ТРЕХМЕРНАЯ АСТРОЛЯБИЯ ДА ВИНЧИ: ВРАЩЕНИЕ В 3D ПЛОСКОСТЯХ (X, Y, Z) */
+    .astrolabe-3d-stage {
+      position: relative;
+      perspective: 1200px;
+      transform-style: preserve-3d;
+    }
+
+    @keyframes rotate3D_Ring1 {
+      0% { transform: rotateX(68deg) rotateY(18deg) rotateZ(0deg); }
+      100% { transform: rotateX(68deg) rotateY(18deg) rotateZ(360deg); }
+    }
+    @keyframes rotate3D_Ring2 {
+      0% { transform: rotateX(-42deg) rotateY(65deg) rotateZ(0deg); }
+      100% { transform: rotateX(-42deg) rotateY(65deg) rotateZ(-360deg); }
+    }
+    @keyframes rotate3D_Ring3 {
+      0% { transform: rotateX(25deg) rotateY(-58deg) rotateZ(360deg); }
+      100% { transform: rotateX(25deg) rotateY(-58deg) rotateZ(0deg); }
+    }
+    @keyframes rotate3D_Ring4 {
+      0% { transform: rotateX(80deg) rotateY(-20deg) rotateZ(0deg); }
+      100% { transform: rotateX(80deg) rotateY(-20deg) rotateZ(360deg); }
+    }
+
+    .ring-3d-1 {
+      position: absolute;
+      inset: -28px;
+      border: 1.5px solid rgba(212, 175, 55, 0.7);
+      border-radius: 50%;
+      transform-style: preserve-3d;
+      animation: rotate3D_Ring1 16s linear infinite;
+      box-shadow: 0 0 20px rgba(212, 175, 55, 0.3), inset 0 0 15px rgba(212, 175, 55, 0.15);
+      pointer-events: none;
+    }
+    .ring-3d-1::after {
+      content: '';
+      position: absolute;
+      top: -4px;
+      left: 50%;
+      width: 9px;
+      height: 9px;
+      background: #d4af37;
+      border-radius: 50%;
+      box-shadow: 0 0 14px #d4af37;
+    }
+
+    .ring-3d-2 {
+      position: absolute;
+      inset: -52px;
+      border: 1.5px dashed rgba(212, 175, 55, 0.55);
+      border-radius: 50%;
+      transform-style: preserve-3d;
+      animation: rotate3D_Ring2 24s linear infinite;
+      pointer-events: none;
+    }
+    .ring-3d-2::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 50%;
+      width: 10px;
+      height: 10px;
+      background: #f4f1ea;
+      border-radius: 50%;
+      box-shadow: 0 0 14px #d4af37;
+    }
+
+    .ring-3d-3 {
+      position: absolute;
+      inset: -74px;
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      border-radius: 50%;
+      transform-style: preserve-3d;
+      animation: rotate3D_Ring3 34s linear infinite;
+      pointer-events: none;
+    }
+    .ring-3d-3::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: -4px;
+      width: 8px;
+      height: 8px;
+      background: #d4af37;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #d4af37;
+    }
+
+    .ring-3d-4 {
+      position: absolute;
+      inset: -12px;
+      border: 1px dotted rgba(212, 175, 55, 0.75);
+      border-radius: 50%;
+      transform-style: preserve-3d;
+      animation: rotate3D_Ring4 20s linear infinite;
+      pointer-events: none;
+    }
+
   </style>
 </head>
 <body class="selection:bg-[#d4af37] selection:text-black">
@@ -1451,10 +1440,12 @@ html_code = """<!DOCTYPE html>
       const { xLabels, monthlyInvestments, interestPayments, debtRepayments, debtBalance, cashBalance } = latestCalculatedData;
       
       let csvContent = "data:text/csv;charset=utf-8,﻿";
-      csvContent += "Период;Дотация (дефицит);Проценты по долгу;Погашение долга;Остаток тела долга;Свободный остаток счета\n";
+      csvContent += "Период;Дотация (дефицит);Проценты по долгу;Погашение долга;Остаток тела долга;Свободный остаток счета
+";
 
       for (let i = 0; i < xLabels.length; i++) {
-        csvContent += `${xLabels[i]};${Math.round(monthlyInvestments[i])};${Math.round(interestPayments[i])};${Math.round(debtRepayments[i])};${Math.round(debtBalance[i])};${Math.round(cashBalance[i])}\n`;
+        csvContent += `${xLabels[i]};${Math.round(monthlyInvestments[i])};${Math.round(interestPayments[i])};${Math.round(debtRepayments[i])};${Math.round(debtBalance[i])};${Math.round(cashBalance[i])}
+`;
       }
 
       const encodedUri = encodeURI(csvContent);
@@ -1528,8 +1519,6 @@ html_code = """<!DOCTYPE html>
     })();
 
     runCalculation();
-  ();
-    };
   </script>
 </body>
 </html>"""
