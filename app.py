@@ -63,12 +63,12 @@ html_code = r"""<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Архитектура Капитала // Финансовое Моделирование</title>
 
-<!-- Типографика -->
+<!-- Типографика: Редакторская антиква + Инженерный моноширинный + Швейцарский гротеск -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
-<!-- Скрипты: Tailwind, Three, Chart.js, GSAP + ScrollTrigger, Lenis -->
+<!-- Библиотеки Awwwards стека: Tailwind, Three.js, Chart.js, GSAP + ScrollTrigger, Lenis -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
 tailwind.config = {
@@ -103,7 +103,7 @@ tailwind.config = {
 <style>
 :root {
     --bg-space: #070709;
-    --bg-panel: rgba(13, 13, 18, 0.85);
+    --bg-panel: rgba(13, 13, 18, 0.78);
     --bg-cell-hover: rgba(24, 24, 34, 0.95);
     --text-main: #f4f1ea;
     --text-muted: #8e8a80;
@@ -113,13 +113,13 @@ tailwind.config = {
     --accent-vermilion: #e63946;
     --accent-jade: #2a9d8f;
     --input-bg: rgba(255, 255, 255, 0.025);
-    --cursor-glow: rgba(212, 175, 55, 0.18);
+    --cursor-glow: rgba(212, 175, 55, 0.22);
     --table-header-bg: rgba(13, 13, 18, 0.98);
-    --grain-opacity: 0.035;
+    --grain-opacity: 0.038;
 }
 html:not(.dark) {
     --bg-space: #f4f1ea;
-    --bg-panel: rgba(255, 255, 255, 0.92);
+    --bg-panel: rgba(255, 255, 255, 0.88);
     --bg-cell-hover: rgba(246, 243, 235, 0.98);
     --text-main: #141416;
     --text-muted: #6b665c;
@@ -129,9 +129,9 @@ html:not(.dark) {
     --accent-vermilion: #c5221f;
     --accent-jade: #1d756b;
     --input-bg: rgba(0, 0, 0, 0.03);
-    --cursor-glow: rgba(184, 134, 11, 0.15);
+    --cursor-glow: rgba(184, 134, 11, 0.18);
     --table-header-bg: rgba(244, 241, 234, 0.98);
-    --grain-opacity: 0.02;
+    --grain-opacity: 0.022;
 }
 
 * { box-sizing: border-box; border-color: var(--border-line); }
@@ -146,13 +146,31 @@ body {
     font-family: 'JetBrains Mono', monospace; 
     overflow-x: hidden; 
     margin: 0; padding: 0; 
-    transition: background-color 0.5s ease, color 0.5s ease; 
+    transition: background-color 0.5s ease, color 0.5s ease;
 }
 
+/* Аналоговый пленочный шум (Film Grain) */
 .film-grain {
     position: fixed; inset: 0; width: 100vw; height: 100vh;
     pointer-events: none; z-index: 999; opacity: var(--grain-opacity);
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Кастомный реактивный курсор Alche */
+#custom-cursor {
+    position: fixed; top: 0; left: 0; width: 8px; height: 8px;
+    background: var(--accent-gold); border-radius: 50%;
+    pointer-events: none; z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s ease, height 0.3s ease, background-color 0.3s ease, opacity 0.3s ease;
+}
+#custom-cursor-follower {
+    position: fixed; top: 0; left: 0; width: 34px; height: 34px;
+    border: 1px solid var(--accent-gold); border-radius: 50%;
+    pointer-events: none; z-index: 9998;
+    transform: translate(-50%, -50%);
+    opacity: 0.45;
+    transition: width 0.3s ease, height 0.3s ease, border-color 0.3s ease, transform 0.15s ease-out;
 }
 
 /* ЗАСТАВКА */
@@ -184,7 +202,7 @@ body {
     background: rgba(13, 13, 18, 0.65); border: 1px solid rgba(212, 175, 55, 0.7);
     color: #f4f1ea; font-family: 'JetBrains Mono', monospace; font-size: 11px;
     letter-spacing: 0.35em; text-transform: uppercase; cursor: pointer;
-    backdrop-filter: blur(8px); overflow: hidden; transition: all 0.4s ease;
+    backdrop-filter: blur(12px); overflow: hidden; transition: all 0.4s ease;
     box-shadow: 0 0 25px rgba(212, 175, 55, 0.15), inset 0 0 15px rgba(212, 175, 55, 0.08);
 }
 .explore-btn::before {
@@ -195,50 +213,62 @@ body {
 .explore-btn:hover {
     border-color: #ffd700; color: #ffd700;
     box-shadow: 0 0 35px rgba(212, 175, 55, 0.4), inset 0 0 20px rgba(212, 175, 55, 0.25);
-    transform: scale(1.03);
+    transform: scale(1.04);
 }
 .explore-btn:hover::before { left: 100%; }
 
 /* ФОН ОСНОВНОГО ПРИЛОЖЕНИЯ */
-#webgl-bg-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; opacity: 0.45; transition: opacity 0.5s ease; }
-html:not(.dark) #webgl-bg-canvas { opacity: 0.18; }
+#webgl-bg-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; opacity: 0.5; transition: opacity 0.5s ease; }
+html:not(.dark) #webgl-bg-canvas { opacity: 0.22; }
 
+/* Архитектурные блоки с ренессансными засечками */
 .alche-block {
-    position: relative; background: var(--bg-panel); backdrop-filter: blur(16px);
+    position: relative; background: var(--bg-panel); backdrop-filter: blur(20px);
     border-right: 1px solid var(--border-line); border-bottom: 1px solid var(--border-line);
     transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 .cross-tl::before { content: '+'; position: absolute; top: -6px; left: -4px; font-family: 'JetBrains Mono', monospace; font-size: 10px; line-height: 1; color: var(--accent-gold); pointer-events: none; z-index: 10; }
 .cross-br::after { content: '+'; position: absolute; bottom: -6px; right: -4px; font-family: 'JetBrains Mono', monospace; font-size: 10px; line-height: 1; color: var(--accent-gold); pointer-events: none; z-index: 10; }
 
-.tilt-card { position: relative; overflow: hidden; transform-style: preserve-3d; perspective: 900px; transition: transform 0.2s ease, border-color 0.3s ease; }
+/* Карточки с магнитным свечением границ (Cursor Glow + 3D Tilt) */
+.tilt-card { 
+    position: relative; overflow: hidden; transform-style: preserve-3d; perspective: 1000px; 
+    transition: transform 0.25s cubic-bezier(0.2, 0, 0.2, 1), border-color 0.3s ease; 
+}
 .tilt-card::before {
-    content: ''; position: absolute; inset: 0; border: 1px solid transparent;
-    background: radial-gradient(350px circle at var(--mouse-x, 0px) var(--mouse-y, 0px), var(--cursor-glow), transparent 70%);
-    opacity: 0; transition: opacity 0.35s ease; pointer-events: none; z-index: 2;
+    content: ''; position: absolute; inset: -1px; border: 1px solid transparent;
+    background: radial-gradient(350px circle at var(--mouse-x, 0px) var(--mouse-y, 0px), var(--cursor-glow), transparent 75%);
+    opacity: 0; transition: opacity 0.4s ease; pointer-events: none; z-index: 2;
 }
 .tilt-card:hover::before { opacity: 1; }
 
-/* Скролл-индикатор в стиле Alche Studio */
+/* Боковой навигатор шагов скролла (HUD) */
 #alcheScrollIndicator {
     position: fixed; right: 24px; top: 50%; transform: translateY(-50%);
     display: flex; flex-direction: column; gap: 14px; z-index: 80; pointer-events: auto;
 }
 .scroll-step-dot {
-    width: 6px; height: 6px; border: 1px solid var(--border-accent);
-    background: transparent; cursor: pointer; transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+    position: relative; width: 6px; height: 6px; border: 1px solid var(--border-accent);
+    background: transparent; cursor: pointer; transition: all 0.35s cubic-bezier(0.19, 1, 0.22, 1);
 }
 .scroll-step-dot.active {
-    background: var(--accent-gold); transform: scale(1.8) rotate(45deg);
-    box-shadow: 0 0 10px var(--accent-gold);
+    background: var(--accent-gold); transform: scale(2) rotate(45deg);
+    box-shadow: 0 0 12px var(--accent-gold);
 }
+.scroll-step-dot::after {
+    content: attr(data-label); position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
+    font-family: 'JetBrains Mono', monospace; font-size: 9px; text-transform: uppercase;
+    letter-spacing: 0.2em; white-space: nowrap; color: var(--accent-gold); opacity: 0;
+    pointer-events: none; transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.scroll-step-dot:hover::after { opacity: 1; transform: translateY(-50%) translateX(-4px); }
 
-/* Scrollytelling Sections */
+/* Секции Scrollytelling с масками появления */
 .scroll-section-step {
-    opacity: 0.15;
-    transform: translateY(24px) scale(0.985);
-    filter: blur(4px);
-    transition: opacity 0.6s cubic-bezier(0.19, 1, 0.22, 1), transform 0.6s cubic-bezier(0.19, 1, 0.22, 1), filter 0.6s ease;
+    opacity: 0.18;
+    transform: translateY(28px) scale(0.985);
+    filter: blur(5px);
+    transition: opacity 0.7s cubic-bezier(0.19, 1, 0.22, 1), transform 0.7s cubic-bezier(0.19, 1, 0.22, 1), filter 0.7s ease;
     will-change: transform, opacity, filter;
 }
 .scroll-section-step.in-focus {
@@ -247,12 +277,17 @@ html:not(.dark) #webgl-bg-canvas { opacity: 0.18; }
     filter: blur(0px);
 }
 
+.reveal-mask {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    transition: clip-path 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 2px; background: var(--border-line); outline: none; }
 input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; background: var(--accent-gold); cursor: pointer; border: 1px solid var(--bg-space); transform: rotate(45deg); transition: transform 0.2s ease, background-color 0.2s ease; }
-input[type="range"]::-webkit-slider-thumb:hover { transform: rotate(45deg) scale(1.35); }
+input[type="range"]::-webkit-slider-thumb:hover { transform: rotate(45deg) scale(1.4); }
 
 .mono-input { background: var(--input-bg); border: 1px solid var(--border-line); color: var(--text-main); font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 7px 10px; width: 100%; border-radius: 0; transition: border-color 0.2s ease, background 0.2s ease; }
-.mono-input:focus { outline: none; border-color: var(--accent-gold); background: rgba(212, 175, 55, 0.06); }
+.mono-input:focus { outline: none; border-color: var(--accent-gold); background: rgba(212, 175, 55, 0.08); }
 select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
 html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #141416; }
 
@@ -266,16 +301,20 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
 <body class="selection:bg-[#d4af37] selection:text-black">
 <div class="film-grain"></div>
 
-<!-- Боковой навигатор шагов скролла (Alche Minimal HUD) -->
+<!-- Кастомный курсор -->
+<div id="custom-cursor"></div>
+<div id="custom-cursor-follower"></div>
+
+<!-- Боковой HUD-навигатор шагов скролла -->
 <nav id="alcheScrollIndicator">
-    <div class="scroll-step-dot active" data-step="0" onclick="scrollToStep(0)" title="KPI & Обзор"></div>
-    <div class="scroll-step-dot" data-step="1" onclick="scrollToStep(1)" title="Обслуживание капитала"></div>
-    <div class="scroll-step-dot" data-step="2" onclick="scrollToStep(2)" title="Складской цикл"></div>
-    <div class="scroll-step-dot" data-step="3" onclick="scrollToStep(3)" title="Денежный поток (CF)"></div>
-    <div class="scroll-step-dot" data-step="4" onclick="scrollToStep(4)" title="Экономика и структура"></div>
+    <div class="scroll-step-dot active" data-step="0" data-label="[01] Сводка KPI" onclick="scrollToStep(0)"></div>
+    <div class="scroll-step-dot" data-step="1" data-label="[02] Обслуживание капитала" onclick="scrollToStep(1)"></div>
+    <div class="scroll-step-dot" data-step="2" data-label="[03] Складской цикл" onclick="scrollToStep(2)"></div>
+    <div class="scroll-step-dot" data-step="3" data-label="[04] Денежный поток" onclick="scrollToStep(3)"></div>
+    <div class="scroll-step-dot" data-step="4" data-label="[05] Юнит-экономика" onclick="scrollToStep(4)"></div>
 </nav>
 
-<!-- РЕНЕССАНСНЫЙ ПРЕЛОАДЕР -->
+<!-- РЕНЕССАНСНЫЙ ПРЕЛОАДЕР С ВИТРУВИАНЦЕМ -->
 <div id="preloader-stage">
     <div id="preloader-canvas-container">
         <canvas id="preloader-webgl"></canvas>
@@ -328,8 +367,8 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
 <div id="mainDashboardApp" class="relative z-10 min-h-screen flex flex-col border-t border-l opacity-0 transition-opacity duration-1000" style="border-color: var(--border-line);">
     <header class="sticky top-0 z-50 alche-block px-5 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4 border-b">
         <div class="flex items-center gap-6">
-            <div class="flex items-center gap-3">
-                <svg class="w-7 h-7 text-[#d4af37] cursor-pointer" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.2">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="playClickSound(1500, 0.04)">
+                <svg class="w-7 h-7 text-[#d4af37]" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.2">
                     <circle cx="16" cy="16" r="14" /><rect x="6" y="6" width="20" height="20" />
                     <polygon points="16,2 30,26 2,26" stroke-width="0.8" stroke-dasharray="1 1"/>
                     <line x1="2" y1="16" x2="30" y2="16" stroke-dasharray="2 2"/>
@@ -360,7 +399,7 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
     </header>
 
     <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 relative">
-        <!-- ЛЕВАЯ ПАНЕЛЬ ПАРАМЕТРОВ (STICKY) -->
+        <!-- ЛЕВАЯ ПАНЕЛЬ ПАРАМЕТРОВ (STICKY HUD) -->
         <aside class="lg:col-span-3 flex flex-col lg:sticky lg:top-[65px] lg:h-[calc(100vh-65px)] overflow-y-auto z-20 border-r" style="border-color: var(--border-line);">
             <div class="alche-block cross-tl px-5 py-3.5 flex items-center justify-between">
                 <span class="font-mono text-[10px] uppercase tracking-[0.2em] text-[#d4af37] font-bold">[00] Параметры Модели</span>
@@ -462,9 +501,9 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
             </form>
         </aside>
 
-        <!-- ПРАВАЯ ЧАСТЬ: SCROLLYTELLING СЕКЦИИ -->
+        <!-- ПРАВАЯ ЧАСТЬ: ПОШАГОВЫЙ SCROLLYTELLING -->
         <section class="lg:col-span-9 flex flex-col">
-            <!-- ЭТАП 0: KPI КАРТОЧКИ -->
+            <!-- ЭТАП 0: СВОДКА KPI -->
             <div id="step-0" class="scroll-section-step in-focus p-4 lg:p-6">
                 <div class="font-mono text-[10px] text-[#d4af37] tracking-[0.25em] uppercase mb-3 flex items-center gap-2">
                     <span class="pulse-dot"></span> [ШАГ 01 // КЛЮЧЕВЫЕ МЕТРИКИ КАПИТАЛА]
@@ -554,8 +593,8 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
                 </div>
             </div>
 
-            <!-- ЭТАП 4: ЭКОНОМИКА И СТРУКТУРА ЗАКАЗОВ -->
-            <div id="step-4" class="scroll-section-step p-4 lg:p-6 space-y-4 mb-20">
+            <!-- ЭТАП 4: ЮНИТ-ЭКОНОМИКА -->
+            <div id="step-4" class="scroll-section-step p-4 lg:p-6 space-y-4 mb-24">
                 <div class="font-mono text-[10px] text-[#d4af37] tracking-[0.25em] uppercase flex items-center gap-2">
                     <span class="pulse-dot"></span> [ШАГ 05 // ЮНИТ-ЭКОНОМИКА И ДИАГРАММА ЗАТРАТ]
                 </div>
@@ -577,6 +616,9 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
 </div>
 
 <script>
+/* ========================================================
+   WEB AUDIO API: ТАКТИЛЬНЫЙ АКУСТИЧЕСКИЙ ОТКЛИК
+   ======================================================== */
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function playClickSound(freq = 1200, duration = 0.02) {
     try {
@@ -585,8 +627,8 @@ function playClickSound(freq = 1200, duration = 0.02) {
         const gain = audioCtx.createGain();
         osc.type = 'sine';
         osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + duration);
-        gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(320, audioCtx.currentTime + duration);
+        gain.gain.setValueAtTime(0.035, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
@@ -595,6 +637,50 @@ function playClickSound(freq = 1200, duration = 0.02) {
     } catch (e) {}
 }
 
+/* ========================================================
+   КАСТОМНЫЙ МАГНИТНЫЙ КУРСОР
+   ======================================================== */
+const cursorDot = document.getElementById('custom-cursor');
+const cursorFollower = document.getElementById('custom-cursor-follower');
+let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
+let followerX = mouseX, followerY = mouseY;
+
+document.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    cursorDot.style.left = `${mouseX}px`;
+    cursorDot.style.top = `${mouseY}px`;
+    
+    const coordEl = document.getElementById('cursorCoordDisplay');
+    if (coordEl) coordEl.textContent = `X: ${mouseX.toString().padStart(4, '0')} / Y: ${mouseY.toString().padStart(4, '0')}`;
+});
+
+function updateCursorFollower() {
+    followerX += (mouseX - followerX) * 0.18;
+    followerY += (mouseY - followerY) * 0.18;
+    cursorFollower.style.left = `${followerX}px`;
+    cursorFollower.style.top = `${followerY}px`;
+    requestAnimationFrame(updateCursorFollower);
+}
+requestAnimationFrame(updateCursorFollower);
+
+// Интерактивное масштабирование курсора при ховере
+document.querySelectorAll('button, a, input, select, .hw-slider-track, .scroll-step-dot').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+        cursorDot.style.transform = 'translate(-50%, -50%) scale(2.2)';
+        cursorFollower.style.transform = 'translate(-50%, -50%) scale(1.6)';
+        cursorFollower.style.borderColor = '#ffd700';
+    });
+    el.addEventListener('mouseleave', () => {
+        cursorDot.style.transform = 'translate(-50%, -50%) scale(1)';
+        cursorFollower.style.transform = 'translate(-50%, -50%) scale(1)';
+        cursorFollower.style.borderColor = 'var(--accent-gold)';
+    });
+});
+
+/* ========================================================
+   ПРЕЛОАДЕР: ВИТРУВИАНЕЦ + ЖИДКИЙ ПЕРЕХОД
+   ======================================================== */
 let preloaderDismissed = false;
 function dismissPreloader() {
     if (preloaderDismissed) return;
@@ -604,7 +690,7 @@ function dismissPreloader() {
     if (app) { app.classList.remove('opacity-0'); app.classList.add('opacity-100'); }
     setTimeout(() => { 
         if (stage) stage.style.display = 'none'; 
-        initScrollytelling(); // Запуск скролл-оркестратора Alche
+        initScrollytelling();
     }, 600);
 }
 
@@ -636,13 +722,10 @@ function updatePreloaderProgress(now) {
         if (btn) btn.classList.add('active');
     }
     
-    if (progress < 1) {
-        requestAnimationFrame(updatePreloaderProgress);
-    }
+    if (progress < 1) requestAnimationFrame(updatePreloaderProgress);
 }
 requestAnimationFrame(updatePreloaderProgress);
 
-/* THREE.JS ПРЕЛОАДЕР */
 const preCanvas = document.getElementById('preloader-webgl');
 const preRenderer = new THREE.WebGLRenderer({ canvas: preCanvas, alpha: true, antialias: true, preserveDrawingBuffer: true });
 preRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -703,10 +786,7 @@ maskScene.add(brushMesh);
 const vitruvianImg = new Image();
 vitruvianImg.crossOrigin = "Anonymous"; 
 vitruvianImg.src = "VITRUVIAN_IMAGE_SRC_PLACEHOLDER";
-let vitruvianPlane = null;
-let aspect = 1.0;
-let drawPlaneWidth = 0;
-let drawPlaneHeight = 0;
+let vitruvianPlane = null, aspect = 1.0, drawPlaneWidth = 0, drawPlaneHeight = 0;
 
 vitruvianImg.onload = () => {
     const canvasTexture = new THREE.Texture(vitruvianImg);
@@ -758,8 +838,7 @@ function resizePreloader() {
 window.addEventListener('resize', resizePreloader);
 
 let isRippling = false;
-let rippleScene, rippleCamera, rippleMaterial;
-let rippleTime = 0;
+let rippleScene, rippleCamera, rippleMaterial, rippleTime = 0;
 const snapshotTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight);
 
 function triggerLiquidTransition(event) {
@@ -794,10 +873,7 @@ function triggerLiquidTransition(event) {
             uProgress: { value: 0.0 },
             uAspect: { value: window.innerWidth / window.innerHeight }
         },
-        vertexShader: `
-            varying vec2 vUv;
-            void main() { vUv = uv; gl_Position = vec4(position, 1.0); }
-        `,
+        vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position, 1.0); }`,
         fragmentShader: `
             uniform sampler2D tDiffuse;
             uniform vec2 uCenter;
@@ -809,14 +885,10 @@ function triggerLiquidTransition(event) {
                 vec2 uv = vUv;
                 vec2 aspectAdjustedUV = vec2(uv.x * uAspect, uv.y);
                 vec2 aspectAdjustedCenter = vec2(uCenter.x * uAspect, uCenter.y);
-                
                 float dist = distance(aspectAdjustedUV, aspectAdjustedCenter);
-                
                 float waveRadius = uProgress * 2.2;
                 float waveWidth = 0.35;
-                float waveFactor = smoothstep(waveRadius - waveWidth, waveRadius, dist) * 
-                                   smoothstep(waveRadius + waveWidth, waveRadius, dist);
-                
+                float waveFactor = smoothstep(waveRadius - waveWidth, waveRadius, dist) * smoothstep(waveRadius + waveWidth, waveRadius, dist);
                 float wave = sin((dist - waveRadius) * 35.0) * waveFactor * (1.0 - uProgress);
                 vec2 dir = normalize(aspectAdjustedUV - aspectAdjustedCenter + 0.0001);
                 
@@ -827,7 +899,6 @@ function triggerLiquidTransition(event) {
                 float r = texture2D(tDiffuse, uv + offsetR).r;
                 float g = texture2D(tDiffuse, uv + offsetG).g;
                 float b = texture2D(tDiffuse, uv + offsetB).b;
-                
                 float fadeOut = smoothstep(0.0, 0.95, uProgress);
                 gl_FragColor = vec4(r, g, b, (1.0 - fadeOut));
             }
@@ -854,10 +925,8 @@ function animatePreloader() {
         rippleTime += 0.016;
         const ripProgress = Math.min(rippleTime / 1.3, 1.0);
         rippleMaterial.uniforms.uProgress.value = ripProgress;
-        
         preRenderer.clear();
         preRenderer.render(rippleScene, rippleCamera);
-        
         if (ripProgress >= 1.0) dismissPreloader();
         return;
     }
@@ -876,14 +945,12 @@ function animatePreloader() {
     
     if (vitruvianPlane) {
         let px = 0, py = 0;
-        
         if (progress <= 0.86) {
             for (let sub = 0; sub < 4; sub++) {
                 drawStep += 0.016;
                 const pTime = drawStep * 1.8;
                 px = Math.sin(pTime) * 0.28 + Math.sin(pTime * 3.7) * 0.12;
                 py = Math.cos(pTime * 0.85) * 0.34 + Math.sin(pTime * 2.1) * 0.09;
-                
                 brushMesh.position.set(px, py, 0);
                 preRenderer.setRenderTarget(maskTarget);
                 preRenderer.render(maskScene, maskCamera);
@@ -930,7 +997,7 @@ const armillaryGroup = new THREE.Group();
 scene.add(armillaryGroup);
 
 let ringColor = 0x00aaff;
-const ringMat = new THREE.MeshBasicMaterial({ color: ringColor, wireframe: true, transparent: true, opacity: 0.12 });
+const ringMat = new THREE.MeshBasicMaterial({ color: ringColor, wireframe: true, transparent: true, opacity: 0.14 });
 
 const mainRings = [];
 ringRadiuses.forEach((radius, i) => {
@@ -943,17 +1010,10 @@ ringRadiuses.forEach((radius, i) => {
     mainRings.push(ring);
 });
 
-let mouseX = 0, mouseY = 0;
 let scrollProgressTarget = 0;
 let currentScrollProgress = 0;
 
-document.addEventListener('mousemove', (e) => {
-    mouseX = (e.clientX - window.innerWidth / 2) * 0.0006;
-    mouseY = (e.clientY - window.innerHeight / 2) * 0.0006;
-    const coordEl = document.getElementById('cursorCoordDisplay');
-    if (coordEl) coordEl.textContent = `X: ${e.clientX.toString().padStart(4, '0')} / Y: ${e.clientY.toString().padStart(4, '0')}`;
-});
-
+// Магнитный эффект 3D-наклона карточек за мышью
 document.querySelectorAll('.tilt-card').forEach(card => {
     card.addEventListener('mousemove', e => {
         const rect = card.getBoundingClientRect();
@@ -963,36 +1023,36 @@ document.querySelectorAll('.tilt-card').forEach(card => {
         card.style.setProperty('--mouse-y', `${y}px`);
         const centerX = rect.width / 2;
         const centerY = rect.height / 2;
-        const rotateX = ((y - centerY) / centerY) * -5;
-        const rotateY = ((x - centerX) / centerX) * 5;
-        card.style.transform = `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-2px)`;
+        const rotateX = ((y - centerY) / centerY) * -6;
+        const rotateY = ((x - centerX) / centerX) * 6;
+        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-3px) scale(1.01)`;
     });
     card.addEventListener('mouseleave', () => {
-        card.style.transform = 'perspective(900px) rotateX(0deg) rotateY(0deg) translateY(0px)';
+        card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px) scale(1)';
     });
 });
 
 function animate() {
     requestAnimationFrame(animate);
-    
-    // Сглаживание прогресса скролла для Three.js
     currentScrollProgress += (scrollProgressTarget - currentScrollProgress) * 0.06;
     
     mainRings[0].rotation.y += 0.001;
     mainRings[1].rotation.x -= 0.0015;
     mainRings[2].rotation.z += 0.0008;
 
-    // Реакция 3D сцены на скролл (эффект Alche Studio: трансформация геометрии и фокуса)
-    armillaryGroup.rotation.y = currentScrollProgress * Math.PI * 1.5;
-    armillaryGroup.rotation.x = currentScrollProgress * 0.8;
+    armillaryGroup.rotation.y = currentScrollProgress * Math.PI * 1.6;
+    armillaryGroup.rotation.x = currentScrollProgress * 0.75;
     
     const t = performance.now() * 0.0002;
-    const baseX = Math.sin(t) * 80 + (currentScrollProgress * 40);
-    const baseY = Math.sin(t * 0.8) * 50 - (currentScrollProgress * 60);
-    const baseZ = 150 - (currentScrollProgress * 35);
+    const normX = (mouseX - window.innerWidth / 2) * 0.0006;
+    const normY = (mouseY - window.innerHeight / 2) * 0.0006;
     
-    camera.position.x += (baseX + mouseX * 30 - camera.position.x) * 0.05;
-    camera.position.y += (baseY - mouseY * 30 - camera.position.y) * 0.05;
+    const baseX = Math.sin(t) * 70 + (currentScrollProgress * 50);
+    const baseY = Math.sin(t * 0.8) * 45 - (currentScrollProgress * 70);
+    const baseZ = 150 - (currentScrollProgress * 40);
+    
+    camera.position.x += (baseX + normX * 35 - camera.position.x) * 0.05;
+    camera.position.y += (baseY - normY * 35 - camera.position.y) * 0.05;
     camera.position.z += (baseZ - camera.position.z) * 0.05;
     camera.lookAt(scene.position);
     renderer.render(scene, camera);
@@ -1014,7 +1074,7 @@ function initScrollytelling() {
     gsap.registerPlugin(ScrollTrigger);
 
     lenisInstance = new Lenis({
-        duration: 1.25,
+        duration: 1.3,
         easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
         smooth: true,
         direction: 'vertical'
@@ -1034,15 +1094,13 @@ function initScrollytelling() {
         document.getElementById('step-4')
     ];
 
-    const dots = document.querySelectorAll('.scroll-step-dot');
-
     steps.forEach((step, idx) => {
         if (!step) return;
 
         ScrollTrigger.create({
             trigger: step,
-            start: "top 70%",
-            end: "bottom 30%",
+            start: "top 72%",
+            end: "bottom 28%",
             onEnter: () => activateStep(idx),
             onEnterBack: () => activateStep(idx),
             onUpdate: (self) => {
@@ -1053,7 +1111,6 @@ function initScrollytelling() {
         });
     });
 
-    // Общий прогресс всей страницы для Three.js
     ScrollTrigger.create({
         start: 0,
         end: "max",
@@ -1066,12 +1123,10 @@ function initScrollytelling() {
 function activateStep(index) {
     playClickSound(1600 - index * 120, 0.02);
     
-    // Подсветка индикаторов
     document.querySelectorAll('.scroll-step-dot').forEach((dot, i) => {
         dot.classList.toggle('active', i === index);
     });
 
-    // Микро-изменение состояния UI карточек (Alche focus state)
     for (let i = 0; i <= 4; i++) {
         const el = document.getElementById(`step-${i}`);
         if (!el) continue;
@@ -1092,12 +1147,12 @@ function activateStep(index) {
 function scrollToStep(stepIndex) {
     const target = document.getElementById(`step-${stepIndex}`);
     if (target && lenisInstance) {
-        lenisInstance.scrollTo(target, { offset: -80, duration: 1.4 });
+        lenisInstance.scrollTo(target, { offset: -85, duration: 1.4 });
     }
 }
 
 /* ========================================================
-   ЛОГИКА ДАШБОРДА И МОДЕЛИРОВАНИЯ
+   ТЕМА И СТИЛИЗАЦИЯ
    ======================================================== */
 let isDark = true;
 function toggleTheme() {
@@ -1120,9 +1175,13 @@ function toggleTheme() {
         ringMat.color.setHex(0x0055aa);
         preBlueMat.color.setHex(0x0055aa);
     }
+    playClickSound(900, 0.03);
     runCalculation();
 }
 
+/* ========================================================
+   ГЛИФ-ДЕКОДЕР (SCRAMBLE EFFECT)
+   ======================================================== */
 const CYRILLIC_GLYPHS = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ0123456789§$%*#@!/[]:;';
 const NUMERIC_GLYPHS = '0123456789 ';
 function scrambleElementText(el, finalText, duration = 460, useAlphabet = true) {
