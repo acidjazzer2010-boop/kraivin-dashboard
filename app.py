@@ -54,7 +54,6 @@ def get_blueprint_vitruvian(filename):
         b64_str = base64.b64encode(buffered.getvalue()).decode()
         return f"data:image/png;base64,{b64_str}"
     except Exception as e:
-        print(f"Ошибка обработки изображения: {e}")
         return ""
 
 html_code = r"""<!DOCTYPE html>
@@ -69,7 +68,7 @@ html_code = r"""<!DOCTYPE html>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
-<!-- Tailwind CSS -->
+<!-- Скрипты: Tailwind, Three, Chart.js, GSAP + ScrollTrigger, Lenis -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
 tailwind.config = {
@@ -97,6 +96,9 @@ tailwind.config = {
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.29/bundled/lenis.min.js"></script>
 
 <style>
 :root {
@@ -133,7 +135,19 @@ html:not(.dark) {
 }
 
 * { box-sizing: border-box; border-color: var(--border-line); }
-body { background-color: var(--bg-space); color: var(--text-main); font-family: 'JetBrains Mono', monospace; overflow-x: hidden; margin: 0; padding: 0; transition: background-color 0.5s ease, color 0.5s ease; }
+html.lenis { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+.lenis.lenis-stopped { overflow: hidden; }
+
+body { 
+    background-color: var(--bg-space); 
+    color: var(--text-main); 
+    font-family: 'JetBrains Mono', monospace; 
+    overflow-x: hidden; 
+    margin: 0; padding: 0; 
+    transition: background-color 0.5s ease, color 0.5s ease; 
+}
 
 .film-grain {
     position: fixed; inset: 0; width: 100vw; height: 100vh;
@@ -160,52 +174,30 @@ body { background-color: var(--bg-space); color: var(--text-main); font-family: 
 @keyframes sparkFlicker { 0% { opacity: 0.5; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1.4); } }
 
 #exploreBtnWrapper {
-    position: absolute;
-    bottom: 50px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 40;
-    opacity: 0;
-    pointer-events: none;
+    position: absolute; bottom: 50px; left: 50%;
+    transform: translateX(-50%); z-index: 40; opacity: 0; pointer-events: none;
     transition: opacity 1.2s cubic-bezier(0.19, 1, 0.22, 1), transform 1.2s cubic-bezier(0.19, 1, 0.22, 1);
 }
-#exploreBtnWrapper.active {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateX(-50%) translateY(0);
-}
+#exploreBtnWrapper.active { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
 .explore-btn {
-    position: relative;
-    padding: 14px 44px;
-    background: rgba(13, 13, 18, 0.65);
-    border: 1px solid rgba(212, 175, 55, 0.7);
-    color: #f4f1ea;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.35em;
-    text-transform: uppercase;
-    cursor: pointer;
-    backdrop-filter: blur(8px);
-    overflow: hidden;
-    transition: all 0.4s ease;
+    position: relative; padding: 14px 44px;
+    background: rgba(13, 13, 18, 0.65); border: 1px solid rgba(212, 175, 55, 0.7);
+    color: #f4f1ea; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    letter-spacing: 0.35em; text-transform: uppercase; cursor: pointer;
+    backdrop-filter: blur(8px); overflow: hidden; transition: all 0.4s ease;
     box-shadow: 0 0 25px rgba(212, 175, 55, 0.15), inset 0 0 15px rgba(212, 175, 55, 0.08);
 }
 .explore-btn::before {
-    content: '';
-    position: absolute;
-    top: 0; left: -100%; width: 100%; height: 100%;
+    content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
     background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.3), transparent);
     transition: left 0.7s ease;
 }
 .explore-btn:hover {
-    border-color: #ffd700;
-    color: #ffd700;
+    border-color: #ffd700; color: #ffd700;
     box-shadow: 0 0 35px rgba(212, 175, 55, 0.4), inset 0 0 20px rgba(212, 175, 55, 0.25);
     transform: scale(1.03);
 }
-.explore-btn:hover::before {
-    left: 100%;
-}
+.explore-btn:hover::before { left: 100%; }
 
 /* ФОН ОСНОВНОГО ПРИЛОЖЕНИЯ */
 #webgl-bg-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; opacity: 0.45; transition: opacity 0.5s ease; }
@@ -227,11 +219,32 @@ html:not(.dark) #webgl-bg-canvas { opacity: 0.18; }
 }
 .tilt-card:hover::before { opacity: 1; }
 
-.tab-view-enter { animation: alcheTabEntrance 0.72s cubic-bezier(0.19, 1, 0.22, 1) forwards; }
-@keyframes alcheTabEntrance {
-    0% { opacity: 0; filter: blur(14px); transform: translateY(12px) scale(0.992); clip-path: inset(0 0 100% 0); }
-    45% { opacity: 0.85; clip-path: inset(0 0 0% 0); }
-    100% { opacity: 1; filter: blur(0px); transform: translateY(0) scale(1); clip-path: inset(0 0 0% 0); }
+/* Скролл-индикатор в стиле Alche Studio */
+#alcheScrollIndicator {
+    position: fixed; right: 24px; top: 50%; transform: translateY(-50%);
+    display: flex; flex-direction: column; gap: 14px; z-index: 80; pointer-events: auto;
+}
+.scroll-step-dot {
+    width: 6px; height: 6px; border: 1px solid var(--border-accent);
+    background: transparent; cursor: pointer; transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+}
+.scroll-step-dot.active {
+    background: var(--accent-gold); transform: scale(1.8) rotate(45deg);
+    box-shadow: 0 0 10px var(--accent-gold);
+}
+
+/* Scrollytelling Sections */
+.scroll-section-step {
+    opacity: 0.15;
+    transform: translateY(24px) scale(0.985);
+    filter: blur(4px);
+    transition: opacity 0.6s cubic-bezier(0.19, 1, 0.22, 1), transform 0.6s cubic-bezier(0.19, 1, 0.22, 1), filter 0.6s ease;
+    will-change: transform, opacity, filter;
+}
+.scroll-section-step.in-focus {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0px);
 }
 
 input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 2px; background: var(--border-line); outline: none; }
@@ -252,6 +265,15 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
 </head>
 <body class="selection:bg-[#d4af37] selection:text-black">
 <div class="film-grain"></div>
+
+<!-- Боковой навигатор шагов скролла (Alche Minimal HUD) -->
+<nav id="alcheScrollIndicator">
+    <div class="scroll-step-dot active" data-step="0" onclick="scrollToStep(0)" title="KPI & Обзор"></div>
+    <div class="scroll-step-dot" data-step="1" onclick="scrollToStep(1)" title="Обслуживание капитала"></div>
+    <div class="scroll-step-dot" data-step="2" onclick="scrollToStep(2)" title="Складской цикл"></div>
+    <div class="scroll-step-dot" data-step="3" onclick="scrollToStep(3)" title="Денежный поток (CF)"></div>
+    <div class="scroll-step-dot" data-step="4" onclick="scrollToStep(4)" title="Экономика и структура"></div>
+</nav>
 
 <!-- РЕНЕССАНСНЫЙ ПРЕЛОАДЕР -->
 <div id="preloader-stage">
@@ -304,7 +326,7 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
 
 <!-- Основное приложение -->
 <div id="mainDashboardApp" class="relative z-10 min-h-screen flex flex-col border-t border-l opacity-0 transition-opacity duration-1000" style="border-color: var(--border-line);">
-    <header class="alche-block px-5 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
+    <header class="sticky top-0 z-50 alche-block px-5 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4 border-b">
         <div class="flex items-center gap-6">
             <div class="flex items-center gap-3">
                 <svg class="w-7 h-7 text-[#d4af37] cursor-pointer" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.2">
@@ -337,8 +359,9 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
         </div>
     </header>
 
-    <div class="flex-1 grid grid-cols-1 lg:grid-cols-12">
-        <aside class="lg:col-span-3 flex flex-col">
+    <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 relative">
+        <!-- ЛЕВАЯ ПАНЕЛЬ ПАРАМЕТРОВ (STICKY) -->
+        <aside class="lg:col-span-3 flex flex-col lg:sticky lg:top-[65px] lg:h-[calc(100vh-65px)] overflow-y-auto z-20 border-r" style="border-color: var(--border-line);">
             <div class="alche-block cross-tl px-5 py-3.5 flex items-center justify-between">
                 <span class="font-mono text-[10px] uppercase tracking-[0.2em] text-[#d4af37] font-bold">[00] Параметры Модели</span>
                 <button id="defaultResetBtn" type="button" onclick="resetDefaults()" class="font-mono text-[9px] uppercase underline opacity-60 hover:opacity-100 transition">Сброс</button>
@@ -439,106 +462,113 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
             </form>
         </aside>
 
-        <!-- ПРАВАЯ ЧАСТЬ -->
+        <!-- ПРАВАЯ ЧАСТЬ: SCROLLYTELLING СЕКЦИИ -->
         <section class="lg:col-span-9 flex flex-col">
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 border-b" style="border-color: var(--border-line);">
-                <div class="alche-block tilt-card p-5">
-                    <div class="flex justify-between items-center opacity-60 mb-1"><span class="font-mono text-[9px] uppercase tracking-widest">[01] Выручка</span></div>
-                    <div id="kpiRev" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#f4f1ea]">0 ₽</div>
-                    <div class="font-mono text-[9px] text-[#d4af37] mt-1.5 opacity-90" id="kpiRevSub">Маржа: 20%</div>
+            <!-- ЭТАП 0: KPI КАРТОЧКИ -->
+            <div id="step-0" class="scroll-section-step in-focus p-4 lg:p-6">
+                <div class="font-mono text-[10px] text-[#d4af37] tracking-[0.25em] uppercase mb-3 flex items-center gap-2">
+                    <span class="pulse-dot"></span> [ШАГ 01 // КЛЮЧЕВЫЕ МЕТРИКИ КАПИТАЛА]
                 </div>
-                <div class="alche-block tilt-card p-5">
-                    <div class="flex justify-between items-center opacity-60 mb-1"><span class="font-mono text-[9px] uppercase tracking-widest">[02] Дефицит</span></div>
-                    <div id="kpiInjections" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#e63946]">0 ₽</div>
-                    <div class="font-mono text-[9px] text-[#e63946] mt-1.5 opacity-90">Внешние дотации</div>
-                </div>
-                <div class="alche-block tilt-card p-5">
-                    <div class="flex justify-between items-center opacity-60 mb-1"><span class="font-mono text-[9px] uppercase tracking-widest">[03] Проценты</span></div>
-                    <div id="kpiInterest" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#d4af37]">0 ₽</div>
-                    <div id="kpiRateSub" class="font-mono text-[9px] text-[#d4af37] mt-1.5 opacity-90">Ставка 19.0%</div>
-                </div>
-                <div class="alche-block tilt-card p-5">
-                    <div class="flex justify-between items-center opacity-60 mb-1"><span class="font-mono text-[9px] uppercase tracking-widest">[04] Пиковый долг</span></div>
-                    <div id="kpiMaxDebt" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#f4f1ea]">0 ₽</div>
-                    <div class="font-mono text-[9px] opacity-60 mt-1.5">Максимум тела</div>
-                </div>
-                <div class="alche-block tilt-card p-5 col-span-2 sm:col-span-1">
-                    <div class="flex justify-between items-center opacity-60 mb-1"><span class="font-mono text-[9px] uppercase tracking-widest">[05] Прибыль</span></div>
-                    <div id="kpiProfit" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#2a9d8f]">0 ₽</div>
-                    <div id="kpiRoiSub" class="font-mono text-[9px] text-[#2a9d8f] mt-1.5 opacity-90">Рентабельность: 0%</div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                    <div class="alche-block tilt-card p-5 border">
+                        <div class="flex justify-between items-center opacity-60 mb-1"><span class="font-mono text-[9px] uppercase tracking-widest">[01] Выручка</span></div>
+                        <div id="kpiRev" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#f4f1ea]">0 ₽</div>
+                        <div class="font-mono text-[9px] text-[#d4af37] mt-1.5 opacity-90" id="kpiRevSub">Маржа: 20%</div>
+                    </div>
+                    <div class="alche-block tilt-card p-5 border">
+                        <div class="flex justify-between items-center opacity-60 mb-1"><span class="font-mono text-[9px] uppercase tracking-widest">[02] Дефицит</span></div>
+                        <div id="kpiInjections" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#e63946]">0 ₽</div>
+                        <div class="font-mono text-[9px] text-[#e63946] mt-1.5 opacity-90">Внешние дотации</div>
+                    </div>
+                    <div class="alche-block tilt-card p-5 border">
+                        <div class="flex justify-between items-center opacity-60 mb-1"><span class="font-mono text-[9px] uppercase tracking-widest">[03] Проценты</span></div>
+                        <div id="kpiInterest" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#d4af37]">0 ₽</div>
+                        <div id="kpiRateSub" class="font-mono text-[9px] text-[#d4af37] mt-1.5 opacity-90">Ставка 19.0%</div>
+                    </div>
+                    <div class="alche-block tilt-card p-5 border">
+                        <div class="flex justify-between items-center opacity-60 mb-1"><span class="font-mono text-[9px] uppercase tracking-widest">[04] Пиковый долг</span></div>
+                        <div id="kpiMaxDebt" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#f4f1ea]">0 ₽</div>
+                        <div class="font-mono text-[9px] opacity-60 mt-1.5">Максимум тела</div>
+                    </div>
+                    <div class="alche-block tilt-card p-5 border col-span-2 sm:col-span-1">
+                        <div class="flex justify-between items-center opacity-60 mb-1"><span class="font-mono text-[9px] uppercase tracking-widest">[05] Прибыль</span></div>
+                        <div id="kpiProfit" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#2a9d8f]">0 ₽</div>
+                        <div id="kpiRoiSub" class="font-mono text-[9px] text-[#2a9d8f] mt-1.5 opacity-90">Рентабельность: 0%</div>
+                    </div>
                 </div>
             </div>
 
-            <div class="alche-block px-5 py-2.5 flex items-center justify-between border-b" style="border-color: var(--border-line);">
-                <div class="flex flex-wrap items-center gap-1.5" id="navTabsContainer">
-                    <button type="button" onclick="selectTab(0)" class="tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest bg-[#d4af37] text-black font-bold transition shadow-md">[01] ОБСЛУЖИВАНИЕ КАПИТАЛА</button>
-                    <button type="button" onclick="selectTab(1)" class="tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest opacity-70 hover:opacity-100 transition">[02] СКЛАДСКОЙ ЦИКЛ</button>
-                    <button type="button" onclick="selectTab(2)" class="tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest opacity-70 hover:opacity-100 transition">[03] ДЕНЕЖНЫЙ ПОТОК</button>
-                    <button type="button" onclick="selectTab(3)" class="tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest opacity-70 hover:opacity-100 transition">[04] ЭКОНОМИКА И ЗАКАЗЫ</button>
+            <!-- ЭТАП 1: ОБСЛУЖИВАНИЕ ДОЛГА -->
+            <div id="step-1" class="scroll-section-step p-4 lg:p-6 space-y-4">
+                <div class="font-mono text-[10px] text-[#d4af37] tracking-[0.25em] uppercase flex items-center gap-2">
+                    <span class="pulse-dot"></span> [ШАГ 02 // ГРАФИК ОБСЛУЖИВАНИЯ ДОЛГА И ПРОЦЕНТОВ]
+                </div>
+                <div class="alche-block p-5 border">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h3 class="font-serif text-xl font-bold tracking-wide italic">График обслуживания долга и начисления процентов</h3>
+                            <p class="font-mono text-[10px] opacity-60">Ежемесячные проценты по ставке кредитора (столбцы) и динамика тела долга (кривая)</p>
+                        </div>
+                    </div>
+                    <div class="h-[360px] relative"><canvas id="chartDebt"></canvas></div>
+                </div>
+                <div class="alche-block border overflow-x-auto">
+                    <table class="w-full text-left font-mono text-[11px]">
+                        <thead class="border-b" style="background-color: var(--table-header-bg); border-color: var(--border-line);">
+                            <tr class="text-[9px] uppercase tracking-widest text-[#d4af37]"><th class="p-3">Период</th><th class="p-3">Дотация (вход)</th><th class="p-3">Проценты</th><th class="p-3">Погашение долга</th><th class="p-3">Остаток долга</th><th class="p-3">Свободный остаток</th></tr>
+                        </thead>
+                        <tbody id="tableDebtBody" class="divide-y" style="border-color: var(--border-line);"></tbody>
+                    </table>
                 </div>
             </div>
 
-            <div class="flex-1 p-5 lg:p-7 space-y-6">
-                <!-- ВКЛАДКА 0: ДОЛГ -->
-                <div id="viewTab0" class="tab-view-enter space-y-6">
-                    <div class="alche-block p-5 border">
-                        <div class="flex justify-between items-center mb-4">
-                            <div>
-                                <h3 class="font-serif text-xl font-bold tracking-wide italic">График обслуживания долга и начисления процентов</h3>
-                                <p class="font-mono text-[10px] opacity-60">Ежемесячные проценты по ставке кредитора (столбцы) и динамика тела долга (кривая)</p>
-                            </div>
-                        </div>
-                        <div class="h-[360px] relative"><canvas id="chartDebt"></canvas></div>
-                    </div>
-                    <div class="alche-block border overflow-x-auto">
-                        <table class="w-full text-left font-mono text-[11px]">
-                            <thead class="border-b" style="background-color: var(--table-header-bg); border-color: var(--border-line);">
-                                <tr class="text-[9px] uppercase tracking-widest text-[#d4af37]"><th class="p-3">Период</th><th class="p-3">Дотация (вход)</th><th class="p-3">Проценты</th><th class="p-3">Погашение долга</th><th class="p-3">Остаток долга</th><th class="p-3">Свободный остаток</th></tr>
-                            </thead>
-                            <tbody id="tableDebtBody" class="divide-y" style="border-color: var(--border-line);"></tbody>
-                        </table>
-                    </div>
+            <!-- ЭТАП 2: СКЛАДСКОЙ ЦИКЛ -->
+            <div id="step-2" class="scroll-section-step p-4 lg:p-6 space-y-4">
+                <div class="font-mono text-[10px] text-[#d4af37] tracking-[0.25em] uppercase flex items-center gap-2">
+                    <span class="pulse-dot"></span> [ШАГ 03 // СКЛАДСКОЙ ЦИКЛ И ПАРТИОННЫЙ ЗАКАЗ]
                 </div>
-
-                <!-- ВКЛАДКА 1: СКЛАД -->
-                <div id="viewTab1" class="hidden space-y-6">
-                    <div class="alche-block p-5 border">
-                        <div class="flex justify-between items-center mb-4">
-                            <div>
-                                <h3 class="font-serif text-xl font-bold tracking-wide italic">Партионные закупки и истощение склада</h3>
-                                <p class="font-mono text-[10px] opacity-60">Закупка дискретными циклами каждые N месяцев без ежемесячного задвоения</p>
-                            </div>
+                <div class="alche-block p-5 border">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h3 class="font-serif text-xl font-bold tracking-wide italic">Партионные закупки и истощение склада</h3>
+                            <p class="font-mono text-[10px] opacity-60">Закупка дискретными циклами каждые N месяцев без ежемесячного задвоения</p>
                         </div>
-                        <div class="h-[400px] relative"><canvas id="chartStock"></canvas></div>
                     </div>
+                    <div class="h-[380px] relative"><canvas id="chartStock"></canvas></div>
                 </div>
+            </div>
 
-                <!-- ВКЛАДКА 2: ДЕНЕЖНЫЙ ПОТОК -->
-                <div id="viewTab2" class="hidden space-y-6">
-                    <div class="alche-block p-5 border">
-                        <div class="flex justify-between items-center mb-4">
-                            <div>
-                                <h3 class="font-serif text-xl font-bold tracking-wide italic">Структура помесячного денежного потока</h3>
-                                <p class="font-mono text-[10px] opacity-60">Сопоставление входящей выручки и совокупных выплат (закупки, аренда, ФОТ и налоги)</p>
-                            </div>
+            <!-- ЭТАП 3: ДЕНЕЖНЫЙ ПОТОК -->
+            <div id="step-3" class="scroll-section-step p-4 lg:p-6 space-y-4">
+                <div class="font-mono text-[10px] text-[#d4af37] tracking-[0.25em] uppercase flex items-center gap-2">
+                    <span class="pulse-dot"></span> [ШАГ 04 // СТРУКТУРА ДЕНЕЖНОГО ПОТОКА (CASH FLOW)]
+                </div>
+                <div class="alche-block p-5 border">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h3 class="font-serif text-xl font-bold tracking-wide italic">Структура помесячного денежного потока</h3>
+                            <p class="font-mono text-[10px] opacity-60">Сопоставление входящей выручки и совокупных выплат (закупки, аренда, ФОТ и налоги)</p>
                         </div>
-                        <div class="h-[400px] relative"><canvas id="chartCF"></canvas></div>
                     </div>
+                    <div class="h-[380px] relative"><canvas id="chartCF"></canvas></div>
                 </div>
+            </div>
 
-                <!-- ВКЛАДКА 3: ЭКОНОМИКА -->
-                <div id="viewTab3" class="hidden space-y-6">
-                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                        <div class="alche-block p-5 border">
-                            <h3 class="font-serif text-xl font-bold tracking-wide italic mb-1">Динамика заказов и выручки</h3>
-                            <p class="font-mono text-[10px] opacity-60 mb-4">Рост клиентской базы и масштабирование объемов отгрузок</p>
-                            <div class="h-[320px] relative"><canvas id="chartOrders"></canvas></div>
-                        </div>
-                        <div class="alche-block p-5 border">
-                            <h3 class="font-serif text-xl font-bold tracking-wide italic mb-1">Структура совокупных затрат</h3>
-                            <p class="font-mono text-[10px] opacity-60 mb-4">Доли расходов с учетом себестоимости, инфраструктуры и процентов по долгу</p>
-                            <div class="h-[320px] relative"><canvas id="chartPie"></canvas></div>
-                        </div>
+            <!-- ЭТАП 4: ЭКОНОМИКА И СТРУКТУРА ЗАКАЗОВ -->
+            <div id="step-4" class="scroll-section-step p-4 lg:p-6 space-y-4 mb-20">
+                <div class="font-mono text-[10px] text-[#d4af37] tracking-[0.25em] uppercase flex items-center gap-2">
+                    <span class="pulse-dot"></span> [ШАГ 05 // ЮНИТ-ЭКОНОМИКА И ДИАГРАММА ЗАТРАТ]
+                </div>
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    <div class="alche-block p-5 border">
+                        <h3 class="font-serif text-xl font-bold tracking-wide italic mb-1">Динамика заказов и выручки</h3>
+                        <p class="font-mono text-[10px] opacity-60 mb-4">Рост клиентской базы и масштабирование объемов отгрузок</p>
+                        <div class="h-[320px] relative"><canvas id="chartOrders"></canvas></div>
+                    </div>
+                    <div class="alche-block p-5 border">
+                        <h3 class="font-serif text-xl font-bold tracking-wide italic mb-1">Структура совокупных затрат</h3>
+                        <p class="font-mono text-[10px] opacity-60 mb-4">Доли расходов с учетом себестоимости, инфраструктуры и процентов по долгу</p>
+                        <div class="h-[320px] relative"><canvas id="chartPie"></canvas></div>
                     </div>
                 </div>
             </div>
@@ -574,6 +604,7 @@ function dismissPreloader() {
     if (app) { app.classList.remove('opacity-0'); app.classList.add('opacity-100'); }
     setTimeout(() => { 
         if (stage) stage.style.display = 'none'; 
+        initScrollytelling(); // Запуск скролл-оркестратора Alche
     }, 600);
 }
 
@@ -611,10 +642,7 @@ function updatePreloaderProgress(now) {
 }
 requestAnimationFrame(updatePreloaderProgress);
 
-
-/* ========================================================
-   THREE.JS ПРЕЛОАДЕР: 2 СЛОЯ (КОЛЬЦА + ВИТРУВИАНЕЦ)
-   ======================================================== */
+/* THREE.JS ПРЕЛОАДЕР */
 const preCanvas = document.getElementById('preloader-webgl');
 const preRenderer = new THREE.WebGLRenderer({ canvas: preCanvas, alpha: true, antialias: true, preserveDrawingBuffer: true });
 preRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -729,7 +757,6 @@ function resizePreloader() {
 }
 window.addEventListener('resize', resizePreloader);
 
-// Liquid Ripple Transition
 let isRippling = false;
 let rippleScene, rippleCamera, rippleMaterial;
 let rippleTime = 0;
@@ -887,9 +914,8 @@ function animatePreloader() {
 }
 animatePreloader();
 
-
 /* ========================================================
-   ОСНОВНОЙ ФОН: ДАШБОРД (THREE.JS)
+   ОСНОВНОЙ ФОН: THREE.JS С ПРИВЯЗКОЙ К СКРОЛЛУ
    ======================================================== */
 const canvas = document.getElementById('webgl-bg-canvas');
 const scene = new THREE.Scene();
@@ -918,10 +944,14 @@ ringRadiuses.forEach((radius, i) => {
 });
 
 let mouseX = 0, mouseY = 0;
+let scrollProgressTarget = 0;
+let currentScrollProgress = 0;
+
 document.addEventListener('mousemove', (e) => {
     mouseX = (e.clientX - window.innerWidth / 2) * 0.0006;
     mouseY = (e.clientY - window.innerHeight / 2) * 0.0006;
-    document.getElementById('cursorCoordDisplay').textContent = `X: ${e.clientX.toString().padStart(4, '0')} / Y: ${e.clientY.toString().padStart(4, '0')}`;
+    const coordEl = document.getElementById('cursorCoordDisplay');
+    if (coordEl) coordEl.textContent = `X: ${e.clientX.toString().padStart(4, '0')} / Y: ${e.clientY.toString().padStart(4, '0')}`;
 });
 
 document.querySelectorAll('.tilt-card').forEach(card => {
@@ -944,14 +974,22 @@ document.querySelectorAll('.tilt-card').forEach(card => {
 
 function animate() {
     requestAnimationFrame(animate);
+    
+    // Сглаживание прогресса скролла для Three.js
+    currentScrollProgress += (scrollProgressTarget - currentScrollProgress) * 0.06;
+    
     mainRings[0].rotation.y += 0.001;
     mainRings[1].rotation.x -= 0.0015;
     mainRings[2].rotation.z += 0.0008;
+
+    // Реакция 3D сцены на скролл (эффект Alche Studio: трансформация геометрии и фокуса)
+    armillaryGroup.rotation.y = currentScrollProgress * Math.PI * 1.5;
+    armillaryGroup.rotation.x = currentScrollProgress * 0.8;
     
     const t = performance.now() * 0.0002;
-    const baseX = Math.sin(t) * 120;
-    const baseY = Math.sin(t * 0.8) * 80;
-    const baseZ = Math.cos(t * 1.2) * 140;
+    const baseX = Math.sin(t) * 80 + (currentScrollProgress * 40);
+    const baseY = Math.sin(t * 0.8) * 50 - (currentScrollProgress * 60);
+    const baseZ = 150 - (currentScrollProgress * 35);
     
     camera.position.x += (baseX + mouseX * 30 - camera.position.x) * 0.05;
     camera.position.y += (baseY - mouseY * 30 - camera.position.y) * 0.05;
@@ -967,6 +1005,100 @@ window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
+/* ========================================================
+   LENIS + SCROLLTRIGGER: SCROLLYTELLING ALCHE STUDIO
+   ======================================================== */
+let lenisInstance = null;
+
+function initScrollytelling() {
+    gsap.registerPlugin(ScrollTrigger);
+
+    lenisInstance = new Lenis({
+        duration: 1.25,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        smooth: true,
+        direction: 'vertical'
+    });
+
+    lenisInstance.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add((time) => {
+        lenisInstance.raf(time * 1000);
+    });
+    gsap.ticker.lagSmoothing(0);
+
+    const steps = [
+        document.getElementById('step-0'),
+        document.getElementById('step-1'),
+        document.getElementById('step-2'),
+        document.getElementById('step-3'),
+        document.getElementById('step-4')
+    ];
+
+    const dots = document.querySelectorAll('.scroll-step-dot');
+
+    steps.forEach((step, idx) => {
+        if (!step) return;
+
+        ScrollTrigger.create({
+            trigger: step,
+            start: "top 70%",
+            end: "bottom 30%",
+            onEnter: () => activateStep(idx),
+            onEnterBack: () => activateStep(idx),
+            onUpdate: (self) => {
+                if (self.isActive) {
+                    scrollProgressTarget = (idx + self.progress) / steps.length;
+                }
+            }
+        });
+    });
+
+    // Общий прогресс всей страницы для Three.js
+    ScrollTrigger.create({
+        start: 0,
+        end: "max",
+        onUpdate: (self) => {
+            scrollProgressTarget = self.progress;
+        }
+    });
+}
+
+function activateStep(index) {
+    playClickSound(1600 - index * 120, 0.02);
+    
+    // Подсветка индикаторов
+    document.querySelectorAll('.scroll-step-dot').forEach((dot, i) => {
+        dot.classList.toggle('active', i === index);
+    });
+
+    // Микро-изменение состояния UI карточек (Alche focus state)
+    for (let i = 0; i <= 4; i++) {
+        const el = document.getElementById(`step-${i}`);
+        if (!el) continue;
+        if (i === index) {
+            el.classList.add('in-focus');
+            const headings = el.querySelectorAll('h3');
+            headings.forEach(h => {
+                const orig = h.getAttribute('data-original-text') || h.textContent;
+                h.setAttribute('data-original-text', orig);
+                scrambleElementText(h, orig, 460, true);
+            });
+        } else {
+            el.classList.remove('in-focus');
+        }
+    }
+}
+
+function scrollToStep(stepIndex) {
+    const target = document.getElementById(`step-${stepIndex}`);
+    if (target && lenisInstance) {
+        lenisInstance.scrollTo(target, { offset: -80, duration: 1.4 });
+    }
+}
+
+/* ========================================================
+   ЛОГИКА ДАШБОРДА И МОДЕЛИРОВАНИЯ
+   ======================================================== */
 let isDark = true;
 function toggleTheme() {
     isDark = !isDark;
@@ -1016,35 +1148,6 @@ function scrambleElementText(el, finalText, duration = 460, useAlphabet = true) 
     el._scrambleTimer = requestAnimationFrame(update);
 }
 function scrambleNumber(el, finalStr, duration = 400) { scrambleElementText(el, finalStr, duration, false); }
-
-const TAB_TITLES = ['[01] ОБСЛУЖИВАНИЕ КАПИТАЛА', '[02] СКЛАДСКОЙ ЦИКЛ', '[03] ДЕНЕЖНЫЙ ПОТОК', '[04] ЭКОНОМИКА И ЗАКАЗЫ'];
-function selectTab(index) {
-    playClickSound(1400, 0.025);
-    const buttons = document.querySelectorAll('#navTabsContainer .tab-btn');
-    buttons.forEach((btn, idx) => {
-        if (idx === index) {
-            btn.className = 'tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest bg-[#d4af37] text-black font-bold transition shadow-md';
-            scrambleElementText(btn, TAB_TITLES[idx], 420, true);
-        } else {
-            btn.className = 'tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest opacity-70 hover:opacity-100 transition';
-            btn.textContent = TAB_TITLES[idx];
-        }
-    });
-    for (let i = 0; i < 4; i++) {
-        const view = document.getElementById(`viewTab${i}`);
-        if (i === index) {
-            view.classList.remove('hidden'); view.classList.remove('tab-view-enter'); void view.offsetWidth; view.classList.add('tab-view-enter');
-            const headerTitles = view.querySelectorAll('h3');
-            headerTitles.forEach(h => {
-                const orig = h.getAttribute('data-original-text') || h.textContent;
-                h.setAttribute('data-original-text', orig);
-                scrambleElementText(h, orig, 520, true);
-            });
-        } else {
-            view.classList.add('hidden');
-        }
-    }
-}
 
 let growthMode = 'abs';
 function setGrowthMode(mode) {
@@ -1322,7 +1425,11 @@ function exportDataToCsv() {
     const link = document.createElement("a"); link.setAttribute("href", encodeURI(csvContent)); link.setAttribute("download", "Finansovaya_Model_Kapital.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link);
 }
 
-setInterval(() => { document.getElementById('telemetryClock').textContent = `[${new Date().toTimeString().split(' ')[0]}]`; }, 1000);
+setInterval(() => { 
+    const clock = document.getElementById('telemetryClock');
+    if (clock) clock.textContent = `[${new Date().toTimeString().split(' ')[0]}]`; 
+}, 1000);
+
 function resetDefaults() { playClickSound(600, 0.05); document.getElementById('financialInputsForm').reset(); runCalculation(); }
 window.onload = () => runCalculation();
 </script>
