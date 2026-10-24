@@ -31,15 +31,25 @@ iframe {
 </style>
 """, unsafe_allow_html=True)
 
+# Функция: извлечение контуров с Anti-Aliasing и перекраска в золото
 def get_blueprint_vitruvian(filename):
     if not os.path.exists(filename):
         return ""
+    
     try:
+        # Конвертируем в градации серого
         img = Image.open(filename).convert("L")
+        
+        # Создаем умную маску прозрачности (сохраняет полутона для гладкости линий)
         def get_alpha(p):
             return max(0, min(255, int((160 - p) * 3.0)))
+            
         alpha = img.point(get_alpha)
+        
+        # Создаем желтый холст (Золотой: #FFD700)
         color_layer = Image.new("RGBA", img.size, (255, 215, 0, 255))
+        
+        # Накладываем маску 
         color_layer.putalpha(alpha)
         
         buffered = io.BytesIO()
@@ -47,7 +57,7 @@ def get_blueprint_vitruvian(filename):
         b64_str = base64.b64encode(buffered.getvalue()).decode()
         return f"data:image/png;base64,{b64_str}"
     except Exception as e:
-        print(f"Ошибка обработки: {e}")
+        print(f"Ошибка обработки изображения: {e}")
         return ""
 
 html_code = r"""<!DOCTYPE html>
@@ -62,6 +72,7 @@ html_code = r"""<!DOCTYPE html>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
+<!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
 tailwind.config = {
@@ -87,6 +98,7 @@ tailwind.config = {
 }
 </script>
 
+<!-- Библиотеки -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -226,7 +238,6 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
         </div>
     </div>
 
-    <!-- Индикатор загрузки -->
     <div class="absolute bottom-10 flex flex-col items-center gap-2 font-mono z-20 pointer-events-auto">
         <div class="flex items-center gap-3 text-[#d4af37] text-[11px] tracking-[0.25em] uppercase">
             <span class="pulse-dot"></span>
@@ -243,6 +254,7 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
 
 <!-- Основное приложение -->
 <div id="mainDashboardApp" class="relative z-10 min-h-screen flex flex-col border-t border-l opacity-0 transition-opacity duration-1000" style="border-color: var(--border-line);">
+    <!-- ВЕРХНИЙ HUD И ПАНЕЛЬ ТЕЛЕМЕТРИИ -->
     <header class="alche-block px-5 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
         <div class="flex items-center gap-6">
             <div class="flex items-center gap-3">
@@ -468,6 +480,24 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
 </div>
 
 <script>
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playClickSound(freq = 1200, duration = 0.02) {
+    try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + duration);
+        gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+    } catch (e) {}
+}
+
 let preloaderDismissed = false;
 function dismissPreloader() {
     if (preloaderDismissed) return;
@@ -500,7 +530,7 @@ requestAnimationFrame(updatePreloaderProgress);
 const preCanvas = document.getElementById('preloader-webgl');
 const preScene = new THREE.Scene();
 const preCamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
-preCamera.position.z = 120; // Огромный масштаб
+preCamera.position.z = 120;
 
 const preRenderer = new THREE.WebGLRenderer({ canvas: preCanvas, alpha: true, antialias: true });
 preRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -516,28 +546,21 @@ window.addEventListener('resize', resizePreloader);
 const preArmillary = new THREE.Group();
 preScene.add(preArmillary);
 
-// Материал колец (голубой чертежный)
 const preBlueMat = new THREE.MeshBasicMaterial({ color: 0x00aaff, wireframe: true, transparent: true, opacity: 0.15 });
 
-// СОЗДАЕМ РОВНО 3 ГИГАНТСКИХ КОЛЬЦА (каждое из тысяч пересекающихся линий за счет wireframe тора высокой детализации)
 const ringRadiuses = [45, 60, 75];
 const rings = [];
 
 ringRadiuses.forEach((radius, i) => {
-    // Высочайшая сегментация: 250 x 40 сегментов = 10 000 полигонов = каркас из тысяч линий
     const geo = new THREE.TorusGeometry(radius, 6 + i, 40, 250);
     const ring = new THREE.Mesh(geo, preBlueMat);
-    
-    // Вращаем их по разным осям как в астролябии
     if (i === 0) ring.rotation.x = Math.PI / 2;
     if (i === 1) ring.rotation.y = Math.PI / 3;
     if (i === 2) ring.rotation.z = Math.PI / 4;
-    
     preArmillary.add(ring);
     rings.push(ring);
 });
 
-// ШЕЙДЕР ДЛЯ ВИТРУВИАНСКОГО ЧЕЛОВЕКА (Эффект пера)
 const vitruvianImg = new Image();
 vitruvianImg.crossOrigin = "Anonymous"; 
 vitruvianImg.src = "VITRUVIAN_IMAGE_SRC_PLACEHOLDER";
@@ -548,7 +571,6 @@ const vertexShader = `
     varying vec2 vUv;
     void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
 `;
-// Шейдер скрывает линии, которые перо еще "не обвело"
 const fragmentShader = `
     uniform sampler2D tDiffuse;
     uniform float uDrawAngle;
@@ -584,12 +606,10 @@ const penEl = document.getElementById('quillPen');
 function animatePreloader() {
     if (!preloaderDismissed) requestAnimationFrame(animatePreloader);
     
-    // Вращение колец астролябии
     rings[0].rotation.y += 0.002;
     rings[1].rotation.x -= 0.0015;
     rings[2].rotation.z += 0.001;
     
-    // Синхронизация пера и проявления рисунка
     if (vitruvianPlane && drawProgress < 6.8) {
         drawProgress += 0.015; 
         planeMaterial.uniforms.uDrawAngle.value = drawProgress;
@@ -616,12 +636,11 @@ animatePreloader();
 
 
 /* ========================================================
-   ОСНОВНОЙ ФОН: СВОБОДНЫЙ ОБЛЕТ КАМЕРЫ (ЛОМАЕМ 4-Ю СТЕНУ)
+   ОСНОВНОЙ ФОН: СВОБОДНЫЙ ОБЛЕТ КАМЕРЫ
    ======================================================== */
 const canvas = document.getElementById('webgl-bg-canvas');
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 2000);
-// Изначальная позиция камеры
 camera.position.z = 150;
 
 const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
@@ -635,9 +654,7 @@ let ringColor = 0x00aaff;
 const ringMat = new THREE.MeshBasicMaterial({ color: ringColor, wireframe: true, transparent: true, opacity: 0.12 });
 
 const mainRings = [];
-// Те же 3 гигантских кольца из каркаса линий, но для фона
 ringRadiuses.forEach((radius, i) => {
-    // Сетка из тысяч пересекающихся линий
     const geo = new THREE.TorusGeometry(radius + 20, 8 + i*2, 40, 250);
     const ring = new THREE.Mesh(geo, ringMat);
     
@@ -677,25 +694,20 @@ document.querySelectorAll('.tilt-card').forEach(card => {
 function animate() {
     requestAnimationFrame(animate);
     
-    // Вращение колец астролябии
     mainRings[0].rotation.y += 0.001;
     mainRings[1].rotation.x -= 0.0015;
     mainRings[2].rotation.z += 0.0008;
     
-    // СВОБОДНЫЙ ОБЛЕТ КАМЕРЫ (Сквозь кольца)
     const t = performance.now() * 0.0002;
-    
-    // Камера описывает гигантскую восьмерку в пространстве, залетая внутрь структуры колец
     const baseX = Math.sin(t) * 120;
     const baseY = Math.sin(t * 0.8) * 80;
-    const baseZ = Math.cos(t * 1.2) * 140; // z проходит от 140 до -140 (насквозь колец, ломая 4-ю стену)
+    const baseZ = Math.cos(t * 1.2) * 140;
     
     camera.position.x += (baseX + mouseX * 30 - camera.position.x) * 0.05;
     camera.position.y += (baseY - mouseY * 30 - camera.position.y) * 0.05;
     camera.position.z += (baseZ - camera.position.z) * 0.05;
     
     camera.lookAt(scene.position);
-    
     renderer.render(scene, camera);
 }
 animate();
@@ -711,57 +723,279 @@ function toggleTheme() {
     isDark = !isDark;
     document.documentElement.classList.toggle('dark', isDark);
     const thumb = document.getElementById('sliderThumb');
+    const lblNight = document.getElementById('lblNight');
+    const lblDay = document.getElementById('lblDay');
     
     if (isDark) {
         thumb.style.transform = 'translateX(0px)';
+        lblNight.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold text-black';
+        lblDay.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold opacity-70';
         ringMat.color.setHex(0x00aaff);
         preBlueMat.color.setHex(0x00aaff);
     } else {
         thumb.style.transform = 'translateX(62px)';
+        lblDay.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold text-white';
+        lblNight.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold opacity-70';
         ringMat.color.setHex(0x0055aa);
         preBlueMat.color.setHex(0x0055aa);
     }
+    runCalculation();
 }
 
-// Заглушки вычислений
+const CYRILLIC_GLYPHS = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ0123456789§$%*#@!/[]:;';
+const NUMERIC_GLYPHS = '0123456789 ';
+
+function scrambleElementText(el, finalText, duration = 460, useAlphabet = true) {
+    if (!el) return;
+    const glyphs = useAlphabet ? CYRILLIC_GLYPHS : NUMERIC_GLYPHS;
+    const start = performance.now();
+    const len = finalText.length;
+    
+    if (el._scrambleTimer) cancelAnimationFrame(el._scrambleTimer);
+    
+    function update(now) {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const revealIdx = Math.floor(progress * len);
+        let out = '';
+        for (let i = 0; i < len; i++) {
+            const char = finalText[i];
+            if (i < revealIdx || char === ' ' || char === '₽' || char === '%' || char === '.' || char === ',' || char === '(' || char === ')' || char === '/' || char === '[' || char === ']' || char === ':') {
+                out += char;
+            } else {
+                out += glyphs[Math.floor(Math.random() * glyphs.length)];
+            }
+        }
+        el.textContent = out;
+        if (progress < 1) el._scrambleTimer = requestAnimationFrame(update);
+        else el._scrambleTimer = null;
+    }
+    el._scrambleTimer = requestAnimationFrame(update);
+}
+
+function scrambleNumber(el, finalStr, duration = 400) { scrambleElementText(el, finalStr, duration, false); }
+
+const TAB_TITLES = ['[01] ОБСЛУЖИВАНИЕ КАПИТАЛА', '[02] СКЛАДСКОЙ ЦИКЛ', '[03] ДЕНЕЖНЫЙ ПОТОК', '[04] ЭКОНОМИКА И ЗАКАЗЫ'];
+
+function selectTab(index) {
+    playClickSound(1400, 0.025);
+    const buttons = document.querySelectorAll('#navTabsContainer .tab-btn');
+    buttons.forEach((btn, idx) => {
+        if (idx === index) {
+            btn.className = 'tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest bg-[#d4af37] text-black font-bold transition shadow-md';
+            scrambleElementText(btn, TAB_TITLES[idx], 420, true);
+        } else {
+            btn.className = 'tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest opacity-70 hover:opacity-100 transition';
+            btn.textContent = TAB_TITLES[idx];
+        }
+    });
+    for (let i = 0; i < 4; i++) {
+        const view = document.getElementById(`viewTab${i}`);
+        if (i === index) {
+            view.classList.remove('hidden'); view.classList.remove('tab-view-enter'); void view.offsetWidth; view.classList.add('tab-view-enter');
+            const headerTitles = view.querySelectorAll('h3');
+            headerTitles.forEach(h => {
+                const orig = h.getAttribute('data-original-text') || h.textContent;
+                h.setAttribute('data-original-text', orig);
+                scrambleElementText(h, orig, 520, true);
+            });
+        } else {
+            view.classList.add('hidden');
+        }
+    }
+}
+
+let growthMode = 'abs';
+function setGrowthMode(mode) {
+    playClickSound(950, 0.02);
+    growthMode = mode;
+    const btnAbs = document.getElementById('btnModeAbs');
+    const btnPct = document.getElementById('btnModePct');
+    const title = document.getElementById('lblGrowthModeTitle');
+    const slider = document.getElementById('paramGrowthSlider');
+    
+    if (mode === 'abs') {
+        btnAbs.className = 'py-1 font-mono text-[9px] uppercase tracking-wider bg-[#d4af37] text-black font-bold transition';
+        btnPct.className = 'py-1 font-mono text-[9px] uppercase tracking-wider opacity-60 hover:opacity-100 transition';
+        title.textContent = 'ПРИРОСТ В МЕСЯЦ'; slider.max = 100; slider.value = 5;
+    } else {
+        btnPct.className = 'py-1 font-mono text-[9px] uppercase tracking-wider bg-[#d4af37] text-black font-bold transition';
+        btnAbs.className = 'py-1 font-mono text-[9px] uppercase tracking-wider opacity-60 hover:opacity-100 transition';
+        title.textContent = 'ПРИРОСТ В %'; slider.max = 50; slider.value = 10;
+    }
+    runCalculation();
+}
+
 function parseCleanNum(val) { return typeof val === 'number' ? val : parseFloat(String(val).replace(/[^\d.-]/g, '')) || 0; }
 function formatSpaced(num) { return Math.round(num).toLocaleString('ru-RU').replace(/,/g, ' '); }
 function formatInput(input) { input.value = formatSpaced(parseCleanNum(input.value)); }
 
-let chartDebtInstance = null, chartStockInstance = null, chartCFInstance = null, chartOrdersInstance = null, chartPieInstance = null;
+let chartDebtInstance = null, chartStockInstance = null, chartCFInstance = null, chartOrdersInstance = null, chartPieInstance = null, latestCalculatedData = null;
 
 function runCalculation() {
+    const startMonth = parseInt(document.getElementById('paramStartMonth').value);
+    const startYear = parseInt(document.getElementById('paramStartYear').value);
     const period = parseInt(document.getElementById('paramPeriod').value);
-    const xLabels = Array.from({length: period}, (_, i) => `Мес ${i+1}`);
-    const debtBalance = new Array(period).fill(20000000).map((v, i) => v - i * 1000000);
-    const interestPayments = new Array(period).fill(300000);
+    const vatRate = parseFloat(document.getElementById('paramVatRate').value);
+    const vatMultiplier = 1 + (vatRate / 100);
+    const marginPct = parseFloat(document.getElementById('paramMargin').value);
+    document.getElementById('lblMarginVal').textContent = `${marginPct}%`;
+    const initialPurchase = parseCleanNum(document.getElementById('paramInitialPurchase').value);
+    const batchCycle = parseInt(document.getElementById('paramBatchCycle').value) || 5;
+    const cbRate = parseFloat(document.getElementById('paramCbRate').value) || 17;
+    const commMargin = parseFloat(document.getElementById('paramCommMargin').value) || 2;
+    const totalRateAnnual = cbRate + commMargin;
+    const monthlyRate = (totalRateAnnual / 100) / 12;
+    document.getElementById('telemetryRate').textContent = `[КАПИТАЛ: ${totalRateAnnual.toFixed(1)}% ГОДОВЫХ]`;
+    document.getElementById('kpiRateSub').textContent = `Ставка ${totalRateAnnual.toFixed(1)}%`;
+    const aov = parseCleanNum(document.getElementById('paramAov').value);
+    const startOrders = parseInt(document.getElementById('paramStartOrders').value) || 40;
+    const growthVal = parseFloat(document.getElementById('paramGrowthSlider').value);
+    document.getElementById('lblGrowthVal').textContent = growthMode === 'abs' ? `+${growthVal} шт.` : `+${growthVal}%`;
+    const maxOrdersCap = parseInt(document.getElementById('paramMaxOrdersCap').value) || 300;
+    const fot = parseCleanNum(document.getElementById('paramFot').value);
+    const wh = parseCleanNum(document.getElementById('paramWh').value);
+    const office = parseCleanNum(document.getElementById('paramOffice').value);
+    const prepPct = parseFloat(document.getElementById('paramPrepaymentPct').value);
+    document.getElementById('lblPrepVal').textContent = `${prepPct}%`;
+    const factShare = parseFloat(document.getElementById('paramFactoringShare').value);
+    document.getElementById('lblFactShareVal').textContent = `${factShare}%`;
+    const factAdvance = 0.8;
+    const shortMonths = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
+    const xLabels = [], orders = [], rev = [];
+    
+    for (let i = 0; i < period; i++) {
+        const mIdx = (startMonth + i) % 12;
+        const yOff = Math.floor((startMonth + i) / 12);
+        xLabels.push(`${shortMonths[mIdx]} ${startYear + yOff}`);
+        let curOrders = i === 0 ? startOrders : (growthMode === 'abs' ? orders[i - 1] + growthVal : orders[i - 1] * (1 + growthVal / 100));
+        curOrders = Math.min(curOrders, maxOrdersCap);
+        orders.push(curOrders);
+        rev.push(curOrders * aov);
+    }
+    
+    const cogsPct = 1 - (marginPct / 100);
+    const cogsVat = rev.map(r => r * cogsPct * vatMultiplier);
+    const cogsPayments = new Array(period).fill(0);
+    const inventoryDeliveries = new Array(period).fill(0);
+    cogsPayments[0] += initialPurchase * (prepPct / 100);
+    if (1 < period) cogsPayments[1] += initialPurchase * ((100 - prepPct) / 100);
+    inventoryDeliveries[0] = initialPurchase;
+    
+    for (let b = batchCycle; b < period; b += batchCycle) {
+        const bEnd = Math.min(b + batchCycle, period);
+        let batchTotal = 0;
+        for (let k = b; k < bEnd; k++) batchTotal += cogsVat[k];
+        inventoryDeliveries[b] = batchTotal;
+        cogsPayments[b] += batchTotal * (prepPct / 100);
+        if (b + 1 < period) cogsPayments[b + 1] += batchTotal * ((100 - prepPct) / 100);
+    }
+    
+    const inventoryBalance = [];
+    let curStock = 0;
+    for (let i = 0; i < period; i++) {
+        curStock += inventoryDeliveries[i] - cogsVat[i];
+        inventoryBalance.push(Math.max(curStock, 0));
+    }
+    
+    const inflows = new Array(period).fill(0);
+    for (let i = 0; i < period; i++) {
+        const invVat = rev[i] * vatMultiplier;
+        inflows[i] += invVat * (factShare / 100) * factAdvance;
+        const targetM = i + 2;
+        if (targetM < period) {
+            inflows[targetM] += invVat * ((100 - factShare) / 100);
+            inflows[targetM] += invVat * (factShare / 100) * (1 - factAdvance);
+        }
+    }
+    
+    const opex = [], taxes = rev.map(r => r * 0.05), baseOutflows = [];
+    for (let i = 0; i < period; i++) {
+        const base = 150000 + wh + office + fot;
+        opex.push(i >= 6 ? base * 1.2 : base);
+        baseOutflows.push(cogsPayments[i] + opex[i] + taxes[i]);
+    }
+    
+    const monthlyInvestments = new Array(period).fill(0), interestPayments = new Array(period).fill(0), debtRepayments = new Array(period).fill(0), debtBalance = new Array(period).fill(0), cashBalance = new Array(period).fill(0);
+    let currentDebt = 0, currentCash = 0;
+    for (let i = 0; i < period; i++) {
+        const interestDue = currentDebt * monthlyRate;
+        interestPayments[i] = interestDue;
+        const netBeforeFin = inflows[i] - (baseOutflows[i] + interestDue);
+        const potCash = currentCash + netBeforeFin;
+        if (potCash < 0) {
+            const needed = Math.abs(potCash);
+            monthlyInvestments[i] = needed;
+            currentDebt += needed;
+            currentCash = 0;
+            debtRepayments[i] = 0;
+        } else {
+            monthlyInvestments[i] = 0;
+            const repay = Math.min(potCash, currentDebt);
+            debtRepayments[i] = repay;
+            currentDebt -= repay;
+            currentCash = potCash - repay;
+        }
+        debtBalance[i] = currentDebt;
+        cashBalance[i] = currentCash;
+    }
+    
+    const sumRev = rev.reduce((a, b) => a + b, 0), sumInvestments = monthlyInvestments.reduce((a, b) => a + b, 0), sumInterest = interestPayments.reduce((a, b) => a + b, 0), maxDebt = Math.max(...debtBalance), sumOpex = opex.reduce((a, b) => a + b, 0), sumTaxes = taxes.reduce((a, b) => a + b, 0);
+    const netProfit = sumRev * (marginPct / 100) - sumOpex - sumTaxes - sumInterest;
+    const roi = sumRev > 0 ? (netProfit / sumRev) * 100 : 0;
+    
+    latestCalculatedData = { xLabels, monthlyInvestments, interestPayments, debtRepayments, debtBalance, cashBalance, sumRev, netProfit, roi };
+    
+    scrambleNumber(document.getElementById('kpiRev'), `${formatSpaced(sumRev)} ₽`);
+    scrambleNumber(document.getElementById('kpiInjections'), `${formatSpaced(sumInvestments)} ₽`);
+    scrambleNumber(document.getElementById('kpiInterest'), `${formatSpaced(sumInterest)} ₽`);
+    scrambleNumber(document.getElementById('kpiMaxDebt'), `${formatSpaced(maxDebt)} ₽`);
+    scrambleNumber(document.getElementById('kpiProfit'), `${formatSpaced(netProfit)} ₽`);
+    document.getElementById('kpiRoiSub').textContent = `Рентабельность: ${roi.toFixed(1)}%`;
+    
+    const tbody = document.getElementById('tableDebtBody');
+    tbody.innerHTML = '';
+    for (let i = 0; i < period; i++) {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-[var(--bg-cell-hover)] transition';
+        tr.innerHTML = `<td class="p-3 font-bold">${xLabels[i]}</td><td class="p-3 text-[#e63946]">${formatSpaced(monthlyInvestments[i])} ₽</td><td class="p-3 text-[#d4af37]">${formatSpaced(interestPayments[i])} ₽</td><td class="p-3 text-[#2a9d8f]">${formatSpaced(debtRepayments[i])} ₽</td><td class="p-3 font-bold">${formatSpaced(debtBalance[i])} ₽</td><td class="p-3">${formatSpaced(cashBalance[i])} ₽</td>`;
+        tbody.appendChild(tr);
+    }
+    
+    const chartText = isDark ? '#8e8a80' : '#6b665c', chartGrid = isDark ? 'rgba(212, 175, 55, 0.08)' : 'rgba(184, 134, 11, 0.12)';
     
     if (chartDebtInstance) chartDebtInstance.destroy();
-    chartDebtInstance = new Chart(document.getElementById('chartDebt').getContext('2d'), {
-        type: 'bar',
-        data: {
-            labels: xLabels,
-            datasets: [
-                { label: 'Проценты', data: interestPayments, backgroundColor: '#d4af37', order: 2 },
-                { label: 'Долг', data: debtBalance, type: 'line', borderColor: '#e63946', borderWidth: 2.5, order: 1 }
-            ]
-        },
-        options: { responsive: true, maintainAspectRatio: false }
-    });
+    chartDebtInstance = new Chart(document.getElementById('chartDebt').getContext('2d'), { type: 'bar', data: { labels: xLabels, datasets: [{ label: 'Проценты за месяц', data: interestPayments, backgroundColor: '#d4af37', order: 2 }, { label: 'Остаток тела долга', data: debtBalance, type: 'line', borderColor: '#e63946', backgroundColor: '#e63946', borderWidth: 2.5, yAxisID: 'y1', tension: 0.3, order: 1 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } }, y: { grid: { color: chartGrid }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } }, y1: { position: 'right', grid: { display: false }, ticks: { color: '#e63946', font: { family: 'JetBrains Mono', size: 10 } } } }, plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } } } });
+    if (chartStockInstance) chartStockInstance.destroy();
+    chartStockInstance = new Chart(document.getElementById('chartStock').getContext('2d'), { type: 'bar', data: { labels: xLabels, datasets: [{ label: 'Оплата партии поставщику', data: cogsPayments, backgroundColor: isDark ? '#52525b' : '#cbd5e1', order: 2 }, { label: 'Остаток склада', data: inventoryBalance, type: 'line', borderColor: '#d4af37', borderWidth: 2.5, yAxisID: 'y1', tension: 0.3, order: 1 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } }, y: { grid: { color: chartGrid }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } }, y1: { position: 'right', grid: { display: false }, ticks: { color: '#d4af37', font: { family: 'JetBrains Mono', size: 10 } } } }, plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } } } });
+    const totalOutflows = baseOutflows.map((b, idx) => b + interestPayments[idx]);
+    if (chartCFInstance) chartCFInstance.destroy();
+    chartCFInstance = new Chart(document.getElementById('chartCF').getContext('2d'), { type: 'bar', data: { labels: xLabels, datasets: [{ label: 'Притоки от продаж', data: inflows, backgroundColor: '#2a9d8f' }, { label: 'Выплаты (закупки + OPEX + %)', data: totalOutflows.map(v => -v), backgroundColor: '#e63946' }] }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } }, y: { grid: { color: chartGrid }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } } }, plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } } } });
+    if (chartOrdersInstance) chartOrdersInstance.destroy();
+    chartOrdersInstance = new Chart(document.getElementById('chartOrders').getContext('2d'), { type: 'bar', data: { labels: xLabels, datasets: [{ label: 'Заказы, шт.', data: orders, backgroundColor: '#d4af37' }, { label: 'Выручка, ₽', data: rev, type: 'line', borderColor: '#2a9d8f', yAxisID: 'y1', borderWidth: 2.5 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } }, y: { grid: { color: chartGrid }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } }, y1: { position: 'right', grid: { display: false }, ticks: { color: '#2a9d8f', font: { family: 'JetBrains Mono', size: 10 } } } }, plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } } } });
+    const sumPurchases = cogsPayments.reduce((a, b) => a + b, 0);
+    if (chartPieInstance) chartPieInstance.destroy();
+    chartPieInstance = new Chart(document.getElementById('chartPie').getContext('2d'), { type: 'doughnut', data: { labels: ['Склад', 'Офис', 'ФОТ', 'Налоги 5%', 'Закупки', 'Проценты по долгу'], datasets: [{ data: [wh * period, office * period, fot * period, sumTaxes, sumPurchases, sumInterest], backgroundColor: ['#52525b', '#71717a', '#d4af37', '#e63946', '#2a9d8f', '#457b9d'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } } } } });
 }
 
-function playClickSound() {}
-function exportDataToCsv() {}
-function selectTab(idx) {}
-function setGrowthMode(mode) {}
-function resetDefaults() { document.getElementById('financialInputsForm').reset(); runCalculation(); }
-setInterval(() => { document.getElementById('telemetryClock').textContent = `[${new Date().toTimeString().split(' ')[0]}]`; }, 1000);
+function exportDataToCsv() {
+    playClickSound(1600, 0.05);
+    if (!latestCalculatedData) return;
+    const { xLabels, monthlyInvestments, interestPayments, debtRepayments, debtBalance, cashBalance } = latestCalculatedData;
+    let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+    csvContent += "Период;Дотация (дефицит);Проценты по долгу;Погашение долга;Остаток тела долга;Свободный остаток счета\n";
+    for (let i = 0; i < xLabels.length; i++) csvContent += `${xLabels[i]};${Math.round(monthlyInvestments[i])};${Math.round(interestPayments[i])};${Math.round(debtRepayments[i])};${Math.round(debtBalance[i])};${Math.round(cashBalance[i])}\n`;
+    const link = document.createElement("a"); link.setAttribute("href", encodeURI(csvContent)); link.setAttribute("download", "Finansovaya_Model_Kapital.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link);
+}
 
+setInterval(() => { document.getElementById('telemetryClock').textContent = `[${new Date().toTimeString().split(' ')[0]}]`; }, 1000);
+function resetDefaults() { playClickSound(600, 0.05); document.getElementById('financialInputsForm').reset(); runCalculation(); }
 window.onload = () => runCalculation();
 </script>
 </body>
 </html>"""
 
+# Обработка картинки[span_0](start_span)[span_0](end_span) "на лету" и подстановка её в HTML
 img_src = get_blueprint_vitruvian("1000400438.jpg")
 html_code = html_code.replace("VITRUVIAN_IMAGE_SRC_PLACEHOLDER", img_src)
 
