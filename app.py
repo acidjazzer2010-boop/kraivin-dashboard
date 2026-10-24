@@ -541,6 +541,8 @@ const preCanvas = document.getElementById('preloader-webgl');
 const preRenderer = new THREE.WebGLRenderer({ canvas: preCanvas, alpha: true, antialias: true, preserveDrawingBuffer: true });
 preRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 preRenderer.setClearColor(0x000000, 0);
+// КРИТИЧНОЕ ИСПРАВЛЕНИЕ: Отключаем автоматическую очистку глобально, чтобы слои корректно накладывались
+preRenderer.autoClear = false;
 
 // --- Сцена 1: Перспективная (Кольца) ---
 const preScene = new THREE.Scene();
@@ -785,12 +787,9 @@ function animatePreloader() {
         
         brushMesh.position.set(px, py, 0);
         
-        const autoClearPrev = preRenderer.autoClear;
-        preRenderer.autoClear = false;
         preRenderer.setRenderTarget(maskTarget);
         preRenderer.render(maskScene, maskCamera);
         preRenderer.setRenderTarget(null);
-        preRenderer.autoClear = autoClearPrev;
         
         if (progress < 0.95) {
             penEl.style.opacity = 1;
@@ -802,7 +801,7 @@ function animatePreloader() {
         }
     }
     
-    // Рендер основной графики и наложение статичного чертежа поверх
+    // Теперь очистка и рендер выполняются вручную, ничего не стирается
     preRenderer.clear();
     preRenderer.render(preScene, preCamera);
     preRenderer.clearDepth(); 
