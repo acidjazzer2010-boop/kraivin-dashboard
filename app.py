@@ -127,9 +127,99 @@ html_code = """<!DOCTYPE html>
       width: 100vw;
       height: 100vh;
       pointer-events: none;
-      z-index: 50;
+      z-index: 999;
       opacity: var(--grain-opacity);
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    }
+
+    /* =========================================================
+       РЕНЕССАНСНЫЙ ПРЕЛОАДЕР: ВИТРУВИАНСКИЙ ЧЕЛОВЕК & ПЕРО (7 СЕК)
+       ========================================================= */
+    #preloader-stage {
+      position: fixed;
+      inset: 0;
+      background: #060608;
+      z-index: 900;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 1.1s cubic-bezier(0.19, 1, 0.22, 1), transform 1.1s cubic-bezier(0.19, 1, 0.22, 1);
+    }
+
+    #preloader-stage.fade-out {
+      opacity: 0;
+      transform: scale(1.035);
+      pointer-events: none;
+    }
+
+    /* Анимации прорисовки пером различных элементов чертежа */
+    .draw-circle {
+      stroke-dasharray: 1260;
+      stroke-dashoffset: 1260;
+      animation: drawLineAnim 2.2s cubic-bezier(0.4, 0, 0.2, 1) 0.3s forwards;
+    }
+    .draw-square {
+      stroke-dasharray: 1400;
+      stroke-dashoffset: 1400;
+      animation: drawLineAnim 2.2s cubic-bezier(0.4, 0, 0.2, 1) 1.2s forwards;
+    }
+    .draw-axis {
+      stroke-dasharray: 600;
+      stroke-dashoffset: 600;
+      animation: drawLineAnim 1.6s cubic-bezier(0.4, 0, 0.2, 1) 2.0s forwards;
+    }
+    .draw-vitruvian-main {
+      stroke-dasharray: 2400;
+      stroke-dashoffset: 2400;
+      animation: drawLineAnim 3.8s cubic-bezier(0.3, 0.1, 0.2, 1) 2.6s forwards;
+    }
+    .draw-vitruvian-spread {
+      stroke-dasharray: 1800;
+      stroke-dashoffset: 1800;
+      animation: drawLineAnim 3.2s cubic-bezier(0.3, 0.1, 0.2, 1) 3.4s forwards;
+    }
+    .draw-details {
+      stroke-dasharray: 800;
+      stroke-dashoffset: 800;
+      animation: drawLineAnim 2.0s ease-out 4.2s forwards;
+    }
+
+    @keyframes drawLineAnim {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    /* Траектория движения золотого пера по ключевым точкам чертежа */
+    @keyframes quillChoreography {
+      0%   { transform: translate(300px, 80px) rotate(-18deg); opacity: 0; }
+      5%   { transform: translate(300px, 100px) rotate(-24deg); opacity: 1; }
+      20%  { transform: translate(490px, 290px) rotate(-10deg); }
+      35%  { transform: translate(110px, 290px) rotate(-35deg); }
+      50%  { transform: translate(300px, 490px) rotate(-18deg); }
+      65%  { transform: translate(220px, 200px) rotate(-28deg); }
+      80%  { transform: translate(380px, 200px) rotate(-15deg); }
+      92%  { transform: translate(300px, 295px) rotate(-22deg); opacity: 1; }
+      100% { transform: translate(315px, 295px) rotate(-20deg); opacity: 0; }
+    }
+
+    .animated-quill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      animation: quillChoreography 6.8s cubic-bezier(0.35, 0.1, 0.25, 1) forwards;
+      filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.5));
+    }
+
+    /* Пульсирующая искра на острие пера */
+    .nib-spark {
+      animation: sparkFlicker 0.25s infinite alternate;
+    }
+    @keyframes sparkFlicker {
+      0% { opacity: 0.55; transform: scale(0.8); }
+      100% { opacity: 1; transform: scale(1.3); }
     }
 
     #webgl-bg-canvas {
@@ -334,6 +424,135 @@ html_code = """<!DOCTYPE html>
 
   <div class="film-grain"></div>
 
+  <!-- =========================================================
+       РЕНЕССАНСНЫЙ ПРЕЛОАДЕР: ВИТРУВИАНСКИЙ ЧЕЛОВЕК (7 СЕКУНД)
+       ========================================================= -->
+  <div id="preloader-stage">
+    <div class="relative w-[340px] h-[340px] sm:w-[480px] sm:h-[480px] lg:w-[540px] lg:h-[540px] flex items-center justify-center">
+      
+      <!-- SVG Чертёж -->
+      <svg id="vitruvianSvg" viewBox="0 0 600 600" class="w-full h-full text-[#d4af37] overflow-visible">
+        <defs>
+          <radialGradient id="goldGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#d4af37" stop-opacity="0.18"/>
+            <stop offset="100%" stop-color="#d4af37" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+
+        <!-- Мягкий центральный нимб золотого свечения -->
+        <circle cx="300" cy="300" r="230" fill="url(#goldGlow)" />
+
+        <!-- 1. Сакральный круг и внешний компас -->
+        <circle cx="300" cy="300" r="200" fill="none" stroke="#d4af37" stroke-width="1.2" class="draw-circle" stroke-dasharray="4 2" />
+        <circle cx="300" cy="300" r="208" fill="none" stroke="#d4af37" stroke-opacity="0.35" stroke-width="0.7" class="draw-circle" />
+
+        <!-- 2. Гармонический квадрат Витрувия -->
+        <rect x="125" y="125" width="350" height="350" fill="none" stroke="#d4af37" stroke-width="1.2" class="draw-square" />
+        <rect x="120" y="120" width="360" height="360" fill="none" stroke="#d4af37" stroke-opacity="0.3" stroke-width="0.6" class="draw-square" stroke-dasharray="2 3" />
+
+        <!-- 3. Оси координат и золотое сечение (1:1.618) -->
+        <g stroke="#d4af37" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.6" class="draw-axis">
+          <line x1="300" y1="50" x2="300" y2="550" />
+          <line x1="50" y1="300" x2="550" y2="300" />
+          <line x1="125" y1="125" x2="475" y2="475" />
+          <line x1="125" y1="475" x2="475" y2="125" />
+          <!-- Линии золотого деления -->
+          <line x1="125" y1="234" x2="475" y2="234" stroke-opacity="0.4" />
+          <line x1="125" y1="366" x2="475" y2="366" stroke-opacity="0.4" />
+        </g>
+
+        <!-- 4. Витрувианский человек: Основная стойка (руки горизонтально, ноги прямо) -->
+        <g fill="none" stroke="#d4af37" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" class="draw-vitruvian-main">
+          <!-- Голова и шея -->
+          <circle cx="300" cy="180" r="22" stroke-width="1.2" />
+          <path d="M294 172 Q300 166 306 172" stroke-width="0.8" />
+          <path d="M296 202 L296 215 M304 202 L304 215" />
+
+          <!-- Торс и грудная клетка -->
+          <path d="M280 218 L320 218 L312 295 L288 295 Z" />
+          <path d="M280 218 Q300 242 320 218" stroke-width="0.8" />
+          <line x1="300" y1="218" x2="300" y2="295" stroke-width="0.8" />
+
+          <!-- Прямые руки (по квадрату) -->
+          <path d="M280 220 L130 220 M320 220 L470 220" stroke-width="1.4" />
+          <circle cx="130" cy="220" r="3" fill="#d4af37" />
+          <circle cx="470" cy="220" r="3" fill="#d4af37" />
+
+          <!-- Прямые ноги -->
+          <path d="M290 295 L282 468 M310 295 L318 468" stroke-width="1.4" />
+          <path d="M272 470 L286 470 M314 470 L328 470" stroke-width="1.5" />
+        </g>
+
+        <!-- 5. Витрувианский человек: Вторая стойка (руки вверх к кругу, ноги врозь) -->
+        <g fill="none" stroke="#d4af37" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" class="draw-vitruvian-spread" stroke-dasharray="5 2">
+          <!-- Поднятые руки к ободу круга -->
+          <path d="M280 220 L158 158 M320 220 L442 158" stroke-width="1.2" />
+          <circle cx="158" cy="158" r="2.5" fill="#d4af37" />
+          <circle cx="442" cy="158" r="2.5" fill="#d4af37" />
+
+          <!-- Расставленные ноги к ободу круга -->
+          <path d="M290 295 L200 452 M310 295 L400 452" stroke-width="1.2" />
+          <path d="M190 457 L206 450 M394 450 L410 457" stroke-width="1.4" />
+        </g>
+
+        <!-- 6. Манускриптные штрихи и текст Да Винчи -->
+        <g fill="none" stroke="#d4af37" stroke-opacity="0.45" stroke-width="0.6" class="draw-details">
+          <line x1="140" y1="140" x2="220" y2="140" />
+          <line x1="140" y1="146" x2="200" y2="146" />
+          <line x1="380" y1="140" x2="460" y2="140" />
+          <line x1="400" y1="146" x2="460" y2="146" />
+          <line x1="140" y1="450" x2="230" y2="450" />
+          <line x1="370" y1="450" x2="460" y2="450" />
+        </g>
+
+        <text x="300" y="525" text-anchor="middle" fill="#d4af37" font-family="'Cormorant Garamond', serif" font-style="italic" font-size="12" letter-spacing="3" opacity="0.85">
+          PROPORTIO DIVINA // HOMO VITRUVIANUS
+        </text>
+      </svg>
+
+      <!-- ПЕРО (Quill), прорисовывающее чертёж -->
+      <div id="quillPen" class="animated-quill">
+        <svg width="42" height="42" viewBox="0 0 64 64" fill="none">
+          <!-- Искрящаяся точка на острие -->
+          <circle cx="4" cy="4" r="3.5" fill="#ffffff" class="nib-spark" />
+          <circle cx="4" cy="4" r="6.5" fill="#d4af37" opacity="0.4" class="nib-spark" />
+          
+          <!-- Острие и перо из золота -->
+          <path d="M4 4 L14 10 L18 8 L8 2 Z" fill="#ffffff" />
+          <path d="M8 2 L18 8 L42 22 C52 28 58 40 60 52 C50 48 40 40 32 30 L14 10 Z" fill="url(#quillGrad)" stroke="#d4af37" stroke-width="0.8" />
+          <path d="M14 10 L44 32" stroke="#4a3b10" stroke-width="0.7" />
+          
+          <defs>
+            <linearGradient id="quillGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#fff4cc" />
+              <stop offset="30%" stop-color="#d4af37" />
+              <stop offset="100%" stop-color="#5a4510" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+
+    </div>
+
+    <!-- Индикатор загрузки и телеметрия инициализации -->
+    <div class="mt-4 flex flex-col items-center gap-2 font-mono">
+      <div class="flex items-center gap-3 text-[#d4af37] text-[11px] tracking-[0.25em] uppercase">
+        <span class="pulse-dot"></span>
+        <span id="loaderStatusText">Гармонизация Капитала...</span>
+        <span id="loaderPercent" class="font-bold">0%</span>
+      </div>
+
+      <!-- Шкала прогресса на 7 секунд -->
+      <div class="w-64 sm:w-80 h-[2px] bg-white/10 relative overflow-hidden mt-1">
+        <div id="loaderProgressBar" class="absolute top-0 bottom-0 left-0 bg-[#d4af37] w-0 transition-all duration-100 ease-out"></div>
+      </div>
+
+      <button type="button" onclick="dismissPreloader()" class="mt-4 text-[9px] uppercase tracking-[0.2em] text-[#d4af37]/60 hover:text-[#d4af37] transition font-mono border border-transparent hover:border-[#d4af37]/30 px-3 py-1">
+        [Пропустить Intro]
+      </button>
+    </div>
+  </div>
+
   <!-- Оптический стеклянно-металлический фильтр SVG feSpecularLighting -->
   <svg width="0" height="0" class="absolute pointer-events-none" style="position: fixed;">
     <defs>
@@ -354,7 +573,7 @@ html_code = """<!DOCTYPE html>
 
   <canvas id="webgl-bg-canvas"></canvas>
 
-  <div class="relative z-10 min-h-screen flex flex-col border-t border-l" style="border-color: var(--border-line);">
+  <div id="mainDashboardApp" class="relative z-10 min-h-screen flex flex-col border-t border-l opacity-0 transition-opacity duration-1000" style="border-color: var(--border-line);">
 
     <!-- ВЕРХНИЙ HUD И ПАНЕЛЬ ТЕЛЕМЕТРИИ -->
     <header class="alche-block px-5 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
@@ -752,6 +971,63 @@ html_code = """<!DOCTYPE html>
         osc.stop(audioCtx.currentTime + duration);
       } catch (e) {}
     }
+
+    // --- УПРАВЛЕНИЕ ПРЕЛОАДЕРОМ (7 СЕКУНД) ---
+    let preloaderDismissed = false;
+    function dismissPreloader() {
+      if (preloaderDismissed) return;
+      preloaderDismissed = true;
+      const stage = document.getElementById('preloader-stage');
+      const app = document.getElementById('mainDashboardApp');
+
+      if (stage) stage.classList.add('fade-out');
+      if (app) {
+        app.classList.remove('opacity-0');
+        app.classList.add('opacity-100');
+      }
+
+      setTimeout(() => {
+        if (stage) stage.style.display = 'none';
+      }, 1100);
+    }
+
+    // Запуск прогресс-бара и таймера на 7.0 секунд
+    const PRELOADER_TOTAL_TIME = 7000;
+    const preloaderStartTime = performance.now();
+
+    const statusSteps = [
+      { t: 0.1, msg: "Калибровка циркуля и осей..." },
+      { t: 0.25, msg: "Начертание божественной пропорции..." },
+      { t: 0.45, msg: "Синтез фигуры Витрувия..." },
+      { t: 0.70, msg: "Инициализация матричных регистров..." },
+      { t: 0.90, msg: "Финализация модели капитала..." }
+    ];
+
+    function updatePreloaderProgress(now) {
+      if (preloaderDismissed) return;
+      const elapsed = now - preloaderStartTime;
+      const progress = Math.min(elapsed / PRELOADER_TOTAL_TIME, 1);
+      
+      const pBar = document.getElementById('loaderProgressBar');
+      const pPct = document.getElementById('loaderPercent');
+      const pTxt = document.getElementById('loaderStatusText');
+
+      if (pBar) pBar.style.width = `${(progress * 100).toFixed(1)}%`;
+      if (pPct) pPct.textContent = `${Math.floor(progress * 100)}%`;
+
+      for (let s of statusSteps) {
+        if (progress >= s.t) {
+          if (pTxt && pTxt.textContent !== s.msg) pTxt.textContent = s.msg;
+        }
+      }
+
+      if (progress < 1) {
+        requestAnimationFrame(updatePreloaderProgress);
+      } else {
+        dismissPreloader();
+      }
+    }
+    requestAnimationFrame(updatePreloaderProgress);
 
     // --- 1. THREE.JS RENAISSANCE ARMILLARY SPHERE ---
     const canvas = document.getElementById('webgl-bg-canvas');
