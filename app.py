@@ -3,7 +3,7 @@ import streamlit.components.v1 as components
 import base64
 import os
 import io
-from PIL import Image, ImageFilter, ImageOps
+from PIL import Image, ImageFilter
 
 st.set_page_config(
     page_title="Архитектура Капитала // Финансовое Моделирование",
@@ -31,32 +31,22 @@ iframe {
 </style>
 """, unsafe_allow_html=True)
 
-# Функция: высокоточная фильтрация контуров тела (ультратонкие золотые линии без фона)
+# Функция: извлечение ультратонких контуров фигуры без фона
 def get_blueprint_vitruvian(filename):
     if not os.path.exists(filename):
         return ""
     
     try:
-        # Открываем и переводим в градации серого
         img = Image.open(filename).convert("L")
-        
-        # Легкое сглаживание шума бумаги
         smoothed = img.filter(ImageFilter.GaussianBlur(radius=0.6))
-        
-        # Выделяем контуры
         edges = smoothed.filter(ImageFilter.FIND_EDGES)
         
-        # Отрезаем фоновые шумы и оставляем только тонкие четкие контуры
         def extract_clean_strokes(p):
-            # Отсекаем слабый шум фона, сохраняя тонкие линии фигуры
             if p < 35:
                 return 0
-            # Линейное масштабирование яркости контура
             return int(min(255, (p - 35) * 3.2))
             
         alpha = edges.point(extract_clean_strokes)
-        
-        # Создаем слой чистого ренессансного золота (#E5C158)
         color_layer = Image.new("RGBA", img.size, (229, 193, 88, 255))
         color_layer.putalpha(alpha)
         
@@ -166,10 +156,59 @@ body { background-color: var(--bg-space); color: var(--text-main); font-family: 
     pointer-events: none; z-index: 25; opacity: 0; 
     filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
     will-change: transform, opacity;
-    transition: opacity 0.4s ease;
+    transition: opacity 0.5s ease;
 }
 .nib-spark { animation: sparkFlicker 0.15s infinite alternate; }
 @keyframes sparkFlicker { 0% { opacity: 0.5; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1.4); } }
+
+/* Кнопка Исследовать с золотым свечением */
+#exploreBtnWrapper {
+    position: absolute;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 40;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1.2s cubic-bezier(0.19, 1, 0.22, 1), transform 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+}
+#exploreBtnWrapper.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+}
+.explore-btn {
+    position: relative;
+    padding: 14px 44px;
+    background: rgba(13, 13, 18, 0.65);
+    border: 1px solid rgba(212, 175, 55, 0.7);
+    color: #f4f1ea;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    overflow: hidden;
+    transition: all 0.4s ease;
+    box-shadow: 0 0 25px rgba(212, 175, 55, 0.15), inset 0 0 15px rgba(212, 175, 55, 0.08);
+}
+.explore-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%; width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.3), transparent);
+    transition: left 0.7s ease;
+}
+.explore-btn:hover {
+    border-color: #ffd700;
+    color: #ffd700;
+    box-shadow: 0 0 35px rgba(212, 175, 55, 0.4), inset 0 0 20px rgba(212, 175, 55, 0.25);
+    transform: scale(1.03);
+}
+.explore-btn:hover::before {
+    left: 100%;
+}
 
 /* ФОН ОСНОВНОГО ПРИЛОЖЕНИЯ */
 #webgl-bg-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; opacity: 0.45; transition: opacity 0.5s ease; }
@@ -247,7 +286,8 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
         Архитектура финансов
     </div>
 
-    <div id="preloaderHUD" class="absolute bottom-10 flex flex-col items-center gap-2 font-mono z-20 pointer-events-auto transition-opacity duration-300">
+    <!-- Индикатор загрузки -->
+    <div id="preloaderHUD" class="absolute bottom-10 flex flex-col items-center gap-2 font-mono z-20 pointer-events-auto transition-opacity duration-500">
         <div class="flex items-center gap-3 text-[#d4af37] text-[11px] tracking-[0.25em] uppercase">
             <span class="pulse-dot"></span>
             <span id="loaderStatusText">Инициализация 3D среды...</span>
@@ -256,6 +296,13 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
         <div class="w-64 sm:w-80 h-[2px] bg-white/10 relative overflow-hidden mt-1">
             <div id="loaderProgressBar" class="absolute top-0 bottom-0 left-0 bg-[#d4af37] w-0 transition-all duration-100 ease-out"></div>
         </div>
+    </div>
+
+    <!-- Кнопка перехода в дашборд (Liquid Ripple) -->
+    <div id="exploreBtnWrapper">
+        <button id="exploreBtn" onclick="triggerLiquidTransition(event)" class="explore-btn">
+            Исследовать
+        </button>
     </div>
 </div>
 
@@ -513,7 +560,7 @@ function dismissPreloader() {
     const stage = document.getElementById('preloader-stage');
     const app = document.getElementById('mainDashboardApp');
     if (app) { app.classList.remove('opacity-0'); app.classList.add('opacity-100'); }
-    setTimeout(() => { if (stage) stage.style.display = 'none'; }, 500);
+    setTimeout(() => { if (stage) stage.style.display = 'none'; }, 600);
 }
 
 const PRELOADER_TOTAL_TIME = 15000;
@@ -524,7 +571,7 @@ setTimeout(() => {
     if(pt) pt.classList.replace('opacity-0', 'opacity-100');
 }, 1800);
 
-let isExploding = false;
+let drawingCompleted = false;
 
 function updatePreloaderProgress(now) {
     if (preloaderDismissed) return;
@@ -536,9 +583,16 @@ function updatePreloaderProgress(now) {
         document.getElementById('loaderPercent').textContent = `${Math.floor(progress * 100)}%`;
     }
     
-    if (progress >= 1 && !isExploding) {
-        triggerPixelExplosion();
-    } else if (progress < 1) {
+    // Как только чертеж завершен и прогресс подошел к концу — плавно проявляем кнопку
+    if (progress >= 0.95 && !drawingCompleted) {
+        drawingCompleted = true;
+        const hud = document.getElementById('preloaderHUD');
+        const btn = document.getElementById('exploreBtnWrapper');
+        if (hud) hud.style.opacity = '0';
+        if (btn) btn.classList.add('active');
+    }
+    
+    if (progress < 1) {
         requestAnimationFrame(updatePreloaderProgress);
     }
 }
@@ -595,7 +649,6 @@ const maskScene = new THREE.Scene();
 const maskCamera = new THREE.OrthographicCamera(-0.5, 0.5, 0.5, -0.5, 0.1, 10);
 maskCamera.position.z = 1;
 
-// Уменьшенная кисть для тонкого, анатомически аккуратного штриха
 const brushGeo = new THREE.PlaneGeometry(0.045, 0.045); 
 const brushMat = new THREE.ShaderMaterial({
     transparent: true, depthWrite: false,
@@ -665,84 +718,98 @@ function resizePreloader() {
 }
 window.addEventListener('resize', resizePreloader);
 
-// --- Сцена 3: Взрыв пикселей ---
-let explosionScene, explosionCamera, explosionMesh;
-let explosionTime = 0;
-const finalTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight);
+// --- Сцена 3: Liquid Displacement & Ripple Transition ---
+let isRippling = false;
+let rippleScene, rippleCamera, rippleMaterial;
+let rippleTime = 0;
+const snapshotTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight);
 
-function triggerPixelExplosion() {
-    isExploding = true;
-    
-    document.getElementById('preloaderTitle').style.transition = 'opacity 0.2s';
+function triggerLiquidTransition(event) {
+    if (isRippling) return;
+    isRippling = true;
+    playClickSound(800, 0.08);
+
+    // Центр волны от координат кнопки
+    const rect = event.target.getBoundingClientRect();
+    const clickX = (rect.left + rect.width / 2) / window.innerWidth;
+    const clickY = 1.0 - ((rect.top + rect.height / 2) / window.innerHeight);
+
+    document.getElementById('exploreBtnWrapper').style.transition = 'opacity 0.3s ease';
+    document.getElementById('exploreBtnWrapper').style.opacity = '0';
+    document.getElementById('preloaderTitle').style.transition = 'opacity 0.4s ease';
     document.getElementById('preloaderTitle').style.opacity = '0';
-    document.getElementById('preloaderHUD').style.opacity = '0';
-    document.getElementById('quillPen').style.opacity = '0';
-    
-    preRenderer.setRenderTarget(finalTarget);
+
+    // Делаем моментальный снепшот прелоадера в текстуру
+    preRenderer.setRenderTarget(snapshotTarget);
     preRenderer.clear();
     preRenderer.render(preScene, preCamera);
     preRenderer.clearDepth();
     preRenderer.render(orthoScene, orthoCamera);
     preRenderer.setRenderTarget(null);
-    
-    explosionScene = new THREE.Scene();
-    explosionCamera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-    explosionCamera.position.z = 100;
-    
-    const w = 320, h = 180;
-    const geometry = new THREE.BufferGeometry();
-    const pos = new Float32Array(w * h * 3);
-    const uvs = new Float32Array(w * h * 2);
-    const dirs = new Float32Array(w * h * 3);
-    
-    const vH = 2 * 100 * Math.tan(25 * Math.PI / 180);
-    const vW = vH * (window.innerWidth / window.innerHeight);
-    
-    let i3 = 0, i2 = 0;
-    for(let y=0; y<h; y++){
-        for(let x=0; x<w; x++){
-            pos[i3] = (x / w - 0.5) * vW;
-            pos[i3+1] = (y / h - 0.5) * vH;
-            pos[i3+2] = 0;
-            uvs[i2] = x / w;
-            uvs[i2+1] = y / h;
-            dirs[i3] = (Math.random() - 0.5) * 2.0;
-            dirs[i3+1] = (Math.random() - 0.5) * 2.0;
-            dirs[i3+2] = Math.random() * 2.0; 
-            i3+=3; i2+=2;
-        }
-    }
-    geometry.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
-    geometry.setAttribute('randomDir', new THREE.BufferAttribute(dirs, 3));
-    
-    const mat = new THREE.ShaderMaterial({
-        uniforms: { tDiffuse: { value: finalTarget.texture }, uTime: { value: 0.0 } },
+
+    // Настраиваем шейдер жидкостного искажения
+    rippleScene = new THREE.Scene();
+    rippleCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+    const quadGeo = new THREE.PlaneGeometry(2, 2);
+    rippleMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+            tDiffuse: { value: snapshotTarget.texture },
+            uCenter: { value: new THREE.Vector2(clickX, clickY) },
+            uProgress: { value: 0.0 },
+            uAspect: { value: window.innerWidth / window.innerHeight }
+        },
         vertexShader: `
-            uniform float uTime; uniform sampler2D tDiffuse;
-            attribute vec3 randomDir; varying vec4 vColor;
+            varying vec2 vUv;
             void main() {
-                vColor = texture2D(tDiffuse, uv);
-                vec3 p = position;
-                p += randomDir * (uTime * 90.0);
-                p.y -= (uTime * uTime * 60.0);
-                vec4 mv = modelViewMatrix * vec4(p, 1.0);
-                gl_PointSize = 3.5;
-                gl_Position = projectionMatrix * mv;
+                vUv = uv;
+                gl_Position = vec4(position, 1.0);
             }
         `,
         fragmentShader: `
-            varying vec4 vColor;
+            uniform sampler2D tDiffuse;
+            uniform vec2 uCenter;
+            uniform float uProgress;
+            uniform float uAspect;
+            varying vec2 vUv;
+
             void main() {
-                if (vColor.a < 0.05) discard;
-                gl_FragColor = vColor;
+                vec2 uv = vUv;
+                vec2 aspectAdjustedUV = vec2(uv.x * uAspect, uv.y);
+                vec2 aspectAdjustedCenter = vec2(uCenter.x * uAspect, uCenter.y);
+                
+                float dist = distance(aspectAdjustedUV, aspectAdjustedCenter);
+                
+                // Волновой фронт расходится от центра
+                float waveRadius = uProgress * 2.2;
+                float waveWidth = 0.35;
+                float waveFactor = smoothstep(waveRadius - waveWidth, waveRadius, dist) * 
+                                   smoothstep(waveRadius + waveWidth, waveRadius, dist);
+                
+                // Синусоидальное гидродинамическое смещение
+                float wave = sin((dist - waveRadius) * 35.0) * waveFactor * (1.0 - uProgress);
+                vec2 dir = normalize(aspectAdjustedUV - aspectAdjustedCenter + 0.0001);
+                
+                // Хроматическая аберрация в волне
+                vec2 offsetR = dir * wave * 0.085;
+                vec2 offsetG = dir * wave * 0.070;
+                vec2 offsetB = dir * wave * 0.055;
+                
+                float r = texture2D(tDiffuse, uv + offsetR).r;
+                float g = texture2D(tDiffuse, uv + offsetG).g;
+                float b = texture2D(tDiffuse, uv + offsetB).b;
+                float a = texture2D(tDiffuse, uv).a;
+                
+                // Плавное растворение картинки в дашборд
+                float fadeOut = smoothstep(0.0, 0.95, uProgress);
+                gl_FragColor = vec4(r, g, b, (1.0 - fadeOut));
             }
         `,
-        transparent: true, depthWrite: false
+        transparent: true
     });
-    
-    explosionMesh = new THREE.Points(geometry, mat);
-    explosionScene.add(explosionMesh);
+
+    const quad = new THREE.Mesh(quadGeo, rippleMaterial);
+    rippleScene.add(quad);
 }
 
 let drawStep = 0;
@@ -756,15 +823,22 @@ function animatePreloader() {
     const t = elapsed * 0.001;
     const progress = Math.min(elapsed / PRELOADER_TOTAL_TIME, 1.0);
     
-    if (isExploding) {
-        explosionTime += 0.016; 
-        explosionMesh.material.uniforms.uTime.value = explosionTime;
+    // Анимация жидкостного перехода при клике
+    if (isRippling) {
+        rippleTime += 0.016;
+        const ripProgress = Math.min(rippleTime / 1.3, 1.0); // 1.3 секунды на волну
+        rippleMaterial.uniforms.uProgress.value = ripProgress;
+        
         preRenderer.clear();
-        preRenderer.render(explosionScene, explosionCamera);
-        if (explosionTime > 1.8) dismissPreloader();
+        preRenderer.render(rippleScene, rippleCamera);
+        
+        if (ripProgress >= 1.0) {
+            dismissPreloader();
+        }
         return;
     }
     
+    // Медленное, плавное вращение колец
     rings[0].rotation.y += 0.0015 + Math.sin(t * 0.4) * 0.001;
     rings[0].rotation.x += 0.0005;
     rings[1].rotation.x -= 0.001 + Math.cos(t * 0.5) * 0.001;
@@ -772,24 +846,20 @@ function animatePreloader() {
     rings[2].rotation.z -= 0.0005 + Math.sin(t * 0.3) * 0.0015;
     rings[2].rotation.y += 0.0015;
     
+    // Плавный пролет камеры через кольца
     preCamera.position.z = 100 - (progress * 50);
     preCamera.position.x = Math.sin(progress * Math.PI) * 10;
     preCamera.position.y = Math.cos(progress * Math.PI * 1.5) * 8;
     preCamera.lookAt(0, 0, -20);
     
     if (vitruvianPlane) {
-        // За один кадр делаем несколько микро-шагов, чтобы кисть шла без пробелов
         let px = 0, py = 0;
         
-        // Рисование активно до 86% времени (13 сек из 15), успевая на 100% покрыть фигуру
         if (progress <= 0.86) {
             for (let sub = 0; sub < 4; sub++) {
                 drawStep += 0.016;
-                // Параметрическая кривая, описывающая силуэт тела с руками и ногами
                 const pTime = drawStep * 1.8;
-                // Горизонтальные размахи (руки, ноги, корпус)
                 px = Math.sin(pTime) * 0.28 + Math.sin(pTime * 3.7) * 0.12;
-                // Вертикальные проходы (от головы до стоп)
                 py = Math.cos(pTime * 0.85) * 0.34 + Math.sin(pTime * 2.1) * 0.09;
                 
                 brushMesh.position.set(px, py, 0);
@@ -798,7 +868,7 @@ function animatePreloader() {
                 preRenderer.setRenderTarget(null);
             }
         } else {
-            // К моменту 86%+ полностью открываем маску на 100% на случай мелких пробелов
+            // К 86%+ полностью открываем всю маску, рисунок завершен
             brushMesh.scale.set(30, 30, 1);
             brushMesh.position.set(0, 0, 0);
             preRenderer.setRenderTarget(maskTarget);
@@ -806,14 +876,12 @@ function animatePreloader() {
             preRenderer.setRenderTarget(null);
         }
         
-        // Положение пера следует за последней точкой штриха
         if (progress < 0.88) {
             penEl.style.opacity = 1;
             const penX = window.innerWidth / 2 + (px * drawPlaneWidth);
             const penY = window.innerHeight / 2 - (py * drawPlaneHeight);
             penEl.style.transform = `translate3d(${penX}px, ${penY}px, 0) rotate(${Math.sin(drawStep * 6) * 18 - 12}deg)`;
         } else {
-            // Перо плавно растворяется перед взрывом
             penEl.style.opacity = 0; 
         }
     }
@@ -1173,7 +1241,6 @@ window.onload = () => runCalculation();
 </body>
 </html>"""
 
-# Обработка картинки "на лету" и подстановка её в HTML
 img_src = get_blueprint_vitruvian("1000400438.jpg")
 html_code = html_code.replace("VITRUVIAN_IMAGE_SRC_PLACEHOLDER", img_src)
 
