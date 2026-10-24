@@ -101,7 +101,7 @@ tailwind.config = {
 <style>
 :root {
     --bg-space: #070709;
-    --bg-panel: rgba(13, 13, 18, 0.82);
+    --bg-panel: rgba(13, 13, 18, 0.85);
     --bg-cell-hover: rgba(24, 24, 34, 0.95);
     --text-main: #f4f1ea;
     --text-muted: #8e8a80;
@@ -117,7 +117,7 @@ tailwind.config = {
 }
 html:not(.dark) {
     --bg-space: #f4f1ea;
-    --bg-panel: rgba(255, 255, 255, 0.90);
+    --bg-panel: rgba(255, 255, 255, 0.92);
     --bg-cell-hover: rgba(246, 243, 235, 0.98);
     --text-main: #141416;
     --text-muted: #6b665c;
@@ -148,7 +148,6 @@ body { background-color: var(--bg-space); color: var(--text-main); font-family: 
 }
 #preloader-canvas-container { position: absolute; inset: 0; width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; z-index: 10; overflow: hidden; }
 
-/* Динамически управляемое перо */
 #quillPen {
     position: absolute; left: 0; top: 0; 
     margin-left: -4px; margin-top: -4px;
@@ -160,7 +159,6 @@ body { background-color: var(--bg-space); color: var(--text-main); font-family: 
 .nib-spark { animation: sparkFlicker 0.15s infinite alternate; }
 @keyframes sparkFlicker { 0% { opacity: 0.5; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1.4); } }
 
-/* Кнопка Исследовать с золотым свечением */
 #exploreBtnWrapper {
     position: absolute;
     bottom: 50px;
@@ -228,25 +226,6 @@ html:not(.dark) #webgl-bg-canvas { opacity: 0.18; }
     opacity: 0; transition: opacity 0.35s ease; pointer-events: none; z-index: 2;
 }
 .tilt-card:hover::before { opacity: 1; }
-
-/* КОНТЕЙНЕР ДЛЯ ГРАФИКОВ С ПОТОКОВЫМИ ПОЛЯМИ ЧАСТИЦ */
-.chart-card-wrapper {
-    position: relative;
-    overflow: hidden;
-}
-.chart-flow-canvas {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 1;
-    opacity: 0.85;
-}
-.chart-container-relative {
-    position: relative;
-    z-index: 2;
-}
 
 .tab-view-enter { animation: alcheTabEntrance 0.72s cubic-bezier(0.19, 1, 0.22, 1) forwards; }
 @keyframes alcheTabEntrance {
@@ -502,17 +481,14 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
             <div class="flex-1 p-5 lg:p-7 space-y-6">
                 <!-- ВКЛАДКА 0: ДОЛГ -->
                 <div id="viewTab0" class="tab-view-enter space-y-6">
-                    <div class="alche-block p-5 border chart-card-wrapper" data-flow="gold">
-                        <canvas class="chart-flow-canvas"></canvas>
-                        <div class="chart-container-relative">
-                            <div class="flex justify-between items-center mb-4">
-                                <div>
-                                    <h3 class="font-serif text-xl font-bold tracking-wide italic">График обслуживания долга и начисления процентов</h3>
-                                    <p class="font-mono text-[10px] opacity-60">Ежемесячные проценты по ставке кредитора (столбцы) и динамика тела долга (кривая)</p>
-                                </div>
+                    <div class="alche-block p-5 border">
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <h3 class="font-serif text-xl font-bold tracking-wide italic">График обслуживания долга и начисления процентов</h3>
+                                <p class="font-mono text-[10px] opacity-60">Ежемесячные проценты по ставке кредитора (столбцы) и динамика тела долга (кривая)</p>
                             </div>
-                            <div class="h-[360px] relative"><canvas id="chartDebt"></canvas></div>
                         </div>
+                        <div class="h-[360px] relative"><canvas id="chartDebt"></canvas></div>
                     </div>
                     <div class="alche-block border overflow-x-auto">
                         <table class="w-full text-left font-mono text-[11px]">
@@ -526,54 +502,42 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
 
                 <!-- ВКЛАДКА 1: СКЛАД -->
                 <div id="viewTab1" class="hidden space-y-6">
-                    <div class="alche-block p-5 border chart-card-wrapper" data-flow="cyan">
-                        <canvas class="chart-flow-canvas"></canvas>
-                        <div class="chart-container-relative">
-                            <div class="flex justify-between items-center mb-4">
-                                <div>
-                                    <h3 class="font-serif text-xl font-bold tracking-wide italic">Партионные закупки и истощение склада</h3>
-                                    <p class="font-mono text-[10px] opacity-60">Закупка дискретными циклами каждые N месяцев без ежемесячного задвоения</p>
-                                </div>
+                    <div class="alche-block p-5 border">
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <h3 class="font-serif text-xl font-bold tracking-wide italic">Партионные закупки и истощение склада</h3>
+                                <p class="font-mono text-[10px] opacity-60">Закупка дискретными циклами каждые N месяцев без ежемесячного задвоения</p>
                             </div>
-                            <div class="h-[400px] relative"><canvas id="chartStock"></canvas></div>
                         </div>
+                        <div class="h-[400px] relative"><canvas id="chartStock"></canvas></div>
                     </div>
                 </div>
 
                 <!-- ВКЛАДКА 2: ДЕНЕЖНЫЙ ПОТОК -->
                 <div id="viewTab2" class="hidden space-y-6">
-                    <div class="alche-block p-5 border chart-card-wrapper" data-flow="jade">
-                        <canvas class="chart-flow-canvas"></canvas>
-                        <div class="chart-container-relative">
-                            <div class="flex justify-between items-center mb-4">
-                                <div>
-                                    <h3 class="font-serif text-xl font-bold tracking-wide italic">Структура помесячного денежного потока</h3>
-                                    <p class="font-mono text-[10px] opacity-60">Сопоставление входящей выручки и совокупных выплат (закупки, аренда, ФОТ и налоги)</p>
-                                </div>
+                    <div class="alche-block p-5 border">
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <h3 class="font-serif text-xl font-bold tracking-wide italic">Структура помесячного денежного потока</h3>
+                                <p class="font-mono text-[10px] opacity-60">Сопоставление входящей выручки и совокупных выплат (закупки, аренда, ФОТ и налоги)</p>
                             </div>
-                            <div class="h-[400px] relative"><canvas id="chartCF"></canvas></div>
                         </div>
+                        <div class="h-[400px] relative"><canvas id="chartCF"></canvas></div>
                     </div>
                 </div>
 
                 <!-- ВКЛАДКА 3: ЭКОНОМИКА -->
                 <div id="viewTab3" class="hidden space-y-6">
                     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                        <div class="alche-block p-5 border chart-card-wrapper" data-flow="gold">
-                            <canvas class="chart-flow-canvas"></canvas>
-                            <div class="chart-container-relative">
-                                <h3 class="font-serif text-xl font-bold tracking-wide italic mb-1">Динамика заказов и выручки</h3>
-                                <p class="font-mono text-[10px] opacity-60 mb-4">Рост клиентской базы и масштабирование объемов отгрузок</p>
-                                <div class="h-[320px] relative"><canvas id="chartOrders"></canvas></div>
-                            </div>
+                        <div class="alche-block p-5 border">
+                            <h3 class="font-serif text-xl font-bold tracking-wide italic mb-1">Динамика заказов и выручки</h3>
+                            <p class="font-mono text-[10px] opacity-60 mb-4">Рост клиентской базы и масштабирование объемов отгрузок</p>
+                            <div class="h-[320px] relative"><canvas id="chartOrders"></canvas></div>
                         </div>
-                        <div class="alche-block p-5 border chart-card-wrapper" data-flow="ruby">
-                            <canvas class="chart-flow-canvas"></canvas>
-                            <div class="chart-container-relative">
-                                <h3 class="font-serif text-xl font-bold tracking-wide italic mb-1">Структура совокупных затрат</h3>
-                                <p class="font-mono text-[10px] opacity-60 mb-4">Доли расходов с учетом себестоимости, инфраструктуры и процентов по долгу</p>
-                                <div class="h-[320px] relative"><canvas id="chartPie"></canvas></div>
-                            </div>
+                        <div class="alche-block p-5 border">
+                            <h3 class="font-serif text-xl font-bold tracking-wide italic mb-1">Структура совокупных затрат</h3>
+                            <p class="font-mono text-[10px] opacity-60 mb-4">Доли расходов с учетом себестоимости, инфраструктуры и процентов по долгу</p>
+                            <div class="h-[320px] relative"><canvas id="chartPie"></canvas></div>
                         </div>
                     </div>
                 </div>
@@ -610,7 +574,6 @@ function dismissPreloader() {
     if (app) { app.classList.remove('opacity-0'); app.classList.add('opacity-100'); }
     setTimeout(() => { 
         if (stage) stage.style.display = 'none'; 
-        initAllChartFlowFields(); // Инициализация силовых полей графиков
     }, 600);
 }
 
@@ -821,6 +784,7 @@ function triggerLiquidTransition(event) {
                 vec2 aspectAdjustedCenter = vec2(uCenter.x * uAspect, uCenter.y);
                 
                 float dist = distance(aspectAdjustedUV, aspectAdjustedCenter);
+                
                 float waveRadius = uProgress * 2.2;
                 float waveWidth = 0.35;
                 float waveFactor = smoothstep(waveRadius - waveWidth, waveRadius, dist) * 
@@ -922,151 +886,6 @@ function animatePreloader() {
     preRenderer.render(orthoScene, orthoCamera);
 }
 animatePreloader();
-
-
-/* =======================================================================
-   INTERACTIVE PARTICLE GALAXY / FLOW FIELD СИСТЕМА ДЛЯ ГРАФИКОВ
-   ======================================================================= */
-class ChartFlowField {
-    constructor(canvas, themeType = 'gold') {
-        this.canvas = canvas;
-        this.ctx = canvas.getContext('2d');
-        this.themeType = themeType;
-        this.particles = [];
-        this.numParticles = 260;
-        this.mouseX = -9999;
-        this.mouseY = -9999;
-        this.isHovered = false;
-        this.time = 0;
-        
-        this.colors = {
-            gold: ['rgba(212, 175, 55, 0.85)', 'rgba(255, 215, 0, 0.4)', 'rgba(184, 134, 11, 0.3)'],
-            cyan: ['rgba(0, 170, 255, 0.85)', 'rgba(0, 220, 255, 0.4)', 'rgba(0, 100, 200, 0.3)'],
-            jade: ['rgba(42, 157, 143, 0.85)', 'rgba(80, 200, 180, 0.4)', 'rgba(20, 100, 90, 0.3)'],
-            ruby: ['rgba(230, 57, 70, 0.85)', 'rgba(255, 100, 110, 0.4)', 'rgba(150, 30, 40, 0.3)']
-        }[themeType] || ['rgba(212, 175, 55, 0.8)'];
-
-        this.resize();
-        this.initParticles();
-        this.bindEvents();
-    }
-
-    resize() {
-        const rect = this.canvas.parentElement.getBoundingClientRect();
-        this.width = this.canvas.width = rect.width;
-        this.height = this.canvas.height = rect.height;
-    }
-
-    initParticles() {
-        this.particles = [];
-        for (let i = 0; i < this.numParticles; i++) {
-            this.particles.push({
-                x: Math.random() * this.width,
-                y: Math.random() * this.height,
-                vx: 0,
-                vy: 0,
-                speed: 0.6 + Math.random() * 1.4,
-                radius: 0.8 + Math.random() * 1.5,
-                color: this.colors[Math.floor(Math.random() * this.colors.length)],
-                life: Math.random() * 100
-            });
-        }
-    }
-
-    bindEvents() {
-        const parent = this.canvas.parentElement;
-        parent.addEventListener('mousemove', (e) => {
-            const rect = this.canvas.getBoundingClientRect();
-            this.mouseX = e.clientX - rect.left;
-            this.mouseY = e.clientY - rect.top;
-            this.isHovered = true;
-        });
-        parent.addEventListener('mouseleave', () => {
-            this.isHovered = false;
-            this.mouseX = -9999;
-            this.mouseY = -9999;
-        });
-    }
-
-    update() {
-        this.time += 0.006;
-        
-        // Полупрозрачная очистка для длинного шелковистого следа потоков
-        this.ctx.fillStyle = 'rgba(7, 7, 9, 0.08)';
-        this.ctx.fillRect(0, 0, this.width, this.height);
-
-        for (let i = 0; i < this.particles.length; i++) {
-            const p = this.particles[i];
-
-            // Векторное поле скоростей (Trig Curl Flow Field)
-            const angle = (Math.cos(p.x * 0.005 + this.time) + Math.sin(p.y * 0.005 + this.time)) * Math.PI;
-            
-            p.vx += Math.cos(angle) * 0.08 * p.speed;
-            p.vy += Math.sin(angle) * 0.08 * p.speed;
-
-            // Интерактивное воздействие курсора: гравитационный вихрь
-            if (this.isHovered) {
-                const dx = this.mouseX - p.x;
-                const dy = this.mouseY - p.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < 180) {
-                    const force = (1 - dist / 180) * 1.8;
-                    // Касательная закрутка (ортогонально к радиусу) + притяжение
-                    p.vx += (-dy / dist * 1.4 + dx / dist * 0.4) * force;
-                    p.vy += (dx / dist * 1.4 + dy / dist * 0.4) * force;
-                }
-            }
-
-            p.x += p.vx;
-            p.y += p.vy;
-            p.vx *= 0.94; // Трение/вязкость среды
-            p.vy *= 0.94;
-
-            // Зацикливание по границам экрана
-            if (p.x < 0) p.x = this.width;
-            if (p.x > this.width) p.x = 0;
-            if (p.y < 0) p.y = this.height;
-            if (p.y > this.height) p.y = 0;
-
-            // Отрисовка светящейся микрочастицы
-            this.ctx.beginPath();
-            this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-            this.ctx.fillStyle = p.color;
-            this.ctx.shadowBlur = 6;
-            this.ctx.shadowColor = p.color;
-            this.ctx.fill();
-            this.ctx.shadowBlur = 0;
-        }
-    }
-}
-
-const activeFlowFields = [];
-function initAllChartFlowFields() {
-    const wrappers = document.querySelectorAll('.chart-card-wrapper');
-    wrappers.forEach(wrapper => {
-        const canvas = wrapper.querySelector('.chart-flow-canvas');
-        const theme = wrapper.getAttribute('data-flow') || 'gold';
-        if (canvas) {
-            const ff = new ChartFlowField(canvas, theme);
-            activeFlowFields.push(ff);
-        }
-    });
-
-    function loopFlow() {
-        for (let i = 0; i < activeFlowFields.length; i++) {
-            // Анимируем только видимые вкладки для экономии ресурсов
-            if (activeFlowFields[i].canvas.offsetParent !== null) {
-                activeFlowFields[i].update();
-            }
-        }
-        requestAnimationFrame(loopFlow);
-    }
-    loopFlow();
-}
-
-window.addEventListener('resize', () => {
-    activeFlowFields.forEach(ff => ff.resize());
-});
 
 
 /* ========================================================
@@ -1225,9 +1044,6 @@ function selectTab(index) {
             view.classList.add('hidden');
         }
     }
-    setTimeout(() => {
-        activeFlowFields.forEach(ff => ff.resize());
-    }, 50);
 }
 
 let growthMode = 'abs';
@@ -1387,7 +1203,7 @@ function runCalculation() {
     }
     
     const chartText = isDark ? '#8e8a80' : '#6b665c';
-    const chartGrid = isDark ? 'rgba(212, 175, 55, 0.05)' : 'rgba(184, 134, 11, 0.08)';
+    const chartGrid = isDark ? 'rgba(212, 175, 55, 0.08)' : 'rgba(184, 134, 11, 0.12)';
     
     if (chartDebtInstance) chartDebtInstance.destroy();
     chartDebtInstance = new Chart(document.getElementById('chartDebt').getContext('2d'), {
@@ -1395,8 +1211,8 @@ function runCalculation() {
         data: {
             labels: xLabels,
             datasets: [
-                { label: 'Проценты за месяц', data: interestPayments, backgroundColor: 'rgba(212, 175, 55, 0.65)', borderColor: '#d4af37', borderWidth: 1, order: 2 },
-                { label: 'Остаток тела долга', data: debtBalance, type: 'line', borderColor: '#e63946', backgroundColor: 'transparent', borderWidth: 2.2, yAxisID: 'y1', tension: 0.35, pointRadius: 2, order: 1 }
+                { label: 'Проценты за месяц', data: interestPayments, backgroundColor: '#d4af37', order: 2 },
+                { label: 'Остаток тела долга', data: debtBalance, type: 'line', borderColor: '#e63946', backgroundColor: '#e63946', borderWidth: 2.5, yAxisID: 'y1', tension: 0.3, order: 1 }
             ]
         },
         options: {
@@ -1417,8 +1233,8 @@ function runCalculation() {
         data: {
             labels: xLabels,
             datasets: [
-                { label: 'Оплата партии', data: cogsPayments, backgroundColor: isDark ? 'rgba(82, 82, 91, 0.65)' : 'rgba(203, 213, 225, 0.65)', borderWidth: 1, order: 2 },
-                { label: 'Остаток склада', data: inventoryBalance, type: 'line', borderColor: '#d4af37', backgroundColor: 'transparent', borderWidth: 2.2, yAxisID: 'y1', tension: 0.35, pointRadius: 2, order: 1 }
+                { label: 'Оплата партии поставщику', data: cogsPayments, backgroundColor: isDark ? '#52525b' : '#cbd5e1', order: 2 },
+                { label: 'Остаток склада', data: inventoryBalance, type: 'line', borderColor: '#d4af37', borderWidth: 2.5, yAxisID: 'y1', tension: 0.3, order: 1 }
             ]
         },
         options: {
@@ -1440,8 +1256,8 @@ function runCalculation() {
         data: {
             labels: xLabels,
             datasets: [
-                { label: 'Притоки от продаж', data: inflows, backgroundColor: 'rgba(42, 157, 143, 0.7)', borderColor: '#2a9d8f', borderWidth: 1 },
-                { label: 'Выплаты (закупки+OPEX+%)', data: totalOutflows.map(v => -v), backgroundColor: 'rgba(230, 57, 70, 0.7)', borderColor: '#e63946', borderWidth: 1 }
+                { label: 'Притоки от продаж', data: inflows, backgroundColor: '#2a9d8f' },
+                { label: 'Выплаты (закупки + OPEX + %)', data: totalOutflows.map(v => -v), backgroundColor: '#e63946' }
             ]
         },
         options: {
@@ -1461,8 +1277,8 @@ function runCalculation() {
         data: {
             labels: xLabels,
             datasets: [
-                { label: 'Заказы, шт.', data: orders, backgroundColor: 'rgba(212, 175, 55, 0.7)', borderColor: '#d4af37', borderWidth: 1 },
-                { label: 'Выручка, ₽', data: rev, type: 'line', borderColor: '#2a9d8f', backgroundColor: 'transparent', yAxisID: 'y1', borderWidth: 2.2, tension: 0.35, pointRadius: 2 }
+                { label: 'Заказы, шт.', data: orders, backgroundColor: '#d4af37' },
+                { label: 'Выручка, ₽', data: rev, type: 'line', borderColor: '#2a9d8f', yAxisID: 'y1', borderWidth: 2.5 }
             ]
         },
         options: {
@@ -1485,12 +1301,7 @@ function runCalculation() {
             labels: ['Склад', 'Офис', 'ФОТ', 'Налоги 5%', 'Закупки', 'Проценты по долгу'],
             datasets: [{
                 data: [wh * period, office * period, fot * period, sumTaxes, sumPurchases, sumInterest],
-                backgroundColor: [
-                    'rgba(82, 82, 91, 0.7)', 'rgba(113, 113, 122, 0.7)', 'rgba(212, 175, 55, 0.8)',
-                    'rgba(230, 57, 70, 0.8)', 'rgba(42, 157, 143, 0.8)', 'rgba(69, 123, 157, 0.8)'
-                ],
-                borderColor: '#0d0d12',
-                borderWidth: 2
+                backgroundColor: ['#52525b', '#71717a', '#d4af37', '#e63946', '#2a9d8f', '#457b9d']
             }]
         },
         options: {
