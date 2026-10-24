@@ -31,7 +31,7 @@ iframe {
 </style>
 """, unsafe_allow_html=True)
 
-# Функция для удаления пергаментного фона и перекраски линий в голубой цвет (чертеж)
+# Функция для удаления пергаментного фона и перекраски линий в желтый цвет
 def get_blueprint_vitruvian(filename):
     if not os.path.exists(filename):
         return ""
@@ -44,8 +44,8 @@ def get_blueprint_vitruvian(filename):
         # Темные линии (значение пикселя < 130) делаем непрозрачными, светлый пергамент прозрачным
         alpha = img.point(lambda p: 255 - p if p < 130 else 0)
         
-        # Создаем сплошной слой цвета Blueprint-голубого (R=0, G=170, B=255 -> #00AAFF)
-        color_layer = Image.new("RGBA", img.size, (0, 170, 255, 255))
+        # Создаем сплошной слой желтого цвета (R=255, G=215, B=0 -> #FFD700)
+        color_layer = Image.new("RGBA", img.size, (255, 215, 0, 255))
         
         # Накладываем маску прозрачности
         color_layer.putalpha(alpha)
@@ -172,11 +172,11 @@ body {
 #preloader-canvas-container:active { cursor: grabbing; }
 #preloader-webgl { width: 100% !important; height: 100% !important; outline: none; }
 
-/* Анимированная перьевая ручка: эффект рисования по кругу */
+/* Анимированная перьевая ручка: свечение и цвет пера теперь желтые */
 .quill-overlay-nib {
     position: absolute; top: 0; left: 0; pointer-events: none; z-index: 25;
     animation: penOrbit 7.8s cubic-bezier(0.35, 0.1, 0.25, 1) forwards;
-    filter: drop-shadow(0 0 10px rgba(0, 170, 255, 0.6));
+    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.6));
 }
 @keyframes penOrbit {
     0% { transform: translate(40vw, 80vh) rotate(-15deg); opacity: 0; }
@@ -302,19 +302,19 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
 <div id="preloader-stage">
     <div id="preloader-canvas-container">
         <canvas id="preloader-webgl"></canvas>
-        <!-- ПЕРЬЕВАЯ РУЧКА -->
+        <!-- ПЕРЬЕВАЯ РУЧКА (ЖЕЛТАЯ) -->
         <div id="quillPen" class="quill-overlay-nib">
             <svg width="48" height="48" viewBox="0 0 64 64" fill="none">
                 <circle cx="4" cy="4" r="3.5" fill="#ffffff" class="nib-spark" />
-                <circle cx="4" cy="4" r="8" fill="#00aaff" opacity="0.4" class="nib-spark" />
-                <path d="M4 4 L14 12 L10 16 Z" fill="#00aaff" />
-                <path d="M4 4 L12 14 L16 10 Z" fill="#0088cc" />
+                <circle cx="4" cy="4" r="8" fill="#ffd700" opacity="0.4" class="nib-spark" />
+                <path d="M4 4 L14 12 L10 16 Z" fill="#ffd700" />
+                <path d="M4 4 L12 14 L16 10 Z" fill="#cca300" />
                 <line x1="4" y1="4" x2="12" y2="12" stroke="#111" stroke-width="0.8"/>
                 <circle cx="12" cy="12" r="1.5" fill="#111"/>
                 <path d="M12 14 L14 12 L50 48 L48 50 Z" fill="url(#penGrad)" stroke="#222" stroke-width="1"/>
                 <path d="M50 48 L14 12" stroke="#ffffff" stroke-width="1.5" opacity="0.3"/>
-                <path d="M18 22 L22 18" stroke="#00aaff" stroke-width="2"/>
-                <path d="M42 46 L46 42" stroke="#00aaff" stroke-width="2"/>
+                <path d="M18 22 L22 18" stroke="#ffd700" stroke-width="2"/>
+                <path d="M42 46 L46 42" stroke="#ffd700" stroke-width="2"/>
                 <defs>
                     <linearGradient id="penGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" stop-color="#2a2a2a" />
@@ -326,7 +326,7 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
         </div>
     </div>
 
-    <!-- Индикатор загрузки и телеметрия инициализации -->
+    <!-- Индикатор загрузки и телеметрия инициализации (БЕЗ КНОПКИ ПРОПУСКА) -->
     <div class="absolute bottom-10 flex flex-col items-center gap-2 font-mono z-20 pointer-events-auto">
         <div class="flex items-center gap-3 text-[#d4af37] text-[11px] tracking-[0.25em] uppercase">
             <span class="pulse-dot"></span>
@@ -815,8 +815,9 @@ preArmillary.add(preRing2);
 preArmillary.add(preRing3);
 preArmillary.add(preRing4);
 
-// ВИТРУВИАНСКИЙ ЧЕЛОВЕК (СИНЯЯ ВЕРСИЯ БЕЗ ФОНА)
+// ВИТРУВИАНСКИЙ ЧЕЛОВЕК (ЖЕЛТАЯ ВЕРСИЯ БЕЗ ФОНА)
 const vitruvianImg = new Image();
+vitruvianImg.crossOrigin = "Anonymous"; // Защита для загрузки по URL
 vitruvianImg.src = "VITRUVIAN_IMAGE_SRC_PLACEHOLDER";
 let planeMaterial = null;
 let vitruvianPlane = null;
@@ -826,6 +827,7 @@ vitruvianImg.onload = () => {
     // Начинаем с нулевой прозрачности, чтобы создать эффект постепенного рисования
     planeMaterial = new THREE.MeshBasicMaterial({ map: canvasTexture, transparent: true, opacity: 0.0, depthWrite: false, side: THREE.DoubleSide });
     const aspect = vitruvianImg.height / vitruvianImg.width;
+    // Масштаб плоскости
     const planeGeo = new THREE.PlaneGeometry(38.0, 38.0 * aspect);
     vitruvianPlane = new THREE.Mesh(planeGeo, planeMaterial);
     preScene.add(vitruvianPlane);
