@@ -2,6 +2,8 @@ import streamlit as st
 import streamlit.components.v1 as components
 import base64
 import os
+import io
+from PIL import Image
 
 st.set_page_config(
     page_title="Архитектура Капитала // Финансовое Моделирование",
@@ -29,14 +31,33 @@ iframe {
 </style>
 """, unsafe_allow_html=True)
 
-# Функция для конвертации локальной картинки в base64
-def get_image_src(filename):
-    if os.path.exists(filename):
-        with open(filename, "rb") as img_file:
-            b64_string = base64.b64encode(img_file.read()).decode()
-            return f"data:image/jpeg;base64,{b64_string}"
-    # Фолбэк, если файл не найден (чтобы сцена не сломалась)
-    return "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Da_Vinci_Vitruve_Luc_Viatour.jpg/500px-Da_Vinci_Vitruve_Luc_Viatour.jpg"
+# Функция для удаления пергаментного фона и перекраски линий в голубой цвет (чертеж)
+def get_blueprint_vitruvian(filename):
+    if not os.path.exists(filename):
+        return ""
+    
+    try:
+        # Открываем изображение и переводим в градации серого
+        img = Image.open(filename).convert("L")
+        
+        # Создаем маску прозрачности: 
+        # Темные линии (значение пикселя < 130) делаем непрозрачными, светлый пергамент прозрачным
+        alpha = img.point(lambda p: 255 - p if p < 130 else 0)
+        
+        # Создаем сплошной слой цвета Blueprint-голубого (R=0, G=170, B=255 -> #00AAFF)
+        color_layer = Image.new("RGBA", img.size, (0, 170, 255, 255))
+        
+        # Накладываем маску прозрачности
+        color_layer.putalpha(alpha)
+        
+        # Кодируем в base64
+        buffered = io.BytesIO()
+        color_layer.save(buffered, format="PNG")
+        b64_str = base64.b64encode(buffered.getvalue()).decode()
+        return f"data:image/png;base64,{b64_str}"
+    except Exception as e:
+        print(f"Ошибка обработки изображения: {e}")
+        return ""
 
 html_code = r"""<!DOCTYPE html>
 <html lang="ru" class="dark">
@@ -151,22 +172,23 @@ body {
 #preloader-canvas-container:active { cursor: grabbing; }
 #preloader-webgl { width: 100% !important; height: 100% !important; outline: none; }
 
-/* Анимированная перьевая ручка */
+/* Анимированная перьевая ручка: эффект рисования по кругу */
 .quill-overlay-nib {
     position: absolute; top: 0; left: 0; pointer-events: none; z-index: 25;
     animation: penOrbit 7.8s cubic-bezier(0.35, 0.1, 0.25, 1) forwards;
-    filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.6));
+    filter: drop-shadow(0 0 10px rgba(0, 170, 255, 0.6));
 }
 @keyframes penOrbit {
-    0% { transform: translate(30vw, 15vh) rotate(-18deg); opacity: 0; }
-    5% { transform: translate(35vw, 18vh) rotate(-24deg); opacity: 1; }
-    22% { transform: translate(65vw, 40vh) rotate(-10deg); }
-    38% { transform: translate(25vw, 60vh) rotate(-35deg); }
-    54% { transform: translate(60vw, 75vh) rotate(-18deg); }
-    70% { transform: translate(45vw, 25vh) rotate(-28deg); }
-    85% { transform: translate(55vw, 35vh) rotate(-15deg); }
-    93% { transform: translate(50vw, 50vh) rotate(-22deg); opacity: 1; }
-    100% { transform: translate(51vw, 51vh) rotate(-20deg); opacity: 0; }
+    0% { transform: translate(40vw, 80vh) rotate(-15deg); opacity: 0; }
+    10% { transform: translate(30vw, 65vh) rotate(-20deg); opacity: 1; }
+    25% { transform: translate(25vw, 45vh) rotate(-25deg); }
+    40% { transform: translate(35vw, 25vh) rotate(-15deg); }
+    50% { transform: translate(50vw, 15vh) rotate(-5deg); }
+    65% { transform: translate(65vw, 25vh) rotate(5deg); }
+    80% { transform: translate(75vw, 45vh) rotate(15deg); }
+    90% { transform: translate(65vw, 70vh) rotate(5deg); }
+    95% { transform: translate(50vw, 80vh) rotate(-5deg); opacity: 1; }
+    100% { transform: translate(50vw, 80vh) rotate(-5deg); opacity: 0; }
 }
 .nib-spark { animation: sparkFlicker 0.25s infinite alternate; }
 @keyframes sparkFlicker {
@@ -284,15 +306,15 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
         <div id="quillPen" class="quill-overlay-nib">
             <svg width="48" height="48" viewBox="0 0 64 64" fill="none">
                 <circle cx="4" cy="4" r="3.5" fill="#ffffff" class="nib-spark" />
-                <circle cx="4" cy="4" r="8" fill="#d4af37" opacity="0.4" class="nib-spark" />
-                <path d="M4 4 L14 12 L10 16 Z" fill="#d4af37" />
-                <path d="M4 4 L12 14 L16 10 Z" fill="#b8860b" />
+                <circle cx="4" cy="4" r="8" fill="#00aaff" opacity="0.4" class="nib-spark" />
+                <path d="M4 4 L14 12 L10 16 Z" fill="#00aaff" />
+                <path d="M4 4 L12 14 L16 10 Z" fill="#0088cc" />
                 <line x1="4" y1="4" x2="12" y2="12" stroke="#111" stroke-width="0.8"/>
                 <circle cx="12" cy="12" r="1.5" fill="#111"/>
-                <path d="M12 14 L14 12 L50 48 L48 50 Z" fill="url(#penGrad)" stroke="#4a3b10" stroke-width="1"/>
+                <path d="M12 14 L14 12 L50 48 L48 50 Z" fill="url(#penGrad)" stroke="#222" stroke-width="1"/>
                 <path d="M50 48 L14 12" stroke="#ffffff" stroke-width="1.5" opacity="0.3"/>
-                <path d="M18 22 L22 18" stroke="#d4af37" stroke-width="2"/>
-                <path d="M42 46 L46 42" stroke="#d4af37" stroke-width="2"/>
+                <path d="M18 22 L22 18" stroke="#00aaff" stroke-width="2"/>
+                <path d="M42 46 L46 42" stroke="#00aaff" stroke-width="2"/>
                 <defs>
                     <linearGradient id="penGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" stop-color="#2a2a2a" />
@@ -304,7 +326,7 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
         </div>
     </div>
 
-    <!-- Индикатор загрузки и телеметрия инициализации (БЕЗ КНОПКИ ПРОПУСКА) -->
+    <!-- Индикатор загрузки и телеметрия инициализации -->
     <div class="absolute bottom-10 flex flex-col items-center gap-2 font-mono z-20 pointer-events-auto">
         <div class="flex items-center gap-3 text-[#d4af37] text-[11px] tracking-[0.25em] uppercase">
             <span class="pulse-dot"></span>
@@ -793,19 +815,19 @@ preArmillary.add(preRing2);
 preArmillary.add(preRing3);
 preArmillary.add(preRing4);
 
-// ВИТРУВИАНСКИЙ ЧЕЛОВЕК (ОТМАСШТАБИРОВАННЫЙ ПОД ОГРОМНЫЕ КОЛЬЦА)
+// ВИТРУВИАНСКИЙ ЧЕЛОВЕК (СИНЯЯ ВЕРСИЯ БЕЗ ФОНА)
 const vitruvianImg = new Image();
-vitruvianImg.crossOrigin = "Anonymous"; // Защита для загрузки по URL
 vitruvianImg.src = "VITRUVIAN_IMAGE_SRC_PLACEHOLDER";
 let planeMaterial = null;
+let vitruvianPlane = null;
 vitruvianImg.onload = () => {
     const canvasTexture = new THREE.Texture(vitruvianImg);
     canvasTexture.needsUpdate = true;
-    planeMaterial = new THREE.MeshBasicMaterial({ map: canvasTexture, transparent: true, opacity: 0.95, depthWrite: false, side: THREE.DoubleSide });
+    // Начинаем с нулевой прозрачности, чтобы создать эффект постепенного рисования
+    planeMaterial = new THREE.MeshBasicMaterial({ map: canvasTexture, transparent: true, opacity: 0.0, depthWrite: false, side: THREE.DoubleSide });
     const aspect = vitruvianImg.height / vitruvianImg.width;
-    // Масштаб плоскости увеличен до 38.0, чтобы соответствовать новым огромным кольцам
     const planeGeo = new THREE.PlaneGeometry(38.0, 38.0 * aspect);
-    const vitruvianPlane = new THREE.Mesh(planeGeo, planeMaterial);
+    vitruvianPlane = new THREE.Mesh(planeGeo, planeMaterial);
     preScene.add(vitruvianPlane);
 };
 
@@ -814,6 +836,11 @@ function animatePreloader() {
         requestAnimationFrame(animatePreloader);
     }
     preControls.update();
+    
+    // Эффект постепенного появления линий (будто рисует перо)
+    if (vitruvianPlane && planeMaterial.opacity < 0.95) {
+        planeMaterial.opacity += 0.005;
+    }
     
     // Плавный пролет колец сквозь камеру
     preArmillary.position.z += 0.2;
@@ -1400,7 +1427,8 @@ window.onload = () => {
 </body>
 </html>"""
 
-img_src = get_image_src("1000400438.jpg")
+# Обработка картинки "на лету" и подстановка её в HTML
+img_src = get_blueprint_vitruvian("1000400438.jpg")
 html_code = html_code.replace("VITRUVIAN_IMAGE_SRC_PLACEHOLDER", img_src)
 
 components.html(html_code, height=1350, scrolling=True)
