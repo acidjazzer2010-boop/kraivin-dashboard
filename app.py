@@ -37,13 +37,13 @@ def get_blueprint_vitruvian(filename):
     
     try:
         img = Image.open(filename).convert("L")
-        smoothed = img.filter(ImageFilter.GaussianBlur(radius=0.6))
+        smoothed = img.filter(ImageFilter.GaussianBlur(radius=0.5))
         edges = smoothed.filter(ImageFilter.FIND_EDGES)
         
         def extract_clean_strokes(p):
-            if p < 35:
+            if p < 30:
                 return 0
-            return int(min(255, (p - 35) * 3.2))
+            return int(min(255, (p - 30) * 3.4))
             
         alpha = edges.point(extract_clean_strokes)
         color_layer = Image.new("RGBA", img.size, (229, 193, 88, 255))
@@ -63,12 +63,12 @@ html_code = r"""<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Архитектура Капитала // Финансовое Моделирование</title>
 
-<!-- Типографика: Редакторская антиква + Инженерный моноширинный + Швейцарский гротеск -->
+<!-- Типографика -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
-<!-- Библиотеки Awwwards стека: Tailwind, Three.js, Chart.js, GSAP + ScrollTrigger, Lenis -->
+<!-- Скрипты -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
 tailwind.config = {
@@ -149,20 +149,19 @@ body {
     transition: background-color 0.5s ease, color 0.5s ease;
 }
 
-/* Аналоговый пленочный шум (Film Grain) */
 .film-grain {
     position: fixed; inset: 0; width: 100vw; height: 100vh;
     pointer-events: none; z-index: 999; opacity: var(--grain-opacity);
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
-/* Кастомный реактивный курсор Alche */
+/* Кастомный курсор */
 #custom-cursor {
     position: fixed; top: 0; left: 0; width: 8px; height: 8px;
     background: var(--accent-gold); border-radius: 50%;
     pointer-events: none; z-index: 9999;
     transform: translate(-50%, -50%);
-    transition: width 0.3s ease, height 0.3s ease, background-color 0.3s ease, opacity 0.3s ease;
+    transition: width 0.3s ease, height 0.3s ease, background-color 0.3s ease;
 }
 #custom-cursor-follower {
     position: fixed; top: 0; left: 0; width: 34px; height: 34px;
@@ -173,23 +172,12 @@ body {
     transition: width 0.3s ease, height 0.3s ease, border-color 0.3s ease, transform 0.15s ease-out;
 }
 
-/* ЗАСТАВКА */
+/* ЭЛЕГАНТНЫЙ ПРЕЛОАДЕР */
 #preloader-stage {
     position: fixed; inset: 0; background: #060608; z-index: 900;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
 }
 #preloader-canvas-container { position: absolute; inset: 0; width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; z-index: 10; overflow: hidden; }
-
-#quillPen {
-    position: absolute; left: 0; top: 0; 
-    margin-left: -4px; margin-top: -4px;
-    pointer-events: none; z-index: 25; opacity: 0; 
-    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
-    will-change: transform, opacity;
-    transition: opacity 0.5s ease;
-}
-.nib-spark { animation: sparkFlicker 0.15s infinite alternate; }
-@keyframes sparkFlicker { 0% { opacity: 0.5; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1.4); } }
 
 #exploreBtnWrapper {
     position: absolute; bottom: 50px; left: 50%;
@@ -221,7 +209,6 @@ body {
 #webgl-bg-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; opacity: 0.5; transition: opacity 0.5s ease; }
 html:not(.dark) #webgl-bg-canvas { opacity: 0.22; }
 
-/* Архитектурные блоки с ренессансными засечками */
 .alche-block {
     position: relative; background: var(--bg-panel); backdrop-filter: blur(20px);
     border-right: 1px solid var(--border-line); border-bottom: 1px solid var(--border-line);
@@ -230,7 +217,6 @@ html:not(.dark) #webgl-bg-canvas { opacity: 0.22; }
 .cross-tl::before { content: '+'; position: absolute; top: -6px; left: -4px; font-family: 'JetBrains Mono', monospace; font-size: 10px; line-height: 1; color: var(--accent-gold); pointer-events: none; z-index: 10; }
 .cross-br::after { content: '+'; position: absolute; bottom: -6px; right: -4px; font-family: 'JetBrains Mono', monospace; font-size: 10px; line-height: 1; color: var(--accent-gold); pointer-events: none; z-index: 10; }
 
-/* Карточки с магнитным свечением границ (Cursor Glow + 3D Tilt) */
 .tilt-card { 
     position: relative; overflow: hidden; transform-style: preserve-3d; perspective: 1000px; 
     transition: transform 0.25s cubic-bezier(0.2, 0, 0.2, 1), border-color 0.3s ease; 
@@ -242,7 +228,6 @@ html:not(.dark) #webgl-bg-canvas { opacity: 0.22; }
 }
 .tilt-card:hover::before { opacity: 1; }
 
-/* Боковой навигатор шагов скролла (HUD) */
 #alcheScrollIndicator {
     position: fixed; right: 24px; top: 50%; transform: translateY(-50%);
     display: flex; flex-direction: column; gap: 14px; z-index: 80; pointer-events: auto;
@@ -263,7 +248,6 @@ html:not(.dark) #webgl-bg-canvas { opacity: 0.22; }
 }
 .scroll-step-dot:hover::after { opacity: 1; transform: translateY(-50%) translateX(-4px); }
 
-/* Секции Scrollytelling с масками появления */
 .scroll-section-step {
     opacity: 0.18;
     transform: translateY(28px) scale(0.985);
@@ -275,11 +259,6 @@ html:not(.dark) #webgl-bg-canvas { opacity: 0.22; }
     opacity: 1;
     transform: translateY(0) scale(1);
     filter: blur(0px);
-}
-
-.reveal-mask {
-    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
-    transition: clip-path 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 2px; background: var(--border-line); outline: none; }
@@ -301,11 +280,9 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
 <body class="selection:bg-[#d4af37] selection:text-black">
 <div class="film-grain"></div>
 
-<!-- Кастомный курсор -->
 <div id="custom-cursor"></div>
 <div id="custom-cursor-follower"></div>
 
-<!-- Боковой HUD-навигатор шагов скролла -->
 <nav id="alcheScrollIndicator">
     <div class="scroll-step-dot active" data-step="0" data-label="[01] Сводка KPI" onclick="scrollToStep(0)"></div>
     <div class="scroll-step-dot" data-step="1" data-label="[02] Обслуживание капитала" onclick="scrollToStep(1)"></div>
@@ -314,29 +291,10 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
     <div class="scroll-step-dot" data-step="4" data-label="[05] Юнит-экономика" onclick="scrollToStep(4)"></div>
 </nav>
 
-<!-- РЕНЕССАНСНЫЙ ПРЕЛОАДЕР С ВИТРУВИАНЦЕМ -->
+<!-- ПРЕЛОАДЕР -->
 <div id="preloader-stage">
     <div id="preloader-canvas-container">
         <canvas id="preloader-webgl"></canvas>
-        <div id="quillPen">
-            <svg width="48" height="48" viewBox="0 0 64 64" fill="none">
-                <circle cx="4" cy="4" r="3.5" fill="#ffffff" class="nib-spark" />
-                <circle cx="4" cy="4" r="8" fill="#ffd700" opacity="0.4" class="nib-spark" />
-                <path d="M4 4 L14 12 L10 16 Z" fill="#ffd700" />
-                <path d="M4 4 L12 14 L16 10 Z" fill="#cca300" />
-                <line x1="4" y1="4" x2="12" y2="12" stroke="#111" stroke-width="0.8"/>
-                <circle cx="12" cy="12" r="1.5" fill="#111"/>
-                <path d="M12 14 L14 12 L50 48 L48 50 Z" fill="url(#penGrad)" stroke="#222" stroke-width="1"/>
-                <path d="M50 48 L14 12" stroke="#ffffff" stroke-width="1.5" opacity="0.3"/>
-                <path d="M18 22 L22 18" stroke="#ffd700" stroke-width="2"/>
-                <path d="M42 46 L46 42" stroke="#ffd700" stroke-width="2"/>
-                <defs>
-                    <linearGradient id="penGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#2a2a2a" /><stop offset="50%" stop-color="#0a0a0a" /><stop offset="100%" stop-color="#000000" />
-                    </linearGradient>
-                </defs>
-            </svg>
-        </div>
     </div>
     
     <div id="preloaderTitle" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 mt-40 font-serif italic text-4xl md:text-5xl font-bold tracking-[0.1em] text-[#d4af37] opacity-0 transition-opacity duration-[1500ms] z-30 pointer-events-none drop-shadow-[0_0_15px_rgba(212,175,55,0.6)] text-center w-full">
@@ -346,7 +304,7 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
     <div id="preloaderHUD" class="absolute bottom-10 flex flex-col items-center gap-2 font-mono z-20 pointer-events-auto transition-opacity duration-500">
         <div class="flex items-center gap-3 text-[#d4af37] text-[11px] tracking-[0.25em] uppercase">
             <span class="pulse-dot"></span>
-            <span id="loaderStatusText">Инициализация 3D среды...</span>
+            <span id="loaderStatusText">Построение пропорций...</span>
             <span id="loaderPercent" class="font-bold">0%</span>
         </div>
         <div class="w-64 sm:w-80 h-[2px] bg-white/10 relative overflow-hidden mt-1">
@@ -399,7 +357,7 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
     </header>
 
     <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 relative">
-        <!-- ЛЕВАЯ ПАНЕЛЬ ПАРАМЕТРОВ (STICKY HUD) -->
+        <!-- ЛЕВАЯ ПАНЕЛЬ ПАРАМЕТРОВ -->
         <aside class="lg:col-span-3 flex flex-col lg:sticky lg:top-[65px] lg:h-[calc(100vh-65px)] overflow-y-auto z-20 border-r" style="border-color: var(--border-line);">
             <div class="alche-block cross-tl px-5 py-3.5 flex items-center justify-between">
                 <span class="font-mono text-[10px] uppercase tracking-[0.2em] text-[#d4af37] font-bold">[00] Параметры Модели</span>
@@ -501,9 +459,9 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
             </form>
         </aside>
 
-        <!-- ПРАВАЯ ЧАСТЬ: ПОШАГОВЫЙ SCROLLYTELLING -->
+        <!-- ПРАВАЯ ЧАСТЬ: SCROLLYTELLING -->
         <section class="lg:col-span-9 flex flex-col">
-            <!-- ЭТАП 0: СВОДКА KPI -->
+            <!-- ЭТАП 0: KPI -->
             <div id="step-0" class="scroll-section-step in-focus p-4 lg:p-6">
                 <div class="font-mono text-[10px] text-[#d4af37] tracking-[0.25em] uppercase mb-3 flex items-center gap-2">
                     <span class="pulse-dot"></span> [ШАГ 01 // КЛЮЧЕВЫЕ МЕТРИКИ КАПИТАЛА]
@@ -537,7 +495,7 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
                 </div>
             </div>
 
-            <!-- ЭТАП 1: ОБСЛУЖИВАНИЕ ДОЛГА -->
+            <!-- ЭТАП 1: ДОЛГ -->
             <div id="step-1" class="scroll-section-step p-4 lg:p-6 space-y-4">
                 <div class="font-mono text-[10px] text-[#d4af37] tracking-[0.25em] uppercase flex items-center gap-2">
                     <span class="pulse-dot"></span> [ШАГ 02 // ГРАФИК ОБСЛУЖИВАНИЯ ДОЛГА И ПРОЦЕНТОВ]
@@ -561,7 +519,7 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
                 </div>
             </div>
 
-            <!-- ЭТАП 2: СКЛАДСКОЙ ЦИКЛ -->
+            <!-- ЭТАП 2: СКЛАД -->
             <div id="step-2" class="scroll-section-step p-4 lg:p-6 space-y-4">
                 <div class="font-mono text-[10px] text-[#d4af37] tracking-[0.25em] uppercase flex items-center gap-2">
                     <span class="pulse-dot"></span> [ШАГ 03 // СКЛАДСКОЙ ЦИКЛ И ПАРТИОННЫЙ ЗАКАЗ]
@@ -577,7 +535,7 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
                 </div>
             </div>
 
-            <!-- ЭТАП 3: ДЕНЕЖНЫЙ ПОТОК -->
+            <!-- ЭТАП 3: CASH FLOW -->
             <div id="step-3" class="scroll-section-step p-4 lg:p-6 space-y-4">
                 <div class="font-mono text-[10px] text-[#d4af37] tracking-[0.25em] uppercase flex items-center gap-2">
                     <span class="pulse-dot"></span> [ШАГ 04 // СТРУКТУРА ДЕНЕЖНОГО ПОТОКА (CASH FLOW)]
@@ -664,7 +622,6 @@ function updateCursorFollower() {
 }
 requestAnimationFrame(updateCursorFollower);
 
-// Интерактивное масштабирование курсора при ховере
 document.querySelectorAll('button, a, input, select, .hw-slider-track, .scroll-step-dot').forEach(el => {
     el.addEventListener('mouseenter', () => {
         cursorDot.style.transform = 'translate(-50%, -50%) scale(2.2)';
@@ -679,7 +636,7 @@ document.querySelectorAll('button, a, input, select, .hw-slider-track, .scroll-s
 });
 
 /* ========================================================
-   ПРЕЛОАДЕР: ВИТРУВИАНЕЦ + ЖИДКИЙ ПЕРЕХОД
+   ПРЕЛОАДЕР: ШЕЙДЕР ТОНКИХ БЕГУЩИХ ЛИНИЙ (БЕЗ ПЕРА)
    ======================================================== */
 let preloaderDismissed = false;
 function dismissPreloader() {
@@ -694,13 +651,13 @@ function dismissPreloader() {
     }, 600);
 }
 
-const PRELOADER_TOTAL_TIME = 15000;
+const PRELOADER_TOTAL_TIME = 10000; // 10 секунд благородного проявления
 const preloaderStartTime = performance.now();
 
 setTimeout(() => {
     const pt = document.getElementById('preloaderTitle');
     if(pt) pt.classList.replace('opacity-0', 'opacity-100');
-}, 1800);
+}, 1600);
 
 let drawingCompleted = false;
 
@@ -727,10 +684,9 @@ function updatePreloaderProgress(now) {
 requestAnimationFrame(updatePreloaderProgress);
 
 const preCanvas = document.getElementById('preloader-webgl');
-const preRenderer = new THREE.WebGLRenderer({ canvas: preCanvas, alpha: true, antialias: true, preserveDrawingBuffer: true });
+const preRenderer = new THREE.WebGLRenderer({ canvas: preCanvas, alpha: true, antialias: true });
 preRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 preRenderer.setClearColor(0x000000, 0);
-preRenderer.autoClear = false;
 
 const preScene = new THREE.Scene();
 const preCamera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 2000);
@@ -739,7 +695,7 @@ preCamera.position.z = 100;
 const preArmillary = new THREE.Group();
 preScene.add(preArmillary);
 
-const preBlueMat = new THREE.MeshBasicMaterial({ color: 0x00aaff, wireframe: true, transparent: true, opacity: 0.25 });
+const preBlueMat = new THREE.MeshBasicMaterial({ color: 0x00aaff, wireframe: true, transparent: true, opacity: 0.18 });
 const ringRadiuses = [35, 55, 75];
 const rings = [];
 
@@ -760,57 +716,68 @@ const orthoCamera = new THREE.OrthographicCamera(
     -100, 100
 );
 
-const maskTarget = new THREE.WebGLRenderTarget(1024, 1024, {
-    minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat
-});
-preRenderer.setRenderTarget(maskTarget);
-preRenderer.clear();
-preRenderer.setRenderTarget(null);
-
-const maskScene = new THREE.Scene();
-const maskCamera = new THREE.OrthographicCamera(-0.5, 0.5, 0.5, -0.5, 0.1, 10);
-maskCamera.position.z = 1;
-
-const brushGeo = new THREE.PlaneGeometry(0.045, 0.045); 
-const brushMat = new THREE.ShaderMaterial({
-    transparent: true, depthWrite: false,
-    vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-    fragmentShader: `varying vec2 vUv; void main() { 
-        float d = distance(vUv, vec2(0.5)); 
-        gl_FragColor = vec4(1.0, 1.0, 1.0, smoothstep(0.5, 0.05, d) * 0.45); 
-    }`
-});
-const brushMesh = new THREE.Mesh(brushGeo, brushMat);
-maskScene.add(brushMesh);
-
+// Шейдер бегущих тонких световых линий
 const vitruvianImg = new Image();
 vitruvianImg.crossOrigin = "Anonymous"; 
 vitruvianImg.src = "VITRUVIAN_IMAGE_SRC_PLACEHOLDER";
-let vitruvianPlane = null, aspect = 1.0, drawPlaneWidth = 0, drawPlaneHeight = 0;
+let vitruvianPlane = null, aspect = 1.0, planeMaterial = null;
 
 vitruvianImg.onload = () => {
     const canvasTexture = new THREE.Texture(vitruvianImg);
     canvasTexture.needsUpdate = true;
     aspect = vitruvianImg.height / vitruvianImg.width;
     
-    const planeMaterial = new THREE.ShaderMaterial({
+    planeMaterial = new THREE.ShaderMaterial({
         uniforms: { 
             tDiffuse: { value: canvasTexture },
-            tMask: { value: maskTarget.texture }
+            uProgress: { value: 0.0 },
+            uTime: { value: 0.0 }
         },
-        vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-        fragmentShader: `
-            uniform sampler2D tDiffuse;
-            uniform sampler2D tMask;
+        vertexShader: `
             varying vec2 vUv;
             void main() {
-                vec4 tex = texture2D(tDiffuse, vUv);
-                vec4 mask = texture2D(tMask, vUv);
-                tex.a *= mask.r; 
-                gl_FragColor = tex;
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
             }
         `,
-        transparent: true, depthWrite: false, side: THREE.DoubleSide
+        fragmentShader: `
+            uniform sampler2D tDiffuse;
+            uniform float uProgress;
+            uniform float uTime;
+            varying vec2 vUv;
+
+            void main() {
+                vec4 tex = texture2D(tDiffuse, vUv);
+                
+                // Центр изображения
+                vec2 center = vec2(0.5, 0.5);
+                float dist = distance(vUv, center);
+                
+                // Радиальный и вертикальный волновые фронты бегущих лучей
+                float front = uProgress * 0.78;
+                
+                // Тонкие бегущие световые лучи-сканеры (light beams)
+                float beam1 = sin((dist * 35.0) - (uTime * 4.5)) * 0.5 + 0.5;
+                float beam2 = sin((vUv.y * 50.0) + (uTime * 3.0)) * 0.5 + 0.5;
+                float fineLines = pow(beam1 * beam2, 3.5) * 1.8;
+                
+                // Плавное базовое проявление
+                float revealMask = smoothstep(front, front - 0.12, dist);
+                
+                // Тонкий светящийся контур на переднем крае прорисовки
+                float edgeScan = smoothstep(front - 0.08, front, dist) * smoothstep(front + 0.03, front, dist);
+                
+                // Финальная сборка альфа-канала и свечения
+                float combinedAlpha = max(revealMask, edgeScan * fineLines);
+                
+                // Золотистое сияние бегущих линий
+                vec3 glowColor = vec3(1.0, 0.88, 0.45) * edgeScan * 2.2;
+                vec3 finalColor = tex.rgb + glowColor;
+                
+                gl_FragColor = vec4(finalColor, tex.a * combinedAlpha);
+            }
+        `,
+        transparent: true, depthWrite: false
     });
     
     vitruvianPlane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), planeMaterial);
@@ -830,8 +797,8 @@ function resizePreloader() {
     orthoCamera.updateProjectionMatrix();
     
     if (vitruvianPlane) {
-        drawPlaneHeight = window.innerHeight * 0.72;
-        drawPlaneWidth = drawPlaneHeight / aspect;
+        const drawPlaneHeight = window.innerHeight * 0.75;
+        const drawPlaneWidth = drawPlaneHeight / aspect;
         vitruvianPlane.scale.set(drawPlaneWidth, drawPlaneHeight, 1);
     }
 }
@@ -858,7 +825,6 @@ function triggerLiquidTransition(event) {
     preRenderer.setRenderTarget(snapshotTarget);
     preRenderer.clear();
     preRenderer.render(preScene, preCamera);
-    preRenderer.clearDepth();
     preRenderer.render(orthoScene, orthoCamera);
     preRenderer.setRenderTarget(null);
 
@@ -910,9 +876,6 @@ function triggerLiquidTransition(event) {
     rippleScene.add(quad);
 }
 
-let drawStep = 0;
-const penEl = document.getElementById('quillPen');
-
 function animatePreloader() {
     if (preloaderDismissed) return;
     requestAnimationFrame(animatePreloader);
@@ -931,58 +894,31 @@ function animatePreloader() {
         return;
     }
     
-    rings[0].rotation.y += 0.0015 + Math.sin(t * 0.4) * 0.001;
-    rings[0].rotation.x += 0.0005;
-    rings[1].rotation.x -= 0.001 + Math.cos(t * 0.5) * 0.001;
-    rings[1].rotation.z += 0.002;
-    rings[2].rotation.z -= 0.0005 + Math.sin(t * 0.3) * 0.0015;
-    rings[2].rotation.y += 0.0015;
+    rings[0].rotation.y += 0.0012 + Math.sin(t * 0.4) * 0.0008;
+    rings[0].rotation.x += 0.0004;
+    rings[1].rotation.x -= 0.0009 + Math.cos(t * 0.5) * 0.0008;
+    rings[1].rotation.z += 0.0015;
+    rings[2].rotation.z -= 0.0004 + Math.sin(t * 0.3) * 0.001;
+    rings[2].rotation.y += 0.0012;
     
-    preCamera.position.z = 100 - (progress * 50);
-    preCamera.position.x = Math.sin(progress * Math.PI) * 10;
-    preCamera.position.y = Math.cos(progress * Math.PI * 1.5) * 8;
+    preCamera.position.z = 100 - (progress * 45);
+    preCamera.position.x = Math.sin(progress * Math.PI) * 8;
+    preCamera.position.y = Math.cos(progress * Math.PI * 1.5) * 6;
     preCamera.lookAt(0, 0, -20);
     
-    if (vitruvianPlane) {
-        let px = 0, py = 0;
-        if (progress <= 0.86) {
-            for (let sub = 0; sub < 4; sub++) {
-                drawStep += 0.016;
-                const pTime = drawStep * 1.8;
-                px = Math.sin(pTime) * 0.28 + Math.sin(pTime * 3.7) * 0.12;
-                py = Math.cos(pTime * 0.85) * 0.34 + Math.sin(pTime * 2.1) * 0.09;
-                brushMesh.position.set(px, py, 0);
-                preRenderer.setRenderTarget(maskTarget);
-                preRenderer.render(maskScene, maskCamera);
-                preRenderer.setRenderTarget(null);
-            }
-        } else {
-            brushMesh.scale.set(30, 30, 1);
-            brushMesh.position.set(0, 0, 0);
-            preRenderer.setRenderTarget(maskTarget);
-            preRenderer.render(maskScene, maskCamera);
-            preRenderer.setRenderTarget(null);
-        }
-        
-        if (progress < 0.88) {
-            penEl.style.opacity = 1;
-            const penX = window.innerWidth / 2 + (px * drawPlaneWidth);
-            const penY = window.innerHeight / 2 - (py * drawPlaneHeight);
-            penEl.style.transform = `translate3d(${penX}px, ${penY}px, 0) rotate(${Math.sin(drawStep * 6) * 18 - 12}deg)`;
-        } else {
-            penEl.style.opacity = 0; 
-        }
+    if (planeMaterial) {
+        planeMaterial.uniforms.uProgress.value = progress;
+        planeMaterial.uniforms.uTime.value = t;
     }
     
     preRenderer.clear();
     preRenderer.render(preScene, preCamera);
-    preRenderer.clearDepth(); 
     preRenderer.render(orthoScene, orthoCamera);
 }
 animatePreloader();
 
 /* ========================================================
-   ОСНОВНОЙ ФОН: THREE.JS С ПРИВЯЗКОЙ К СКРОЛЛУ
+   ОСНОВНОЙ ФОН THREE.JS
    ======================================================== */
 const canvas = document.getElementById('webgl-bg-canvas');
 const scene = new THREE.Scene();
@@ -1013,7 +949,6 @@ ringRadiuses.forEach((radius, i) => {
 let scrollProgressTarget = 0;
 let currentScrollProgress = 0;
 
-// Магнитный эффект 3D-наклона карточек за мышью
 document.querySelectorAll('.tilt-card').forEach(card => {
     card.addEventListener('mousemove', e => {
         const rect = card.getBoundingClientRect();
@@ -1066,7 +1001,7 @@ window.addEventListener('resize', () => {
 });
 
 /* ========================================================
-   LENIS + SCROLLTRIGGER: SCROLLYTELLING ALCHE STUDIO
+   LENIS + SCROLLTRIGGER
    ======================================================== */
 let lenisInstance = null;
 
@@ -1152,7 +1087,7 @@ function scrollToStep(stepIndex) {
 }
 
 /* ========================================================
-   ТЕМА И СТИЛИЗАЦИЯ
+   ТЕМА И МОДЕЛИРОВАНИЕ
    ======================================================== */
 let isDark = true;
 function toggleTheme() {
@@ -1179,9 +1114,6 @@ function toggleTheme() {
     runCalculation();
 }
 
-/* ========================================================
-   ГЛИФ-ДЕКОДЕР (SCRAMBLE EFFECT)
-   ======================================================== */
 const CYRILLIC_GLYPHS = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ0123456789§$%*#@!/[]:;';
 const NUMERIC_GLYPHS = '0123456789 ';
 function scrambleElementText(el, finalText, duration = 460, useAlphabet = true) {
