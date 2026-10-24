@@ -31,7 +31,6 @@ iframe {
 </style>
 """, unsafe_allow_html=True)
 
-# Функция: извлечение ультратонких контуров фигуры без фона
 def get_blueprint_vitruvian(filename):
     if not os.path.exists(filename):
         return ""
@@ -102,7 +101,7 @@ tailwind.config = {
 <style>
 :root {
     --bg-space: #070709;
-    --bg-panel: rgba(13, 13, 18, 0.85);
+    --bg-panel: rgba(13, 13, 18, 0.82);
     --bg-cell-hover: rgba(24, 24, 34, 0.95);
     --text-main: #f4f1ea;
     --text-muted: #8e8a80;
@@ -118,7 +117,7 @@ tailwind.config = {
 }
 html:not(.dark) {
     --bg-space: #f4f1ea;
-    --bg-panel: rgba(255, 255, 255, 0.92);
+    --bg-panel: rgba(255, 255, 255, 0.90);
     --bg-cell-hover: rgba(246, 243, 235, 0.98);
     --text-main: #141416;
     --text-muted: #6b665c;
@@ -230,6 +229,25 @@ html:not(.dark) #webgl-bg-canvas { opacity: 0.18; }
 }
 .tilt-card:hover::before { opacity: 1; }
 
+/* КОНТЕЙНЕР ДЛЯ ГРАФИКОВ С ПОТОКОВЫМИ ПОЛЯМИ ЧАСТИЦ */
+.chart-card-wrapper {
+    position: relative;
+    overflow: hidden;
+}
+.chart-flow-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.85;
+}
+.chart-container-relative {
+    position: relative;
+    z-index: 2;
+}
+
 .tab-view-enter { animation: alcheTabEntrance 0.72s cubic-bezier(0.19, 1, 0.22, 1) forwards; }
 @keyframes alcheTabEntrance {
     0% { opacity: 0; filter: blur(14px); transform: translateY(12px) scale(0.992); clip-path: inset(0 0 100% 0); }
@@ -281,12 +299,10 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
         </div>
     </div>
     
-    <!-- Появляющийся заголовок -->
     <div id="preloaderTitle" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 mt-40 font-serif italic text-4xl md:text-5xl font-bold tracking-[0.1em] text-[#d4af37] opacity-0 transition-opacity duration-[1500ms] z-30 pointer-events-none drop-shadow-[0_0_15px_rgba(212,175,55,0.6)] text-center w-full">
         Архитектура финансов
     </div>
 
-    <!-- Индикатор загрузки -->
     <div id="preloaderHUD" class="absolute bottom-10 flex flex-col items-center gap-2 font-mono z-20 pointer-events-auto transition-opacity duration-500">
         <div class="flex items-center gap-3 text-[#d4af37] text-[11px] tracking-[0.25em] uppercase">
             <span class="pulse-dot"></span>
@@ -298,7 +314,6 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
         </div>
     </div>
 
-    <!-- Кнопка перехода в дашборд (Liquid Ripple) -->
     <div id="exploreBtnWrapper">
         <button id="exploreBtn" onclick="triggerLiquidTransition(event)" class="explore-btn">
             Исследовать
@@ -485,12 +500,19 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
             </div>
 
             <div class="flex-1 p-5 lg:p-7 space-y-6">
+                <!-- ВКЛАДКА 0: ДОЛГ -->
                 <div id="viewTab0" class="tab-view-enter space-y-6">
-                    <div class="alche-block p-5 border">
-                        <div class="flex justify-between items-center mb-4">
-                            <div><h3 class="font-serif text-xl font-bold tracking-wide italic">График обслуживания долга и начисления процентов</h3><p class="font-mono text-[10px] opacity-60">Ежемесячные проценты по ставке кредитора (столбцы) и динамика тела долга (кривая)</p></div>
+                    <div class="alche-block p-5 border chart-card-wrapper" data-flow="gold">
+                        <canvas class="chart-flow-canvas"></canvas>
+                        <div class="chart-container-relative">
+                            <div class="flex justify-between items-center mb-4">
+                                <div>
+                                    <h3 class="font-serif text-xl font-bold tracking-wide italic">График обслуживания долга и начисления процентов</h3>
+                                    <p class="font-mono text-[10px] opacity-60">Ежемесячные проценты по ставке кредитора (столбцы) и динамика тела долга (кривая)</p>
+                                </div>
+                            </div>
+                            <div class="h-[360px] relative"><canvas id="chartDebt"></canvas></div>
                         </div>
-                        <div class="h-[360px] relative"><canvas id="chartDebt"></canvas></div>
                     </div>
                     <div class="alche-block border overflow-x-auto">
                         <table class="w-full text-left font-mono text-[11px]">
@@ -501,31 +523,57 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
                         </table>
                     </div>
                 </div>
+
+                <!-- ВКЛАДКА 1: СКЛАД -->
                 <div id="viewTab1" class="hidden space-y-6">
-                    <div class="alche-block p-5 border">
-                        <div class="flex justify-between items-center mb-4">
-                            <div><h3 class="font-serif text-xl font-bold tracking-wide italic">Партионные закупки и истощение склада</h3><p class="font-mono text-[10px] opacity-60">Закупка дискретными циклами каждые N месяцев без ежемесячного задвоения</p></div>
+                    <div class="alche-block p-5 border chart-card-wrapper" data-flow="cyan">
+                        <canvas class="chart-flow-canvas"></canvas>
+                        <div class="chart-container-relative">
+                            <div class="flex justify-between items-center mb-4">
+                                <div>
+                                    <h3 class="font-serif text-xl font-bold tracking-wide italic">Партионные закупки и истощение склада</h3>
+                                    <p class="font-mono text-[10px] opacity-60">Закупка дискретными циклами каждые N месяцев без ежемесячного задвоения</p>
+                                </div>
+                            </div>
+                            <div class="h-[400px] relative"><canvas id="chartStock"></canvas></div>
                         </div>
-                        <div class="h-[400px] relative"><canvas id="chartStock"></canvas></div>
                     </div>
                 </div>
+
+                <!-- ВКЛАДКА 2: ДЕНЕЖНЫЙ ПОТОК -->
                 <div id="viewTab2" class="hidden space-y-6">
-                    <div class="alche-block p-5 border">
-                        <div class="flex justify-between items-center mb-4">
-                            <div><h3 class="font-serif text-xl font-bold tracking-wide italic">Структура помесячного денежного потока</h3><p class="font-mono text-[10px] opacity-60">Сопоставление входящей выручки и совокупных выплат (закупки, аренда, ФОТ и налоги)</p></div>
+                    <div class="alche-block p-5 border chart-card-wrapper" data-flow="jade">
+                        <canvas class="chart-flow-canvas"></canvas>
+                        <div class="chart-container-relative">
+                            <div class="flex justify-between items-center mb-4">
+                                <div>
+                                    <h3 class="font-serif text-xl font-bold tracking-wide italic">Структура помесячного денежного потока</h3>
+                                    <p class="font-mono text-[10px] opacity-60">Сопоставление входящей выручки и совокупных выплат (закупки, аренда, ФОТ и налоги)</p>
+                                </div>
+                            </div>
+                            <div class="h-[400px] relative"><canvas id="chartCF"></canvas></div>
                         </div>
-                        <div class="h-[400px] relative"><canvas id="chartCF"></canvas></div>
                     </div>
                 </div>
+
+                <!-- ВКЛАДКА 3: ЭКОНОМИКА -->
                 <div id="viewTab3" class="hidden space-y-6">
                     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                        <div class="alche-block p-5 border">
-                            <h3 class="font-serif text-xl font-bold tracking-wide italic mb-1">Динамика заказов и выручки</h3><p class="font-mono text-[10px] opacity-60 mb-4">Рост клиентской базы и масштабирование объемов отгрузок</p>
-                            <div class="h-[320px] relative"><canvas id="chartOrders"></canvas></div>
+                        <div class="alche-block p-5 border chart-card-wrapper" data-flow="gold">
+                            <canvas class="chart-flow-canvas"></canvas>
+                            <div class="chart-container-relative">
+                                <h3 class="font-serif text-xl font-bold tracking-wide italic mb-1">Динамика заказов и выручки</h3>
+                                <p class="font-mono text-[10px] opacity-60 mb-4">Рост клиентской базы и масштабирование объемов отгрузок</p>
+                                <div class="h-[320px] relative"><canvas id="chartOrders"></canvas></div>
+                            </div>
                         </div>
-                        <div class="alche-block p-5 border">
-                            <h3 class="font-serif text-xl font-bold tracking-wide italic mb-1">Структура совокупных затрат</h3><p class="font-mono text-[10px] opacity-60 mb-4">Доли расходов с учетом себестоимости, инфраструктуры и процентов по долгу</p>
-                            <div class="h-[320px] relative"><canvas id="chartPie"></canvas></div>
+                        <div class="alche-block p-5 border chart-card-wrapper" data-flow="ruby">
+                            <canvas class="chart-flow-canvas"></canvas>
+                            <div class="chart-container-relative">
+                                <h3 class="font-serif text-xl font-bold tracking-wide italic mb-1">Структура совокупных затрат</h3>
+                                <p class="font-mono text-[10px] opacity-60 mb-4">Доли расходов с учетом себестоимости, инфраструктуры и процентов по долгу</p>
+                                <div class="h-[320px] relative"><canvas id="chartPie"></canvas></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -560,7 +608,10 @@ function dismissPreloader() {
     const stage = document.getElementById('preloader-stage');
     const app = document.getElementById('mainDashboardApp');
     if (app) { app.classList.remove('opacity-0'); app.classList.add('opacity-100'); }
-    setTimeout(() => { if (stage) stage.style.display = 'none'; }, 600);
+    setTimeout(() => { 
+        if (stage) stage.style.display = 'none'; 
+        initAllChartFlowFields(); // Инициализация силовых полей графиков
+    }, 600);
 }
 
 const PRELOADER_TOTAL_TIME = 15000;
@@ -583,7 +634,6 @@ function updatePreloaderProgress(now) {
         document.getElementById('loaderPercent').textContent = `${Math.floor(progress * 100)}%`;
     }
     
-    // Как только чертеж завершен и прогресс подошел к концу — плавно проявляем кнопку
     if (progress >= 0.95 && !drawingCompleted) {
         drawingCompleted = true;
         const hud = document.getElementById('preloaderHUD');
@@ -608,7 +658,6 @@ preRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 preRenderer.setClearColor(0x000000, 0);
 preRenderer.autoClear = false;
 
-// --- Сцена 1: Перспективная (Кольца) ---
 const preScene = new THREE.Scene();
 const preCamera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 2000);
 preCamera.position.z = 100;
@@ -630,7 +679,6 @@ ringRadiuses.forEach((radius, i) => {
     rings.push(ring);
 });
 
-// --- Сцена 2: Ортографическая (Статичный чертеж) ---
 const orthoScene = new THREE.Scene();
 const orthoCamera = new THREE.OrthographicCamera(
     -window.innerWidth / 2, window.innerWidth / 2,
@@ -718,7 +766,7 @@ function resizePreloader() {
 }
 window.addEventListener('resize', resizePreloader);
 
-// --- Сцена 3: Liquid Displacement & Ripple Transition ---
+// Liquid Ripple Transition
 let isRippling = false;
 let rippleScene, rippleCamera, rippleMaterial;
 let rippleTime = 0;
@@ -729,7 +777,6 @@ function triggerLiquidTransition(event) {
     isRippling = true;
     playClickSound(800, 0.08);
 
-    // Центр волны от координат кнопки
     const rect = event.target.getBoundingClientRect();
     const clickX = (rect.left + rect.width / 2) / window.innerWidth;
     const clickY = 1.0 - ((rect.top + rect.height / 2) / window.innerHeight);
@@ -739,7 +786,6 @@ function triggerLiquidTransition(event) {
     document.getElementById('preloaderTitle').style.transition = 'opacity 0.4s ease';
     document.getElementById('preloaderTitle').style.opacity = '0';
 
-    // Делаем моментальный снепшот прелоадера в текстуру
     preRenderer.setRenderTarget(snapshotTarget);
     preRenderer.clear();
     preRenderer.render(preScene, preCamera);
@@ -747,7 +793,6 @@ function triggerLiquidTransition(event) {
     preRenderer.render(orthoScene, orthoCamera);
     preRenderer.setRenderTarget(null);
 
-    // Настраиваем шейдер жидкостного искажения
     rippleScene = new THREE.Scene();
     rippleCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
@@ -761,10 +806,7 @@ function triggerLiquidTransition(event) {
         },
         vertexShader: `
             varying vec2 vUv;
-            void main() {
-                vUv = uv;
-                gl_Position = vec4(position, 1.0);
-            }
+            void main() { vUv = uv; gl_Position = vec4(position, 1.0); }
         `,
         fragmentShader: `
             uniform sampler2D tDiffuse;
@@ -779,18 +821,14 @@ function triggerLiquidTransition(event) {
                 vec2 aspectAdjustedCenter = vec2(uCenter.x * uAspect, uCenter.y);
                 
                 float dist = distance(aspectAdjustedUV, aspectAdjustedCenter);
-                
-                // Волновой фронт расходится от центра
                 float waveRadius = uProgress * 2.2;
                 float waveWidth = 0.35;
                 float waveFactor = smoothstep(waveRadius - waveWidth, waveRadius, dist) * 
                                    smoothstep(waveRadius + waveWidth, waveRadius, dist);
                 
-                // Синусоидальное гидродинамическое смещение
                 float wave = sin((dist - waveRadius) * 35.0) * waveFactor * (1.0 - uProgress);
                 vec2 dir = normalize(aspectAdjustedUV - aspectAdjustedCenter + 0.0001);
                 
-                // Хроматическая аберрация в волне
                 vec2 offsetR = dir * wave * 0.085;
                 vec2 offsetG = dir * wave * 0.070;
                 vec2 offsetB = dir * wave * 0.055;
@@ -798,9 +836,7 @@ function triggerLiquidTransition(event) {
                 float r = texture2D(tDiffuse, uv + offsetR).r;
                 float g = texture2D(tDiffuse, uv + offsetG).g;
                 float b = texture2D(tDiffuse, uv + offsetB).b;
-                float a = texture2D(tDiffuse, uv).a;
                 
-                // Плавное растворение картинки в дашборд
                 float fadeOut = smoothstep(0.0, 0.95, uProgress);
                 gl_FragColor = vec4(r, g, b, (1.0 - fadeOut));
             }
@@ -823,22 +859,18 @@ function animatePreloader() {
     const t = elapsed * 0.001;
     const progress = Math.min(elapsed / PRELOADER_TOTAL_TIME, 1.0);
     
-    // Анимация жидкостного перехода при клике
     if (isRippling) {
         rippleTime += 0.016;
-        const ripProgress = Math.min(rippleTime / 1.3, 1.0); // 1.3 секунды на волну
+        const ripProgress = Math.min(rippleTime / 1.3, 1.0);
         rippleMaterial.uniforms.uProgress.value = ripProgress;
         
         preRenderer.clear();
         preRenderer.render(rippleScene, rippleCamera);
         
-        if (ripProgress >= 1.0) {
-            dismissPreloader();
-        }
+        if (ripProgress >= 1.0) dismissPreloader();
         return;
     }
     
-    // Медленное, плавное вращение колец
     rings[0].rotation.y += 0.0015 + Math.sin(t * 0.4) * 0.001;
     rings[0].rotation.x += 0.0005;
     rings[1].rotation.x -= 0.001 + Math.cos(t * 0.5) * 0.001;
@@ -846,7 +878,6 @@ function animatePreloader() {
     rings[2].rotation.z -= 0.0005 + Math.sin(t * 0.3) * 0.0015;
     rings[2].rotation.y += 0.0015;
     
-    // Плавный пролет камеры через кольца
     preCamera.position.z = 100 - (progress * 50);
     preCamera.position.x = Math.sin(progress * Math.PI) * 10;
     preCamera.position.y = Math.cos(progress * Math.PI * 1.5) * 8;
@@ -868,7 +899,6 @@ function animatePreloader() {
                 preRenderer.setRenderTarget(null);
             }
         } else {
-            // К 86%+ полностью открываем всю маску, рисунок завершен
             brushMesh.scale.set(30, 30, 1);
             brushMesh.position.set(0, 0, 0);
             preRenderer.setRenderTarget(maskTarget);
@@ -894,8 +924,153 @@ function animatePreloader() {
 animatePreloader();
 
 
+/* =======================================================================
+   INTERACTIVE PARTICLE GALAXY / FLOW FIELD СИСТЕМА ДЛЯ ГРАФИКОВ
+   ======================================================================= */
+class ChartFlowField {
+    constructor(canvas, themeType = 'gold') {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.themeType = themeType;
+        this.particles = [];
+        this.numParticles = 260;
+        this.mouseX = -9999;
+        this.mouseY = -9999;
+        this.isHovered = false;
+        this.time = 0;
+        
+        this.colors = {
+            gold: ['rgba(212, 175, 55, 0.85)', 'rgba(255, 215, 0, 0.4)', 'rgba(184, 134, 11, 0.3)'],
+            cyan: ['rgba(0, 170, 255, 0.85)', 'rgba(0, 220, 255, 0.4)', 'rgba(0, 100, 200, 0.3)'],
+            jade: ['rgba(42, 157, 143, 0.85)', 'rgba(80, 200, 180, 0.4)', 'rgba(20, 100, 90, 0.3)'],
+            ruby: ['rgba(230, 57, 70, 0.85)', 'rgba(255, 100, 110, 0.4)', 'rgba(150, 30, 40, 0.3)']
+        }[themeType] || ['rgba(212, 175, 55, 0.8)'];
+
+        this.resize();
+        this.initParticles();
+        this.bindEvents();
+    }
+
+    resize() {
+        const rect = this.canvas.parentElement.getBoundingClientRect();
+        this.width = this.canvas.width = rect.width;
+        this.height = this.canvas.height = rect.height;
+    }
+
+    initParticles() {
+        this.particles = [];
+        for (let i = 0; i < this.numParticles; i++) {
+            this.particles.push({
+                x: Math.random() * this.width,
+                y: Math.random() * this.height,
+                vx: 0,
+                vy: 0,
+                speed: 0.6 + Math.random() * 1.4,
+                radius: 0.8 + Math.random() * 1.5,
+                color: this.colors[Math.floor(Math.random() * this.colors.length)],
+                life: Math.random() * 100
+            });
+        }
+    }
+
+    bindEvents() {
+        const parent = this.canvas.parentElement;
+        parent.addEventListener('mousemove', (e) => {
+            const rect = this.canvas.getBoundingClientRect();
+            this.mouseX = e.clientX - rect.left;
+            this.mouseY = e.clientY - rect.top;
+            this.isHovered = true;
+        });
+        parent.addEventListener('mouseleave', () => {
+            this.isHovered = false;
+            this.mouseX = -9999;
+            this.mouseY = -9999;
+        });
+    }
+
+    update() {
+        this.time += 0.006;
+        
+        // Полупрозрачная очистка для длинного шелковистого следа потоков
+        this.ctx.fillStyle = 'rgba(7, 7, 9, 0.08)';
+        this.ctx.fillRect(0, 0, this.width, this.height);
+
+        for (let i = 0; i < this.particles.length; i++) {
+            const p = this.particles[i];
+
+            // Векторное поле скоростей (Trig Curl Flow Field)
+            const angle = (Math.cos(p.x * 0.005 + this.time) + Math.sin(p.y * 0.005 + this.time)) * Math.PI;
+            
+            p.vx += Math.cos(angle) * 0.08 * p.speed;
+            p.vy += Math.sin(angle) * 0.08 * p.speed;
+
+            // Интерактивное воздействие курсора: гравитационный вихрь
+            if (this.isHovered) {
+                const dx = this.mouseX - p.x;
+                const dy = this.mouseY - p.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 180) {
+                    const force = (1 - dist / 180) * 1.8;
+                    // Касательная закрутка (ортогонально к радиусу) + притяжение
+                    p.vx += (-dy / dist * 1.4 + dx / dist * 0.4) * force;
+                    p.vy += (dx / dist * 1.4 + dy / dist * 0.4) * force;
+                }
+            }
+
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vx *= 0.94; // Трение/вязкость среды
+            p.vy *= 0.94;
+
+            // Зацикливание по границам экрана
+            if (p.x < 0) p.x = this.width;
+            if (p.x > this.width) p.x = 0;
+            if (p.y < 0) p.y = this.height;
+            if (p.y > this.height) p.y = 0;
+
+            // Отрисовка светящейся микрочастицы
+            this.ctx.beginPath();
+            this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            this.ctx.fillStyle = p.color;
+            this.ctx.shadowBlur = 6;
+            this.ctx.shadowColor = p.color;
+            this.ctx.fill();
+            this.ctx.shadowBlur = 0;
+        }
+    }
+}
+
+const activeFlowFields = [];
+function initAllChartFlowFields() {
+    const wrappers = document.querySelectorAll('.chart-card-wrapper');
+    wrappers.forEach(wrapper => {
+        const canvas = wrapper.querySelector('.chart-flow-canvas');
+        const theme = wrapper.getAttribute('data-flow') || 'gold';
+        if (canvas) {
+            const ff = new ChartFlowField(canvas, theme);
+            activeFlowFields.push(ff);
+        }
+    });
+
+    function loopFlow() {
+        for (let i = 0; i < activeFlowFields.length; i++) {
+            // Анимируем только видимые вкладки для экономии ресурсов
+            if (activeFlowFields[i].canvas.offsetParent !== null) {
+                activeFlowFields[i].update();
+            }
+        }
+        requestAnimationFrame(loopFlow);
+    }
+    loopFlow();
+}
+
+window.addEventListener('resize', () => {
+    activeFlowFields.forEach(ff => ff.resize());
+});
+
+
 /* ========================================================
-   ОСНОВНОЙ ФОН: ДАШБОРД
+   ОСНОВНОЙ ФОН: ДАШБОРД (THREE.JS)
    ======================================================== */
 const canvas = document.getElementById('webgl-bg-canvas');
 const scene = new THREE.Scene();
@@ -1050,6 +1225,9 @@ function selectTab(index) {
             view.classList.add('hidden');
         }
     }
+    setTimeout(() => {
+        activeFlowFields.forEach(ff => ff.resize());
+    }, 50);
 }
 
 let growthMode = 'abs';
@@ -1208,20 +1386,119 @@ function runCalculation() {
         tbody.appendChild(tr);
     }
     
-    const chartText = isDark ? '#8e8a80' : '#6b665c', chartGrid = isDark ? 'rgba(212, 175, 55, 0.08)' : 'rgba(184, 134, 11, 0.12)';
+    const chartText = isDark ? '#8e8a80' : '#6b665c';
+    const chartGrid = isDark ? 'rgba(212, 175, 55, 0.05)' : 'rgba(184, 134, 11, 0.08)';
     
     if (chartDebtInstance) chartDebtInstance.destroy();
-    chartDebtInstance = new Chart(document.getElementById('chartDebt').getContext('2d'), { type: 'bar', data: { labels: xLabels, datasets: [{ label: 'Проценты за месяц', data: interestPayments, backgroundColor: '#d4af37', order: 2 }, { label: 'Остаток тела долга', data: debtBalance, type: 'line', borderColor: '#e63946', backgroundColor: '#e63946', borderWidth: 2.5, yAxisID: 'y1', tension: 0.3, order: 1 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } }, y: { grid: { color: chartGrid }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } }, y1: { position: 'right', grid: { display: false }, ticks: { color: '#e63946', font: { family: 'JetBrains Mono', size: 10 } } } }, plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } } } });
+    chartDebtInstance = new Chart(document.getElementById('chartDebt').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: xLabels,
+            datasets: [
+                { label: 'Проценты за месяц', data: interestPayments, backgroundColor: 'rgba(212, 175, 55, 0.65)', borderColor: '#d4af37', borderWidth: 1, order: 2 },
+                { label: 'Остаток тела долга', data: debtBalance, type: 'line', borderColor: '#e63946', backgroundColor: 'transparent', borderWidth: 2.2, yAxisID: 'y1', tension: 0.35, pointRadius: 2, order: 1 }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { grid: { display: false }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } },
+                y: { grid: { color: chartGrid }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } },
+                y1: { position: 'right', grid: { display: false }, ticks: { color: '#e63946', font: { family: 'JetBrains Mono', size: 10 } } }
+            },
+            plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } }
+        }
+    });
+
     if (chartStockInstance) chartStockInstance.destroy();
-    chartStockInstance = new Chart(document.getElementById('chartStock').getContext('2d'), { type: 'bar', data: { labels: xLabels, datasets: [{ label: 'Оплата партии поставщику', data: cogsPayments, backgroundColor: isDark ? '#52525b' : '#cbd5e1', order: 2 }, { label: 'Остаток склада', data: inventoryBalance, type: 'line', borderColor: '#d4af37', borderWidth: 2.5, yAxisID: 'y1', tension: 0.3, order: 1 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } }, y: { grid: { color: chartGrid }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } }, y1: { position: 'right', grid: { display: false }, ticks: { color: '#d4af37', font: { family: 'JetBrains Mono', size: 10 } } } }, plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } } } });
+    chartStockInstance = new Chart(document.getElementById('chartStock').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: xLabels,
+            datasets: [
+                { label: 'Оплата партии', data: cogsPayments, backgroundColor: isDark ? 'rgba(82, 82, 91, 0.65)' : 'rgba(203, 213, 225, 0.65)', borderWidth: 1, order: 2 },
+                { label: 'Остаток склада', data: inventoryBalance, type: 'line', borderColor: '#d4af37', backgroundColor: 'transparent', borderWidth: 2.2, yAxisID: 'y1', tension: 0.35, pointRadius: 2, order: 1 }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { grid: { display: false }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } },
+                y: { grid: { color: chartGrid }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } },
+                y1: { position: 'right', grid: { display: false }, ticks: { color: '#d4af37', font: { family: 'JetBrains Mono', size: 10 } } }
+            },
+            plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } }
+        }
+    });
+
     const totalOutflows = baseOutflows.map((b, idx) => b + interestPayments[idx]);
     if (chartCFInstance) chartCFInstance.destroy();
-    chartCFInstance = new Chart(document.getElementById('chartCF').getContext('2d'), { type: 'bar', data: { labels: xLabels, datasets: [{ label: 'Притоки от продаж', data: inflows, backgroundColor: '#2a9d8f' }, { label: 'Выплаты (закупки + OPEX + %)', data: totalOutflows.map(v => -v), backgroundColor: '#e63946' }] }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } }, y: { grid: { color: chartGrid }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } } }, plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } } } });
+    chartCFInstance = new Chart(document.getElementById('chartCF').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: xLabels,
+            datasets: [
+                { label: 'Притоки от продаж', data: inflows, backgroundColor: 'rgba(42, 157, 143, 0.7)', borderColor: '#2a9d8f', borderWidth: 1 },
+                { label: 'Выплаты (закупки+OPEX+%)', data: totalOutflows.map(v => -v), backgroundColor: 'rgba(230, 57, 70, 0.7)', borderColor: '#e63946', borderWidth: 1 }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { grid: { display: false }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } },
+                y: { grid: { color: chartGrid }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } }
+            },
+            plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } }
+        }
+    });
+
     if (chartOrdersInstance) chartOrdersInstance.destroy();
-    chartOrdersInstance = new Chart(document.getElementById('chartOrders').getContext('2d'), { type: 'bar', data: { labels: xLabels, datasets: [{ label: 'Заказы, шт.', data: orders, backgroundColor: '#d4af37' }, { label: 'Выручка, ₽', data: rev, type: 'line', borderColor: '#2a9d8f', yAxisID: 'y1', borderWidth: 2.5 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } }, y: { grid: { color: chartGrid }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } }, y1: { position: 'right', grid: { display: false }, ticks: { color: '#2a9d8f', font: { family: 'JetBrains Mono', size: 10 } } } }, plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } } } });
+    chartOrdersInstance = new Chart(document.getElementById('chartOrders').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: xLabels,
+            datasets: [
+                { label: 'Заказы, шт.', data: orders, backgroundColor: 'rgba(212, 175, 55, 0.7)', borderColor: '#d4af37', borderWidth: 1 },
+                { label: 'Выручка, ₽', data: rev, type: 'line', borderColor: '#2a9d8f', backgroundColor: 'transparent', yAxisID: 'y1', borderWidth: 2.2, tension: 0.35, pointRadius: 2 }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { grid: { display: false }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } },
+                y: { grid: { color: chartGrid }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } },
+                y1: { position: 'right', grid: { display: false }, ticks: { color: '#2a9d8f', font: { family: 'JetBrains Mono', size: 10 } } }
+            },
+            plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } }
+        }
+    });
+
     const sumPurchases = cogsPayments.reduce((a, b) => a + b, 0);
     if (chartPieInstance) chartPieInstance.destroy();
-    chartPieInstance = new Chart(document.getElementById('chartPie').getContext('2d'), { type: 'doughnut', data: { labels: ['Склад', 'Офис', 'ФОТ', 'Налоги 5%', 'Закупки', 'Проценты по долгу'], datasets: [{ data: [wh * period, office * period, fot * period, sumTaxes, sumPurchases, sumInterest], backgroundColor: ['#52525b', '#71717a', '#d4af37', '#e63946', '#2a9d8f', '#457b9d'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } } } } });
+    chartPieInstance = new Chart(document.getElementById('chartPie').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Склад', 'Офис', 'ФОТ', 'Налоги 5%', 'Закупки', 'Проценты по долгу'],
+            datasets: [{
+                data: [wh * period, office * period, fot * period, sumTaxes, sumPurchases, sumInterest],
+                backgroundColor: [
+                    'rgba(82, 82, 91, 0.7)', 'rgba(113, 113, 122, 0.7)', 'rgba(212, 175, 55, 0.8)',
+                    'rgba(230, 57, 70, 0.8)', 'rgba(42, 157, 143, 0.8)', 'rgba(69, 123, 157, 0.8)'
+                ],
+                borderColor: '#0d0d12',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } } }
+        }
+    });
 }
 
 function exportDataToCsv() {
