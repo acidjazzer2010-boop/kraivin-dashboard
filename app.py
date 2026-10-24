@@ -32,24 +32,21 @@ iframe {
 """, unsafe_allow_html=True)
 
 def get_pure_silhouette_contour(filename):
-    """Выделяет чистейший золотой силуэт без фона на прозрачном RGBA"""
+    """Выделяет четкий контур чертежа на прозрачном RGBA фоне"""
     if not os.path.exists(filename):
         return ""
     
     try:
         img = Image.open(filename).convert("L")
-        # Подавление шума и выделение контуров высокой резкости
         smoothed = img.filter(ImageFilter.GaussianBlur(radius=0.4))
         edges = smoothed.filter(ImageFilter.FIND_EDGES)
         
-        # Точная отсечка шума: остаются только филигранные линии чертежа
         def isolate_lines(p):
-            if p < 25:
+            if p < 24:
                 return 0
-            return int(min(255, (p - 25) * 4.2))
+            return int(min(255, (p - 24) * 4.4))
             
         alpha_channel = edges.point(isolate_lines)
-        # Золотой цвет линий Да Винчи (RGB: 229, 193, 88)
         gold_canvas = Image.new("RGBA", img.size, (229, 193, 88, 255))
         gold_canvas.putalpha(alpha_channel)
         
@@ -67,7 +64,7 @@ html_code = r"""<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Архитектура Капитала // Финансовое Моделирование</title>
 
-<!-- Шрифты премиальных премий: Редакторский Serif + Инженерный моно -->
+<!-- Типографика -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -171,7 +168,7 @@ body {
     transition: width 0.3s ease, height 0.3s ease, border-color 0.3s ease, transform 0.15s ease-out;
 }
 
-/* КИНЕМАТОГРАФИЧНЫЙ 3D ПРЕЛОАДЕР */
+/* ПРЕЛОАДЕР */
 #preloader-stage {
     position: fixed; inset: 0; background: #040407; z-index: 900;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -185,21 +182,21 @@ body {
 }
 #exploreBtnWrapper.active { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
 .explore-btn {
-    position: relative; padding: 15px 48px;
-    background: rgba(8, 8, 12, 0.75); border: 1px solid rgba(212, 175, 55, 0.8);
+    position: relative; padding: 14px 44px;
+    background: rgba(13, 13, 18, 0.65); border: 1px solid rgba(212, 175, 55, 0.7);
     color: #f4f1ea; font-family: 'JetBrains Mono', monospace; font-size: 11px;
-    letter-spacing: 0.4em; text-transform: uppercase; cursor: pointer;
-    backdrop-filter: blur(14px); overflow: hidden; transition: all 0.4s ease;
-    box-shadow: 0 0 30px rgba(212, 175, 55, 0.2), inset 0 0 15px rgba(212, 175, 55, 0.1);
+    letter-spacing: 0.35em; text-transform: uppercase; cursor: pointer;
+    backdrop-filter: blur(12px); overflow: hidden; transition: all 0.4s ease;
+    box-shadow: 0 0 25px rgba(212, 175, 55, 0.15), inset 0 0 15px rgba(212, 175, 55, 0.08);
 }
 .explore-btn::before {
     content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.35), transparent);
+    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.3), transparent);
     transition: left 0.7s ease;
 }
 .explore-btn:hover {
     border-color: #ffd700; color: #ffd700;
-    box-shadow: 0 0 45px rgba(212, 175, 55, 0.5), inset 0 0 25px rgba(212, 175, 55, 0.3);
+    box-shadow: 0 0 35px rgba(212, 175, 55, 0.4), inset 0 0 20px rgba(212, 175, 55, 0.25);
     transform: scale(1.04);
 }
 .explore-btn:hover::before { left: 100%; }
@@ -290,7 +287,7 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
     <div class="scroll-step-dot" data-step="4" data-label="[05] Юнит-экономика" onclick="scrollToStep(4)"></div>
 </nav>
 
-<!-- ПРЕЛОАДЕР: ПРОЛЁТ СКВОЗЬ ГИГАНТСКИЕ КОЛЬЦА К СИЛУЭТУ -->
+<!-- ПРЕЛОАДЕР: ПРОЛЁТ СКВОЗЬ КАРКАСНЫЕ ГОЛУБЫЕ КОЛЬЦА К СИЛУЭТУ -->
 <div id="preloader-stage">
     <canvas id="preloader-webgl"></canvas>
     
@@ -301,7 +298,7 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
     <div id="preloaderHUD" class="absolute bottom-10 flex flex-col items-center gap-2 font-mono z-20 pointer-events-auto transition-opacity duration-500">
         <div class="flex items-center gap-3 text-[#d4af37] text-[11px] tracking-[0.3em] uppercase">
             <span class="pulse-dot"></span>
-            <span id="loaderStatusText">Инициализация пролёта сферы...</span>
+            <span id="loaderStatusText">Трассировка контура от основания...</span>
             <span id="loaderPercent" class="font-bold">0%</span>
         </div>
         <div class="w-64 sm:w-80 h-[2px] bg-white/10 relative overflow-hidden mt-1">
@@ -311,7 +308,7 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
 
     <div id="exploreBtnWrapper">
         <button id="exploreBtn" onclick="triggerLiquidTransition(event)" class="explore-btn">
-            Войти в систему
+            Исследовать
         </button>
     </div>
 </div>
@@ -455,7 +452,7 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
             </form>
         </aside>
 
-        <!-- ПРАВАЯ ЧАСТЬ: SCROLLYTELLING СЕКЦИИ -->
+        <!-- ПРАВАЯ ЧАСТЬ: SCROLLYTELLING -->
         <section class="lg:col-span-9 flex flex-col">
             <div id="step-0" class="scroll-section-step in-focus p-4 lg:p-6">
                 <div class="font-mono text-[10px] text-[#d4af37] tracking-[0.25em] uppercase mb-3 flex items-center gap-2">
@@ -623,7 +620,7 @@ document.querySelectorAll('button, a, input, select, .hw-slider-track, .scroll-s
 });
 
 /* =========================================================================
-   НОВЫЙ КИНЕМАТОГРАФИЧНЫЙ 3D ПРЕЛОАДЕР (ПРОЛЁТ КАМЕРЫ СКВОЗЬ КОЛЬЦА)
+   3D ПРЕЛОАДЕР: ОДНОЦВЕТНЫЕ ГОЛУБЫЕ КАРКАСНЫЕ КОЛЬЦА + БЕГУЩИЙ СНИЗУ ВВЕРХ КОНТУР
    ========================================================================= */
 let preloaderDismissed = false;
 function dismissPreloader() {
@@ -638,7 +635,7 @@ function dismissPreloader() {
     }, 600);
 }
 
-const PRELOADER_TOTAL_TIME = 9000; // 9 секунд выверенного кинематографичного пролёта
+const PRELOADER_TOTAL_TIME = 9000;
 const preloaderStartTime = performance.now();
 
 setTimeout(() => {
@@ -676,58 +673,43 @@ preRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 preRenderer.setSize(window.innerWidth, window.innerHeight);
 
 const preScene = new THREE.Scene();
-// Перспективная камера для ощущения грандиозного масштаба и глубины
 const preCamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 3000);
-preCamera.position.set(0, 0, 420); // Начало: далеко перед кольцами
+preCamera.position.set(0, 0, 480);
 
 const preGroup = new THREE.Group();
 preScene.add(preGroup);
 
-// СОЗДАНИЕ ГИГАНТСКИХ КОЛЕЦ АРМИЛЛЯРА
-const ringBlueWire = new THREE.MeshBasicMaterial({ 
-    color: 0x00c3ff, 
+// Единый чистый голубой цвет для всех каркасных колец (#00aaff)
+const pureBlueWireMat = new THREE.MeshBasicMaterial({ 
+    color: 0x00aaff, 
     wireframe: true, 
     transparent: true, 
     opacity: 0.32 
 });
-const ringGoldLimb = new THREE.MeshBasicMaterial({ 
-    color: 0xd4af37, 
-    wireframe: true, 
-    transparent: true, 
-    opacity: 0.45 
-});
 
 const giantRings = [];
 
-// 1. Внешнее гигантское кольцо (пролёт сквозь него на 20-30% времени)
-const gRing1 = new THREE.Mesh(new THREE.TorusGeometry(180, 8, 30, 240), ringBlueWire);
+// 1. Внешнее гигантское каркасное кольцо
+const gRing1 = new THREE.Mesh(new THREE.TorusGeometry(185, 9, 30, 240), pureBlueWireMat);
 gRing1.position.z = 240;
 preGroup.add(gRing1);
-giantRings.push({ mesh: gRing1, rx: 0.001, ry: 0.003, rz: 0.0005 });
+giantRings.push({ mesh: gRing1, rx: 0.0012, ry: 0.0028, rz: 0.0006 });
 
-// 2. Среднее кольцо с золотым сечением (пролёт на 50-60% времени)
-const gRing2 = new THREE.Mesh(new THREE.TorusGeometry(125, 6, 28, 200), ringGoldLimb);
+// 2. Среднее каркасное кольцо
+const gRing2 = new THREE.Mesh(new THREE.TorusGeometry(130, 6.5, 26, 200), pureBlueWireMat);
 gRing2.rotation.x = Math.PI / 3;
 gRing2.position.z = 110;
 preGroup.add(gRing2);
-giantRings.push({ mesh: gRing2, rx: -0.002, ry: 0.0015, rz: 0.001 });
+giantRings.push({ mesh: gRing2, rx: -0.002, ry: 0.0016, rz: 0.001 });
 
-// 3. Внутреннее сферическое кольцо горизонта
-const gRing3 = new THREE.Mesh(new THREE.TorusGeometry(85, 4.5, 24, 180), ringBlueWire);
+// 3. Внутреннее каркасное кольцо
+const gRing3 = new THREE.Mesh(new THREE.TorusGeometry(88, 4.5, 24, 180), pureBlueWireMat);
 gRing3.rotation.y = Math.PI / 4;
-gRing3.position.z = 10;
+gRing3.position.z = -10;
 preGroup.add(gRing3);
-giantRings.push({ mesh: gRing3, rx: 0.0015, ry: -0.0025, rz: 0.0008 });
+giantRings.push({ mesh: gRing3, rx: 0.0016, ry: -0.0022, rz: 0.0008 });
 
-// Золотой диск экватора с делениями
-const equatorDisc = new THREE.Mesh(new THREE.RingGeometry(84, 86, 120), new THREE.MeshBasicMaterial({
-    color: 0xffd700, side: THREE.DoubleSide, transparent: true, opacity: 0.5
-}));
-equatorDisc.rotation.x = Math.PI / 2;
-equatorDisc.position.z = 10;
-preGroup.add(equatorDisc);
-
-// ЗОЛОТОЙ СИЛУЭТ ВИТРУВИАНСКОГО ЧЕЛОВЕКА (РАСПОЛОЖЕН В ЦЕНТРЕ СФЕРЫ Z = 0)
+// СИЛУЭТ ВИТРУВИАНЦА: СТАТИЧЕН ПО Z, ЛИНИИ БЕГУТ СНИЗУ ВВЕРХ (ОТ НОГ К ГОЛОВЕ)
 const vitruvianImg = new Image();
 vitruvianImg.crossOrigin = "Anonymous";
 vitruvianImg.src = "VITRUVIAN_IMAGE_SRC_PLACEHOLDER";
@@ -739,7 +721,6 @@ vitruvianImg.onload = () => {
     tex.needsUpdate = true;
     const aspect = vitruvianImg.width / vitruvianImg.height;
     
-    // Шейдер бегущих тонких золотых лучей по силуэту
     vitShaderMat = new THREE.ShaderMaterial({
         uniforms: {
             tDiffuse: { value: tex },
@@ -762,33 +743,26 @@ vitruvianImg.onload = () => {
             void main() {
                 vec4 tex = texture2D(tDiffuse, vUv);
                 
-                // Центр пропорций (пупок)
-                vec2 center = vec2(0.5, 0.505);
-                vec2 p = vUv - center;
-                float r = length(p);
-                float theta = atan(p.y, p.x);
+                // Трассировка строго снизу вверх (vUv.y от 0.0 у ступней до 1.0 у макушки)
+                float front = uProgress * 1.08;
                 
-                // Тонкие бегущие световые линии (Laser Scan Streaks)
-                float beamAngle1 = fract((theta / 6.28318) + (r * 2.8) - (uTime * 0.8));
-                float beamLine1 = smoothstep(0.88, 0.99, beamAngle1);
+                // Базовое проявление пройденной высоты
+                float reveal = smoothstep(front, front - 0.06, vUv.y);
                 
-                float beamAngle2 = fract(-(theta / 6.28318) + (r * 3.4) - (uTime * 0.65));
-                float beamLine2 = smoothstep(0.91, 0.99, beamAngle2);
+                // Тонкий бегущий световой луч на линии фронта
+                float leadEdge = smoothstep(front - 0.045, front, vUv.y) * smoothstep(front + 0.015, front, vUv.y);
                 
-                // Радиальный фронт проявления пропорций
-                float maxDist = uProgress * 0.72;
-                float reveal = smoothstep(maxDist + 0.04, maxDist - 0.06, r);
+                // Высокочастотные микро-импульсы бегущего контура (эффект рисования тушью)
+                float tracerBeam = sin((vUv.x * 65.0) + (uTime * 12.0)) * 0.5 + 0.5;
+                float dynamicPulse = pow(tracerBeam, 2.5) * leadEdge * 3.5;
                 
-                // Острая световая кромка передней волны
-                float edgeScan = smoothstep(maxDist - 0.05, maxDist, r) * smoothstep(maxDist + 0.02, maxDist, r);
-                float activeBeams = (beamLine1 + beamLine2) * edgeScan * 3.5;
+                float finalAlpha = clamp(reveal + dynamicPulse, 0.0, 1.0);
                 
-                float finalAlpha = clamp(reveal + activeBeams, 0.0, 1.0);
+                // Золотистый цвет линий Да Винчи с ярким светом на бегущей кромке
+                vec3 edgeGlow = vec3(1.0, 0.92, 0.55) * (dynamicPulse * 2.2);
+                vec3 finalColor = tex.rgb + edgeGlow;
                 
-                // Чистый золотой цвет с яркими искрами по контурам
-                vec3 goldColor = tex.rgb + vec3(1.0, 0.88, 0.45) * (activeBeams * 2.2);
-                
-                gl_FragColor = vec4(goldColor, tex.a * finalAlpha);
+                gl_FragColor = vec4(finalColor, tex.a * finalAlpha);
             }
         `,
         transparent: true,
@@ -796,11 +770,12 @@ vitruvianImg.onload = () => {
         side: THREE.DoubleSide
     });
     
-    const height = 110;
+    // Эскиз сохраняет точный масштаб и зафиксирован на Z = 0
+    const height = 112;
     const width = height * aspect;
     const geo = new THREE.PlaneGeometry(width, height);
     vitruvianMesh = new THREE.Mesh(geo, vitShaderMat);
-    vitruvianMesh.position.set(0, 0, 0); // В центре сферы
+    vitruvianMesh.position.set(0, 0, 0);
     preGroup.add(vitruvianMesh);
 };
 
@@ -894,23 +869,23 @@ function animatePreloader() {
         return;
     }
     
-    // Вращение гигантских колец в 3D
+    // Вращение голубых колец
     giantRings.forEach(item => {
         item.mesh.rotation.x += item.rx;
         item.mesh.rotation.y += item.ry;
         item.mesh.rotation.z += item.rz;
     });
-    equatorDisc.rotation.z += 0.002;
 
-    // КИНЕМАТОГРАФИЧЕСКИЙ ПРОЛЁТ СКВОЗЬ КОЛЬЦА:
-    // Камера стартует с Z=420, пролетает сквозь внешнее (Z=240) и среднее (Z=110) кольца,
-    // и плавно останавливается прямо перед силуэтом на Z=85.
-    const easeFly = Math.pow(progress, 1.4); // Плавное кинематографичное ускорение и торможение
-    preCamera.position.z = 420 - (easeFly * 335); // 420 -> 85
+    // ПРОЛЁТ КАМЕРЫ СКВОЗЬ КОЛЬЦА:
+    // Камера стартует далеко (Z=480), пролетает через кольца (Z=240, Z=110)
+    // и плавно замедляется на комфортной дистанции обзора силуэта (Z=135).
+    // Сам силуэт не надвигается — он статичен в координатах Z = 0.
+    const easeFly = Math.pow(progress, 1.35);
+    preCamera.position.z = 480 - (easeFly * 345); // 480 -> 135
     
-    // Легкий орбитальный дрейф камеры
-    preCamera.position.x = Math.sin(progress * Math.PI) * 14;
-    preCamera.position.y = Math.cos(progress * Math.PI * 1.5) * 8;
+    // Небольшой параллакс-дрейф
+    preCamera.position.x = Math.sin(progress * Math.PI) * 12;
+    preCamera.position.y = Math.cos(progress * Math.PI * 1.5) * 6;
     preCamera.lookAt(0, 0, 0);
     
     if (vitShaderMat) {
@@ -1432,7 +1407,6 @@ window.onload = () => runCalculation();
 </body>
 </html>"""
 
-# Преобразуем изображение в чистейший контур без фона
 img_src = get_pure_silhouette_contour("1000400438.jpg")
 html_code = html_code.replace("VITRUVIAN_IMAGE_SRC_PLACEHOLDER", img_src)
 
