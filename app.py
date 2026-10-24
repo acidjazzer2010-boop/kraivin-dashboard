@@ -3,12 +3,12 @@ import streamlit.components.v1 as components
 
 st.set_page_config(
     page_title="Архитектура Капитала // Финансовое Моделирование",
-    page_icon="📊",
+    page_icon="⚜️",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# Скрываем системные элементы Streamlit для чистого отображения монолита
+# Скрываем системные элементы Streamlit для кинематографичного монолита
 st.markdown("""
 <style>
     #MainMenu, header, footer, .stDeployButton {
@@ -66,13 +66,14 @@ html_code = """<!DOCTYPE html>
     }
   </script>
 
-  <!-- Chart.js для аналитических панелей -->
+  <!-- Three.js & Chart.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
     :root {
       --bg-space: #070709;
-      --bg-panel: rgba(13, 13, 18, 0.88);
+      --bg-panel: rgba(13, 13, 18, 0.85);
       --bg-cell-hover: rgba(24, 24, 34, 0.95);
       --text-main: #f4f1ea;
       --text-muted: #8e8a80;
@@ -119,16 +120,31 @@ html_code = """<!DOCTYPE html>
       transition: background-color 0.5s cubic-bezier(0.16, 1, 0.3, 1), color 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    /* Архитектурный аналоговый шум кинопленки */
+    /* Архитектурный аналоговый шум кинопленки (Film Grain) */
     .film-grain {
       position: fixed;
       inset: 0;
       width: 100vw;
       height: 100vh;
       pointer-events: none;
-      z-index: 40;
+      z-index: 50;
       opacity: var(--grain-opacity);
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    }
+
+    #webgl-bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.45;
+      transition: opacity 0.5s ease;
+    }
+    html:not(.dark) #webgl-bg-canvas {
+      opacity: 0.18;
     }
 
     .alche-block {
@@ -141,6 +157,7 @@ html_code = """<!DOCTYPE html>
       transition: background-color 0.3s ease, border-color 0.3s ease;
     }
 
+    /* Координатные перекрестия сетки */
     .cross-tl::before {
       content: '+';
       position: absolute;
@@ -166,6 +183,16 @@ html_code = """<!DOCTYPE html>
       z-index: 10;
     }
 
+    /* Рельефная оптика через SVG feSpecularLighting */
+    .specular-emboss {
+      filter: url(#specular-glass-filter);
+      transition: filter 0.2s ease, transform 0.3s ease;
+    }
+    .specular-emboss:hover {
+      transform: scale(1.08) rotate(4deg);
+    }
+
+    /* 3D Tilt Карточки с динамическим курсорным бликом */
     .tilt-card {
       position: relative;
       overflow: hidden;
@@ -188,20 +215,28 @@ html_code = """<!DOCTYPE html>
       opacity: 1;
     }
 
+    /* Двухфазное раскрытие вкладок */
     @keyframes alcheTabEntrance {
       0% {
         opacity: 0;
         filter: blur(14px);
         transform: translateY(12px) scale(0.992);
+        clip-path: inset(0 0 100% 0);
+      }
+      45% {
+        opacity: 0.85;
+        clip-path: inset(0 0 0% 0);
       }
       100% {
         opacity: 1;
         filter: blur(0px);
         transform: translateY(0) scale(1);
+        clip-path: inset(0 0 0% 0);
       }
     }
     .tab-view-enter {
-      animation: alcheTabEntrance 0.6s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+      animation: alcheTabEntrance 0.72s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+      will-change: transform, opacity, filter, clip-path;
     }
 
     input[type="range"] {
@@ -221,7 +256,7 @@ html_code = """<!DOCTYPE html>
       cursor: pointer;
       border: 1px solid var(--bg-space);
       transform: rotate(45deg);
-      transition: transform 0.2s ease;
+      transition: transform 0.2s ease, background-color 0.2s ease;
     }
     input[type="range"]::-webkit-slider-thumb:hover {
       transform: rotate(45deg) scale(1.35);
@@ -243,7 +278,16 @@ html_code = """<!DOCTYPE html>
       border-color: var(--accent-gold);
       background: rgba(212, 175, 55, 0.06);
     }
+    select.mono-input option {
+      background-color: #0d0d12;
+      color: #f4f1ea;
+    }
+    html:not(.dark) select.mono-input option {
+      background-color: #f4f1ea;
+      color: #141416;
+    }
 
+    /* Тактильный тумблер */
     .hw-slider-track {
       position: relative;
       width: 140px;
@@ -263,9 +307,10 @@ html_code = """<!DOCTYPE html>
       bottom: 2px;
       width: 66px;
       background: var(--accent-gold);
-      transition: transform 0.45s cubic-bezier(0.19, 1, 0.22, 1);
+      transition: transform 0.45s cubic-bezier(0.19, 1, 0.22, 1), background-color 0.3s ease;
     }
 
+    /* Индикатор пульса телеметрии */
     .pulse-dot {
       display: inline-block;
       width: 6px;
@@ -282,234 +327,45 @@ html_code = """<!DOCTYPE html>
     ::-webkit-scrollbar { width: 4px; height: 4px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border-line); }
-
-    /* ========================================================
-       ТРЕХМЕРНАЯ АРМИЛЛЯРНАЯ СФЕРА (РЕФЕРЕНС: 3 ОБЪЕМНЫХ КОЛЬЦА)
-       ======================================================== */
-    #alche-preloader {
-      perspective: 1400px;
-      overflow: hidden;
-    }
-
-    .dolly-zoom-container {
-      transform-style: preserve-3d;
-      animation: dollyAnimation 5s cubic-bezier(0.35, 0, 0.25, 1) forwards;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      height: 100%;
-    }
-
-    @keyframes dollyAnimation {
-      0% {
-        transform: translateZ(-350px) scale(0.75);
-        opacity: 0;
-      }
-      18% {
-        opacity: 1;
-      }
-      48% {
-        transform: translateZ(240px) scale(1.25);
-      }
-      84% {
-        transform: translateZ(0px) scale(1.0);
-        opacity: 1;
-        filter: blur(0px);
-      }
-      100% {
-        transform: translateZ(120px) scale(1.08);
-        opacity: 0;
-        filter: blur(16px);
-      }
-    }
-
-    .armillary-orb {
-      position: relative;
-      width: 320px;
-      height: 320px;
-      transform-style: preserve-3d;
-      animation: globeSpin 28s linear infinite;
-    }
-
-    @keyframes globeSpin {
-      0% { transform: rotateX(24deg) rotateY(0deg); }
-      100% { transform: rotateX(24deg) rotateY(360deg); }
-    }
-
-    .volumetric-ring {
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      transform-style: preserve-3d;
-      pointer-events: none;
-    }
-
-    /* Кольцо 1: Золотое (горизонтальное / экватор) */
-    .ring-horiz {
-      border: 8px solid #d4af37;
-      box-shadow: 0 0 35px rgba(212, 175, 55, 0.65), inset 0 0 20px rgba(212, 175, 55, 0.45);
-      transform: rotateX(90deg);
-      animation: spinHoriz 7.5s linear infinite;
-    }
-    .ring-horiz::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      right: -8px;
-      margin-top: -6px;
-      width: 12px;
-      height: 12px;
-      background: #f4f1ea;
-      border-radius: 50%;
-      box-shadow: 0 0 15px #ffffff;
-    }
-
-    /* Кольцо 2: Бирюзовое (вертикальное / меридиан) */
-    .ring-vert {
-      border: 8px solid #2a9d8f;
-      box-shadow: 0 0 35px rgba(42, 157, 143, 0.65), inset 0 0 20px rgba(42, 157, 143, 0.45);
-      transform: rotateY(90deg);
-      animation: spinVert 10.5s linear infinite;
-    }
-
-    /* Кольцо 3: Рубиновое (диагональное / эклиптика) */
-    .ring-diag {
-      border: 8px solid #e63946;
-      box-shadow: 0 0 35px rgba(230, 57, 70, 0.65), inset 0 0 20px rgba(230, 57, 70, 0.45);
-      transform: rotateX(45deg) rotateY(45deg);
-      animation: spinDiag 13.5s linear infinite;
-    }
-
-    @keyframes spinHoriz {
-      0% { transform: rotateX(90deg) rotateZ(0deg); }
-      100% { transform: rotateX(90deg) rotateZ(360deg); }
-    }
-    @keyframes spinVert {
-      0% { transform: rotateY(90deg) rotateZ(0deg); }
-      100% { transform: rotateY(90deg) rotateZ(360deg); }
-    }
-    @keyframes spinDiag {
-      0% { transform: rotateX(45deg) rotateY(45deg) rotateZ(0deg); }
-      100% { transform: rotateX(45deg) rotateY(45deg) rotateZ(360deg); }
-    }
-
-    /* Статичный Витрувианский человек без фона в центре */
-    .vitruvian-man-static {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 220px;
-      height: 220px;
-      margin-top: -110px;
-      margin-left: -110px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-      transform: translateZ(0px);
-      z-index: 10;
-    }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent-gold); }
   </style>
 </head>
 <body class="selection:bg-[#d4af37] selection:text-black">
 
-  <!-- ========================================================
-       ПРЕЛОАДЕР: 3D АРМИЛЛЯРНАЯ СФЕРА + ВИТРУВИАНСКИЙ ЧЕЛОВЕК (5 СЕК)
-       ======================================================== -->
-  <div id="alche-preloader" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#070709] select-none">
-    
-    <div class="dolly-zoom-container">
-      
-      <!-- 3D сфера с независимым вращением колец -->
-      <div class="armillary-orb mb-10">
-        
-        <!-- 3 объемных кольца по осям X, Y, Z -->
-        <div class="volumetric-ring ring-horiz"></div>
-        <div class="volumetric-ring ring-vert"></div>
-        <div class="volumetric-ring ring-diag"></div>
-
-        <!-- Статичный Витрувианский человек в центре (векторная гравюра без пергамента) -->
-        <div class="vitruvian-man-static">
-          <svg viewBox="0 0 300 300" class="w-full h-full filter drop-shadow-[0_0_22px_rgba(212,175,55,0.7)]">
-            <!-- Окружность и квадрат пропорций Леонардо -->
-            <circle cx="150" cy="150" r="130" fill="none" stroke="#d4af37" stroke-width="1.8" opacity="0.9" />
-            <rect x="35" y="45" width="230" height="230" fill="none" stroke="#d4af37" stroke-width="1.4" opacity="0.75" />
-            
-            <!-- Осевые координаты -->
-            <line x1="150" y1="20" x2="150" y2="280" stroke="#d4af37" stroke-width="0.8" stroke-dasharray="2 3" opacity="0.5" />
-            <line x1="20" y1="150" x2="280" y2="150" stroke="#d4af37" stroke-width="0.8" stroke-dasharray="2 3" opacity="0.5" />
-            
-            <!-- Голова и шея -->
-            <circle cx="150" cy="74" r="14" fill="none" stroke="#f4f1ea" stroke-width="1.8" />
-            <path d="M145 88 L145 98 M155 88 L155 98" stroke="#f4f1ea" stroke-width="1.8" />
-            
-            <!-- Торс и плечи -->
-            <path d="M136 98 L164 98 L160 162 L140 162 Z" fill="none" stroke="#f4f1ea" stroke-width="1.8" />
-            <line x1="150" y1="98" x2="150" y2="162" stroke="#d4af37" stroke-width="1.2" opacity="0.7" />
-            <path d="M141 120 Q150 126 159 120" fill="none" stroke="#d4af37" stroke-width="1.2" opacity="0.7" />
-            
-            <!-- Позиция 1: Прямые руки и ноги -->
-            <line x1="136" y1="102" x2="35" y2="102" stroke="#f4f1ea" stroke-width="1.8" />
-            <line x1="164" y1="102" x2="265" y2="102" stroke="#f4f1ea" stroke-width="1.8" />
-            <line x1="144" y1="162" x2="136" y2="275" stroke="#f4f1ea" stroke-width="1.8" />
-            <line x1="156" y1="162" x2="164" y2="275" stroke="#f4f1ea" stroke-width="1.8" />
-            
-            <!-- Позиция 2: Поднятые руки и разведенные ноги (канон Витрувия) -->
-            <line x1="136" y1="102" x2="52" y2="58" stroke="#d4af37" stroke-width="1.8" />
-            <line x1="164" y1="102" x2="248" y2="58" stroke="#d4af37" stroke-width="1.8" />
-            <line x1="143" y1="162" x2="82" y2="252" stroke="#d4af37" stroke-width="1.8" />
-            <line x1="157" y1="162" x2="218" y2="252" stroke="#d4af37" stroke-width="1.8" />
-          </svg>
-        </div>
-
-      </div>
-
-      <!-- Статус и калибровка модели -->
-      <div class="space-y-2 pointer-events-none">
-        <div class="font-mono text-[9px] uppercase tracking-[0.3em] text-[#d4af37] opacity-90">
-          [ФИНАНСОВОЕ МОДЕЛИРОВАНИЕ // СИСТЕМА 2026]
-        </div>
-        <h2 class="font-serif italic text-2xl sm:text-3xl font-bold tracking-wider text-[#f4f1ea]">
-          Архитектура Капитала
-        </h2>
-        <p class="font-mono text-[10px] text-[#8e8a80] max-w-sm mx-auto tracking-wide">
-          Моделирование денежных потоков, партионных закупок и кредитной нагрузки
-        </p>
-
-        <!-- Прогресс-бар ровно на 5 секунд -->
-        <div class="pt-4 w-64 mx-auto space-y-1.5">
-          <div class="flex justify-between items-center font-mono text-[9px]">
-            <span class="text-[#8e8a80] uppercase tracking-wider flex items-center gap-1.5">
-              <span class="pulse-dot"></span> КАЛИБРОВКА МОДЕЛИ
-            </span>
-            <span id="preloader-pct" class="text-[#d4af37] font-bold">0%</span>
-          </div>
-          <div class="w-full h-[2px] bg-[#d4af37]/20 rounded-full overflow-hidden">
-            <div id="preloader-bar" class="h-full bg-gradient-to-r from-[#d4af37] via-[#f4f1ea] to-[#d4af37] w-0"></div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
   <div class="film-grain"></div>
 
-  <!-- ========================================================
-       ОСНОВНОЙ ДАШБОРД (ОТКРЫВАЕТСЯ ЧЕРЕЗ 5 СЕКУНД)
-       ======================================================== -->
+  <!-- Оптический стеклянно-металлический фильтр SVG feSpecularLighting -->
+  <svg width="0" height="0" class="absolute pointer-events-none" style="position: fixed;">
+    <defs>
+      <filter id="specular-glass-filter" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur in="SourceAlpha" stdDeviation="2.2" result="blurMap" />
+        <feDiffuseLighting in="blurMap" surfaceScale="3" diffuseConstant="1.1" lighting-color="#ffffff" result="diffuseLight">
+          <fePointLight id="svgCursorLightDiff" x="120" y="40" z="50" />
+        </feDiffuseLighting>
+        <feSpecularLighting in="blurMap" surfaceScale="4.5" specularConstant="1.4" specularExponent="24" lighting-color="#d4af37" result="specularGlare">
+          <fePointLight id="svgCursorLightSpec" x="120" y="40" z="70" />
+        </feSpecularLighting>
+        <feComposite in="SourceGraphic" in2="diffuseLight" operator="arithmetic" k1="0" k2="1" k3="0.35" k4="0" result="litGraphic" />
+        <feComposite in="specularGlare" in2="SourceGraphic" operator="in" result="glareMasked" />
+        <feBlend in="glareMasked" in2="litGraphic" mode="screen" />
+      </filter>
+    </defs>
+  </svg>
+
+  <canvas id="webgl-bg-canvas"></canvas>
+
   <div class="relative z-10 min-h-screen flex flex-col border-t border-l" style="border-color: var(--border-line);">
 
-    <!-- ВЕРХНИЙ HUD -->
+    <!-- ВЕРХНИЙ HUD И ПАНЕЛЬ ТЕЛЕМЕТРИИ -->
     <header class="alche-block px-5 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-6">
         <div class="flex items-center gap-3">
-          <svg class="w-7 h-7 text-[#d4af37] cursor-pointer" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.2">
+          <svg class="w-7 h-7 text-[#d4af37] specular-emboss cursor-pointer" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.2">
             <circle cx="16" cy="16" r="14" />
             <rect x="6" y="6" width="20" height="20" />
             <polygon points="16,2 30,26 2,26" stroke-width="0.8" stroke-dasharray="1 1"/>
+            <line x1="2" y1="16" x2="30" y2="16" stroke-dasharray="2 2"/>
+            <line x1="16" y1="2" x2="16" y2="30" stroke-dasharray="2 2"/>
           </svg>
           <div>
             <div class="font-mono text-[9px] uppercase tracking-[0.25em] text-[#d4af37] opacity-80">AUREA PROPORTIO // 1 : 1.618</div>
@@ -520,15 +376,18 @@ html_code = """<!DOCTYPE html>
         <div class="hidden xl:flex items-center gap-5 pl-5 border-l font-mono text-[10px] opacity-75">
           <span>[НАЛОГОВЫЙ КОДЕКС: 22% НДС]</span>
           <span id="telemetryRate">[КАПИТАЛ: 19.0% ГОДОВЫХ]</span>
+          <span id="cursorCoordDisplay" class="text-[#d4af37]">X: 0000 / Y: 0000</span>
           <span id="telemetryClock">[15:00:00]</span>
         </div>
       </div>
 
       <div class="flex items-center gap-4">
+        <!-- Кнопка мгновенного скачивания отчета (без перезагрузки страницы) -->
         <button id="downloadReportBtn" onclick="exportDataToCsv()" type="button" class="px-3.5 py-1.5 border font-mono text-[10px] uppercase tracking-widest hover:border-[#d4af37] hover:bg-[#d4af37]/10 transition flex items-center gap-2">
           <span>↓ Скачать отчет</span>
         </button>
 
+        <!-- Аппаратный ползунок "День / Ночь" -->
         <div id="themeSlider" class="hw-slider-track" onclick="toggleTheme()" title="Переключить режим: Ночь / День">
           <div id="sliderThumb" class="hw-slider-thumb" style="transform: translateX(0px);"></div>
           <span id="lblNight" class="relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold text-black">Ночь</span>
@@ -537,7 +396,7 @@ html_code = """<!DOCTYPE html>
       </div>
     </header>
 
-    <!-- Сетка дашборда -->
+    <!-- Основная рабочая сетка -->
     <div class="flex-1 grid grid-cols-1 lg:grid-cols-12">
 
       <!-- ЛЕВАЯ ПАНЕЛЬ ПАРАМЕТРОВ -->
@@ -548,7 +407,7 @@ html_code = """<!DOCTYPE html>
         </div>
 
         <form id="financialInputsForm" class="flex-1 flex flex-col" onsubmit="event.preventDefault();">
-          <!-- Секция I -->
+          <!-- Секция I: Горизонт и маржинальность -->
           <div class="alche-block p-5 space-y-4">
             <div class="flex justify-between items-baseline">
               <span class="font-serif italic text-base font-semibold">I. Временной горизонт и маржа</span>
@@ -558,7 +417,7 @@ html_code = """<!DOCTYPE html>
             <div class="grid grid-cols-2 gap-2.5">
               <div>
                 <label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Месяц старта</label>
-                <select id="paramStartMonth" class="mono-input" onchange="runCalculation();">
+                <select id="paramStartMonth" class="mono-input" onchange="playClickSound(); runCalculation();">
                   <option value="0">Январь</option>
                   <option value="1">Февраль</option>
                   <option value="2">Март</option>
@@ -575,7 +434,7 @@ html_code = """<!DOCTYPE html>
               </div>
               <div>
                 <label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Год старта</label>
-                <select id="paramStartYear" class="mono-input" onchange="runCalculation();">
+                <select id="paramStartYear" class="mono-input" onchange="playClickSound(); runCalculation();">
                   <option value="2026" selected>2026</option>
                   <option value="2027">2027</option>
                 </select>
@@ -585,7 +444,7 @@ html_code = """<!DOCTYPE html>
             <div class="grid grid-cols-2 gap-2.5">
               <div>
                 <label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Горизонт</label>
-                <select id="paramPeriod" class="mono-input" onchange="runCalculation();">
+                <select id="paramPeriod" class="mono-input" onchange="playClickSound(); runCalculation();">
                   <option value="6">6 месяцев</option>
                   <option value="12" selected>12 месяцев</option>
                   <option value="18">18 месяцев</option>
@@ -594,7 +453,7 @@ html_code = """<!DOCTYPE html>
               </div>
               <div>
                 <label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Ставка НДС</label>
-                <select id="paramVatRate" class="mono-input" onchange="runCalculation();">
+                <select id="paramVatRate" class="mono-input" onchange="playClickSound(); runCalculation();">
                   <option value="22" selected>22%</option>
                   <option value="20">20%</option>
                   <option value="10">10%</option>
@@ -612,7 +471,7 @@ html_code = """<!DOCTYPE html>
             </div>
           </div>
 
-          <!-- Секция II -->
+          <!-- Секция II: Партионный склад и кредитная ставка -->
           <div class="alche-block p-5 space-y-4">
             <div class="flex justify-between items-baseline">
               <span class="font-serif italic text-base font-semibold">II. Партионный склад и капитал</span>
@@ -640,7 +499,7 @@ html_code = """<!DOCTYPE html>
             </div>
           </div>
 
-          <!-- Секция III -->
+          <!-- Секция III: Масштабирование заказов -->
           <div class="alche-block p-5 space-y-4">
             <div class="flex justify-between items-baseline">
               <span class="font-serif italic text-base font-semibold">III. Масштабирование заказов</span>
@@ -680,7 +539,7 @@ html_code = """<!DOCTYPE html>
             </div>
           </div>
 
-          <!-- Секция IV -->
+          <!-- Секция IV: Постоянные затраты и факторинг -->
           <div class="alche-block p-5 space-y-4 flex-1">
             <div class="flex justify-between items-baseline">
               <span class="font-serif italic text-base font-semibold">IV. Постоянные затраты и факторинг</span>
@@ -722,14 +581,14 @@ html_code = """<!DOCTYPE html>
         </form>
       </aside>
 
-      <!-- ПРАВАЯ ЧАСТЬ: ДАШБОРД -->
+      <!-- ПРАВАЯ ЧАСТЬ: ДАШБОРД И АНАЛИТИКА -->
       <section class="lg:col-span-9 flex flex-col">
-        <!-- 5 KPI карточек -->
+        <!-- 5 Архитектурных KPI-карточек с 3D Tilt и спарклайнами -->
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 border-b" style="border-color: var(--border-line);">
           <div class="alche-block tilt-card p-5">
             <div class="flex justify-between items-center opacity-60 mb-1">
               <span class="font-mono text-[9px] uppercase tracking-widest">[01] Выручка</span>
-              <span class="text-[#d4af37]">▲</span>
+              <svg class="w-8 h-3 text-[#d4af37]" viewBox="0 0 32 12" fill="none"><path d="M1 11L9 8L17 9L25 3L31 1" stroke="currentColor" stroke-width="1.2"/></svg>
             </div>
             <div id="kpiRev" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#f4f1ea]">0 ₽</div>
             <div class="font-mono text-[9px] text-[#d4af37] mt-1.5 opacity-90" id="kpiRevSub">Маржа: 20%</div>
@@ -738,7 +597,7 @@ html_code = """<!DOCTYPE html>
           <div class="alche-block tilt-card p-5">
             <div class="flex justify-between items-center opacity-60 mb-1">
               <span class="font-mono text-[9px] uppercase tracking-widest">[02] Дефицит</span>
-              <span class="text-[#e63946]">▼</span>
+              <svg class="w-8 h-3 text-[#e63946]" viewBox="0 0 32 12" fill="none"><path d="M1 2L9 2L17 8L25 10L31 11" stroke="currentColor" stroke-width="1.2"/></svg>
             </div>
             <div id="kpiInjections" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#e63946]">0 ₽</div>
             <div class="font-mono text-[9px] text-[#e63946] mt-1.5 opacity-90">Внешние дотации</div>
@@ -764,7 +623,7 @@ html_code = """<!DOCTYPE html>
           <div class="alche-block tilt-card p-5 col-span-2 sm:col-span-1">
             <div class="flex justify-between items-center opacity-60 mb-1">
               <span class="font-mono text-[9px] uppercase tracking-widest">[05] Прибыль</span>
-              <span class="text-[#2a9d8f]">★</span>
+              <svg class="w-8 h-3 text-[#2a9d8f]" viewBox="0 0 32 12" fill="none"><path d="M1 10L10 9L18 6L24 5L31 1" stroke="currentColor" stroke-width="1.2"/></svg>
             </div>
             <div id="kpiProfit" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#2a9d8f]">0 ₽</div>
             <div id="kpiRoiSub" class="font-mono text-[9px] text-[#2a9d8f] mt-1.5 opacity-90">Рентабельность: 0%</div>
@@ -779,23 +638,29 @@ html_code = """<!DOCTYPE html>
             <button type="button" onclick="selectTab(2)" class="tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest opacity-70 hover:opacity-100 transition">[03] ДЕНЕЖНЫЙ ПОТОК</button>
             <button type="button" onclick="selectTab(3)" class="tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest opacity-70 hover:opacity-100 transition">[04] ЭКОНОМИКА И ЗАКАЗЫ</button>
           </div>
+          <div class="hidden md:flex items-center gap-2 font-mono text-[9px] text-[#d4af37]">
+            <span class="pulse-dot"></span>
+            <span>THREE.JS & SVG LIGHTING</span>
+          </div>
         </div>
 
         <!-- Динамические секции -->
         <div class="flex-1 p-5 lg:p-7 space-y-6">
-          <!-- Секция 01 -->
+          <!-- Секция 01: Долг и проценты -->
           <div id="viewTab0" class="tab-view-enter space-y-6">
             <div class="alche-block p-5 border">
-              <div class="mb-4">
-                <h3 class="font-serif text-xl font-bold tracking-wide italic">График обслуживания долга и начисления процентов</h3>
-                <p class="font-mono text-[10px] opacity-60">Ежемесячные проценты по ставке кредитора (столбцы) и динамика тела долга (кривая)</p>
+              <div class="flex justify-between items-center mb-4">
+                <div>
+                  <h3 class="font-serif text-xl font-bold tracking-wide italic">График обслуживания долга и начисления процентов</h3>
+                  <p class="font-mono text-[10px] opacity-60">Ежемесячные проценты по ставке кредитора (столбцы) и динамика тела долга (кривая)</p>
+                </div>
               </div>
               <div class="h-[360px] relative">
                 <canvas id="chartDebt"></canvas>
               </div>
             </div>
 
-            <!-- Таблица ведомости -->
+            <!-- Таблица долговой ведомости -->
             <div class="alche-block border overflow-x-auto">
               <table class="w-full text-left font-mono text-[11px]">
                 <thead class="border-b" style="background-color: var(--table-header-bg); border-color: var(--border-line);">
@@ -813,12 +678,14 @@ html_code = """<!DOCTYPE html>
             </div>
           </div>
 
-          <!-- Секция 02 -->
+          <!-- Секция 02: Складской цикл -->
           <div id="viewTab1" class="hidden space-y-6">
             <div class="alche-block p-5 border">
-              <div class="mb-4">
-                <h3 class="font-serif text-xl font-bold tracking-wide italic">Партионные закупки и истощение склада</h3>
-                <p class="font-mono text-[10px] opacity-60">Закупка дискретными циклами каждые N месяцев без ежемесячного задвоения</p>
+              <div class="flex justify-between items-center mb-4">
+                <div>
+                  <h3 class="font-serif text-xl font-bold tracking-wide italic">Партионные закупки и истощение склада</h3>
+                  <p class="font-mono text-[10px] opacity-60">Закупка дискретными циклами каждые N месяцев без ежемесячного задвоения</p>
+                </div>
               </div>
               <div class="h-[400px] relative">
                 <canvas id="chartStock"></canvas>
@@ -826,12 +693,14 @@ html_code = """<!DOCTYPE html>
             </div>
           </div>
 
-          <!-- Секция 03 -->
+          <!-- Секция 03: Денежный поток -->
           <div id="viewTab2" class="hidden space-y-6">
             <div class="alche-block p-5 border">
-              <div class="mb-4">
-                <h3 class="font-serif text-xl font-bold tracking-wide italic">Структура помесячного денежного потока</h3>
-                <p class="font-mono text-[10px] opacity-60">Сопоставление входящей выручки и совокупных выплат</p>
+              <div class="flex justify-between items-center mb-4">
+                <div>
+                  <h3 class="font-serif text-xl font-bold tracking-wide italic">Структура помесячного денежного потока</h3>
+                  <p class="font-mono text-[10px] opacity-60">Сопоставление входящей выручки и совокупных выплат (закупки, аренда, ФОТ и налоги)</p>
+                </div>
               </div>
               <div class="h-[400px] relative">
                 <canvas id="chartCF"></canvas>
@@ -839,7 +708,7 @@ html_code = """<!DOCTYPE html>
             </div>
           </div>
 
-          <!-- Секция 04 -->
+          <!-- Секция 04: Заказы и структура затрат -->
           <div id="viewTab3" class="hidden space-y-6">
             <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
               <div class="alche-block p-5 border">
@@ -865,64 +734,121 @@ html_code = """<!DOCTYPE html>
   </div>
 
   <script>
-    // --- ПРЕЛОАДЕР: РОВНО 5 СЕКУНД И ГАРАНТИРОВАННЫЙ СТАРТ ДАШБОРДА ---
-    (function runPreloader5s() {
-      const preloader = document.getElementById('alche-preloader');
-      const pctEl = document.getElementById('preloader-pct');
-      const barEl = document.getElementById('preloader-bar');
-      if (!preloader) return;
+    // --- 0. АУДИОСИНТЕЗАТОР ТАКТИЛЬНЫХ КЛИКОВ (Web Audio API) ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playClickSound(freq = 1200, duration = 0.02) {
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + duration);
+        gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
 
-      const TOTAL_MS = 5000; // Ровно 5 секунд
-      const startT = performance.now();
-      let finished = false;
+    // --- 1. THREE.JS RENAISSANCE ARMILLARY SPHERE ---
+    const canvas = document.getElementById('webgl-bg-canvas');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 24;
 
-      function complete() {
-        if (finished) return;
-        finished = true;
-        if (pctEl) pctEl.textContent = '100%';
-        if (barEl) barEl.style.width = '100%';
+    const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-        preloader.style.transition = 'opacity 0.7s ease, filter 0.7s ease';
-        preloader.style.opacity = '0';
-        preloader.style.filter = 'blur(16px)';
-        preloader.style.pointerEvents = 'none';
+    const armillaryGroup = new THREE.Group();
+    scene.add(armillaryGroup);
 
-        setTimeout(() => {
-          preloader.style.display = 'none';
-          try {
-            runCalculation();
-          } catch(e) {
-            console.error("Dashboard error:", e);
-          }
-        }, 700);
+    let ringColor = 0xd4af37;
+    const ringMat = new THREE.MeshBasicMaterial({ color: ringColor, wireframe: true, transparent: true, opacity: 0.32 });
+
+    const rings = [
+      new THREE.Mesh(new THREE.TorusGeometry(8.5, 0.04, 16, 120), ringMat),
+      new THREE.Mesh(new THREE.TorusGeometry(10.5, 0.03, 16, 120), ringMat),
+      new THREE.Mesh(new THREE.TorusGeometry(12.5, 0.025, 16, 120), ringMat),
+      new THREE.Mesh(new THREE.IcosahedronGeometry(4.8, 1), ringMat)
+    ];
+
+    rings[0].rotation.x = Math.PI / 4;
+    rings[1].rotation.y = Math.PI / 3;
+    rings[2].rotation.z = Math.PI / 6;
+
+    rings.forEach(r => armillaryGroup.add(r));
+
+    let mouseX = 0, mouseY = 0;
+    const lightDiff = document.getElementById('svgCursorLightDiff');
+    const lightSpec = document.getElementById('svgCursorLightSpec');
+
+    document.addEventListener('mousemove', (e) => {
+      mouseX = (e.clientX - window.innerWidth / 2) * 0.0006;
+      mouseY = (e.clientY - window.innerHeight / 2) * 0.0006;
+      document.getElementById('cursorCoordDisplay').textContent = `X: ${e.clientX.toString().padStart(4, '0')} / Y: ${e.clientY.toString().padStart(4, '0')}`;
+
+      // Динамическое смещение луча в SVG feSpecularLighting
+      if (lightDiff && lightSpec) {
+        const lx = e.clientX % 320;
+        const ly = e.clientY % 220;
+        lightDiff.setAttribute('x', lx);
+        lightDiff.setAttribute('y', ly);
+        lightSpec.setAttribute('x', lx);
+        lightSpec.setAttribute('y', ly);
       }
+    });
 
-      function update(now) {
-        const elapsed = now - startT;
-        const progress = Math.min(elapsed / TOTAL_MS, 1.0);
-        const p = Math.floor(progress * 100);
+    // 3D Tilt Карточки с магнитным наклоном
+    document.querySelectorAll('.tilt-card').forEach(card => {
+      card.addEventListener('mousemove', e => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        card.style.setProperty('--mouse-x', `${x}px`);
+        card.style.setProperty('--mouse-y', `${y}px`);
+        
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotateX = ((y - centerY) / centerY) * -5;
+        const rotateY = ((x - centerX) / centerX) * 5;
+        card.style.transform = `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-2px)`;
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = 'perspective(900px) rotateX(0deg) rotateY(0deg) translateY(0px)';
+      });
+    });
 
-        if (pctEl) pctEl.textContent = p + '%';
-        if (barEl) barEl.style.width = p + '%';
+    const camPresets = [
+      { z: 24, rx: 0.2, ry: 0.3 },
+      { z: 19, rx: -0.4, ry: 1.1 },
+      { z: 27, rx: 0.5, ry: -0.6 },
+      { z: 18, rx: 0.1, ry: 2.2 }
+    ];
+    let currentCamPreset = camPresets[0];
 
-        if (progress < 1.0) {
-          requestAnimationFrame(update);
-        } else {
-          complete();
-        }
-      }
+    function animate() {
+      requestAnimationFrame(animate);
+      armillaryGroup.rotation.x += 0.002 + (mouseY - armillaryGroup.rotation.x) * 0.04;
+      armillaryGroup.rotation.y += 0.003 + (mouseX - armillaryGroup.rotation.y) * 0.04;
+      camera.position.z += (currentCamPreset.z - camera.position.z) * 0.05;
+      renderer.render(scene, camera);
+    }
+    animate();
 
-      requestAnimationFrame(update);
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
 
-      // Защитная страховка
-      setTimeout(() => {
-        if (!finished) complete();
-      }, 5200);
-    })();
-
-    // --- ПЕРЕКЛЮЧЕНИЕ ТЕМЫ ДЕНЬ / НОЧЬ ---
+    // --- 2. HARDWARE DAY / NIGHT SWITCH ---
     let isDark = true;
     function toggleTheme() {
+      playClickSound(800, 0.04);
       isDark = !isDark;
       document.documentElement.classList.toggle('dark', isDark);
       const thumb = document.getElementById('sliderThumb');
@@ -933,22 +859,75 @@ html_code = """<!DOCTYPE html>
         thumb.style.transform = 'translateX(0px)';
         lblNight.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold text-black';
         lblDay.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold opacity-70';
+        ringMat.color.setHex(0xd4af37);
       } else {
         thumb.style.transform = 'translateX(62px)';
         lblDay.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold text-white';
         lblNight.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold opacity-70';
+        ringMat.color.setHex(0x1d756b);
       }
       runCalculation();
     }
 
-    // --- ТАБЫ ---
+    // --- 3. MATRIX CIPHER / ПОДБОР БУКВ И ЦИФР ДЛЯ СЛОЖЕНИЯ СЛОВА ---
+    const CYRILLIC_GLYPHS = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ0123456789§$%*#@!/[]:;';
+    const NUMERIC_GLYPHS = '0123456789 ';
+
+    function scrambleElementText(el, finalText, duration = 460, useAlphabet = true) {
+      if (!el) return;
+      const glyphs = useAlphabet ? CYRILLIC_GLYPHS : NUMERIC_GLYPHS;
+      const start = performance.now();
+      const len = finalText.length;
+
+      if (el._scrambleTimer) cancelAnimationFrame(el._scrambleTimer);
+
+      function update(now) {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const revealIdx = Math.floor(progress * len);
+        let out = '';
+        for (let i = 0; i < len; i++) {
+          const char = finalText[i];
+          if (i < revealIdx || char === ' ' || char === '₽' || char === '%' || char === '.' || char === ',' || char === '(' || char === ')' || char === '/' || char === '[' || char === ']' || char === ':') {
+            out += char;
+          } else {
+            out += glyphs[Math.floor(Math.random() * glyphs.length)];
+          }
+        }
+        el.textContent = out;
+        if (progress < 1) {
+          el._scrambleTimer = requestAnimationFrame(update);
+        } else {
+          el.textContent = finalText;
+          el._scrambleTimer = null;
+        }
+      }
+      el._scrambleTimer = requestAnimationFrame(update);
+    }
+
+    function scrambleNumber(el, finalStr, duration = 400) {
+      scrambleElementText(el, finalStr, duration, false);
+    }
+
+    // --- 4. TAB CONTROLLER WITH CINEMATIC REVEAL & CIPHER SCRAMBLE ---
+    const TAB_TITLES = [
+      '[01] ОБСЛУЖИВАНИЕ КАПИТАЛА',
+      '[02] СКЛАДСКОЙ ЦИКЛ',
+      '[03] ДЕНЕЖНЫЙ ПОТОК',
+      '[04] ЭКОНОМИКА И ЗАКАЗЫ'
+    ];
+
     function selectTab(index) {
+      playClickSound(1400, 0.025);
+      currentCamPreset = camPresets[index];
       const buttons = document.querySelectorAll('#navTabsContainer .tab-btn');
       buttons.forEach((btn, idx) => {
         if (idx === index) {
           btn.className = 'tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest bg-[#d4af37] text-black font-bold transition shadow-md';
+          scrambleElementText(btn, TAB_TITLES[idx], 420, true);
         } else {
           btn.className = 'tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest opacity-70 hover:opacity-100 transition';
+          btn.textContent = TAB_TITLES[idx];
         }
       });
 
@@ -957,17 +936,25 @@ html_code = """<!DOCTYPE html>
         if (i === index) {
           view.classList.remove('hidden');
           view.classList.remove('tab-view-enter');
-          void view.offsetWidth;
+          void view.offsetWidth; // trigger reflow
           view.classList.add('tab-view-enter');
+
+          const headerTitles = view.querySelectorAll('h3');
+          headerTitles.forEach(h => {
+            const orig = h.getAttribute('data-original-text') || h.textContent;
+            h.setAttribute('data-original-text', orig);
+            scrambleElementText(h, orig, 520, true);
+          });
         } else {
           view.classList.add('hidden');
         }
       }
     }
 
-    // --- ФИНАНСОВЫЙ ДВИЖОК МОДЕЛИ ---
+    // --- 5. FINANCIAL MODEL CORE ENGINE ---
     let growthMode = 'abs';
     function setGrowthMode(mode) {
+      playClickSound(950, 0.02);
       growthMode = mode;
       const btnAbs = document.getElementById('btnModeAbs');
       const btnPct = document.getElementById('btnModePct');
@@ -992,7 +979,7 @@ html_code = """<!DOCTYPE html>
 
     function parseCleanNum(val) {
       if (typeof val === 'number') return val;
-      return parseFloat(String(val).replace(/[^\\d.-]/g, '')) || 0;
+      return parseFloat(String(val).replace(/[^\d.-]/g, '')) || 0;
     }
 
     function formatSpaced(num) {
@@ -1000,7 +987,8 @@ html_code = """<!DOCTYPE html>
     }
 
     function formatInput(input) {
-      input.value = formatSpaced(parseCleanNum(input.value));
+      const val = parseCleanNum(input.value);
+      input.value = formatSpaced(val);
     }
 
     let chartDebtInstance = null;
@@ -1008,6 +996,7 @@ html_code = """<!DOCTYPE html>
     let chartCFInstance = null;
     let chartOrdersInstance = null;
     let chartPieInstance = null;
+
     let latestCalculatedData = null;
 
     function runCalculation() {
@@ -1054,7 +1043,12 @@ html_code = """<!DOCTYPE html>
         const yOff = Math.floor((startMonth + i) / 12);
         xLabels.push(`${shortMonths[mIdx]} ${startYear + yOff}`);
 
-        let curOrders = (i === 0) ? startOrders : (growthMode === 'abs' ? orders[i - 1] + growthVal : orders[i - 1] * (1 + growthVal / 100));
+        let curOrders = 0;
+        if (i === 0) {
+          curOrders = startOrders;
+        } else {
+          curOrders = growthMode === 'abs' ? orders[i - 1] + growthVal : orders[i - 1] * (1 + growthVal / 100);
+        }
         curOrders = Math.min(curOrders, maxOrdersCap);
         orders.push(curOrders);
         rev.push(curOrders * aov);
@@ -1062,6 +1056,7 @@ html_code = """<!DOCTYPE html>
 
       const cogsPct = 1 - (marginPct / 100);
       const cogsVat = rev.map(r => r * cogsPct * vatMultiplier);
+
       const cogsPayments = new Array(period).fill(0);
       const inventoryDeliveries = new Array(period).fill(0);
 
@@ -1120,6 +1115,7 @@ html_code = """<!DOCTYPE html>
       for (let i = 0; i < period; i++) {
         const interestDue = currentDebt * monthlyRate;
         interestPayments[i] = interestDue;
+
         const netBeforeFin = inflows[i] - (baseOutflows[i] + interestDue);
         const potCash = currentCash + netBeforeFin;
 
@@ -1149,13 +1145,15 @@ html_code = """<!DOCTYPE html>
       const netProfit = sumRev * (marginPct / 100) - sumOpex - sumTaxes - sumInterest;
       const roi = sumRev > 0 ? (netProfit / sumRev) * 100 : 0;
 
-      latestCalculatedData = { xLabels, monthlyInvestments, interestPayments, debtRepayments, debtBalance, cashBalance };
+      latestCalculatedData = {
+        xLabels, monthlyInvestments, interestPayments, debtRepayments, debtBalance, cashBalance, sumRev, netProfit, roi
+      };
 
-      document.getElementById('kpiRev').textContent = `${formatSpaced(sumRev)} ₽`;
-      document.getElementById('kpiInjections').textContent = `${formatSpaced(sumInvestments)} ₽`;
-      document.getElementById('kpiInterest').textContent = `${formatSpaced(sumInterest)} ₽`;
-      document.getElementById('kpiMaxDebt').textContent = `${formatSpaced(maxDebt)} ₽`;
-      document.getElementById('kpiProfit').textContent = `${formatSpaced(netProfit)} ₽`;
+      scrambleNumber(document.getElementById('kpiRev'), `${formatSpaced(sumRev)} ₽`);
+      scrambleNumber(document.getElementById('kpiInjections'), `${formatSpaced(sumInvestments)} ₽`);
+      scrambleNumber(document.getElementById('kpiInterest'), `${formatSpaced(sumInterest)} ₽`);
+      scrambleNumber(document.getElementById('kpiMaxDebt'), `${formatSpaced(maxDebt)} ₽`);
+      scrambleNumber(document.getElementById('kpiProfit'), `${formatSpaced(netProfit)} ₽`);
       document.getElementById('kpiRoiSub').textContent = `Рентабельность: ${roi.toFixed(1)}%`;
 
       const tbody = document.getElementById('tableDebtBody');
@@ -1279,30 +1277,43 @@ html_code = """<!DOCTYPE html>
       });
     }
 
+    // Мгновенный экспорт в CSV прямо в браузере без обращения к бэкенду
     function exportDataToCsv() {
+      playClickSound(1600, 0.05);
       if (!latestCalculatedData) return;
       const { xLabels, monthlyInvestments, interestPayments, debtRepayments, debtBalance, cashBalance } = latestCalculatedData;
-      let csvContent = "data:text/csv;charset=utf-8,﻿Период;Дотация;Проценты;Погашение;Остаток долга;Свободный остаток\\n";
+      
+      let csvContent = "data:text/csv;charset=utf-8,﻿";
+      csvContent += "Период;Дотация (дефицит);Проценты по долгу;Погашение долга;Остаток тела долга;Свободный остаток счета\n";
+
       for (let i = 0; i < xLabels.length; i++) {
-        csvContent += `${xLabels[i]};${Math.round(monthlyInvestments[i])};${Math.round(interestPayments[i])};${Math.round(debtRepayments[i])};${Math.round(debtBalance[i])};${Math.round(cashBalance[i])}\\n`;
+        csvContent += `${xLabels[i]};${Math.round(monthlyInvestments[i])};${Math.round(interestPayments[i])};${Math.round(debtRepayments[i])};${Math.round(debtBalance[i])};${Math.round(cashBalance[i])}\n`;
       }
+
+      const encodedUri = encodeURI(csvContent);
       const link = document.createElement("a");
-      link.setAttribute("href", encodeURI(csvContent));
+      link.setAttribute("href", encodedUri);
       link.setAttribute("download", "Finansovaya_Model_Kapital.csv");
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     }
 
+    // Часы в HUD
     setInterval(() => {
       const now = new Date();
       document.getElementById('telemetryClock').textContent = `[${now.toTimeString().split(' ')[0]}]`;
     }, 1000);
 
     function resetDefaults() {
+      playClickSound(600, 0.05);
       document.getElementById('financialInputsForm').reset();
       runCalculation();
     }
+
+    window.onload = () => {
+      runCalculation();
+    };
   </script>
 </body>
 </html>"""
