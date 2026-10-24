@@ -146,34 +146,34 @@ html_code = """<!DOCTYPE html>
     }
 
     .draw-circle {
-      stroke-dasharray: 1260;
-      stroke-dashoffset: 1260;
-      animation: drawLineAnim 2.2s cubic-bezier(0.4, 0, 0.2, 1) 0.3s forwards;
+      stroke-dasharray: 1300;
+      stroke-dashoffset: 1300;
+      animation: drawLineAnim 2.2s cubic-bezier(0.4, 0, 0.2, 1) 0.2s forwards;
     }
     .draw-square {
       stroke-dasharray: 1400;
       stroke-dashoffset: 1400;
-      animation: drawLineAnim 2.2s cubic-bezier(0.4, 0, 0.2, 1) 1.2s forwards;
+      animation: drawLineAnim 2.2s cubic-bezier(0.4, 0, 0.2, 1) 1.0s forwards;
     }
     .draw-axis {
       stroke-dasharray: 600;
       stroke-dashoffset: 600;
-      animation: drawLineAnim 1.6s cubic-bezier(0.4, 0, 0.2, 1) 2.0s forwards;
+      animation: drawLineAnim 1.6s cubic-bezier(0.4, 0, 0.2, 1) 1.8s forwards;
     }
-    .draw-vitruvian-main {
-      stroke-dasharray: 2400;
-      stroke-dashoffset: 2400;
-      animation: drawLineAnim 3.8s cubic-bezier(0.3, 0.1, 0.2, 1) 2.6s forwards;
+    .draw-anatomy-primary {
+      stroke-dasharray: 3800;
+      stroke-dashoffset: 3800;
+      animation: drawLineAnim 4.2s cubic-bezier(0.25, 0.1, 0.25, 1) 2.2s forwards;
     }
-    .draw-vitruvian-spread {
-      stroke-dasharray: 1800;
-      stroke-dashoffset: 1800;
-      animation: drawLineAnim 3.2s cubic-bezier(0.3, 0.1, 0.2, 1) 3.4s forwards;
+    .draw-anatomy-spread {
+      stroke-dasharray: 3200;
+      stroke-dashoffset: 3200;
+      animation: drawLineAnim 3.8s cubic-bezier(0.25, 0.1, 0.25, 1) 2.8s forwards;
     }
-    .draw-details {
-      stroke-dasharray: 800;
-      stroke-dashoffset: 800;
-      animation: drawLineAnim 2.0s ease-out 4.2s forwards;
+    .draw-anatomy-hatch {
+      stroke-dasharray: 1600;
+      stroke-dashoffset: 1600;
+      animation: drawLineAnim 2.8s ease-out 3.6s forwards;
     }
 
     @keyframes drawLineAnim {
@@ -182,16 +182,17 @@ html_code = """<!DOCTYPE html>
       }
     }
 
-    @keyframes quillChoreography {
-      0%   { transform: translate(300px, 80px) rotate(-18deg); opacity: 0; }
-      5%   { transform: translate(300px, 100px) rotate(-24deg); opacity: 1; }
-      20%  { transform: translate(490px, 290px) rotate(-10deg); }
-      35%  { transform: translate(110px, 290px) rotate(-35deg); }
-      50%  { transform: translate(300px, 490px) rotate(-18deg); }
-      65%  { transform: translate(220px, 200px) rotate(-28deg); }
-      80%  { transform: translate(380px, 200px) rotate(-15deg); }
-      92%  { transform: translate(300px, 295px) rotate(-22deg); opacity: 1; }
-      100% { transform: translate(315px, 295px) rotate(-20deg); opacity: 0; }
+    @keyframes quillFollowsDrawing {
+      0%   { transform: translate(300px, 95px) rotate(-18deg); opacity: 0; }
+      4%   { transform: translate(300px, 95px) rotate(-22deg); opacity: 1; }
+      18%  { transform: translate(500px, 300px) rotate(-10deg); }
+      32%  { transform: translate(100px, 300px) rotate(-35deg); }
+      48%  { transform: translate(300px, 160px) rotate(-25deg); }
+      60%  { transform: translate(180px, 225px) rotate(-30deg); }
+      72%  { transform: translate(430px, 225px) rotate(-15deg); }
+      84%  { transform: translate(250px, 420px) rotate(-20deg); }
+      92%  { transform: translate(350px, 420px) rotate(-18deg); opacity: 1; }
+      100% { transform: translate(300px, 300px) rotate(-15deg); opacity: 0; }
     }
 
     .animated-quill {
@@ -199,8 +200,8 @@ html_code = """<!DOCTYPE html>
       top: 0;
       left: 0;
       pointer-events: none;
-      animation: quillChoreography 6.8s cubic-bezier(0.35, 0.1, 0.25, 1) forwards;
-      filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.5));
+      animation: quillFollowsDrawing 6.8s cubic-bezier(0.35, 0.1, 0.25, 1) forwards;
+      filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.55));
     }
 
     .nib-spark {
@@ -418,56 +419,99 @@ html_code = """<!DOCTYPE html>
           </radialGradient>
         </defs>
 
-        <circle cx="300" cy="300" r="230" fill="url(#goldGlow)" />
+        <circle cx="300" cy="300" r="235" fill="url(#goldGlow)" />
 
-        <circle cx="300" cy="300" r="200" fill="none" stroke="#d4af37" stroke-width="1.2" class="draw-circle" stroke-dasharray="4 2" />
-        <circle cx="300" cy="300" r="208" fill="none" stroke="#d4af37" stroke-opacity="0.35" stroke-width="0.7" class="draw-circle" />
+        <circle cx="300" cy="300" r="202" fill="none" stroke="#d4af37" stroke-width="1.3" class="draw-circle" />
+        <circle cx="300" cy="300" r="208" fill="none" stroke="#d4af37" stroke-opacity="0.3" stroke-width="0.7" class="draw-circle" stroke-dasharray="3 3" />
 
-        <rect x="125" y="125" width="350" height="350" fill="none" stroke="#d4af37" stroke-width="1.2" class="draw-square" />
+        <rect x="125" y="125" width="350" height="350" fill="none" stroke="#d4af37" stroke-width="1.3" class="draw-square" />
         <rect x="120" y="120" width="360" height="360" fill="none" stroke="#d4af37" stroke-opacity="0.3" stroke-width="0.6" class="draw-square" stroke-dasharray="2 3" />
 
-        <g stroke="#d4af37" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.6" class="draw-axis">
-          <line x1="300" y1="50" x2="300" y2="550" />
-          <line x1="50" y1="300" x2="550" y2="300" />
+        <g stroke="#d4af37" stroke-width="0.7" stroke-dasharray="3 3" opacity="0.55" class="draw-axis">
+          <line x1="300" y1="45" x2="300" y2="555" />
+          <line x1="45" y1="300" x2="555" y2="300" />
           <line x1="125" y1="125" x2="475" y2="475" />
           <line x1="125" y1="475" x2="475" y2="125" />
-          <line x1="125" y1="234" x2="475" y2="234" stroke-opacity="0.4" />
-          <line x1="125" y1="366" x2="475" y2="366" stroke-opacity="0.4" />
+          <line x1="125" y1="210" x2="475" y2="210" stroke-opacity="0.35" />
+          <line x1="125" y1="345" x2="475" y2="345" stroke-opacity="0.35" />
+          <circle cx="125" cy="225" r="2.5" fill="#d4af37" />
+          <circle cx="475" cy="225" r="2.5" fill="#d4af37" />
+          <circle cx="157" cy="157" r="2.5" fill="#d4af37" />
+          <circle cx="443" cy="157" r="2.5" fill="#d4af37" />
+          <circle cx="185" cy="450" r="2.5" fill="#d4af37" />
+          <circle cx="415" cy="450" r="2.5" fill="#d4af37" />
         </g>
 
-        <g fill="none" stroke="#d4af37" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" class="draw-vitruvian-main">
-          <circle cx="300" cy="180" r="22" stroke-width="1.2" />
-          <path d="M294 172 Q300 166 306 172" stroke-width="0.8" />
-          <path d="M296 202 L296 215 M304 202 L304 215" />
+        <!-- АНАТОМИЧЕСКИЙ РЕЛЬЕФНЫЙ СИЛУЭТ ЧЕЛОВЕКА (КОНТУРЫ ДА ВИНЧИ) -->
+        <!-- 1. Основная анатомическая фигура: Голова, рельефный торс, горизонтальные руки и сомкнутые ноги -->
+        <g fill="none" stroke="#d4af37" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" class="draw-anatomy-primary">
+          <!-- Голова и черты лица с волосами -->
+          <path d="M293 162 C291 150 309 150 307 162 C312 165 310 178 307 184 C304 188 301 190 300 190 C299 190 296 188 293 184 C290 178 288 165 293 162 Z" />
+          <path d="M288 160 C294 153 306 153 312 160 C315 168 312 176 312 176 M288 160 C285 168 288 176 288 176" stroke-width="0.8" />
+          <path d="M296 170 Q300 172 304 170 M298 175 Q300 177 302 175 M297 181 Q300 183 303 181" stroke-width="0.7" />
+          
+          <!-- Шея и ключицы -->
+          <path d="M294 188 C294 195 289 198 284 202 M306 188 C306 195 311 198 316 202" />
+          <path d="M284 202 C292 205 300 205 300 206 C300 205 308 205 316 202" stroke-width="0.9" />
 
-          <path d="M280 218 L320 218 L312 295 L288 295 Z" />
-          <path d="M280 218 Q300 242 320 218" stroke-width="0.8" />
-          <line x1="300" y1="218" x2="300" y2="295" stroke-width="0.8" />
+          <!-- Мускулатура груди и пресс -->
+          <path d="M284 204 C278 214 278 226 287 232 C295 233 300 231 300 231 C300 231 305 233 313 232 C322 226 322 214 316 204" />
+          <line x1="300" y1="206" x2="300" y2="288" stroke-width="0.8" />
+          <path d="M290 242 C296 244 300 244 300 244 C300 244 304 244 310 242" stroke-width="0.8" />
+          <path d="M291 256 C296 258 300 258 300 258 C300 258 304 258 309 256" stroke-width="0.8" />
+          <circle cx="300" cy="272" r="1.8" fill="#d4af37" />
 
-          <path d="M280 220 L130 220 M320 220 L470 220" stroke-width="1.4" />
-          <circle cx="130" cy="220" r="3" fill="#d4af37" />
-          <circle cx="470" cy="220" r="3" fill="#d4af37" />
+          <!-- Контур торса и таза -->
+          <path d="M283 204 C276 220 280 240 283 258 C285 268 287 278 285 288 C287 296 295 302 300 302 C305 302 313 296 315 288 C313 278 315 268 317 258 C320 240 324 220 317 204" />
 
-          <path d="M290 295 L282 468 M310 295 L318 468" stroke-width="1.4" />
-          <path d="M272 470 L286 470 M314 470 L328 470" stroke-width="1.5" />
+          <!-- Левая горизонтальная рука: плечо, бицепс, предплечье, пальцы -->
+          <path d="M283 204 C268 205 248 207 230 209 C212 211 192 212 174 213 C155 214 138 216 126 217 C122 217 122 223 125 224 C132 226 148 224 165 222 C184 221 204 220 226 219 C248 218 268 217 282 220" />
+          <path d="M125 217 C120 216 116 218 116 221 C116 224 121 225 125 225" stroke-width="0.8" />
+
+          <!-- Правая горизонтальная рука -->
+          <path d="M317 204 C332 205 352 207 370 209 C388 211 408 212 426 213 C445 214 462 216 474 217 C478 217 478 223 475 224 C468 226 452 224 435 222 C416 221 396 220 374 219 C352 218 332 217 318 220" />
+          <path d="M475 217 C480 216 484 218 484 221 C484 224 479 225 475 225" stroke-width="0.8" />
+
+          <!-- Левая прямая нога: бедро, колено, икра, ступня к основанию квадрата -->
+          <path d="M287 296 C283 318 283 346 284 374 C284 382 282 390 284 398 C287 420 285 450 285 474 C280 475 272 475 272 473 C275 471 282 467 283 458 C286 440 287 416 288 396 C290 380 292 360 293 340 C295 322 296 306 298 300" />
+
+          <!-- Правая прямая нога -->
+          <path d="M313 296 C317 318 317 346 316 374 C316 382 318 390 316 398 C313 420 315 450 315 474 C320 475 328 475 328 473 C325 471 318 467 317 458 C314 440 313 416 312 396 C310 380 308 360 307 340 C305 322 304 306 302 300" />
         </g>
 
-        <g fill="none" stroke="#d4af37" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" class="draw-vitruvian-spread" stroke-dasharray="5 2">
-          <path d="M280 220 L158 158 M320 220 L442 158" stroke-width="1.2" />
-          <circle cx="158" cy="158" r="2.5" fill="#d4af37" />
-          <circle cx="442" cy="158" r="2.5" fill="#d4af37" />
+        <!-- 2. Вторая стойка в круге: Поднятые руки к ободу круга и расставленные ноги -->
+        <g fill="none" stroke="#d4af37" stroke-width="1.05" stroke-linecap="round" stroke-linejoin="round" class="draw-anatomy-spread">
+          <!-- Левая поднятая рука (к верхнему сектору круга) -->
+          <path d="M282 206 C262 192 238 180 214 168 C192 158 174 148 155 138 C151 136 148 141 151 144 C167 156 186 170 208 182 C230 194 254 204 278 216" stroke-dasharray="8 2" />
+          <path d="M152 137 C147 134 144 137 146 141 C149 144 153 144 156 142" stroke-width="0.8" />
 
-          <path d="M290 295 L200 452 M310 295 L400 452" stroke-width="1.2" />
-          <path d="M190 457 L206 450 M394 450 L410 457" stroke-width="1.4" />
+          <!-- Правая поднятая рука (к верхнему сектору круга) -->
+          <path d="M318 206 C338 192 362 180 386 168 C408 158 426 148 445 138 C449 136 452 141 449 144 C433 156 414 170 392 182 C370 194 346 204 322 216" stroke-dasharray="8 2" />
+          <path d="M448 137 C453 134 456 137 454 141 C451 144 447 144 444 142" stroke-width="0.8" />
+
+          <!-- Левая расставленная нога к нижнему сектору круга -->
+          <path d="M285 298 C270 326 248 358 226 390 C206 420 188 448 176 462 C172 466 176 468 181 465 C196 452 216 426 238 396 C260 364 282 330 294 304" stroke-dasharray="9 2" />
+
+          <!-- Правая расставленная нога к нижнему сектору круга -->
+          <path d="M315 298 C330 326 352 358 374 390 C394 420 412 448 424 462 C428 466 424 468 419 465 C404 452 384 426 362 396 C340 364 318 330 306 304" stroke-dasharray="9 2" />
         </g>
 
-        <g fill="none" stroke="#d4af37" stroke-opacity="0.45" stroke-width="0.6" class="draw-details">
-          <line x1="140" y1="140" x2="220" y2="140" />
-          <line x1="140" y1="146" x2="200" y2="146" />
-          <line x1="380" y1="140" x2="460" y2="140" />
-          <line x1="400" y1="146" x2="460" y2="146" />
-          <line x1="140" y1="450" x2="230" y2="450" />
-          <line x1="370" y1="450" x2="460" y2="450" />
+        <!-- 3. Аутентичная манускриптная штриховка мышц и анатомических теней -->
+        <g fill="none" stroke="#d4af37" stroke-opacity="0.38" stroke-width="0.65" class="draw-anatomy-hatch">
+          <line x1="285" y1="212" x2="295" y2="210" />
+          <line x1="285" y1="217" x2="295" y2="215" />
+          <line x1="305" y1="210" x2="315" y2="212" />
+          <line x1="305" y1="215" x2="315" y2="217" />
+          <line x1="286" y1="234" x2="294" y2="231" />
+          <line x1="287" y1="247" x2="295" y2="244" />
+          <line x1="306" y1="231" x2="314" y2="234" />
+          <line x1="305" y1="244" x2="313" y2="247" />
+          <line x1="145" y1="130" x2="220" y2="130" />
+          <line x1="145" y1="136" x2="200" y2="136" />
+          <line x1="380" y1="130" x2="455" y2="130" />
+          <line x1="400" y1="136" x2="455" y2="136" />
+          <line x1="145" y1="466" x2="225" y2="466" />
+          <line x1="375" y1="466" x2="455" y2="466" />
         </g>
 
         <text x="300" y="525" text-anchor="middle" fill="#d4af37" font-family="'Cormorant Garamond', serif" font-style="italic" font-size="12" letter-spacing="3" opacity="0.85">
