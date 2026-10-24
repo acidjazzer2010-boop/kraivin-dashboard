@@ -979,7 +979,7 @@ html_code = """<!DOCTYPE html>
 
     function parseCleanNum(val) {
       if (typeof val === 'number') return val;
-      return parseFloat(String(val).replace(/[^\d.-]/g, '')) || 0;
+      return parseFloat(String(val).replace(/[^\\d.-]/g, '')) || 0;
     }
 
     function formatSpaced(num) {
@@ -1283,11 +1283,11 @@ html_code = """<!DOCTYPE html>
       if (!latestCalculatedData) return;
       const { xLabels, monthlyInvestments, interestPayments, debtRepayments, debtBalance, cashBalance } = latestCalculatedData;
       
-      let csvContent = "data:text/csv;charset=utf-8,﻿";
-      csvContent += "Период;Дотация (дефицит);Проценты по долгу;Погашение долга;Остаток тела долга;Свободный остаток счета\n";
+      let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+      csvContent += "Период;Дотация (дефицит);Проценты по долгу;Погашение долга;Остаток тела долга;Свободный остаток счета\\n";
 
       for (let i = 0; i < xLabels.length; i++) {
-        csvContent += `${xLabels[i]};${Math.round(monthlyInvestments[i])};${Math.round(interestPayments[i])};${Math.round(debtRepayments[i])};${Math.round(debtBalance[i])};${Math.round(cashBalance[i])}\n`;
+        csvContent += `${xLabels[i]};${Math.round(monthlyInvestments[i])};${Math.round(interestPayments[i])};${Math.round(debtRepayments[i])};${Math.round(debtBalance[i])};${Math.round(cashBalance[i])}\\n`;
       }
 
       const encodedUri = encodeURI(csvContent);
