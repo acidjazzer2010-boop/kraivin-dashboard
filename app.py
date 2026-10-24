@@ -3,7 +3,7 @@ import streamlit.components.v1 as components
 import base64
 import os
 import io
-from PIL import Image, ImageFilter
+from PIL import Image, ImageFilter, ImageOps
 
 st.set_page_config(
     page_title="Архитектура Капитала // Финансовое Моделирование",
@@ -31,20 +31,33 @@ iframe {
 </style>
 """, unsafe_allow_html=True)
 
-# Функция: извлечение ИСКЛЮЧИТЕЛЬНО контуров (FIND_EDGES) для эффекта чертежа
+# Функция: высокоточная фильтрация контуров тела (ультратонкие золотые линии без фона)
 def get_blueprint_vitruvian(filename):
     if not os.path.exists(filename):
         return ""
     
     try:
+        # Открываем и переводим в градации серого
         img = Image.open(filename).convert("L")
-        edges = img.filter(ImageFilter.FIND_EDGES)
         
-        def get_alpha(p):
-            return int(min(255, p * 2.5))
+        # Легкое сглаживание шума бумаги
+        smoothed = img.filter(ImageFilter.GaussianBlur(radius=0.6))
+        
+        # Выделяем контуры
+        edges = smoothed.filter(ImageFilter.FIND_EDGES)
+        
+        # Отрезаем фоновые шумы и оставляем только тонкие четкие контуры
+        def extract_clean_strokes(p):
+            # Отсекаем слабый шум фона, сохраняя тонкие линии фигуры
+            if p < 35:
+                return 0
+            # Линейное масштабирование яркости контура
+            return int(min(255, (p - 35) * 3.2))
             
-        alpha = edges.point(get_alpha)
-        color_layer = Image.new("RGBA", img.size, (255, 215, 0, 255))
+        alpha = edges.point(extract_clean_strokes)
+        
+        # Создаем слой чистого ренессансного золота (#E5C158)
+        color_layer = Image.new("RGBA", img.size, (229, 193, 88, 255))
         color_layer.putalpha(alpha)
         
         buffered = io.BytesIO()
@@ -93,7 +106,6 @@ tailwind.config = {
 }
 </script>
 
-<!-- Библиотеки -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -154,6 +166,7 @@ body { background-color: var(--bg-space); color: var(--text-main); font-family: 
     pointer-events: none; z-index: 25; opacity: 0; 
     filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
     will-change: transform, opacity;
+    transition: opacity 0.4s ease;
 }
 .nib-spark { animation: sparkFlicker 0.15s infinite alternate; }
 @keyframes sparkFlicker { 0% { opacity: 0.5; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1.4); } }
@@ -250,7 +263,6 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
 
 <!-- Основное приложение -->
 <div id="mainDashboardApp" class="relative z-10 min-h-screen flex flex-col border-t border-l opacity-0 transition-opacity duration-1000" style="border-color: var(--border-line);">
-    <!-- ВЕРХНИЙ HUD И ПАНЕЛЬ ТЕЛЕМЕТРИИ -->
     <header class="alche-block px-5 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
         <div class="flex items-center gap-6">
             <div class="flex items-center gap-3">
@@ -504,10 +516,9 @@ function dismissPreloader() {
     setTimeout(() => { if (stage) stage.style.display = 'none'; }, 500);
 }
 
-const PRELOADER_TOTAL_TIME = 15000; // 15 секунд загрузки
+const PRELOADER_TOTAL_TIME = 15000;
 const preloaderStartTime = performance.now();
 
-// Появление текста
 setTimeout(() => {
     const pt = document.getElementById('preloaderTitle');
     if(pt) pt.classList.replace('opacity-0', 'opacity-100');
@@ -535,13 +546,12 @@ requestAnimationFrame(updatePreloaderProgress);
 
 
 /* ========================================================
-   THREE.JS ПРЕЛОАДЕР: 2 СЛОЯ (ПЕРСПЕКТИВА ДЛЯ КОЛЕЦ + ОРТОГРАФИЯ ДЛЯ ВИТРУВИАНЦА)
+   THREE.JS ПРЕЛОАДЕР: 2 СЛОЯ (КОЛЬЦА + ВИТРУВИАНЕЦ)
    ======================================================== */
 const preCanvas = document.getElementById('preloader-webgl');
 const preRenderer = new THREE.WebGLRenderer({ canvas: preCanvas, alpha: true, antialias: true, preserveDrawingBuffer: true });
 preRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 preRenderer.setClearColor(0x000000, 0);
-// КРИТИЧНОЕ ИСПРАВЛЕНИЕ: Отключаем автоматическую очистку глобально, чтобы слои корректно накладывались
 preRenderer.autoClear = false;
 
 // --- Сцена 1: Перспективная (Кольца) ---
@@ -585,13 +595,14 @@ const maskScene = new THREE.Scene();
 const maskCamera = new THREE.OrthographicCamera(-0.5, 0.5, 0.5, -0.5, 0.1, 10);
 maskCamera.position.z = 1;
 
-const brushGeo = new THREE.PlaneGeometry(0.1, 0.1); 
+// Уменьшенная кисть для тонкого, анатомически аккуратного штриха
+const brushGeo = new THREE.PlaneGeometry(0.045, 0.045); 
 const brushMat = new THREE.ShaderMaterial({
     transparent: true, depthWrite: false,
     vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
     fragmentShader: `varying vec2 vUv; void main() { 
         float d = distance(vUv, vec2(0.5)); 
-        gl_FragColor = vec4(1.0, 1.0, 1.0, smoothstep(0.5, 0.1, d) * 0.5); 
+        gl_FragColor = vec4(1.0, 1.0, 1.0, smoothstep(0.5, 0.05, d) * 0.45); 
     }`
 });
 const brushMesh = new THREE.Mesh(brushGeo, brushMat);
@@ -647,14 +658,14 @@ function resizePreloader() {
     orthoCamera.updateProjectionMatrix();
     
     if (vitruvianPlane) {
-        drawPlaneHeight = window.innerHeight * 0.7; // 70% высоты экрана
+        drawPlaneHeight = window.innerHeight * 0.72;
         drawPlaneWidth = drawPlaneHeight / aspect;
         vitruvianPlane.scale.set(drawPlaneWidth, drawPlaneHeight, 1);
     }
 }
 window.addEventListener('resize', resizePreloader);
 
-// --- Сцена 3: Взрыв пикселей (Shatter Transition) ---
+// --- Сцена 3: Взрыв пикселей ---
 let explosionScene, explosionCamera, explosionMesh;
 let explosionTime = 0;
 const finalTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight);
@@ -662,13 +673,11 @@ const finalTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerH
 function triggerPixelExplosion() {
     isExploding = true;
     
-    // Прячем HTML-элементы
     document.getElementById('preloaderTitle').style.transition = 'opacity 0.2s';
     document.getElementById('preloaderTitle').style.opacity = '0';
     document.getElementById('preloaderHUD').style.opacity = '0';
     document.getElementById('quillPen').style.opacity = '0';
     
-    // Рендерим финальный кадр в текстуру
     preRenderer.setRenderTarget(finalTarget);
     preRenderer.clear();
     preRenderer.render(preScene, preCamera);
@@ -676,18 +685,17 @@ function triggerPixelExplosion() {
     preRenderer.render(orthoScene, orthoCamera);
     preRenderer.setRenderTarget(null);
     
-    // Настройка системы частиц
     explosionScene = new THREE.Scene();
     explosionCamera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
     explosionCamera.position.z = 100;
     
-    const w = 320, h = 180; // ~57,600 частиц (создает эффект плотности без тормозов)
+    const w = 320, h = 180;
     const geometry = new THREE.BufferGeometry();
     const pos = new Float32Array(w * h * 3);
     const uvs = new Float32Array(w * h * 2);
     const dirs = new Float32Array(w * h * 3);
     
-    const vH = 2 * 100 * Math.tan(25 * Math.PI / 180); // Точная высота фрастума на Z=0
+    const vH = 2 * 100 * Math.tan(25 * Math.PI / 180);
     const vW = vH * (window.innerWidth / window.innerHeight);
     
     let i3 = 0, i2 = 0;
@@ -698,7 +706,6 @@ function triggerPixelExplosion() {
             pos[i3+2] = 0;
             uvs[i2] = x / w;
             uvs[i2+1] = y / h;
-            // Рандомный вектор разлета (вперед на зрителя и в стороны)
             dirs[i3] = (Math.random() - 0.5) * 2.0;
             dirs[i3+1] = (Math.random() - 0.5) * 2.0;
             dirs[i3+2] = Math.random() * 2.0; 
@@ -717,11 +724,8 @@ function triggerPixelExplosion() {
             void main() {
                 vColor = texture2D(tDiffuse, uv);
                 vec3 p = position;
-                // Раскол и разлет частиц
                 p += randomDir * (uTime * 90.0);
-                // Гравитация
                 p.y -= (uTime * uTime * 60.0);
-                
                 vec4 mv = modelViewMatrix * vec4(p, 1.0);
                 gl_PointSize = 3.5;
                 gl_Position = projectionMatrix * mv;
@@ -741,7 +745,7 @@ function triggerPixelExplosion() {
     explosionScene.add(explosionMesh);
 }
 
-let drawProgress = 0;
+let drawStep = 0;
 const penEl = document.getElementById('quillPen');
 
 function animatePreloader() {
@@ -753,18 +757,14 @@ function animatePreloader() {
     const progress = Math.min(elapsed / PRELOADER_TOTAL_TIME, 1.0);
     
     if (isExploding) {
-        // Анимация взрыва пикселей (длится ~1.8 сек)
         explosionTime += 0.016; 
         explosionMesh.material.uniforms.uTime.value = explosionTime;
-        
         preRenderer.clear();
         preRenderer.render(explosionScene, explosionCamera);
-        
         if (explosionTime > 1.8) dismissPreloader();
         return;
     }
     
-    // Медленное вращение
     rings[0].rotation.y += 0.0015 + Math.sin(t * 0.4) * 0.001;
     rings[0].rotation.x += 0.0005;
     rings[1].rotation.x -= 0.001 + Math.cos(t * 0.5) * 0.001;
@@ -772,36 +772,52 @@ function animatePreloader() {
     rings[2].rotation.z -= 0.0005 + Math.sin(t * 0.3) * 0.0015;
     rings[2].rotation.y += 0.0015;
     
-    // Очень медленный пролет камеры (только через кольца, Витрувианец статичен)
     preCamera.position.z = 100 - (progress * 50);
     preCamera.position.x = Math.sin(progress * Math.PI) * 10;
     preCamera.position.y = Math.cos(progress * Math.PI * 1.5) * 8;
     preCamera.lookAt(0, 0, -20);
     
     if (vitruvianPlane) {
-        drawProgress += 0.012; 
+        // За один кадр делаем несколько микро-шагов, чтобы кисть шла без пробелов
+        let px = 0, py = 0;
         
-        let tHarm = drawProgress * 2.8; 
-        let px = Math.sin(tHarm * 1.1) * 0.35 + Math.cos(tHarm * 0.4) * 0.1;
-        let py = Math.cos(tHarm * 1.3) * 0.35 + Math.sin(tHarm * 0.5) * 0.1;
+        // Рисование активно до 86% времени (13 сек из 15), успевая на 100% покрыть фигуру
+        if (progress <= 0.86) {
+            for (let sub = 0; sub < 4; sub++) {
+                drawStep += 0.016;
+                // Параметрическая кривая, описывающая силуэт тела с руками и ногами
+                const pTime = drawStep * 1.8;
+                // Горизонтальные размахи (руки, ноги, корпус)
+                px = Math.sin(pTime) * 0.28 + Math.sin(pTime * 3.7) * 0.12;
+                // Вертикальные проходы (от головы до стоп)
+                py = Math.cos(pTime * 0.85) * 0.34 + Math.sin(pTime * 2.1) * 0.09;
+                
+                brushMesh.position.set(px, py, 0);
+                preRenderer.setRenderTarget(maskTarget);
+                preRenderer.render(maskScene, maskCamera);
+                preRenderer.setRenderTarget(null);
+            }
+        } else {
+            // К моменту 86%+ полностью открываем маску на 100% на случай мелких пробелов
+            brushMesh.scale.set(30, 30, 1);
+            brushMesh.position.set(0, 0, 0);
+            preRenderer.setRenderTarget(maskTarget);
+            preRenderer.render(maskScene, maskCamera);
+            preRenderer.setRenderTarget(null);
+        }
         
-        brushMesh.position.set(px, py, 0);
-        
-        preRenderer.setRenderTarget(maskTarget);
-        preRenderer.render(maskScene, maskCamera);
-        preRenderer.setRenderTarget(null);
-        
-        if (progress < 0.95) {
+        // Положение пера следует за последней точкой штриха
+        if (progress < 0.88) {
             penEl.style.opacity = 1;
             const penX = window.innerWidth / 2 + (px * drawPlaneWidth);
             const penY = window.innerHeight / 2 - (py * drawPlaneHeight);
-            penEl.style.transform = `translate3d(${penX}px, ${penY}px, 0) rotate(${Math.sin(drawProgress * 6) * 20 - 15}deg)`;
+            penEl.style.transform = `translate3d(${penX}px, ${penY}px, 0) rotate(${Math.sin(drawStep * 6) * 18 - 12}deg)`;
         } else {
+            // Перо плавно растворяется перед взрывом
             penEl.style.opacity = 0; 
         }
     }
     
-    // Теперь очистка и рендер выполняются вручную, ничего не стирается
     preRenderer.clear();
     preRenderer.render(preScene, preCamera);
     preRenderer.clearDepth(); 
@@ -811,7 +827,7 @@ animatePreloader();
 
 
 /* ========================================================
-   ОСНОВНОЙ ФОН: СВОБОДНЫЙ ОБЛЕТ КАМЕРЫ (ДАШБОРД)
+   ОСНОВНОЙ ФОН: ДАШБОРД
    ======================================================== */
 const canvas = document.getElementById('webgl-bg-canvas');
 const scene = new THREE.Scene();
