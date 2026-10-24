@@ -1,5 +1,7 @@
 import streamlit as st
 import streamlit.components.v1 as components
+import base64
+import os
 
 st.set_page_config(
     page_title="Архитектура Капитала // Финансовое Моделирование",
@@ -26,6 +28,18 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
+# Функция для конвертации локального изображения Витрувианского человека в Base64
+def get_image_base64(path):
+    if os.path.exists(path):
+        with open(path, "rb") as f:
+            return base64.b64encode(f.read()).decode("utf-8")
+    return ""
+
+img_b64 = get_image_base64("1000400438_2.jpg")
+# Если файл не найден (например, другое имя), используем фоллбэк
+img_src = f"data:image/jpeg;base64,{img_b64}" if img_b64 else "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Da_Vinci_Vitruve_Luc_Viatour.jpg/800px-Da_Vinci_Vitruve_Luc_Viatour.jpg"
+
 
 html_code = """<!DOCTYPE html>
 <html lang="ru" class="dark">
@@ -391,18 +405,27 @@ html_code = """<!DOCTYPE html>
     <div id="preloader-canvas-container">
       <canvas id="preloader-webgl"></canvas>
 
+      <!-- Перьевая ручка -->
       <div id="quillPen" class="quill-overlay-nib">
         <svg width="42" height="42" viewBox="0 0 64 64" fill="none">
           <circle cx="4" cy="4" r="3.5" fill="#ffffff" class="nib-spark" />
           <circle cx="4" cy="4" r="6.5" fill="#d4af37" opacity="0.4" class="nib-spark" />
-          <path d="M4 4 L14 10 L18 8 L8 2 Z" fill="#ffffff" />
-          <path d="M8 2 L18 8 L42 22 C52 28 58 40 60 52 C50 48 40 40 32 30 L14 10 Z" fill="url(#quillGradPre)" stroke="#d4af37" stroke-width="0.8" />
-          <path d="M14 10 L44 32" stroke="#4a3b10" stroke-width="0.7" />
+          
+          <path d="M4 4 L11 15 L15 11 Z" fill="#e5e7eb" stroke="#d4af37" stroke-width="0.5"/>
+          <line x1="4" y1="4" x2="10" y2="10" stroke="#070709" stroke-width="0.5"/>
+          <circle cx="10" cy="10" r="1" fill="#070709"/>
+          
+          <path d="M11 15 L15 11 L55 51 C58 54 54 58 51 55 Z" fill="url(#penGrad)" stroke="#d4af37" stroke-width="1"/>
+          
+          <path d="M18 22 L22 18" stroke="#d4af37" stroke-width="2"/>
+          <path d="M42 46 L46 42" stroke="#d4af37" stroke-width="2"/>
+          
           <defs>
-            <linearGradient id="quillGradPre" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#fff4cc" />
-              <stop offset="30%" stop-color="#d4af37" />
-              <stop offset="100%" stop-color="#5a4510" />
+            <linearGradient id="penGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#1a1a1a" />
+              <stop offset="30%" stop-color="#3a3a3a" />
+              <stop offset="70%" stop-color="#111111" />
+              <stop offset="100%" stop-color="#000000" />
             </linearGradient>
           </defs>
         </svg>
@@ -915,10 +938,10 @@ html_code = """<!DOCTYPE html>
       opacity: 0.35
     });
 
-    const preRing1 = new THREE.Mesh(new THREE.TorusGeometry(3.6, 0.035, 16, 120), preGoldMat);
-    const preRing2 = new THREE.Mesh(new THREE.TorusGeometry(3.72, 0.025, 16, 120), preRingMatDim);
-    const preRing3 = new THREE.Mesh(new THREE.TorusGeometry(3.85, 0.035, 16, 120), preGoldMat);
-    const preRing4 = new THREE.Mesh(new THREE.TorusGeometry(4.05, 0.025, 16, 120), preRingMatDim);
+    const preRing1 = new THREE.Mesh(new THREE.TorusGeometry(5.2, 0.035, 16, 120), preGoldMat);
+    const preRing2 = new THREE.Mesh(new THREE.TorusGeometry(5.6, 0.025, 16, 120), preRingMatDim);
+    const preRing3 = new THREE.Mesh(new THREE.TorusGeometry(6.0, 0.035, 16, 120), preGoldMat);
+    const preRing4 = new THREE.Mesh(new THREE.TorusGeometry(6.4, 0.025, 16, 120), preRingMatDim);
 
     preRing1.rotation.x = Math.PI / 4;
     preRing2.rotation.y = Math.PI / 3;
@@ -930,27 +953,25 @@ html_code = """<!DOCTYPE html>
     preArmillary.add(preRing3);
     preArmillary.add(preRing4);
 
-    const textureCanvas = document.createElement('canvas');
-    textureCanvas.width = 1024;
-    textureCanvas.height = 1024;
-    const tCtx = textureCanvas.getContext('2d');
-
     const vitruvianImg = new Image();
     vitruvianImg.crossOrigin = "anonymous";
-    vitruvianImg.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Da_Vinci_Vitruve_Luc_Viatour.jpg/800px-Da_Vinci_Vitruve_Luc_Viatour.jpg";
+    vitruvianImg.src = "VITRUVIAN_IMAGE_SRC_PLACEHOLDER";
 
     let planeMaterial = null;
 
     vitruvianImg.onload = () => {
+      const w = vitruvianImg.width;
+      const h = vitruvianImg.height;
       const offCanvas = document.createElement('canvas');
-      offCanvas.width = vitruvianImg.width;
-      offCanvas.height = vitruvianImg.height;
+      offCanvas.width = w;
+      offCanvas.height = h;
       const oCtx = offCanvas.getContext('2d');
       oCtx.drawImage(vitruvianImg, 0, 0);
 
-      const imgData = oCtx.getImageData(0, 0, offCanvas.width, offCanvas.height);
+      const imgData = oCtx.getImageData(0, 0, w, h);
       const d = imgData.data;
 
+      // Динамически удаляем фон пергамента и подсвечиваем чернила золотом
       for (let i = 0; i < d.length; i += 4) {
         const r = d[i], g = d[i + 1], b = d[i + 2];
         const brightness = (r * 0.299 + g * 0.587 + b * 0.114);
@@ -964,13 +985,7 @@ html_code = """<!DOCTYPE html>
       }
       oCtx.putImageData(imgData, 0, 0);
 
-      const s = 920;
-      const dx = (1024 - s) / 2;
-      const dy = (1024 - s) / 2;
-      tCtx.clearRect(0, 0, 1024, 1024);
-      tCtx.drawImage(offCanvas, dx, dy, s, s);
-
-      const canvasTexture = new THREE.CanvasTexture(textureCanvas);
+      const canvasTexture = new THREE.CanvasTexture(offCanvas);
       planeMaterial = new THREE.MeshBasicMaterial({
         map: canvasTexture,
         transparent: true,
@@ -979,7 +994,16 @@ html_code = """<!DOCTYPE html>
         side: THREE.DoubleSide
       });
 
-      const planeGeo = new THREE.PlaneGeometry(5.4, 5.4);
+      // Сохраняем исходные пропорции эскиза, масштабируя под 3D-сцену
+      let planeW = 7.5;
+      let planeH = 7.5;
+      if (w > h) {
+          planeH = planeW * (h / w);
+      } else {
+          planeW = planeH * (w / h);
+      }
+
+      const planeGeo = new THREE.PlaneGeometry(planeW, planeH);
       const vitruvianPlane = new THREE.Mesh(planeGeo, planeMaterial);
       preScene.add(vitruvianPlane);
     };
@@ -988,19 +1012,23 @@ html_code = """<!DOCTYPE html>
       if (!preloaderDismissed) {
         requestAnimationFrame(animatePreloader);
       }
-      preRing1.rotation.x += 0.016;
-      preRing1.rotation.y += 0.009;
+      
+      // Медленное вращение во всех плоскостях
+      preRing1.rotation.x += 0.004;
+      preRing1.rotation.y += 0.003;
 
-      preRing2.rotation.y += 0.014;
-      preRing2.rotation.z += 0.011;
+      preRing2.rotation.y += 0.005;
+      preRing2.rotation.z += 0.004;
 
-      preRing3.rotation.z += 0.018;
-      preRing3.rotation.x += 0.007;
+      preRing3.rotation.z += 0.006;
+      preRing3.rotation.x += 0.002;
 
-      preRing4.rotation.x -= 0.012;
-      preRing4.rotation.y += 0.015;
+      preRing4.rotation.x -= 0.003;
+      preRing4.rotation.y += 0.005;
+      preRing4.rotation.z -= 0.002;
 
-      preArmillary.rotation.y += 0.005;
+      preArmillary.rotation.y += 0.002;
+      preArmillary.rotation.x += 0.001;
 
       preRenderer.render(preScene, preCamera);
     }
@@ -1564,5 +1592,8 @@ html_code = """<!DOCTYPE html>
   </script>
 </body>
 </html>"""
+
+# Подстановка изображения (строки) напрямую в HTML-код избегая конфликта фигурных скобок с f-strings
+html_code = html_code.replace("VITRUVIAN_IMAGE_SRC_PLACEHOLDER", img_src)
 
 components.html(html_code, height=1350, scrolling=True)
