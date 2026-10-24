@@ -3,7 +3,7 @@ import streamlit.components.v1 as components
 import base64
 import os
 import io
-from PIL import Image
+from PIL import Image, ImageFilter
 
 st.set_page_config(
     page_title="Архитектура Капитала // Финансовое Моделирование",
@@ -31,7 +31,7 @@ iframe {
 </style>
 """, unsafe_allow_html=True)
 
-# Функция: извлечение контуров с Anti-Aliasing и перекраска в золото
+# Функция: извлечение ИСКЛЮЧИТЕЛЬНО контуров (FIND_EDGES) для эффекта чертежа
 def get_blueprint_vitruvian(filename):
     if not os.path.exists(filename):
         return ""
@@ -40,16 +40,20 @@ def get_blueprint_vitruvian(filename):
         # Конвертируем в градации серого
         img = Image.open(filename).convert("L")
         
-        # Создаем умную маску прозрачности (сохраняет полутона для гладкости линий)
+        # Находим только контуры/границы рисунка
+        edges = img.filter(ImageFilter.FIND_EDGES)
+        
+        # Делаем контуры непрозрачными, а фон прозрачным
         def get_alpha(p):
-            return max(0, min(255, int((160 - p) * 3.0)))
+            # p - яркость пикселя. Усиливаем её для чёткости линии.
+            return int(min(255, p * 2.5))
             
-        alpha = img.point(get_alpha)
+        alpha = edges.point(get_alpha)
         
         # Создаем желтый холст (Золотой: #FFD700)
         color_layer = Image.new("RGBA", img.size, (255, 215, 0, 255))
         
-        # Накладываем маску 
+        # Накладываем альфа-канал контуров на золотой фон
         color_layer.putalpha(alpha)
         
         buffered = io.BytesIO()
@@ -100,7 +104,6 @@ tailwind.config = {
 
 <!-- Библиотеки -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -153,8 +156,7 @@ body { background-color: var(--bg-space); color: var(--text-main); font-family: 
     transition: opacity 1.1s cubic-bezier(0.19, 1, 0.22, 1), transform 1.1s cubic-bezier(0.19, 1, 0.22, 1);
 }
 #preloader-stage.fade-out { opacity: 0; transform: scale(1.035); pointer-events: none; }
-#preloader-canvas-container { position: absolute; inset: 0; width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; cursor: grab; z-index: 10; }
-#preloader-canvas-container:active { cursor: grabbing; }
+#preloader-canvas-container { position: absolute; inset: 0; width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; z-index: 10; overflow: hidden; }
 
 /* Динамически управляемое перо */
 #quillPen {
@@ -236,6 +238,11 @@ html:not(.dark) select.mono-input option { background-color: #f4f1ea; color: #14
                 </defs>
             </svg>
         </div>
+    </div>
+    
+    <!-- Появляющийся заголовок -->
+    <div id="preloaderTitle" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 mt-40 font-serif italic text-4xl md:text-5xl font-bold tracking-[0.1em] text-[#d4af37] opacity-0 transition-opacity duration-[1500ms] z-30 pointer-events-none drop-shadow-[0_0_15px_rgba(212,175,55,0.6)] text-center w-full">
+        Архитектура финансов
     </div>
 
     <div class="absolute bottom-10 flex flex-col items-center gap-2 font-mono z-20 pointer-events-auto">
@@ -509,8 +516,14 @@ function dismissPreloader() {
     setTimeout(() => { if (stage) stage.style.display = 'none'; }, 1100);
 }
 
-const PRELOADER_TOTAL_TIME = 8000; 
+const PRELOADER_TOTAL_TIME = 8500; 
 const preloaderStartTime = performance.now();
+
+// Появление текста
+setTimeout(() => {
+    const pt = document.getElementById('preloaderTitle');
+    if(pt) pt.classList.replace('opacity-0', 'opacity-100');
+}, 1800);
 
 function updatePreloaderProgress(now) {
     if (preloaderDismissed) return;
@@ -525,15 +538,17 @@ requestAnimationFrame(updatePreloaderProgress);
 
 
 /* ========================================================
-   THREE.JS ПРЕЛОАДЕР: 3 ГИГАНТСКИХ КОЛЬЦА + ВИТРУВИАНЕЦ (ШЕЙДЕР)
+   THREE.JS ПРЕЛОАДЕР: 3 КОЛЬЦА + ВИТРУВИАНЕЦ (ПРОЯВЛЕНИЕ ЧЕРЕЗ МАСКУ)
    ======================================================== */
 const preCanvas = document.getElementById('preloader-webgl');
 const preScene = new THREE.Scene();
-const preCamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+const preCamera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 2000);
 preCamera.position.z = 120;
 
 const preRenderer = new THREE.WebGLRenderer({ canvas: preCanvas, alpha: true, antialias: true });
 preRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+// Для правильной очистки render target:
+preRenderer.setClearColor(0x000000, 0);
 
 function resizePreloader() {
     preRenderer.setSize(window.innerWidth, window.innerHeight);
@@ -546,13 +561,14 @@ window.addEventListener('resize', resizePreloader);
 const preArmillary = new THREE.Group();
 preScene.add(preArmillary);
 
-const preBlueMat = new THREE.MeshBasicMaterial({ color: 0x00aaff, wireframe: true, transparent: true, opacity: 0.15 });
+const preBlueMat = new THREE.MeshBasicMaterial({ color: 0x00aaff, wireframe: true, transparent: true, opacity: 0.25 });
 
-const ringRadiuses = [45, 60, 75];
+// 3 Кольца, дистанция увеличена для пролета камеры
+const ringRadiuses = [35, 55, 75];
 const rings = [];
 
 ringRadiuses.forEach((radius, i) => {
-    const geo = new THREE.TorusGeometry(radius, 6 + i, 40, 250);
+    const geo = new THREE.TorusGeometry(radius, 6 + i*1.5, 40, 250);
     const ring = new THREE.Mesh(geo, preBlueMat);
     if (i === 0) ring.rotation.x = Math.PI / 2;
     if (i === 1) ring.rotation.y = Math.PI / 3;
@@ -561,40 +577,70 @@ ringRadiuses.forEach((radius, i) => {
     rings.push(ring);
 });
 
+// Настройка Render Target для рисования маски пером
+const maskTarget = new THREE.WebGLRenderTarget(1024, 1024, {
+    minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat
+});
+preRenderer.setRenderTarget(maskTarget);
+preRenderer.clear();
+preRenderer.setRenderTarget(null);
+
+const maskScene = new THREE.Scene();
+let maskCamera = null;
+
+// Кисть для отрисовки маски (мягкий круг)
+const brushGeo = new THREE.PlaneGeometry(6, 6);
+const brushMat = new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: `varying vec2 vUv; void main() { 
+        float d = distance(vUv, vec2(0.5)); 
+        // Кисть добавляет альфу (белый цвет)
+        gl_FragColor = vec4(1.0, 1.0, 1.0, smoothstep(0.5, 0.1, d) * 0.5); 
+    }`
+});
+const brushMesh = new THREE.Mesh(brushGeo, brushMat);
+maskScene.add(brushMesh);
+
 const vitruvianImg = new Image();
 vitruvianImg.crossOrigin = "Anonymous"; 
 vitruvianImg.src = "VITRUVIAN_IMAGE_SRC_PLACEHOLDER";
 let planeMaterial = null;
 let vitruvianPlane = null;
-
-const vertexShader = `
-    varying vec2 vUv;
-    void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
-`;
-const fragmentShader = `
-    uniform sampler2D tDiffuse;
-    uniform float uDrawAngle;
-    varying vec2 vUv;
-    void main() {
-        vec4 tex = texture2D(tDiffuse, vUv);
-        float dx = vUv.x - 0.5;
-        float dy = vUv.y - 0.5;
-        float angle = atan(dx, dy); 
-        if (angle < 0.0) angle += 6.28318530718;
-        if (angle > uDrawAngle) tex.a = 0.0;
-        gl_FragColor = tex;
-    }
-`;
+let aspect = 1.0;
 
 vitruvianImg.onload = () => {
     const canvasTexture = new THREE.Texture(vitruvianImg);
     canvasTexture.needsUpdate = true;
+    
+    aspect = vitruvianImg.height / vitruvianImg.width;
+    
+    // Камера для маски строго соответствует размеру PlaneGeometry
+    maskCamera = new THREE.OrthographicCamera(-25, 25, 25 * aspect, -25 * aspect, 0.1, 10);
+    maskCamera.position.z = 5;
+
     planeMaterial = new THREE.ShaderMaterial({
-        uniforms: { tDiffuse: { value: canvasTexture }, uDrawAngle: { value: 0.0 } },
-        vertexShader: vertexShader, fragmentShader: fragmentShader,
+        uniforms: { 
+            tDiffuse: { value: canvasTexture },
+            tMask: { value: maskTarget.texture }
+        },
+        vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+        fragmentShader: `
+            uniform sampler2D tDiffuse;
+            uniform sampler2D tMask;
+            varying vec2 vUv;
+            void main() {
+                vec4 tex = texture2D(tDiffuse, vUv);
+                vec4 mask = texture2D(tMask, vUv);
+                // Картинка проявляется только там, где кисть оставила след в маске
+                tex.a *= mask.r; 
+                gl_FragColor = tex;
+            }
+        `,
         transparent: true, depthWrite: false, side: THREE.DoubleSide
     });
-    const aspect = vitruvianImg.height / vitruvianImg.width;
+    
     const planeGeo = new THREE.PlaneGeometry(50.0, 50.0 * aspect);
     vitruvianPlane = new THREE.Mesh(planeGeo, planeMaterial);
     preScene.add(vitruvianPlane);
@@ -606,26 +652,57 @@ const penEl = document.getElementById('quillPen');
 function animatePreloader() {
     if (!preloaderDismissed) requestAnimationFrame(animatePreloader);
     
-    rings[0].rotation.y += 0.002;
-    rings[1].rotation.x -= 0.0015;
-    rings[2].rotation.z += 0.001;
+    const elapsed = performance.now() - preloaderStartTime;
+    const t = elapsed * 0.001; // секунды
+    const progress = Math.min(elapsed / PRELOADER_TOTAL_TIME, 1.0);
     
-    if (vitruvianPlane && drawProgress < 6.8) {
-        drawProgress += 0.015; 
-        planeMaterial.uniforms.uDrawAngle.value = drawProgress;
+    // Хаотичное медленное вращение 3 колец
+    rings[0].rotation.y += 0.003 + Math.sin(t * 0.4) * 0.002;
+    rings[0].rotation.x += 0.001;
+    rings[1].rotation.x -= 0.002 + Math.cos(t * 0.5) * 0.002;
+    rings[1].rotation.z += 0.004;
+    rings[2].rotation.z -= 0.001 + Math.sin(t * 0.3) * 0.003;
+    rings[2].rotation.y += 0.003;
+    
+    // Камера плавно пролетает СВОЗЬ структуру колец и чертеж
+    // Z идет от 120 (далеко) до -25 (камера проходит за чертеж)
+    preCamera.position.z = 120 - (progress * 145);
+    preCamera.position.x = Math.sin(progress * Math.PI) * 15;
+    preCamera.position.y = Math.cos(progress * Math.PI * 1.5) * 12;
+    preCamera.lookAt(0, 0, -30);
+    
+    if (vitruvianPlane && maskCamera && progress < 0.9) {
+        drawProgress += 0.02; // Скорость пера
         
-        const R_x = 25.0;
-        const R_y = 25.0 * (vitruvianImg.height / vitruvianImg.width);
-        const pen3D = new THREE.Vector3(R_x * Math.sin(drawProgress), R_y * Math.cos(drawProgress), 0);
+        // Сложная траектория (Lissajous) пера, как геометрический чертеж
+        let tHarm = drawProgress * 2.8; 
+        let px = Math.sin(tHarm * 1.1) * 19 + Math.cos(tHarm * 0.4) * 5;
+        let py = Math.cos(tHarm * 1.3) * 19 * aspect + Math.sin(tHarm * 0.5) * 5 * aspect;
         
+        const pen3D = new THREE.Vector3(px, py, 0);
+        
+        // Перемещаем кисть на маске
+        brushMesh.position.x = px;
+        brushMesh.position.y = py;
+        
+        // Рисуем маску без очистки (autoClear = false)
+        const autoClearPrev = preRenderer.autoClear;
+        preRenderer.autoClear = false;
+        preRenderer.setRenderTarget(maskTarget);
+        preRenderer.render(maskScene, maskCamera);
+        preRenderer.setRenderTarget(null);
+        preRenderer.autoClear = autoClearPrev;
+        
+        // Координаты HTML Пера
         pen3D.project(preCamera);
         const penX = (pen3D.x * 0.5 + 0.5) * window.innerWidth;
         const penY = -(pen3D.y * 0.5 - 0.5) * window.innerHeight;
         
-        if (drawProgress > 0.1 && drawProgress <= 6.28) {
+        // Перо исчезает чуть раньше, когда камера пролетает сквозь плоскость
+        if (progress < 0.85) {
             penEl.style.opacity = 1;
-            penEl.style.transform = `translate3d(${penX}px, ${penY}px, 0) rotate(${Math.sin(drawProgress * 10) * 15 - 15}deg)`;
-        } else if (drawProgress > 6.28) {
+            penEl.style.transform = `translate3d(${penX}px, ${penY}px, 0) rotate(${Math.sin(drawProgress * 6) * 20 - 15}deg)`;
+        } else {
             penEl.style.opacity = 0; 
         }
     }
@@ -995,7 +1072,7 @@ window.onload = () => runCalculation();
 </body>
 </html>"""
 
-# Обработка картинки[span_0](start_span)[span_0](end_span) "на лету" и подстановка её в HTML
+# Обработка картинки "на лету" и подстановка её в HTML
 img_src = get_blueprint_vitruvian("1000400438.jpg")
 html_code = html_code.replace("VITRUVIAN_IMAGE_SRC_PLACEHOLDER", img_src)
 
