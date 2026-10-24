@@ -8,7 +8,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Скрываем системные элементы Streamlit для кинематографичного монолита
 st.markdown("""
 <style>
     #MainMenu, header, footer, .stDeployButton {
@@ -35,12 +34,10 @@ html_code = """<!DOCTYPE html>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Архитектура Капитала // Финансовое Моделирование</title>
 
-  <!-- Типографика: Cormorant Garamond, JetBrains Mono, Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -66,7 +63,6 @@ html_code = """<!DOCTYPE html>
     }
   </script>
 
-  <!-- Three.js & Chart.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -120,7 +116,6 @@ html_code = """<!DOCTYPE html>
       transition: background-color 0.5s cubic-bezier(0.16, 1, 0.3, 1), color 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    /* Архитектурный аналоговый шум кинопленки (Film Grain) */
     .film-grain {
       position: fixed;
       inset: 0;
@@ -132,9 +127,6 @@ html_code = """<!DOCTYPE html>
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
     }
 
-    /* =========================================================
-       РЕНЕССАНСНЫЙ ПРЕЛОАДЕР: ВИТРУВИАНСКИЙ ЧЕЛОВЕК & ПЕРО (7 СЕК)
-       ========================================================= */
     #preloader-stage {
       position: fixed;
       inset: 0;
@@ -153,7 +145,6 @@ html_code = """<!DOCTYPE html>
       pointer-events: none;
     }
 
-    /* Анимации прорисовки пером различных элементов чертежа */
     .draw-circle {
       stroke-dasharray: 1260;
       stroke-dashoffset: 1260;
@@ -191,7 +182,6 @@ html_code = """<!DOCTYPE html>
       }
     }
 
-    /* Траектория движения золотого пера по ключевым точкам чертежа */
     @keyframes quillChoreography {
       0%   { transform: translate(300px, 80px) rotate(-18deg); opacity: 0; }
       5%   { transform: translate(300px, 100px) rotate(-24deg); opacity: 1; }
@@ -213,7 +203,6 @@ html_code = """<!DOCTYPE html>
       filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.5));
     }
 
-    /* Пульсирующая искра на острие пера */
     .nib-spark {
       animation: sparkFlicker 0.25s infinite alternate;
     }
@@ -247,7 +236,6 @@ html_code = """<!DOCTYPE html>
       transition: background-color 0.3s ease, border-color 0.3s ease;
     }
 
-    /* Координатные перекрестия сетки */
     .cross-tl::before {
       content: '+';
       position: absolute;
@@ -273,7 +261,6 @@ html_code = """<!DOCTYPE html>
       z-index: 10;
     }
 
-    /* Рельефная оптика через SVG feSpecularLighting */
     .specular-emboss {
       filter: url(#specular-glass-filter);
       transition: filter 0.2s ease, transform 0.3s ease;
@@ -282,7 +269,6 @@ html_code = """<!DOCTYPE html>
       transform: scale(1.08) rotate(4deg);
     }
 
-    /* 3D Tilt Карточки с динамическим курсорным бликом */
     .tilt-card {
       position: relative;
       overflow: hidden;
@@ -305,7 +291,6 @@ html_code = """<!DOCTYPE html>
       opacity: 1;
     }
 
-    /* Двухфазное раскрытие вкладок */
     @keyframes alcheTabEntrance {
       0% {
         opacity: 0;
@@ -377,7 +362,6 @@ html_code = """<!DOCTYPE html>
       color: #141416;
     }
 
-    /* Тактильный тумблер */
     .hw-slider-track {
       position: relative;
       width: 140px;
@@ -400,7 +384,6 @@ html_code = """<!DOCTYPE html>
       transition: transform 0.45s cubic-bezier(0.19, 1, 0.22, 1), background-color 0.3s ease;
     }
 
-    /* Индикатор пульса телеметрии */
     .pulse-dot {
       display: inline-block;
       width: 6px;
@@ -424,13 +407,9 @@ html_code = """<!DOCTYPE html>
 
   <div class="film-grain"></div>
 
-  <!-- =========================================================
-       РЕНЕССАНСНЫЙ ПРЕЛОАДЕР: ВИТРУВИАНСКИЙ ЧЕЛОВЕК (7 СЕКУНД)
-       ========================================================= -->
   <div id="preloader-stage">
     <div class="relative w-[340px] h-[340px] sm:w-[480px] sm:h-[480px] lg:w-[540px] lg:h-[540px] flex items-center justify-center">
       
-      <!-- SVG Чертёж -->
       <svg id="vitruvianSvg" viewBox="0 0 600 600" class="w-full h-full text-[#d4af37] overflow-visible">
         <defs>
           <radialGradient id="goldGlow" cx="50%" cy="50%" r="50%">
@@ -439,63 +418,49 @@ html_code = """<!DOCTYPE html>
           </radialGradient>
         </defs>
 
-        <!-- Мягкий центральный нимб золотого свечения -->
         <circle cx="300" cy="300" r="230" fill="url(#goldGlow)" />
 
-        <!-- 1. Сакральный круг и внешний компас -->
         <circle cx="300" cy="300" r="200" fill="none" stroke="#d4af37" stroke-width="1.2" class="draw-circle" stroke-dasharray="4 2" />
         <circle cx="300" cy="300" r="208" fill="none" stroke="#d4af37" stroke-opacity="0.35" stroke-width="0.7" class="draw-circle" />
 
-        <!-- 2. Гармонический квадрат Витрувия -->
         <rect x="125" y="125" width="350" height="350" fill="none" stroke="#d4af37" stroke-width="1.2" class="draw-square" />
         <rect x="120" y="120" width="360" height="360" fill="none" stroke="#d4af37" stroke-opacity="0.3" stroke-width="0.6" class="draw-square" stroke-dasharray="2 3" />
 
-        <!-- 3. Оси координат и золотое сечение (1:1.618) -->
         <g stroke="#d4af37" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.6" class="draw-axis">
           <line x1="300" y1="50" x2="300" y2="550" />
           <line x1="50" y1="300" x2="550" y2="300" />
           <line x1="125" y1="125" x2="475" y2="475" />
           <line x1="125" y1="475" x2="475" y2="125" />
-          <!-- Линии золотого деления -->
           <line x1="125" y1="234" x2="475" y2="234" stroke-opacity="0.4" />
           <line x1="125" y1="366" x2="475" y2="366" stroke-opacity="0.4" />
         </g>
 
-        <!-- 4. Витрувианский человек: Основная стойка (руки горизонтально, ноги прямо) -->
         <g fill="none" stroke="#d4af37" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" class="draw-vitruvian-main">
-          <!-- Голова и шея -->
           <circle cx="300" cy="180" r="22" stroke-width="1.2" />
           <path d="M294 172 Q300 166 306 172" stroke-width="0.8" />
           <path d="M296 202 L296 215 M304 202 L304 215" />
 
-          <!-- Торс и грудная клетка -->
           <path d="M280 218 L320 218 L312 295 L288 295 Z" />
           <path d="M280 218 Q300 242 320 218" stroke-width="0.8" />
           <line x1="300" y1="218" x2="300" y2="295" stroke-width="0.8" />
 
-          <!-- Прямые руки (по квадрату) -->
           <path d="M280 220 L130 220 M320 220 L470 220" stroke-width="1.4" />
           <circle cx="130" cy="220" r="3" fill="#d4af37" />
           <circle cx="470" cy="220" r="3" fill="#d4af37" />
 
-          <!-- Прямые ноги -->
           <path d="M290 295 L282 468 M310 295 L318 468" stroke-width="1.4" />
           <path d="M272 470 L286 470 M314 470 L328 470" stroke-width="1.5" />
         </g>
 
-        <!-- 5. Витрувианский человек: Вторая стойка (руки вверх к кругу, ноги врозь) -->
         <g fill="none" stroke="#d4af37" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" class="draw-vitruvian-spread" stroke-dasharray="5 2">
-          <!-- Поднятые руки к ободу круга -->
           <path d="M280 220 L158 158 M320 220 L442 158" stroke-width="1.2" />
           <circle cx="158" cy="158" r="2.5" fill="#d4af37" />
           <circle cx="442" cy="158" r="2.5" fill="#d4af37" />
 
-          <!-- Расставленные ноги к ободу круга -->
           <path d="M290 295 L200 452 M310 295 L400 452" stroke-width="1.2" />
           <path d="M190 457 L206 450 M394 450 L410 457" stroke-width="1.4" />
         </g>
 
-        <!-- 6. Манускриптные штрихи и текст Да Винчи -->
         <g fill="none" stroke="#d4af37" stroke-opacity="0.45" stroke-width="0.6" class="draw-details">
           <line x1="140" y1="140" x2="220" y2="140" />
           <line x1="140" y1="146" x2="200" y2="146" />
@@ -506,18 +471,15 @@ html_code = """<!DOCTYPE html>
         </g>
 
         <text x="300" y="525" text-anchor="middle" fill="#d4af37" font-family="'Cormorant Garamond', serif" font-style="italic" font-size="12" letter-spacing="3" opacity="0.85">
-          PROPORTIO DIVINA // HOMO VITRUVIANUS
+          HOMO VITRUVIANUS
         </text>
       </svg>
 
-      <!-- ПЕРО (Quill), прорисовывающее чертёж -->
       <div id="quillPen" class="animated-quill">
         <svg width="42" height="42" viewBox="0 0 64 64" fill="none">
-          <!-- Искрящаяся точка на острие -->
           <circle cx="4" cy="4" r="3.5" fill="#ffffff" class="nib-spark" />
           <circle cx="4" cy="4" r="6.5" fill="#d4af37" opacity="0.4" class="nib-spark" />
           
-          <!-- Острие и перо из золота -->
           <path d="M4 4 L14 10 L18 8 L8 2 Z" fill="#ffffff" />
           <path d="M8 2 L18 8 L42 22 C52 28 58 40 60 52 C50 48 40 40 32 30 L14 10 Z" fill="url(#quillGrad)" stroke="#d4af37" stroke-width="0.8" />
           <path d="M14 10 L44 32" stroke="#4a3b10" stroke-width="0.7" />
@@ -534,15 +496,13 @@ html_code = """<!DOCTYPE html>
 
     </div>
 
-    <!-- Индикатор загрузки и телеметрия инициализации -->
     <div class="mt-4 flex flex-col items-center gap-2 font-mono">
       <div class="flex items-center gap-3 text-[#d4af37] text-[11px] tracking-[0.25em] uppercase">
         <span class="pulse-dot"></span>
-        <span id="loaderStatusText">Гармонизация Капитала...</span>
+        <span id="loaderStatusText">Инициализация...</span>
         <span id="loaderPercent" class="font-bold">0%</span>
       </div>
 
-      <!-- Шкала прогресса на 7 секунд -->
       <div class="w-64 sm:w-80 h-[2px] bg-white/10 relative overflow-hidden mt-1">
         <div id="loaderProgressBar" class="absolute top-0 bottom-0 left-0 bg-[#d4af37] w-0 transition-all duration-100 ease-out"></div>
       </div>
@@ -553,7 +513,6 @@ html_code = """<!DOCTYPE html>
     </div>
   </div>
 
-  <!-- Оптический стеклянно-металлический фильтр SVG feSpecularLighting -->
   <svg width="0" height="0" class="absolute pointer-events-none" style="position: fixed;">
     <defs>
       <filter id="specular-glass-filter" x="-20%" y="-20%" width="140%" height="140%">
@@ -575,7 +534,6 @@ html_code = """<!DOCTYPE html>
 
   <div id="mainDashboardApp" class="relative z-10 min-h-screen flex flex-col border-t border-l opacity-0 transition-opacity duration-1000" style="border-color: var(--border-line);">
 
-    <!-- ВЕРХНИЙ HUD И ПАНЕЛЬ ТЕЛЕМЕТРИИ -->
     <header class="alche-block px-5 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-6">
         <div class="flex items-center gap-3">
@@ -601,12 +559,10 @@ html_code = """<!DOCTYPE html>
       </div>
 
       <div class="flex items-center gap-4">
-        <!-- Кнопка мгновенного скачивания отчета (без перезагрузки страницы) -->
         <button id="downloadReportBtn" onclick="exportDataToCsv()" type="button" class="px-3.5 py-1.5 border font-mono text-[10px] uppercase tracking-widest hover:border-[#d4af37] hover:bg-[#d4af37]/10 transition flex items-center gap-2">
           <span>↓ Скачать отчет</span>
         </button>
 
-        <!-- Аппаратный ползунок "День / Ночь" -->
         <div id="themeSlider" class="hw-slider-track" onclick="toggleTheme()" title="Переключить режим: Ночь / День">
           <div id="sliderThumb" class="hw-slider-thumb" style="transform: translateX(0px);"></div>
           <span id="lblNight" class="relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold text-black">Ночь</span>
@@ -615,10 +571,8 @@ html_code = """<!DOCTYPE html>
       </div>
     </header>
 
-    <!-- Основная рабочая сетка -->
     <div class="flex-1 grid grid-cols-1 lg:grid-cols-12">
 
-      <!-- ЛЕВАЯ ПАНЕЛЬ ПАРАМЕТРОВ -->
       <aside class="lg:col-span-3 flex flex-col">
         <div class="alche-block cross-tl px-5 py-3.5 flex items-center justify-between">
           <span class="font-mono text-[10px] uppercase tracking-[0.2em] text-[#d4af37] font-bold">[00] Параметры Модели</span>
@@ -626,7 +580,6 @@ html_code = """<!DOCTYPE html>
         </div>
 
         <form id="financialInputsForm" class="flex-1 flex flex-col" onsubmit="event.preventDefault();">
-          <!-- Секция I: Горизонт и маржинальность -->
           <div class="alche-block p-5 space-y-4">
             <div class="flex justify-between items-baseline">
               <span class="font-serif italic text-base font-semibold">I. Временной горизонт и маржа</span>
@@ -690,7 +643,6 @@ html_code = """<!DOCTYPE html>
             </div>
           </div>
 
-          <!-- Секция II: Партионный склад и кредитная ставка -->
           <div class="alche-block p-5 space-y-4">
             <div class="flex justify-between items-baseline">
               <span class="font-serif italic text-base font-semibold">II. Партионный склад и капитал</span>
@@ -718,7 +670,6 @@ html_code = """<!DOCTYPE html>
             </div>
           </div>
 
-          <!-- Секция III: Масштабирование заказов -->
           <div class="alche-block p-5 space-y-4">
             <div class="flex justify-between items-baseline">
               <span class="font-serif italic text-base font-semibold">III. Масштабирование заказов</span>
@@ -758,7 +709,6 @@ html_code = """<!DOCTYPE html>
             </div>
           </div>
 
-          <!-- Секция IV: Постоянные затраты и факторинг -->
           <div class="alche-block p-5 space-y-4 flex-1">
             <div class="flex justify-between items-baseline">
               <span class="font-serif italic text-base font-semibold">IV. Постоянные затраты и факторинг</span>
@@ -800,9 +750,7 @@ html_code = """<!DOCTYPE html>
         </form>
       </aside>
 
-      <!-- ПРАВАЯ ЧАСТЬ: ДАШБОРД И АНАЛИТИКА -->
       <section class="lg:col-span-9 flex flex-col">
-        <!-- 5 Архитектурных KPI-карточек с 3D Tilt и спарклайнами -->
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 border-b" style="border-color: var(--border-line);">
           <div class="alche-block tilt-card p-5">
             <div class="flex justify-between items-center opacity-60 mb-1">
@@ -849,7 +797,6 @@ html_code = """<!DOCTYPE html>
           </div>
         </div>
 
-        <!-- Навигационные вкладки -->
         <div class="alche-block px-5 py-2.5 flex items-center justify-between border-b" style="border-color: var(--border-line);">
           <div class="flex flex-wrap items-center gap-1.5" id="navTabsContainer">
             <button type="button" onclick="selectTab(0)" class="tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest bg-[#d4af37] text-black font-bold transition shadow-md">[01] ОБСЛУЖИВАНИЕ КАПИТАЛА</button>
@@ -863,9 +810,7 @@ html_code = """<!DOCTYPE html>
           </div>
         </div>
 
-        <!-- Динамические секции -->
         <div class="flex-1 p-5 lg:p-7 space-y-6">
-          <!-- Секция 01: Долг и проценты -->
           <div id="viewTab0" class="tab-view-enter space-y-6">
             <div class="alche-block p-5 border">
               <div class="flex justify-between items-center mb-4">
@@ -879,7 +824,6 @@ html_code = """<!DOCTYPE html>
               </div>
             </div>
 
-            <!-- Таблица долговой ведомости -->
             <div class="alche-block border overflow-x-auto">
               <table class="w-full text-left font-mono text-[11px]">
                 <thead class="border-b" style="background-color: var(--table-header-bg); border-color: var(--border-line);">
@@ -897,7 +841,6 @@ html_code = """<!DOCTYPE html>
             </div>
           </div>
 
-          <!-- Секция 02: Складской цикл -->
           <div id="viewTab1" class="hidden space-y-6">
             <div class="alche-block p-5 border">
               <div class="flex justify-between items-center mb-4">
@@ -912,7 +855,6 @@ html_code = """<!DOCTYPE html>
             </div>
           </div>
 
-          <!-- Секция 03: Денежный поток -->
           <div id="viewTab2" class="hidden space-y-6">
             <div class="alche-block p-5 border">
               <div class="flex justify-between items-center mb-4">
@@ -927,7 +869,6 @@ html_code = """<!DOCTYPE html>
             </div>
           </div>
 
-          <!-- Секция 04: Заказы и структура затрат -->
           <div id="viewTab3" class="hidden space-y-6">
             <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
               <div class="alche-block p-5 border">
@@ -953,7 +894,6 @@ html_code = """<!DOCTYPE html>
   </div>
 
   <script>
-    // --- 0. АУДИОСИНТЕЗАТОР ТАКТИЛЬНЫХ КЛИКОВ (Web Audio API) ---
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playClickSound(freq = 1200, duration = 0.02) {
       try {
@@ -972,7 +912,6 @@ html_code = """<!DOCTYPE html>
       } catch (e) {}
     }
 
-    // --- УПРАВЛЕНИЕ ПРЕЛОАДЕРОМ (7 СЕКУНД) ---
     let preloaderDismissed = false;
     function dismissPreloader() {
       if (preloaderDismissed) return;
@@ -991,15 +930,14 @@ html_code = """<!DOCTYPE html>
       }, 1100);
     }
 
-    // Запуск прогресс-бара и таймера на 7.0 секунд
     const PRELOADER_TOTAL_TIME = 7000;
     const preloaderStartTime = performance.now();
 
     const statusSteps = [
       { t: 0.1, msg: "Калибровка циркуля и осей..." },
-      { t: 0.25, msg: "Начертание божественной пропорции..." },
+      { t: 0.25, msg: "Построение геометрии..." },
       { t: 0.45, msg: "Синтез фигуры Витрувия..." },
-      { t: 0.70, msg: "Инициализация матричных регистров..." },
+      { t: 0.70, msg: "Инициализация регистров..." },
       { t: 0.90, msg: "Финализация модели капитала..." }
     ];
 
@@ -1029,7 +967,6 @@ html_code = """<!DOCTYPE html>
     }
     requestAnimationFrame(updatePreloaderProgress);
 
-    // --- 1. THREE.JS RENAISSANCE ARMILLARY SPHERE ---
     const canvas = document.getElementById('webgl-bg-canvas');
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -1067,7 +1004,6 @@ html_code = """<!DOCTYPE html>
       mouseY = (e.clientY - window.innerHeight / 2) * 0.0006;
       document.getElementById('cursorCoordDisplay').textContent = `X: ${e.clientX.toString().padStart(4, '0')} / Y: ${e.clientY.toString().padStart(4, '0')}`;
 
-      // Динамическое смещение луча в SVG feSpecularLighting
       if (lightDiff && lightSpec) {
         const lx = e.clientX % 320;
         const ly = e.clientY % 220;
@@ -1078,7 +1014,6 @@ html_code = """<!DOCTYPE html>
       }
     });
 
-    // 3D Tilt Карточки с магнитным наклоном
     document.querySelectorAll('.tilt-card').forEach(card => {
       card.addEventListener('mousemove', e => {
         const rect = card.getBoundingClientRect();
@@ -1121,7 +1056,6 @@ html_code = """<!DOCTYPE html>
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    // --- 2. HARDWARE DAY / NIGHT SWITCH ---
     let isDark = true;
     function toggleTheme() {
       playClickSound(800, 0.04);
@@ -1145,7 +1079,6 @@ html_code = """<!DOCTYPE html>
       runCalculation();
     }
 
-    // --- 3. MATRIX CIPHER / ПОДБОР БУКВ И ЦИФР ДЛЯ СЛОЖЕНИЯ СЛОВА ---
     const CYRILLIC_GLYPHS = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ0123456789§$%*#@!/[]:;';
     const NUMERIC_GLYPHS = '0123456789 ';
 
@@ -1185,7 +1118,6 @@ html_code = """<!DOCTYPE html>
       scrambleElementText(el, finalStr, duration, false);
     }
 
-    // --- 4. TAB CONTROLLER WITH CINEMATIC REVEAL & CIPHER SCRAMBLE ---
     const TAB_TITLES = [
       '[01] ОБСЛУЖИВАНИЕ КАПИТАЛА',
       '[02] СКЛАДСКОЙ ЦИКЛ',
@@ -1212,7 +1144,7 @@ html_code = """<!DOCTYPE html>
         if (i === index) {
           view.classList.remove('hidden');
           view.classList.remove('tab-view-enter');
-          void view.offsetWidth; // trigger reflow
+          void view.offsetWidth;
           view.classList.add('tab-view-enter');
 
           const headerTitles = view.querySelectorAll('h3');
@@ -1227,7 +1159,6 @@ html_code = """<!DOCTYPE html>
       }
     }
 
-    // --- 5. FINANCIAL MODEL CORE ENGINE ---
     let growthMode = 'abs';
     function setGrowthMode(mode) {
       playClickSound(950, 0.02);
@@ -1553,7 +1484,6 @@ html_code = """<!DOCTYPE html>
       });
     }
 
-    // Мгновенный экспорт в CSV прямо в браузере без обращения к бэкенду
     function exportDataToCsv() {
       playClickSound(1600, 0.05);
       if (!latestCalculatedData) return;
@@ -1575,7 +1505,6 @@ html_code = """<!DOCTYPE html>
       document.body.removeChild(link);
     }
 
-    // Часы в HUD
     setInterval(() => {
       const now = new Date();
       document.getElementById('telemetryClock').textContent = `[${now.toTimeString().split(' ')[0]}]`;
