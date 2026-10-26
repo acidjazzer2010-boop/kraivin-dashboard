@@ -11,15 +11,22 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-def get_image_b64(path):
-    if os.path.exists(path):
-        try:
-            with open(path, "rb") as f:
-                ext = path.split('.')[-1].lower()
-                mime = "image/jpeg" if ext in ["jpg", "jpeg"] else f"image/{ext}"
-                return f"data:{mime};base64,{base64.b64encode(f.read()).decode()}"
-        except Exception:
-            return ""
+def get_image_b64(filename):
+    # Проверяем как в текущей директории, так и в родительских/вложенных
+    candidates = [
+        filename,
+        os.path.join(".", filename),
+        os.path.join(os.path.dirname(__file__), filename) if "__file__" in locals() else filename
+    ]
+    for path in candidates:
+        if os.path.exists(path):
+            try:
+                with open(path, "rb") as f:
+                    ext = path.split('.')[-1].lower()
+                    mime = "image/jpeg" if ext in ["jpg", "jpeg"] else f"image/{ext}"
+                    return f"data:{mime};base64,{base64.b64encode(f.read()).decode()}"
+            except Exception:
+                pass
     return ""
 
 img_files = [
@@ -131,7 +138,7 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
 <body class="selection:bg-[#d4af37] selection:text-black">
 <div class="film-grain" aria-hidden="true"></div>
 
-<!-- ПРЕЛОАДЕР: АСТРОЛЯБИЯ + МЕХАНИЧЕСКАЯ ИРИСОВАЯ ДИАФРАГМА -->
+<!-- ПРЕЛОАДЕР -->
 <div id="preloader-stage">
     <canvas id="preloader-webgl"></canvas>
     
@@ -371,317 +378,13 @@ const USER_IMAGES = [
     "__IMG_4__"
 ];
 
-const BLUEPRINT_PRESETS = [
-    {
-        name: "Тяга и масштабирование",
-        subtitle: "Сверхбыстрый прирост заказов (+15 шт./мес)",
-        apply: () => {
-            setGrowthMode('abs');
-            document.getElementById('paramGrowthSlider').value = 15;
-            document.getElementById('paramMargin').value = 25;
-            document.getElementById('paramStartOrders').value = 50;
-        }
-    },
-    {
-        name: "Механика оборачиваемости",
-        subtitle: "Короткий 3-месячный цикл закупки партий",
-        apply: () => {
-            document.getElementById('paramBatchCycle').value = 3;
-            document.getElementById('paramSupplierPrepay').value = 30;
-            document.getElementById('paramSupplierDelay').value = 2;
-        }
-    },
-    {
-        name: "Аэродинамика кассовых разрывов",
-        subtitle: "Факторинг 80% для ликвидации дефицита",
-        apply: () => {
-            document.getElementById('paramFactoringShare').value = 80;
-            document.getElementById('paramMargin').value = 22;
-        }
-    },
-    {
-        name: "Золотая пропорция (Канон)",
-        subtitle: "Сбалансированная модель 1 : 1.618",
-        apply: () => {
-            document.getElementById('paramMargin').value = 20;
-            document.getElementById('paramFactoringShare').value = 50;
-            document.getElementById('paramBatchCycle').value = 5;
-        }
-    },
-    {
-        name: "Защита резервов и баланс",
-        subtitle: "Минимизация долга и удержание ликвидности",
-        apply: () => {
-            document.getElementById('paramSupplierPrepay').value = 20;
-            document.getElementById('paramSupplierDelay').value = 3;
-            document.getElementById('paramMaxOrdersCap').value = 180;
-        }
-    }
-];
-
-let audioCtx = null;
-function playClickSound(freq = 1200, duration = 0.02) {
-    try {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(320, audioCtx.currentTime + duration);
-        gain.gain.setValueAtTime(0.035, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + duration);
-    } catch (e) {}
-}
-
-function playGearDroneSound() {
-    try {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(65, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(45, audioCtx.currentTime + 0.28);
-        gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.28);
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.28);
-    } catch (e) {}
-}
-
-/* ЗВУК ЗАТВОРА КАМЕРЫ-ОБСКУРЫ */
-function playIrisShutterSound() {
-    try {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(140, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.35);
-        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.35);
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.35);
-    } catch (e) {}
-}
-
-let _calcTimer = null;
-function scheduleCalc(delay = 70) {
-    if (_calcTimer) clearTimeout(_calcTimer);
-    _calcTimer = setTimeout(() => { _calcTimer = null; runCalculation(); }, delay);
-}
-
-let preloaderDismissed = false;
-function dismissPreloader() {
-    if (preloaderDismissed) return;
-    preloaderDismissed = true;
-    const stage = document.getElementById('preloader-stage');
-    const app = document.getElementById('mainDashboardApp');
-    document.documentElement.style.overflow = 'auto';
-    document.body.style.overflow = 'auto';
-    if (app) {
-        app.classList.add('ready'); void app.offsetWidth;
-        app.classList.remove('opacity-0'); app.classList.add('opacity-100');
-    }
-    setTimeout(() => {
-        if (stage) stage.style.display = 'none';
-        try {
-            preScene.traverse(o => {
-                if (o.geometry) o.geometry.dispose();
-                if (o.material) { Array.isArray(o.material) ? o.material.forEach(m => m.dispose()) : o.material.dispose(); }
-            });
-            preRenderer.dispose(); preRenderer.forceContextLoss();
-            snapshotTarget.dispose();
-        } catch (e) {}
-    }, 1450);
-}
-
-const PRELOADER_TOTAL_TIME = REDUCE_MOTION ? 1200 : 9000;
-const preloaderStartTime = performance.now();
-
-setTimeout(() => { const pt = document.getElementById('preloaderTitle'); if (pt) pt.classList.add('locked-on'); }, 900);
-
-let drawingCompleted = false;
-function updatePreloaderProgress(now) {
-    if (preloaderDismissed) return;
-    const elapsed = now - preloaderStartTime;
-    const progress = Math.min(elapsed / PRELOADER_TOTAL_TIME, 1);
-    const bar = document.getElementById('loaderProgressBar');
-    const pct = document.getElementById('loaderPercent');
-    if (bar) bar.style.width = `${(progress * 100).toFixed(0)}%`;
-    if (pct) pct.textContent = `${Math.floor(progress * 100)}%`;
-    if (progress >= 0.96 && !drawingCompleted) {
-        drawingCompleted = true;
-        const hud = document.getElementById('preloaderHUD');
-        const btn = document.getElementById('exploreBtnWrapper');
-        if (hud) hud.style.opacity = '0';
-        if (btn) btn.classList.add('active');
-    }
-    if (progress < 1) requestAnimationFrame(updatePreloaderProgress);
-}
-requestAnimationFrame(updatePreloaderProgress);
-
-/* THREE.JS ПРЕЛОАДЕР */
-const preCanvas = document.getElementById('preloader-webgl');
-const preRenderer = new THREE.WebGLRenderer({ canvas: preCanvas, alpha: true, antialias: true });
-preRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-preRenderer.setSize(window.innerWidth, window.innerHeight);
-
-const preScene = new THREE.Scene();
-const preCamera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 1, 6000);
-const baseCamZ = 390;
-let targetCamPos = new THREE.Vector3(0, 0, baseCamZ);
-let currentLookTarget = new THREE.Vector3(0, 0, 0);
-let targetLookTarget = new THREE.Vector3(0, 0, 0);
-preCamera.position.copy(targetCamPos);
-
-const preGroup = new THREE.Group();
-preScene.add(preGroup);
-
-/* ЗОЛОТАЯ ВЗВЕСЬ ЧАСТИЦ */
-const particleCount = 450;
-const particleGeo = new THREE.BufferGeometry();
-const particlePos = new Float32Array(particleCount * 3);
-for (let i = 0; i < particleCount * 3; i += 3) {
-    particlePos[i] = (Math.random() - 0.5) * 600;
-    particlePos[i + 1] = (Math.random() - 0.5) * 450;
-    particlePos[i + 2] = (Math.random() - 0.5) * 500;
-}
-particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePos, 3));
-const particleMat = new THREE.PointsMaterial({
-    color: 0xd4af37,
-    size: 2.2,
-    transparent: true,
-    opacity: 0.38,
-    blending: THREE.AdditiveBlending
-});
-const dustParticles = new THREE.Points(particleGeo, particleMat);
-preGroup.add(dustParticles);
-
-const megaRingWireMat = new THREE.MeshBasicMaterial({ color: 0x00c3ff, wireframe: true, transparent: true, opacity: 0.38 });
-const secondaryWireMat = new THREE.MeshBasicMaterial({ color: 0x0077aa, wireframe: true, transparent: true, opacity: 0.22 });
-
-function createCyclopeanTrussRing(mainRadius, tubeWidth, tubeDepth, segments) {
-    const group = new THREE.Group();
-    group.add(new THREE.Mesh(new THREE.TorusGeometry(mainRadius, tubeWidth * 0.45, 12, segments), megaRingWireMat));
-    const linePts = [];
-    const rOuter = mainRadius + tubeWidth, rInner = mainRadius - tubeWidth, zOffset = tubeDepth;
-    
-    for (let i = 0; i < segments; i++) {
-        const nextIdx = (i + 1) % segments;
-        const a1 = (i / segments) * Math.PI * 2;
-        const a2 = (nextIdx / segments) * Math.PI * 2;
-
-        const p1_topOut = new THREE.Vector3(Math.cos(a1) * rOuter, Math.sin(a1) * rOuter, zOffset);
-        const p2_topOut = new THREE.Vector3(Math.cos(a2) * rOuter, Math.sin(a2) * rOuter, zOffset);
-        const p1_botOut = new THREE.Vector3(Math.cos(a1) * rOuter, Math.sin(a1) * rOuter, -zOffset);
-        const p2_botOut = new THREE.Vector3(Math.cos(a2) * rOuter, Math.sin(a2) * rOuter, -zOffset);
-
-        const p1_topIn = new THREE.Vector3(Math.cos(a1) * rInner, Math.sin(a1) * rInner, zOffset);
-        const p2_topIn = new THREE.Vector3(Math.cos(a2) * rInner, Math.sin(a2) * rInner, zOffset);
-        const p1_botIn = new THREE.Vector3(Math.cos(a1) * rInner, Math.sin(a1) * rInner, -zOffset);
-        const p2_botIn = new THREE.Vector3(Math.cos(a2) * rInner, Math.sin(a2) * rInner, -zOffset);
-
-        linePts.push(p1_topOut, p2_topOut);
-        linePts.push(p1_botOut, p2_botOut);
-        linePts.push(p1_topIn, p2_topIn);
-        linePts.push(p1_botIn, p2_botIn);
-
-        linePts.push(p1_topOut, p1_botOut);
-        linePts.push(p1_topIn, p1_botIn);
-        linePts.push(p1_topOut, p1_topIn);
-        linePts.push(p1_botOut, p1_botIn);
-
-        if (i % 2 === 0) {
-            linePts.push(p1_topOut, p2_botOut);
-            linePts.push(p1_topIn, p2_botIn);
-            linePts.push(p1_topOut, p2_topIn);
-        } else {
-            linePts.push(p1_botOut, p2_topOut);
-            linePts.push(p1_botIn, p2_topIn);
-            linePts.push(p1_botOut, p2_botIn);
-        }
-
-        if (i % 3 === 0) {
-            const toothR = rOuter + tubeWidth * 0.42;
-            const pTooth = new THREE.Vector3(Math.cos(a1) * toothR, Math.sin(a1) * toothR, 0);
-            linePts.push(p1_topOut, pTooth);
-            linePts.push(pTooth, p1_botOut);
-        }
-    }
-    group.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(linePts), megaRingWireMat));
-    group.add(new THREE.Mesh(new THREE.TorusGeometry(mainRadius - tubeWidth * 1.6, tubeWidth * 0.18, 8, Math.floor(segments * 0.75)), secondaryWireMat));
-    return group;
-}
-
-const astrolabeRings = [];
-const aRing1 = createCyclopeanTrussRing(340, 18.0, 12.0, 180);
-const aRing2 = createCyclopeanTrussRing(255, 14.0, 10.0, 150);
-const aRing3 = createCyclopeanTrussRing(175, 11.0, 8.0, 130);
-aRing2.rotation.x = Math.PI / 3.4; aRing2.rotation.z = Math.PI / 6.0; aRing3.rotation.y = Math.PI / 3.0;
-preGroup.add(aRing1); preGroup.add(aRing2); preGroup.add(aRing3);
-astrolabeRings.push(
-    { group: aRing1, sx: 0.00045, sy: 0.00065, sz: 0.00025, px: 0.2, py: 1.1 },
-    { group: aRing2, sx: -0.00055, sy: 0.00040, sz: -0.00045, px: 2.3, py: 0.7 },
-    { group: aRing3, sx: 0.00060, sy: -0.00050, sz: 0.00035, px: 1.5, py: 3.2 }
-);
-
-function createDaVinciHoloMaterial(texture) {
-    return new THREE.ShaderMaterial({
-        uniforms: {
-            uTex: { value: texture },
-            uHover: { value: 0.0 },
-            uTime: { value: 0.0 }
-        },
-        vertexShader: `
-            varying vec2 vUv;
-            void main() {
-                vUv = uv;
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-            }
-        `,
-        fragmentShader: `
-            uniform sampler2D uTex;
-            uniform float uHover;
-            uniform float uTime;
-            varying vec2 vUv;
-            void main() {
-                vec4 tex = texture2D(uTex, vUv);
-                float lum = dot(tex.rgb, vec3(0.299, 0.587, 0.114));
-                float stroke = smoothstep(0.12, 0.65, lum);
-                if (lum > 0.85) stroke = 1.0 - stroke;
-                
-                vec3 baseGold = vec3(0.85, 0.71, 0.25);
-                vec3 highlight = vec3(1.0, 0.95, 0.78);
-                float wave = sin((vUv.x + vUv.y) * 12.0 - uTime * 4.0) * 0.5 + 0.5;
-                vec3 finalColor = mix(baseGold, highlight, wave * 0.4 + uHover * 0.6);
-                
-                float alpha = stroke * (0.65 + uHover * 0.35);
-                if (alpha < 0.08) discard;
-                gl_FragColor = vec4(finalColor, alpha);
-            }
-        `,
-        transparent: true,
-        side: THREE.DoubleSide,
-        depthWrite: false
-    });
-}
-
-function createBlueprintWireMaterial() {
-    return new THREE.ShaderMaterial({
-        uniforms: { uHover: { value: 0.0 }, uTime: { value: 0.0 } },
-        vertexShader: `varying vec3 vPos;void main(){vPos=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
-        fragmentShader: `uniform float uHover;uniform float uTime;varying vec3 vPos;void main(){float wave=sin((vPos.x+vPos.y+vPos.z)*0.2-uTime*3.5)*0.5+0.5;vec3 baseGold=vec3(0.85,0.71,0.25);vec3 brightGlow=vec3(1.0,0.96,0.82);vec3 col=mix(baseGold,brightGlow,wave*0.4+uHover*0.6);float alpha=clamp(0.70+wave*0.30+uHover*0.30,0.0,1.0);gl_FragColor=vec4(col,alpha);}`,
-        transparent: true, depthWrite: false
-    });
-}
-
-function createVolumetricBlueprintCard(b64Image) {
+/* БЕЗОПАСНАЯ ГЕНЕРАЦИЯ ОБЪЕМНЫХ КАРТОЧЕК С 3D-ЧЕРТЕЖОМ */
+function createSafeVolumetricBlueprintCard(b64Image, typeIdx) {
     const cardGroup = new THREE.Group();
-    const w = 58, h = 58, d = 24;
+    const w = 58, h = 58, d = 26;
     const pts = [];
 
+    // 1. Пространственный каркас куба
     const corners = [
         new THREE.Vector3(-w/2, -h/2, -d/2), new THREE.Vector3(w/2, -h/2, -d/2),
         new THREE.Vector3(w/2, h/2, -d/2), new THREE.Vector3(-w/2, h/2, -d/2),
@@ -694,6 +397,7 @@ function createVolumetricBlueprintCard(b64Image) {
     ];
     boxEdges.forEach(e => pts.push(corners[e[0]], corners[e[1]]));
 
+    // 2. Сетка пересечений по горизонтали и вертикали
     for (let x = -w/2; x <= w/2; x += 11.6) {
         pts.push(new THREE.Vector3(x, -h/2, 0), new THREE.Vector3(x, h/2, 0));
         pts.push(new THREE.Vector3(x, -h/2, -d/2), new THREE.Vector3(x, -h/2, d/2));
@@ -703,6 +407,7 @@ function createVolumetricBlueprintCard(b64Image) {
         pts.push(new THREE.Vector3(-w/2, y, -d/2), new THREE.Vector3(-w/2, y, d/2));
     }
 
+    // 3. Кинематические кольца и спицы
     const rLimb = 32;
     for (let i = 0; i < 48; i++) {
         const nextI = (i + 1) % 48;
@@ -710,6 +415,7 @@ function createVolumetricBlueprintCard(b64Image) {
         pts.push(new THREE.Vector3(Math.cos(a1)*rLimb, Math.sin(a1)*rLimb, 0), new THREE.Vector3(Math.cos(a2)*rLimb, Math.sin(a2)*rLimb, 0));
         if (i % 4 === 0) {
             pts.push(new THREE.Vector3(Math.cos(a1)*(rLimb-3), Math.sin(a1)*(rLimb-3), 0), new THREE.Vector3(Math.cos(a1)*(rLimb+3), Math.sin(a1)*(rLimb+3), 0));
+            pts.push(new THREE.Vector3(0, 0, 0), new THREE.Vector3(Math.cos(a1)*rLimb*0.5, Math.sin(a1)*rLimb*0.5, (i%8===0?4:-4)));
         }
     }
 
@@ -719,28 +425,41 @@ function createVolumetricBlueprintCard(b64Image) {
     );
     cardGroup.add(wireframeMesh);
 
-    if (b64Image && b64Image.startsWith('data:image')) {
-        const loader = new THREE.TextureLoader();
-        loader.load(b64Image, (texture) => {
-            texture.generateMipmaps = true;
-            texture.minFilter = THREE.LinearMipmapLinearFilter;
-            const planeGeo = new THREE.PlaneGeometry(50, 50);
-            const planeMat = createDaVinciHoloMaterial(texture);
-            const planeMesh = new THREE.Mesh(planeGeo, planeMat);
-            planeMesh.position.z = 0;
-            cardGroup.add(planeMesh);
-        });
+    // 4. Безопасная загрузка изображения с Luma-Keying
+    if (typeof b64Image === 'string' && b64Image.length > 50 && b64Image.startsWith('data:image')) {
+        try {
+            const loader = new THREE.TextureLoader();
+            loader.load(
+                b64Image,
+                (texture) => {
+                    texture.generateMipmaps = true;
+                    texture.minFilter = THREE.LinearMipmapLinearFilter;
+                    const planeGeo = new THREE.PlaneGeometry(50, 50);
+                    const planeMat = createDaVinciHoloMaterial(texture);
+                    const planeMesh = new THREE.Mesh(planeGeo, planeMat);
+                    planeMesh.position.z = 0;
+                    cardGroup.add(planeMesh);
+                },
+                undefined,
+                (err) => {
+                    // Изолируем ошибку, чтобы каркас оставался рабочим
+                    console.warn("Image load fallback for index:", typeIdx);
+                }
+            );
+        } catch (e) {
+            console.warn("Texture exception caught:", e);
+        }
     }
 
     return cardGroup;
 }
 
 const floatingInventions = [
-    { group: createVolumetricBlueprintCard(USER_IMAGES[0]), basePos: new THREE.Vector3(-110, 34, 45), rotSpeed: new THREE.Vector3(0.0016, 0.0014, -0.0008), name: "Чертёж I" },
-    { group: createVolumetricBlueprintCard(USER_IMAGES[1]), basePos: new THREE.Vector3(115, -28, -40), rotSpeed: new THREE.Vector3(0.0012, 0.0018, 0.0010), name: "Чертёж II" },
-    { group: createVolumetricBlueprintCard(USER_IMAGES[2]), basePos: new THREE.Vector3(90, 36, 75), rotSpeed: new THREE.Vector3(-0.0014, 0.0016, 0.0009), name: "Чертёж III" },
-    { group: createVolumetricBlueprintCard(USER_IMAGES[3]), basePos: new THREE.Vector3(-36, -42, -35), rotSpeed: new THREE.Vector3(0.0008, 0.0012, 0.0006), name: "Чертёж IV" },
-    { group: createVolumetricBlueprintCard(USER_IMAGES[4]), basePos: new THREE.Vector3(-85, -25, 80), rotSpeed: new THREE.Vector3(-0.0012, 0.0015, -0.0007), name: "Чертёж V" }
+    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[0], 0), basePos: new THREE.Vector3(-110, 34, 45), rotSpeed: new THREE.Vector3(0.0016, 0.0014, -0.0008), name: "Чертёж I" },
+    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[1], 1), basePos: new THREE.Vector3(115, -28, -40), rotSpeed: new THREE.Vector3(0.0012, 0.0018, 0.0010), name: "Чертёж II" },
+    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[2], 2), basePos: new THREE.Vector3(90, 36, 75), rotSpeed: new THREE.Vector3(-0.0014, 0.0016, 0.0009), name: "Чертёж III" },
+    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[3], 3), basePos: new THREE.Vector3(-36, -42, -35), rotSpeed: new THREE.Vector3(0.0008, 0.0012, 0.0006), name: "Чертёж IV" },
+    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[4], 4), basePos: new THREE.Vector3(-85, -25, 80), rotSpeed: new THREE.Vector3(-0.0012, 0.0015, -0.0007), name: "Чертёж V" }
 ];
 
 const hoverTargets = [];
@@ -760,6 +479,9 @@ floatingInventions.forEach((item) => {
     item.isHovered = false;
     hoverTargets.push(item);
 });
+
+// ПЕРВЫЙ ПРИНУДИТЕЛЬНЫЙ РЕНДЕР КАДРА ДЛЯ ИСКЛЮЧЕНИЯ ЧЕРНОГО ЭКРАНА
+preRenderer.render(preScene, preCamera);
 
 let currentSlideIndex = -1;
 
@@ -885,9 +607,7 @@ function checkRaycastHover() {
     }
 }
 
-/* =========================================================================
-   НОВЫЙ ТРАНЗИШН: ДИАФРАГМА КАМЕРЫ-ОБСКУРЫ (MECHANICAL IRIS SHUTTER)
-   ========================================================================= */
+/* МЕХАНИЧЕСКАЯ ИРИСОВАЯ ДИАФРАГМА */
 let isIrisTransition = false;
 let irisScene, irisCamera, irisMaterial, irisTime = 0;
 const snapshotTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight);
@@ -896,7 +616,6 @@ function triggerIrisShutterTransition(event) {
     if (isIrisTransition) return;
     isIrisTransition = true;
     
-    // Звуковой запуск: вращение колец + захлопывание латунного затвора
     playGearDroneSound();
     playIrisShutterSound();
 
@@ -906,7 +625,6 @@ function triggerIrisShutterTransition(event) {
         hud.style.opacity = '0'; 
     }
 
-    // Сохранение текущего кадра сцены
     preRenderer.setRenderTarget(snapshotTarget);
     preRenderer.clear();
     preRenderer.render(preScene, preCamera);
@@ -915,7 +633,6 @@ function triggerIrisShutterTransition(event) {
     irisScene = new THREE.Scene();
     irisCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-    // Шейдер 12-лепестковой латунной ирисовой диафрагмы эпохи Галилея
     irisMaterial = new THREE.ShaderMaterial({
         uniforms: {
             tDiffuse: { value: snapshotTarget.texture },
@@ -940,54 +657,42 @@ function triggerIrisShutterTransition(event) {
                 float r = length(p);
                 float theta = atan(p.y, p.x);
 
-                // Фаза 1: Схлопывание лепестков затвора (0.0 -> 0.75)
-                // Фаза 2: Оптическая вспышка и раскрытие (0.75 -> 1.0)
                 float closeProgress = smoothstep(0.0, 0.72, uProgress);
                 float flashProgress = smoothstep(0.72, 1.0, uProgress);
 
-                // Кинематическое закручивание лепестков по спирали
                 float twist = theta + closeProgress * 2.8;
                 float bladePattern = cos(twist * BLADES);
                 
-                // Апертура диафрагмы: от полного экрана до точки
                 float aperture = (1.0 - closeProgress) * 1.35;
                 float bladeEdge = aperture + bladePattern * 0.08 * (1.0 - closeProgress);
 
                 vec4 sceneCol = texture2D(tDiffuse, vUv);
 
-                // Латунная текстура лепестков диафрагмы
                 vec3 brassDark = vec3(0.08, 0.07, 0.04);
                 vec3 brassGold = vec3(0.85, 0.71, 0.25);
                 vec3 brassEdge = vec3(1.0, 0.92, 0.65);
 
-                // Линии гравировки на лепестках
                 float rib = smoothstep(0.85, 0.98, sin(twist * BLADES * 2.0));
                 vec3 bladeColor = mix(brassDark, brassGold, 0.25 + rib * 0.35);
 
-                // Окантовка лезвий
                 float edgeGlow = smoothstep(bladeEdge - 0.02, bladeEdge, r) * smoothstep(bladeEdge + 0.02, bladeEdge, r);
 
                 vec3 col;
                 float alpha = 1.0;
 
                 if (r > bladeEdge) {
-                    // Зона закрывающихся механических лепестков
                     col = bladeColor + edgeGlow * brassEdge * 1.5;
                 } else {
-                    // Видимая зона через апертуру
                     col = sceneCol.rgb;
-                    col += edgeGlow * brassEdge * 2.0; // отблеск на границе среза линзы
+                    col += edgeGlow * brassEdge * 2.0;
                 }
 
-                // Фокальная оптическая вспышка в момент полного смыкания
                 if (uProgress > 0.65 && uProgress < 0.85) {
                     float burst = 1.0 - abs(uProgress - 0.75) / 0.10;
                     col += vec3(1.0, 0.95, 0.75) * burst * 2.2;
                 }
 
-                // Плавное растворение затвора в дашборд
                 alpha = 1.0 - flashProgress;
-
                 gl_FragColor = vec4(col, alpha);
             }
         `,
@@ -1004,14 +709,12 @@ function animatePreloader() {
     const elapsed = performance.now() - preloaderStartTime;
     const t = elapsed * 0.001;
 
-    // ОБРАБОТКА МЕХАНИЧЕСКОЙ ДИАФРАГМЫ ПРИ ВЫХОДЕ
     if (isIrisTransition) {
         irisTime += 0.016;
         const transProgress = Math.min(irisTime / 1.35, 1.0);
         irisMaterial.uniforms.uProgress.value = transProgress;
         irisMaterial.uniforms.uTime.value = t;
 
-        // Кольца астролябии ускоряются и стягиваются в точку
         preGroup.scale.multiplyScalar(0.96);
         astrolabeRings.forEach(item => {
             item.group.rotation.x += item.sx * 6.0;
@@ -1072,6 +775,8 @@ function animatePreloader() {
     preRenderer.clear();
     preRenderer.render(preScene, preCamera);
 }
+
+// ЗАПУСК ЦИКЛА АНИМАЦИИ
 animatePreloader();
 
 setTimeout(() => {
