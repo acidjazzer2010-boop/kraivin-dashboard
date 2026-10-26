@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Архитектура Капитала</title>
+    <style>/* __INLINE_CSS__ */</style>
+    <!-- Локальные проверенные зависимости -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="film-grain"></div>
+    <div id="custom-cursor"></div>
+    <div id="custom-cursor-follower"></div>
+
+    <!-- Быстрый прелоадер -->
+    <div id="preloader-stage">
+        <div id="preloaderTitle" style="position: absolute; color: var(--accent-gold); font-size: 28px; opacity: 0; transition: opacity 1s ease;">
+            Архитектура финансов
+        </div>
+        <div id="preloaderHUD" style="position: absolute; bottom: 40px; text-align: center;">
+            <div style="font-size: 11px; color: var(--accent-gold); letter-spacing: 0.2em;">ИНИЦИАЛИЗАЦИЯ <span id="loaderPercent">0%</span></div>
+            <div style="width: 240px; height: 2px; background: rgba(255,255,255,0.1); margin-top: 6px;">
+                <div id="loaderProgressBar" style="width: 0%; height: 100%; background: var(--accent-gold);"></div>
+            </div>
+        </div>
+        <div id="exploreBtnWrapper" style="position: absolute; bottom: 35px; opacity: 0; pointer-events: none; transition: opacity 0.5s ease;">
+            <button class="explore-btn" onclick="dismissPreloader()">Исследовать</button>
+        </div>
+    </div>
+
+    <!-- Основное рабочее пространство -->
+    <main id="mainDashboardApp" style="opacity: 0; transition: opacity 0.8s ease;">
+        <header class="alche-block" style="padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="color: var(--accent-gold); font-size: 18px;">⚜️</span>
+                <div>
+                    <div style="font-size: 9px; letter-spacing: 0.25em; color: var(--accent-gold);">AUREA PROPORTIO // 1 : 1.618</div>
+                    <div style="font-size: 16px; font-weight: bold;">Архитектура Капитала и Ликвидности</div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button id="muteBtn" onclick="toggleMute()" class="mono-input" style="width: auto; cursor: pointer;">ЗВУК: ВКЛ</button>
+            </div>
+        </header>
+
+        <!-- KPI метрики -->
+        <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1px; background: var(--border-line);">
+            <div class="alche-block tilt-card">
+                <div style="font-size: 9px; color: var(--text-muted);">[01] ВЫРУЧКА</div>
+                <div id="kpiRev" style="font-size: 22px; font-weight: bold; margin-top: 4px;">-- ₽</div>
+            </div>
+            <div class="alche-block tilt-card">
+                <div style="font-size: 9px; color: var(--text-muted);">[02] ДЕФИЦИТ (ДОТАЦИИ)</div>
+                <div id="kpiDeficit" style="font-size: 22px; font-weight: bold; color: var(--accent-vermilion); margin-top: 4px;">-- ₽</div>
+            </div>
+            <div class="alche-block tilt-card">
+                <div style="font-size: 9px; color: var(--text-muted);">[03] КАССОВЫЙ РАЗРЫВ</div>
+                <div id="kpiGap" style="font-size: 22px; font-weight: bold; color: var(--accent-gold); margin-top: 4px;">--</div>
+            </div>
+            <div class="alche-block tilt-card">
+                <div style="font-size: 9px; color: var(--text-muted);">[04] ЧИСТАЯ ПРИБЫЛЬ</div>
+                <div id="kpiProfit" style="font-size: 22px; font-weight: bold; color: var(--accent-jade); margin-top: 4px;">-- ₽</div>
+            </div>
+        </section>
+
+        <!-- Графики -->
+        <div style="padding: 24px; display: grid; gap: 24px;">
+            <div class="alche-block" style="padding: 20px;">
+                <h3 style="font-size: 16px; margin-bottom: 12px;">График обслуживания долга и начисления процентов</h3>
+                <div style="height: 320px;"><canvas id="chartDebt"></canvas></div>
+            </div>
+            <div class="alche-block" style="padding: 20px;">
+                <h3 style="font-size: 16px; margin-bottom: 12px;">Партионные закупки и истощение склада</h3>
+                <div style="height: 320px;"><canvas id="chartStock"></canvas></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Передача серверных данных в JS -->
+    <script>
+        window.SERVER_FIN_DATA = __FIN_DATA_JSON__;
+        // Заполнение KPI при старте
+        if (window.SERVER_FIN_DATA && window.SERVER_FIN_DATA.kpi) {
+            const k = window.SERVER_FIN_DATA.kpi;
+            document.getElementById('kpiRev').textContent = k.sum_rev.toLocaleString('ru-RU') + ' ₽';
+            document.getElementById('kpiDeficit').textContent = k.sum_injections.toLocaleString('ru-RU') + ' ₽';
+            document.getElementById('kpiGap').textContent = k.first_gap_month;
+            document.getElementById('kpiProfit').textContent = k.net_profit.toLocaleString('ru-RU') + ' ₽';
+        }
+    </script>
+    <script>/* __INLINE_JS__ */</script>
+</body>
+</html>
