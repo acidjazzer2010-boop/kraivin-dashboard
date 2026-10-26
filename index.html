@@ -363,8 +363,14 @@ window.onerror = function(msg, url, line) {
 const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const USER_IMAGES = typeof __JSON_IMAGES_PAYLOAD__ !== 'undefined' ? __JSON_IMAGES_PAYLOAD__ : [];
 
+/* Флаги перехода и тайминги */
+let isObscuraTransition = false;
+let obscuraStartTime = 0;
+const OBSCURA_DURATION = 6.8;
+let preloaderDismissed = false;
+
 /* =========================================================================
-   СТАБИЛИЗИРОВАННЫЙ RENAISSANCE WEB AUDIO ДВИЖОК С ЛИМИТЕРОМ И УПРАВЛЕНИЕМ ФОНОМ
+   СТАБИЛИЗИРОВАННЫЙ RENAISSANCE WEB AUDIO ДВИЖОК С ЛИМИТЕРОМ
    ========================================================================= */
 class RenaissanceSoundscapeEngine {
     constructor() {
@@ -449,9 +455,7 @@ class RenaissanceSoundscapeEngine {
             const gain = this.ctx.createGain();
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-
             gain.gain.setValueAtTime(0.035, this.ctx.currentTime);
-
             osc.connect(gain);
             gain.connect(this.warmthFilter);
             osc.start();
@@ -490,9 +494,7 @@ class RenaissanceSoundscapeEngine {
 
     start() {
         this.init();
-        if (this.ctx.state === 'suspended') {
-            this.ctx.resume();
-        }
+        if (this.ctx.state === 'suspended') this.ctx.resume();
         if (this.isPlaying) return;
         this.isPlaying = true;
 
@@ -503,11 +505,8 @@ class RenaissanceSoundscapeEngine {
             const note = this.scale[Math.floor(Math.random() * this.scale.length)];
             const duration = 4.5 + Math.random() * 2.5;
             this.playPolyphonicVoice(note, duration);
-
-            const nextIn = 4000 + Math.random() * 4000;
-            this.timer = setTimeout(scheduleVoice, nextIn);
+            this.timer = setTimeout(scheduleVoice, 4000 + Math.random() * 4000);
         };
-
         scheduleVoice();
     }
 
@@ -640,11 +639,9 @@ function playCathedralFocusTone() {
             const gain = ctx.createGain();
             osc.type = idx === 0 ? 'sine' : 'triangle';
             osc.frequency.setValueAtTime(f, ctx.currentTime);
-            
             gain.gain.setValueAtTime(0.0001, ctx.currentTime);
             gain.gain.linearRampToValueAtTime(0.08 / (idx + 1), ctx.currentTime + 0.2);
             gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 3.4);
-            
             osc.connect(gain);
             gain.connect(renaissanceAudio.warmthFilter || ctx.destination);
             osc.start();
@@ -680,7 +677,6 @@ function scheduleCalc(delay = 70) {
     _calcTimer = setTimeout(() => { _calcTimer = null; runCalculation(); }, delay);
 }
 
-let preloaderDismissed = false;
 function dismissPreloader() {
     if (preloaderDismissed) return;
     preloaderDismissed = true;
@@ -748,6 +744,7 @@ preCamera.position.copy(targetCamPos);
 const preGroup = new THREE.Group();
 preScene.add(preGroup);
 
+/* ЗОЛОТАЯ ВЗВЕСЬ ЧАСТИЦ */
 const particleCount = 450;
 const particleGeo = new THREE.BufferGeometry();
 const particlePos = new Float32Array(particleCount * 3);
@@ -770,6 +767,9 @@ preGroup.add(dustParticles);
 const megaRingWireMat = new THREE.MeshBasicMaterial({ color: 0x00c3ff, wireframe: true, transparent: true, opacity: 0.38 });
 const secondaryWireMat = new THREE.MeshBasicMaterial({ color: 0x0077aa, wireframe: true, transparent: true, opacity: 0.22 });
 
+/* =========================================================================
+   ГЕНЕРАЦИЯ ДИСКОВ СУДЬБЫ НОСТРАДАМУСА И РЕНЕССАНСНЫХ ЛАТИНСКИХ КАТРЕНОВ
+   ========================================================================= */
 const NOSTRADAMUS_PROPHECIES = [
     {
         innerRing: "ROTA FORTUNAE • FATORUM ORBIS • CENTURIA I • OMNIA FLUXUS",
@@ -1092,12 +1092,16 @@ const floatingInventions = [
 ];
 
 const hoverTargets = [];
-floatingInventions.forEach((item) => {
+floatingInventions.forEach((item, idx) => {
     item.group.position.copy(item.basePos);
     preGroup.add(item.group);
 
-    const hitMesh = new THREE.Mesh(new THREE.SphereGeometry(48, 16, 16), new THREE.MeshBasicMaterial({ visible: false }));
+    // Компактный и точный хитбокс, строго повторяющий размеры карточки
+    const hitGeo = new THREE.BoxGeometry(46, 46, 12);
+    const hitMat = new THREE.MeshBasicMaterial({ visible: false });
+    const hitMesh = new THREE.Mesh(hitGeo, hitMat);
     hitMesh.position.copy(item.basePos);
+    hitMesh.userData = { slideIdx: idx };
     preGroup.add(hitMesh);
 
     item.hitMesh = hitMesh;
@@ -1108,6 +1112,8 @@ floatingInventions.forEach((item) => {
 });
 
 let currentSlideIndex = -1;
+let isProgrammaticNav = false;
+let navResumeTimer = null;
 
 function updateSlideDots() {
     document.querySelectorAll('.slide-dot').forEach((d, idx) => {
@@ -1121,6 +1127,11 @@ function focusSlide(idx) {
     currentSlideIndex = idx;
     playClickSound(1800, 0.015);
     updateSlideDots();
+
+    // Временная блокировка hover-эффектов от мыши после переключения
+    isProgrammaticNav = true;
+    if (navResumeTimer) clearTimeout(navResumeTimer);
+    navResumeTimer = setTimeout(() => { isProgrammaticNav = false; }, 350);
 
     hoverTargets.forEach((item, i) => {
         const isCurrent = (i === idx);
@@ -1159,9 +1170,64 @@ window.applySelectedPresetAndEnter = function(e) {
     triggerCameraObscuraTransition(e);
 };
 
-let isObscuraTransition = false;
-let obscuraStartTime = 0;
-const OBSCURA_DURATION = 6.8;
+/* ИСПРАВЛЕННЫЙ RAYCASTER: КЛИКИ И СВОБОДНЫЙ ВЫБОР БЕЗ ПЕРЕКРЫТИЙ */
+const raycaster = new THREE.Raycaster();
+const mouseVec = new THREE.Vector2(-999, -999);
+
+function performRaycastSelection(isExplicitClick = false) {
+    if (preloaderDismissed || isObscuraTransition) return;
+    if (!isExplicitClick && (isProgrammaticNav || window.innerWidth < 768)) return;
+
+    raycaster.setFromCamera(mouseVec, preCamera);
+    
+    // Активная карточка исключается из списка целей, чтобы ее хитбокс не перекрывал другие карточки
+    const candidateMeshes = isExplicitClick 
+        ? hoverTargets.map(h => h.hitMesh) 
+        : hoverTargets.filter((_, i) => i !== currentSlideIndex).map(h => h.hitMesh);
+
+    const intersects = raycaster.intersectObjects(candidateMeshes, false);
+    if (intersects.length > 0) {
+        const hit = intersects[0].object;
+        const targetIdx = hit.userData.slideIdx;
+        if (typeof targetIdx === 'number' && targetIdx !== currentSlideIndex) {
+            focusSlide(targetIdx);
+        }
+    }
+}
+
+window.addEventListener('mousemove', (e) => {
+    mouseVec.x = (e.clientX / window.innerWidth) * 2 - 1;
+    mouseVec.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    performRaycastSelection(false);
+});
+
+// Прямой клик по чертежам в пространстве Three.js
+window.addEventListener('pointerdown', (e) => {
+    if (e.target && e.target.id === 'preloader-webgl') {
+        mouseVec.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouseVec.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        performRaycastSelection(true);
+    }
+});
+
+let touchStartX = 0, touchStartY = 0;
+window.addEventListener('touchstart', (e) => {
+    if (e.touches.length > 0) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+    }
+}, { passive: true });
+
+window.addEventListener('touchend', (e) => {
+    if (e.changedTouches.length > 0) {
+        const diffX = e.changedTouches[0].clientX - touchStartX;
+        const diffY = e.changedTouches[0].clientY - touchStartY;
+        if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
+            if (diffX < 0) nextSlide();
+            else prevSlide();
+        }
+    }
+}, { passive: true });
 
 function triggerCameraObscuraTransition(event) {
     if (isObscuraTransition) return;
@@ -1238,7 +1304,6 @@ function animatePreloader() {
         const alignP = Math.min(progress / 0.44, 1.0);
         const easeAlign = 0.5 - 0.5 * Math.cos(alignP * Math.PI);
 
-        // Плавный и величественный разгон вращения кругов судьбы
         const accelCurve = Math.pow(progress, 3.4);
         const currentSpeed = 0.0003 + accelCurve * 0.17;
 
@@ -1339,14 +1404,13 @@ function animatePreloader() {
     preRenderer.render(preScene, preCamera);
 }
 
-// Принудительный старт анимации прелоадера
+// Запуск анимации прелоадера
 animatePreloader();
 
 setTimeout(() => {
     if (!preloaderDismissed && currentSlideIndex === -1) focusSlide(0);
 }, 1200);
 
-// Декодер глифов и бизнес-логика дашборда
 const CYRILLIC_GLYPHS = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ0123456789§$%*#@!/[]:;';
 const NUMERIC_GLYPHS = '0123456789 ';
 function scrambleElementText(el, finalText, duration = 460, useAlphabet = true) {
