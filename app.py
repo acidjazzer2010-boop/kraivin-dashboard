@@ -44,7 +44,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 <html lang="ru" class="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Архитектура Капитала</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -57,26 +57,38 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 :root{--bg-space:#070709;--bg-panel:rgba(13,13,18,.85);--bg-cell-hover:rgba(24,24,34,.95);--text-main:#f4f1ea;--text-muted:#8e8a80;--border-line:rgba(212,175,55,.16);--border-accent:rgba(212,175,55,.6);--accent-gold:#d4af37;--accent-vermilion:#e63946;--accent-jade:#2a9d8f;--input-bg:rgba(255,255,255,.025);--cursor-glow:rgba(212,175,55,.2);--table-header-bg:rgba(13,13,18,.98);--grain-opacity:.035}
 html:not(.dark){--bg-space:#f4f1ea;--bg-panel:rgba(255,255,255,.92);--bg-cell-hover:rgba(246,243,235,.98);--text-main:#141416;--text-muted:#6b665c;--border-line:rgba(184,134,11,.22);--border-accent:rgba(184,134,11,.75);--accent-gold:#b8860b;--accent-vermilion:#c5221f;--accent-jade:#1d756b;--input-bg:rgba(0,0,0,.03);--cursor-glow:rgba(184,134,11,.15);--table-header-bg:rgba(244,241,234,.98);--grain-opacity:.02}
 *{box-sizing:border-box;border-color:var(--border-line);margin:0;padding:0;scrollbar-width:thin;scrollbar-color:var(--border-line) transparent}
-html,body{width:100%;height:100%;margin:0;padding:0;overflow:hidden;background:var(--bg-space);color:var(--text-main);font-family:'JetBrains Mono',monospace}
+html,body{width:100%;height:100%;margin:0;padding:0;overflow:hidden;background:var(--bg-space);color:var(--text-main);font-family:'JetBrains Mono',monospace;-webkit-tap-highlight-color:transparent}
 :focus-visible{outline:2px solid var(--accent-gold);outline-offset:2px}
 button:focus:not(:focus-visible){outline:none}
 .film-grain{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:999;opacity:var(--grain-opacity);background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
-#preloader-stage{position:fixed;top:0;left:0;width:100vw;height:100vh;background:radial-gradient(circle at center,#0d0e17 0%,#030306 100%);z-index:900;overflow:hidden}
+
+#preloader-stage{position:fixed;top:0;left:0;width:100vw;height:100vh;background:radial-gradient(circle at center,#0d0e17 0%,#030306 100%);z-index:900;overflow:hidden;touch-action:none}
 #preloader-webgl{position:absolute;inset:0;width:100%;height:100%;z-index:10;cursor:grab}
 #preloader-webgl:active{cursor:grabbing}
+
 .preloader-fixed-hud{position:absolute;inset:0;width:100%;height:100%;z-index:30;pointer-events:none;user-select:none}
-#preloaderTitle{position:absolute;top:44px;left:50%;transform:translateX(-50%);font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:clamp(22px,3.4vw,46px);font-weight:700;letter-spacing:.28em;color:var(--accent-gold);opacity:0;text-shadow:0 0 45px rgba(212,175,55,.85);transition:opacity 1.8s cubic-bezier(.16,1,.3,1);text-align:center;white-space:nowrap}
+#preloaderTitle{position:absolute;top:32px;left:50%;transform:translateX(-50%);font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:clamp(20px,3.2vw,44px);font-weight:700;letter-spacing:.26em;color:var(--accent-gold);opacity:0;text-shadow:0 0 45px rgba(212,175,55,.85);transition:opacity 1.8s cubic-bezier(.16,1,.3,1);text-align:center;white-space:nowrap}
 #preloaderTitle.locked-on{opacity:1!important}
-.bottom-dock{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;width:340px;height:56px}
+
+/* СЛАЙДЕР ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ */
+.slider-ui-container{position:absolute;top:50%;left:0;width:100%;transform:translateY(-50%);display:flex;justify-content:space-between;align-items:center;padding:0 14px;pointer-events:none;z-index:40}
+.slide-nav-btn{width:46px;height:46px;border-radius:50%;background:rgba(13,13,18,0.7);border:1px solid rgba(212,175,55,0.4);color:var(--accent-gold);display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;pointer-events:auto;backdrop-filter:blur(10px);transition:all .25s ease}
+.slide-nav-btn:hover{background:rgba(212,175,55,0.2);border-color:var(--accent-gold);transform:scale(1.1)}
+.slide-nav-btn:active{transform:scale(0.95)}
+
+.slide-dots{position:absolute;bottom:104px;left:50%;transform:translateX(-50%);display:flex;gap:12px;pointer-events:auto;z-index:40}
+.slide-dot{width:8px;height:8px;border-radius:50%;border:1px solid var(--accent-gold);background:transparent;cursor:pointer;transition:all .3s ease}
+.slide-dot.active{background:var(--accent-gold);box-shadow:0 0 10px var(--accent-gold);transform:scale(1.35)}
+
+.bottom-dock{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;width:340px;height:56px}
 #preloaderHUD{display:flex;flex-direction:column;align-items:center;gap:8px;transition:opacity .4s}
 .progress-bar-bg{width:280px;height:2px;background:rgba(255,255,255,.12);position:relative;overflow:hidden}
 #loaderProgressBar{position:absolute;left:0;top:0;height:100%;width:0;background:var(--accent-gold);box-shadow:0 0 10px var(--accent-gold);transition:width .1s linear}
 #exploreBtnWrapper{position:absolute;opacity:0;pointer-events:none;transition:opacity .6s cubic-bezier(.19,1,.22,1),transform .6s cubic-bezier(.19,1,.22,1);transform:translateY(8px)}
 #exploreBtnWrapper.active{opacity:1;pointer-events:auto;transform:translateY(0)}
-.explore-btn{padding:13px 46px;background:rgba(13,13,18,.9);border:1px solid rgba(212,175,55,.95);color:#f4f1ea;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.38em;text-transform:uppercase;cursor:pointer;backdrop-filter:blur(14px);overflow:hidden;transition:all .3s;box-shadow:0 0 40px rgba(212,175,55,.35),inset 0 0 16px rgba(212,175,55,.18)}
-.explore-btn::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(212,175,55,.45),transparent);transition:left .7s}
-.explore-btn:hover{border-color:#ffd700;color:#ffd700;box-shadow:0 0 60px rgba(212,175,55,.7),inset 0 0 24px rgba(212,175,55,.35);transform:scale(1.05)}
-.explore-btn:hover::before{left:100%}
+.explore-btn{padding:12px 42px;background:rgba(13,13,18,.9);border:1px solid rgba(212,175,55,.95);color:#f4f1ea;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.38em;text-transform:uppercase;cursor:pointer;backdrop-filter:blur(14px);overflow:hidden;transition:all .3s;box-shadow:0 0 40px rgba(212,175,55,.35),inset 0 0 16px rgba(212,175,55,.18)}
+.explore-btn:hover{border-color:#ffd700;color:#ffd700;box-shadow:0 0 60px rgba(212,175,55,.7),inset 0 0 24px rgba(212,175,55,.35);transform:scale(1.04)}
+
 #mainDashboardApp{display:none;position:relative;z-index:10;min-height:100vh}
 #mainDashboardApp.ready{display:flex}
 #webgl-bg-canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;pointer-events:none;opacity:.35}
@@ -109,15 +121,31 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
 <body class="selection:bg-[#d4af37] selection:text-black">
 <div class="film-grain" aria-hidden="true"></div>
 
+<!-- ПРЕЛОАДЕР СО СЛАЙДИНГОМ -->
 <div id="preloader-stage">
     <canvas id="preloader-webgl"></canvas>
+    
     <div class="preloader-fixed-hud">
         <div id="preloaderTitle">Архитектура финансов</div>
+        
+        <!-- НАВИГАЦИОННЫЕ ЭЛЕМЕНТЫ СЛАЙДЕРА -->
+        <div class="slider-ui-container">
+            <button class="slide-nav-btn" onclick="prevSlide()" aria-label="Предыдущий чертеж">‹</button>
+            <button class="slide-nav-btn" onclick="nextSlide()" aria-label="Следующий чертеж">›</button>
+        </div>
+
+        <div class="slide-dots">
+            <button class="slide-dot active" onclick="goToSlide(0)"></button>
+            <button class="slide-dot" onclick="goToSlide(1)"></button>
+            <button class="slide-dot" onclick="goToSlide(2)"></button>
+            <button class="slide-dot" onclick="goToSlide(3)"></button>
+        </div>
+
         <div class="bottom-dock">
             <div id="preloaderHUD">
                 <div class="flex items-center gap-3 text-[#d4af37] text-[10px] tracking-[0.25em] uppercase font-mono">
                     <span class="pulse-dot" aria-hidden="true"></span>
-                    <span id="loaderStatusText">Трассировка кинематических узлов...</span>
+                    <span id="loaderStatusText">Свайпайте чертежи влево/вправо...</span>
                     <span id="loaderPercent" class="font-bold">0%</span>
                 </div>
                 <div class="progress-bar-bg mt-1"><div id="loaderProgressBar"></div></div>
@@ -131,6 +159,7 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
 
 <canvas id="webgl-bg-canvas"></canvas>
 
+<!-- ДАШБОРД -->
 <div id="mainDashboardApp" class="flex-col border-t border-l opacity-0 transition-opacity duration-1000">
     <header class="alche-block px-5 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4 border-b">
         <div class="flex items-center gap-6">
@@ -419,7 +448,6 @@ preScene.add(preGroup);
 const megaRingWireMat = new THREE.MeshBasicMaterial({ color: 0x00c3ff, wireframe: true, transparent: true, opacity: 0.38 });
 const secondaryWireMat = new THREE.MeshBasicMaterial({ color: 0x0077aa, wireframe: true, transparent: true, opacity: 0.22 });
 
-/* ИСПРАВЛЕННЫЙ ГЕНЕРАТОР КОЛЕЦ: устранены артефакты шва и перехлесты */
 function createCyclopeanTrussRing(mainRadius, tubeWidth, tubeDepth, segments) {
     const group = new THREE.Group();
     group.add(new THREE.Mesh(new THREE.TorusGeometry(mainRadius, tubeWidth * 0.45, 12, segments), megaRingWireMat));
@@ -441,19 +469,16 @@ function createCyclopeanTrussRing(mainRadius, tubeWidth, tubeDepth, segments) {
         const p1_botIn = new THREE.Vector3(Math.cos(a1) * rInner, Math.sin(a1) * rInner, -zOffset);
         const p2_botIn = new THREE.Vector3(Math.cos(a2) * rInner, Math.sin(a2) * rInner, -zOffset);
 
-        // Пояса
         linePts.push(p1_topOut, p2_topOut);
         linePts.push(p1_botOut, p2_botOut);
         linePts.push(p1_topIn, p2_topIn);
         linePts.push(p1_botIn, p2_botIn);
 
-        // Шпангоуты
         linePts.push(p1_topOut, p1_botOut);
         linePts.push(p1_topIn, p1_botIn);
         linePts.push(p1_topOut, p1_topIn);
         linePts.push(p1_botOut, p1_botIn);
 
-        // Симметричные диагонали
         if (i % 2 === 0) {
             linePts.push(p1_topOut, p2_botOut);
             linePts.push(p1_topIn, p2_botIn);
@@ -464,7 +489,6 @@ function createCyclopeanTrussRing(mainRadius, tubeWidth, tubeDepth, segments) {
             linePts.push(p1_botOut, p2_botIn);
         }
 
-        // Зубчатый обод
         if (i % 3 === 0) {
             const toothR = rOuter + tubeWidth * 0.42;
             const pTooth = new THREE.Vector3(Math.cos(a1) * toothR, Math.sin(a1) * toothR, 0);
@@ -498,7 +522,7 @@ function createBlueprintLineMaterial() {
     });
 }
 
-/* 3D-ЧЕРТЕЖИ ДА ВИНЧИ С ЗАМКНУТОЙ СТРУКТУРОЙ */
+/* 3D-ЧЕРТЕЖИ ДА ВИНЧИ С НАДЕЖНЫМ КАРКАСОМ */
 function buildUltra3DAerialScrew() {
     const pts = [];
     const h = 76, radiusMax = 38;
@@ -658,55 +682,11 @@ function buildUltra3DVitruvian() {
     return new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), createBlueprintLineMaterial());
 }
 
-function createWireframeFromImage(dataUriOrUrl, fallbackMesh) {
-    const group = new THREE.Group();
-    group.add(fallbackMesh);
-    if (!dataUriOrUrl || !dataUriOrUrl.startsWith('data:image')) return group;
-
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-        try {
-            const canvas = document.createElement('canvas');
-            canvas.width = 64; canvas.height = 64;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, 64, 64);
-            const data = ctx.getImageData(0, 0, 64, 64).data;
-            const detected = [];
-            for (let y = 0; y < 64; y += 2) {
-                for (let x = 0; x < 64; x += 2) {
-                    const idx = (y * 64 + x) * 4;
-                    const bright = 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
-                    if (bright < 165 || (bright > 60 && bright < 195)) {
-                        detected.push(new THREE.Vector3(((x / 64) - 0.5) * 64, -((y / 64) - 0.5) * 64, ((bright / 255) - 0.5) * 12.0));
-                    }
-                }
-            }
-            if (detected.length > 50) {
-                const linePts = [];
-                for (let i = 0; i < detected.length; i += 2) {
-                    const p1 = detected[i];
-                    for (let j = i + 1; j < Math.min(i + 8, detected.length); j++) {
-                        const p2 = detected[j];
-                        if (p1.distanceTo(p2) > 1.2 && p1.distanceTo(p2) < 11.0) linePts.push(p1, p2);
-                    }
-                }
-                if (linePts.length > 80) {
-                    group.remove(fallbackMesh);
-                    group.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(linePts), createBlueprintLineMaterial()));
-                }
-            }
-        } catch (e) {}
-    };
-    img.src = dataUriOrUrl;
-    return group;
-}
-
 const floatingInventions = [
-    { group: createWireframeFromImage(USER_IMAGES.img1, buildUltra3DAerialScrew()), basePos: new THREE.Vector3(-115, 32, 50), rotSpeed: new THREE.Vector3(0.0016, 0.0014, -0.0008) },
-    { group: createWireframeFromImage(USER_IMAGES.img2, buildUltra3DClockworkGears()), basePos: new THREE.Vector3(120, -26, -45), rotSpeed: new THREE.Vector3(0.0012, 0.0018, 0.0010) },
-    { group: createWireframeFromImage(USER_IMAGES.img3, buildUltra3DOrnithopter()), basePos: new THREE.Vector3(95, 38, 75), rotSpeed: new THREE.Vector3(-0.0014, 0.0016, 0.0009) },
-    { group: createWireframeFromImage("", buildUltra3DVitruvian()), basePos: new THREE.Vector3(-35, -42, -35), rotSpeed: new THREE.Vector3(0.0008, 0.0012, 0.0006) }
+    { group: buildUltra3DAerialScrew(), basePos: new THREE.Vector3(-115, 32, 50), rotSpeed: new THREE.Vector3(0.0016, 0.0014, -0.0008), name: "Воздушный винт" },
+    { group: buildUltra3DClockworkGears(), basePos: new THREE.Vector3(120, -26, -45), rotSpeed: new THREE.Vector3(0.0012, 0.0018, 0.0010), name: "Редуктор" },
+    { group: buildUltra3DOrnithopter(), basePos: new THREE.Vector3(95, 38, 75), rotSpeed: new THREE.Vector3(-0.0014, 0.0016, 0.0009), name: "Орнитоптер" },
+    { group: buildUltra3DVitruvian(), basePos: new THREE.Vector3(-35, -42, -35), rotSpeed: new THREE.Vector3(0.0008, 0.0012, 0.0006), name: "Витрувианский канон" }
 ];
 
 const hoverTargets = [];
@@ -714,7 +694,6 @@ floatingInventions.forEach((item) => {
     item.group.position.copy(item.basePos);
     preGroup.add(item.group);
 
-    // Хитбокс достаточного радиуса для надежного наведения
     const hitGeo = new THREE.SphereGeometry(48, 16, 16);
     const hitMat = new THREE.MeshBasicMaterial({ visible: false });
     const hitMesh = new THREE.Mesh(hitGeo, hitMat);
@@ -728,68 +707,115 @@ floatingInventions.forEach((item) => {
     hoverTargets.push(item);
 });
 
-/* ИСПРАВЛЕННЫЙ RAYCASTER: свободное переключение между фигурами */
-const raycaster = new THREE.Raycaster();
-const mouseVec = new THREE.Vector2(-999, -999);
-let currentHovered = null;
+/* =========================================================================
+   ЛОГИКА СЛАЙДЕРА (ТАЧ-СВАЙПЫ ДЛЯ СМАРТФОНОВ И КНОПКИ)
+   ========================================================================= */
+let currentSlideIndex = -1;
 
-window.addEventListener('mousemove', (e) => {
-    mouseVec.x = (e.clientX / window.innerWidth) * 2 - 1;
-    mouseVec.y = -(e.clientY / window.innerHeight) * 2 + 1;
-});
+function updateSlideDots() {
+    const dots = document.querySelectorAll('.slide-dot');
+    dots.forEach((d, idx) => {
+        if (idx === currentSlideIndex) d.classList.add('active');
+        else d.classList.remove('active');
+    });
+}
 
-function checkRaycastHover() {
-    if (preloaderDismissed) return;
-    
-    // Проверка попадания луча
-    raycaster.setFromCamera(mouseVec, preCamera);
-    const hitMeshes = hoverTargets.map(h => h.hitMesh);
-    const intersects = raycaster.intersectObjects(hitMeshes, false);
+function focusSlide(idx) {
+    if (idx < 0 || idx >= hoverTargets.length) return;
+    currentSlideIndex = idx;
+    playClickSound(1800, 0.015);
+    updateSlideDots();
 
-    let foundTarget = null;
-    if (intersects.length > 0) {
-        const hit = intersects[0].object;
-        foundTarget = hoverTargets.find(h => h.hitMesh === hit) || null;
-    }
-
-    // Если ховер сменился или снят
-    hoverTargets.forEach(item => {
-        const isCurrent = (item === foundTarget);
+    hoverTargets.forEach((item, i) => {
+        const isCurrent = (i === idx);
         item.isHovered = isCurrent;
         item.targetScale = isCurrent ? 1.35 : 1.0;
         item.targetZ = isCurrent ? 120 : item.basePos.z;
 
         item.group.traverse(child => {
             if (child.isLineSegments && child.material && child.material.uniforms && child.material.uniforms.uHover) {
-                child.material.uniforms.uHover.value = THREE.MathUtils.lerp(
-                    child.material.uniforms.uHover.value, 
-                    isCurrent ? 1.0 : 0.0, 
-                    isCurrent ? 0.2 : 0.08
-                );
+                child.material.uniforms.uHover.value = isCurrent ? 1.0 : 0.0;
             }
         });
     });
 
-    if (foundTarget) {
-        if (currentHovered !== foundTarget) {
-            playClickSound(1800, 0.015);
-            currentHovered = foundTarget;
-        }
-        // Дистанция камеры рассчитывается БЕЗ пересечения коллайдера хитбокса (Z + 110)
-        // Камера подлетает перед фигурой, не залипая внутри сферы!
-        const objPos = foundTarget.group.position;
-        targetCamPos.set(objPos.x * 0.72, objPos.y * 0.72, objPos.z + 110);
-        targetLookTarget.set(objPos.x, objPos.y, objPos.z);
-    } else {
-        if (currentHovered !== null) {
-            currentHovered = null;
-        }
-        // Возврат на общую панораму
-        targetCamPos.set(0, 0, baseCamZ);
-        targetLookTarget.set(0, 0, 0);
+    const target = hoverTargets[idx];
+    const objPos = target.group.position;
+    // На мобильных подлетаем оптимально по центру
+    const isMobile = window.innerWidth < 768;
+    const zOffset = isMobile ? 120 : 105;
+    targetCamPos.set(objPos.x * 0.72, objPos.y * 0.72, objPos.z + zOffset);
+    targetLookTarget.set(objPos.x, objPos.y, objPos.z);
+
+    const status = document.getElementById('loaderStatusText');
+    if (status && floatingInventions[idx]) {
+        status.textContent = `[${idx + 1}/4] ${floatingInventions[idx].name}`;
     }
 }
 
+window.nextSlide = function() {
+    let next = currentSlideIndex + 1;
+    if (next >= hoverTargets.length) next = 0;
+    focusSlide(next);
+};
+
+window.prevSlide = function() {
+    let prev = currentSlideIndex - 1;
+    if (prev < 0) prev = hoverTargets.length - 1;
+    focusSlide(prev);
+};
+
+window.goToSlide = function(idx) {
+    focusSlide(idx);
+};
+
+/* СЕНСОРНЫЙ СВАЙП ДЛЯ ТЕЛЕФОНОВ (TOUCH SWIPE) */
+let touchStartX = 0, touchStartY = 0;
+window.addEventListener('touchstart', (e) => {
+    if (e.touches.length > 0) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+    }
+}, { passive: true });
+
+window.addEventListener('touchend', (e) => {
+    if (e.changedTouches.length > 0) {
+        const diffX = e.changedTouches[0].clientX - touchStartX;
+        const diffY = e.changedTouches[0].clientY - touchStartY;
+        // Если жест горизонтальный
+        if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
+            if (diffX < 0) nextSlide();
+            else prevSlide();
+        }
+    }
+}, { passive: true });
+
+/* ДЕСКТОПНЫЙ РАЙКАСТЕР (ЕСЛИ МЫШЬ) */
+const raycaster = new THREE.Raycaster();
+const mouseVec = new THREE.Vector2(-999, -999);
+
+window.addEventListener('mousemove', (e) => {
+    mouseVec.x = (e.clientX / window.innerWidth) * 2 - 1;
+    mouseVec.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    checkRaycastHover();
+});
+
+function checkRaycastHover() {
+    if (preloaderDismissed || window.innerWidth < 768) return;
+    raycaster.setFromCamera(mouseVec, preCamera);
+    const hitMeshes = hoverTargets.map(h => h.hitMesh);
+    const intersects = raycaster.intersectObjects(hitMeshes, false);
+
+    if (intersects.length > 0) {
+        const hit = intersects[0].object;
+        const idx = hoverTargets.findIndex(h => h.hitMesh === hit);
+        if (idx !== -1 && idx !== currentSlideIndex) {
+            focusSlide(idx);
+        }
+    }
+}
+
+/* ЖИДКИЙ ПЕРЕХОД (RIPPLE) */
 let isRippling = false;
 let rippleScene, rippleCamera, rippleMaterial, rippleTime = 0;
 const snapshotTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight);
@@ -877,8 +903,6 @@ function animatePreloader() {
         item.group.rotation.z += item.sz + Math.sin(t * 0.15) * 0.0003;
     });
 
-    checkRaycastHover();
-
     hoverTargets.forEach((item, idx) => {
         if (!item.isHovered) {
             item.group.position.y = item.basePos.y + Math.sin(t * 1.1 + idx * 1.5) * 7.5;
@@ -904,9 +928,8 @@ function animatePreloader() {
         });
     });
 
-    // Плавный кинематографический наезд и откат камеры
-    preCamera.position.lerp(targetCamPos, 0.045);
-    currentLookTarget.lerp(targetLookTarget, 0.045);
+    preCamera.position.lerp(targetCamPos, 0.05);
+    currentLookTarget.lerp(targetLookTarget, 0.05);
     preCamera.lookAt(currentLookTarget);
 
     preRenderer.clear();
@@ -914,7 +937,14 @@ function animatePreloader() {
 }
 animatePreloader();
 
-/* ТЕКСТ И ГЛИФЫ */
+/* СТАРТОВЫЙ ВЫБОР ПЕРВОГО СЛАЙДА ЧЕРЕЗ 1 СЕКУНДУ */
+setTimeout(() => {
+    if (!preloaderDismissed && currentSlideIndex === -1) {
+        focusSlide(0);
+    }
+}, 1200);
+
+/* ТЕКСТ И ДАШБОРД */
 const CYRILLIC_GLYPHS = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ0123456789§$%*#@!/[]:;';
 const NUMERIC_GLYPHS = '0123456789 ';
 function scrambleElementText(el, finalText, duration = 460, useAlphabet = true) {
