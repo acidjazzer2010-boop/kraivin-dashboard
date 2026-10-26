@@ -98,7 +98,7 @@ html, body {
     height: 100%;
     margin: 0;
     padding: 0;
-    overflow: hidden; /* Блокировка скролла на этапе прелоадера */
+    overflow: hidden;
     background-color: var(--bg-space);
     color: var(--text-main);
     font-family: 'JetBrains Mono', monospace;
@@ -111,14 +111,14 @@ html, body {
 }
 
 /* =========================================================================
-   МОНОЛИТНЫЙ ПРЕЛОАДЕР (СТРОГО 100VH, БЕЗ СКРОЛЛА)
+   МОНУМЕНТАЛЬНЫЙ ПРЕЛОАДЕР (БЕЗ СКРОЛЛА, 1920x1080)
    ========================================================================= */
 #preloader-stage {
     position: fixed;
     top: 0; left: 0;
     width: 100vw;
     height: 100vh;
-    background: #050508;
+    background: radial-gradient(circle at center, #090a10 0%, #040407 100%);
     z-index: 900;
     overflow: hidden;
 }
@@ -133,7 +133,6 @@ html, body {
 }
 #preloader-webgl:active { cursor: grabbing; }
 
-/* ЕДИНЫЙ ЖЕСТКИЙ ЭКРАННЫЙ СЛОЙ ТИПОГРАФИКИ И КНОПОК */
 .preloader-fixed-hud {
     position: absolute;
     inset: 0;
@@ -144,21 +143,20 @@ html, body {
     user-select: none;
 }
 
-/* Заголовок строго над астролябией */
 #preloaderTitle {
     position: absolute;
-    top: 52px;
+    top: 48px;
     left: 50%;
     transform: translateX(-50%);
     font-family: 'Cormorant Garamond', Georgia, serif;
     font-style: italic;
-    font-size: clamp(26px, 3.2vw, 44px);
+    font-size: clamp(28px, 3.5vw, 46px);
     font-weight: 700;
-    letter-spacing: 0.24em;
+    letter-spacing: 0.28em;
     color: var(--accent-gold);
     opacity: 0;
-    text-shadow: 0 0 35px rgba(212, 175, 55, 0.75);
-    transition: opacity 1.6s cubic-bezier(0.16, 1, 0.3, 1);
+    text-shadow: 0 0 45px rgba(212, 175, 55, 0.85);
+    transition: opacity 1.8s cubic-bezier(0.16, 1, 0.3, 1);
     text-align: center;
     white-space: nowrap;
 }
@@ -166,18 +164,17 @@ html, body {
     opacity: 1 !important;
 }
 
-/* Нижний блок строго под кольцами */
 .bottom-dock {
     position: absolute;
-    bottom: 46px;
+    bottom: 44px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 320px;
-    height: 54px;
+    width: 340px;
+    height: 56px;
 }
 
 #preloaderHUD {
@@ -188,7 +185,7 @@ html, body {
     transition: opacity 0.4s ease;
 }
 .progress-bar-bg {
-    width: 260px;
+    width: 280px;
     height: 2px;
     background: rgba(255, 255, 255, 0.12);
     position: relative;
@@ -199,6 +196,7 @@ html, body {
     left: 0; top: 0;
     height: 100%; width: 0%;
     background: var(--accent-gold);
+    box-shadow: 0 0 10px var(--accent-gold);
     transition: width 0.1s linear;
 }
 
@@ -216,28 +214,28 @@ html, body {
 }
 
 .explore-btn {
-    padding: 12px 42px;
-    background: rgba(13, 13, 18, 0.88);
+    padding: 13px 46px;
+    background: rgba(13, 13, 18, 0.9);
     border: 1px solid rgba(212, 175, 55, 0.95);
     color: #f4f1ea;
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
-    letter-spacing: 0.35em;
+    letter-spacing: 0.38em;
     text-transform: uppercase;
     cursor: pointer;
     backdrop-filter: blur(14px);
     overflow: hidden;
     transition: all 0.3s ease;
-    box-shadow: 0 0 35px rgba(212, 175, 55, 0.3), inset 0 0 16px rgba(212, 175, 55, 0.15);
+    box-shadow: 0 0 40px rgba(212, 175, 55, 0.35), inset 0 0 16px rgba(212, 175, 55, 0.18);
 }
 .explore-btn::before {
     content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.4), transparent);
+    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.45), transparent);
     transition: left 0.7s ease;
 }
 .explore-btn:hover {
     border-color: #ffd700; color: #ffd700;
-    box-shadow: 0 0 50px rgba(212, 175, 55, 0.6), inset 0 0 20px rgba(212, 175, 55, 0.3);
+    box-shadow: 0 0 60px rgba(212, 175, 55, 0.7), inset 0 0 24px rgba(212, 175, 55, 0.35);
     transform: scale(1.05);
 }
 .explore-btn:hover::before { left: 100%; }
@@ -305,7 +303,7 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
 <body class="selection:bg-[#d4af37] selection:text-black">
 <div class="film-grain"></div>
 
-<!-- ПРЕЛОАДЕР (СТРОГО ОДИН ЭКРАН 1920x1080) -->
+<!-- ПРЕЛОАДЕР: ЦИКЛОПИЧЕСКИЕ КОЛЬЦА И МЕХАНИЗМЫ ДА ВИНЧИ -->
 <div id="preloader-stage">
     <canvas id="preloader-webgl"></canvas>
 
@@ -316,7 +314,7 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
             <div id="preloaderHUD">
                 <div class="flex items-center gap-3 text-[#d4af37] text-[10px] tracking-[0.25em] uppercase font-mono">
                     <span class="pulse-dot"></span>
-                    <span id="loaderStatusText">Сборка конструкций Да Винчи...</span>
+                    <span id="loaderStatusText">Инициализация циклопических осей...</span>
                     <span id="loaderPercent" class="font-bold">0%</span>
                 </div>
                 <div class="progress-bar-bg mt-1">
@@ -335,7 +333,7 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
 
 <canvas id="webgl-bg-canvas"></canvas>
 
-<!-- ДАШБОРД (СКРОЛЛ ТОЛЬКО ЗДЕСЬ ПОСЛЕ ВХОДА) -->
+<!-- ДАШБОРД -->
 <div id="mainDashboardApp" class="flex-col border-t border-l opacity-0 transition-opacity duration-1000">
     <header class="alche-block px-5 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4 border-b">
         <div class="flex items-center gap-6">
@@ -371,7 +369,6 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
     </header>
 
     <div class="flex-1 grid grid-cols-1 lg:grid-cols-12">
-        <!-- ЛЕВАЯ ПАНЕЛЬ ПАРАМЕТРОВ -->
         <aside class="lg:col-span-3 flex flex-col border-r">
             <div class="alche-block cross-tl px-5 py-3.5 flex items-center justify-between">
                 <span class="font-mono text-[10px] uppercase tracking-[0.2em] text-[#d4af37] font-bold">[00] Параметры Модели</span>
@@ -492,7 +489,6 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
             </form>
         </aside>
 
-        <!-- ПРАВАЯ ЧАСТЬ -->
         <section class="lg:col-span-9 flex flex-col">
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 border-b">
                 <div class="alche-block tilt-card p-5" onmouseenter="scrambleTitle(this)">
@@ -522,7 +518,6 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
                 </div>
             </div>
 
-            <!-- НАВИГАЦИОННЫЕ ВКЛАДКИ -->
             <div class="alche-block px-5 py-2.5 flex items-center justify-between border-b">
                 <div class="flex flex-wrap items-center gap-1.5" id="navTabsContainer">
                     <button type="button" onclick="selectTab(0)" class="tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest bg-[#d4af37] text-black font-bold transition shadow-md">[01] ОБСЛУЖИВАНИЕ КАПИТАЛА</button>
@@ -533,7 +528,6 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
             </div>
 
             <div class="flex-1 p-5 lg:p-7 space-y-6">
-                <!-- ВКЛАДКА 0: ДОЛГ -->
                 <div id="viewTab0" class="tab-view-enter space-y-6">
                     <div class="alche-block p-5 border">
                         <div class="flex justify-between items-center mb-4">
@@ -554,7 +548,6 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
                     </div>
                 </div>
 
-                <!-- ВКЛАДКА 1: СКЛАД -->
                 <div id="viewTab1" class="hidden space-y-6">
                     <div class="alche-block p-5 border">
                         <div class="flex justify-between items-center mb-4">
@@ -567,7 +560,6 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
                     </div>
                 </div>
 
-                <!-- ВКЛАДКА 2: CASH FLOW -->
                 <div id="viewTab2" class="hidden space-y-6">
                     <div class="alche-block p-5 border">
                         <div class="flex justify-between items-center mb-4">
@@ -580,7 +572,6 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
                     </div>
                 </div>
 
-                <!-- ВКЛАДКА 3: ЭКОНОМИКА -->
                 <div id="viewTab3" class="hidden space-y-6">
                     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
                         <div class="alche-block p-5 border">
@@ -627,7 +618,6 @@ function dismissPreloader() {
     const stage = document.getElementById('preloader-stage');
     const app = document.getElementById('mainDashboardApp');
     
-    // Включаем скролл только для дашборда
     document.documentElement.style.overflow = 'auto';
     document.body.style.overflow = 'auto';
     
@@ -643,7 +633,6 @@ function dismissPreloader() {
 const PRELOADER_TOTAL_TIME = 9000;
 const preloaderStartTime = performance.now();
 
-// Проявление заголовка без возможности исчезновения
 setTimeout(() => {
     const pt = document.getElementById('preloaderTitle');
     if (pt) pt.classList.add('locked-on');
@@ -674,7 +663,7 @@ function updatePreloaderProgress(now) {
 requestAnimationFrame(updatePreloaderProgress);
 
 /* =========================================================================
-   THREE.JS ПРЕЛОАДЕР: ГАРАНТИЯ 1920x1080 (ВСЁ В ПОЛЕ ЗРЕНИЯ)
+   THREE.JS ПРЕЛОАДЕР: ЦИКЛОПИЧЕСКИЕ КОЛЬЦА-МОНОЛИТЫ
    ========================================================================= */
 const preCanvas = document.getElementById('preloader-webgl');
 const preRenderer = new THREE.WebGLRenderer({ canvas: preCanvas, alpha: true, antialias: true, preserveDrawingBuffer: true });
@@ -682,21 +671,10 @@ preRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 preRenderer.setSize(window.innerWidth, window.innerHeight);
 
 const preScene = new THREE.Scene();
-const preCamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 4000);
+const preCamera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 1, 5000);
 
-// Динамический расчёт Z камеры: объекты всегда занимают центр и не наезжают на заголовок и кнопку
-function computeExactFitZ() {
-    const vFovRad = (preCamera.fov * Math.PI) / 180;
-    const requiredRadius = 160; 
-    let z = requiredRadius / Math.tan(vFovRad / 2);
-    const aspect = window.innerWidth / window.innerHeight;
-    if (aspect < 1.77) { // Меньше стандарта 16:9
-        z = z * (1.77 / Math.max(aspect, 0.7));
-    }
-    return Math.max(z * 1.05, 340);
-}
-
-let baseCamZ = computeExactFitZ();
+// Камера стоит на дистанции 380, при этом радиус внешнего кольца 340, что выводит его за границы экрана
+const baseCamZ = 380;
 let targetCamPos = new THREE.Vector3(0, 0, baseCamZ);
 let currentLookTarget = new THREE.Vector3(0, 0, 0);
 let targetLookTarget = new THREE.Vector3(0, 0, 0);
@@ -706,59 +684,111 @@ preCamera.position.copy(targetCamPos);
 const preGroup = new THREE.Group();
 preScene.add(preGroup);
 
-const astrolabeWireMat = new THREE.MeshBasicMaterial({
-    color: 0x00b4ff, wireframe: true, transparent: true, opacity: 0.38
+// Небесно-голубой светящийся каркас мега-структуры
+const megaRingWireMat = new THREE.MeshBasicMaterial({
+    color: 0x00c3ff, wireframe: true, transparent: true, opacity: 0.38
+});
+const secondaryWireMat = new THREE.MeshBasicMaterial({
+    color: 0x0077aa, wireframe: true, transparent: true, opacity: 0.22
 });
 
-function createMassiveTrussRing(mainRadius, tubeRadius, segmentsRadial, segmentsTubular) {
+// Генератор монументальных колец астролябии
+function createCyclopeanTrussRing(mainRadius, tubeWidth, tubeDepth, segments) {
     const group = new THREE.Group();
-    const mainMesh = new THREE.Mesh(new THREE.TorusGeometry(mainRadius, tubeRadius, segmentsRadial, segmentsTubular), astrolabeWireMat);
-    group.add(mainMesh);
 
+    // 1. Центральное несущее тело (массивный торус)
+    const coreMesh = new THREE.Mesh(
+        new THREE.TorusGeometry(mainRadius, tubeWidth * 0.45, 12, segments),
+        megaRingWireMat
+    );
+    group.add(coreMesh);
+
+    // 2. Внешний и внутренний рельсовые пояса с зубчатой передачей
     const linePts = [];
-    const rIn = mainRadius - tubeRadius * 1.05;
-    const rOut = mainRadius + tubeRadius * 1.05;
+    const rOuter = mainRadius + tubeWidth;
+    const rInner = mainRadius - tubeWidth;
+    const zOffset = tubeDepth;
 
-    for (let i = 0; i < segmentsTubular; i++) {
-        const a1 = (i / segmentsTubular) * Math.PI * 2;
-        const a2 = ((i + 1) / segmentsTubular) * Math.PI * 2;
-        const pIn1 = new THREE.Vector3(Math.cos(a1) * rIn, Math.sin(a1) * rIn, 0);
-        const pIn2 = new THREE.Vector3(Math.cos(a2) * rIn, Math.sin(a2) * rIn, 0);
-        const pOut1 = new THREE.Vector3(Math.cos(a1) * rOut, Math.sin(a1) * rOut, 0);
-        const pOut2 = new THREE.Vector3(Math.cos(a2) * rOut, Math.sin(a2) * rOut, 0);
+    for (let i = 0; i < segments; i++) {
+        const a1 = (i / segments) * Math.PI * 2;
+        const a2 = ((i + 1) / segments) * Math.PI * 2;
 
-        linePts.push(pIn1, pIn2, pOut1, pOut2);
-        if (i % 2 === 0) linePts.push(pIn1, pOut2, pOut1, pIn2);
+        // 4 продольных несущих пояса (квадратное сечение гигантской балки)
+        const p1_topOut = new THREE.Vector3(Math.cos(a1) * rOuter, Math.sin(a1) * rOuter, zOffset);
+        const p2_topOut = new THREE.Vector3(Math.cos(a2) * rOuter, Math.sin(a2) * rOuter, zOffset);
+        const p1_botOut = new THREE.Vector3(Math.cos(a1) * rOuter, Math.sin(a1) * rOuter, -zOffset);
+        const p2_botOut = new THREE.Vector3(Math.cos(a2) * rOuter, Math.sin(a2) * rOuter, -zOffset);
 
-        const zOff = tubeRadius * 0.9;
-        const pZTop = new THREE.Vector3(Math.cos(a1) * mainRadius, Math.sin(a1) * mainRadius, zOff);
-        const pZBot = new THREE.Vector3(Math.cos(a1) * mainRadius, Math.sin(a1) * mainRadius, -zOff);
-        linePts.push(pZTop, pZBot, pIn1, pZTop, pOut1, pZTop);
+        const p1_topIn = new THREE.Vector3(Math.cos(a1) * rInner, Math.sin(a1) * rInner, zOffset);
+        const p2_topIn = new THREE.Vector3(Math.cos(a2) * rInner, Math.sin(a2) * rInner, zOffset);
+        const p1_botIn = new THREE.Vector3(Math.cos(a1) * rInner, Math.sin(a1) * rInner, -zOffset);
+        const p2_botIn = new THREE.Vector3(Math.cos(a2) * rInner, Math.sin(a2) * rInner, -zOffset);
+
+        // Продольные хорды
+        linePts.push(p1_topOut, p2_topOut, p1_botOut, p2_botOut);
+        linePts.push(p1_topIn, p2_topIn, p1_botIn, p2_botIn);
+
+        // Поперечные шпангоуты
+        linePts.push(p1_topOut, p1_botOut, p1_topIn, p1_botIn);
+        linePts.push(p1_topOut, p1_topIn, p1_botOut, p1_botIn);
+
+        // Пространственные диагональные фермы (жесткость мега-конструкции)
+        if (i % 2 === 0) {
+            linePts.push(p1_topOut, p2_botOut);
+            linePts.push(p1_topIn, p2_botIn);
+            linePts.push(p1_topOut, p2_topIn);
+        }
+
+        // Зубчатые венцы механизма неизбежности на внешнем ободе
+        if (i % 3 === 0) {
+            const toothR = rOuter + tubeWidth * 0.4;
+            const pTooth = new THREE.Vector3(Math.cos(a1) * toothR, Math.sin(a1) * toothR, 0);
+            linePts.push(p1_topOut, pTooth, pTooth, p1_botOut);
+        }
     }
 
-    const trussMesh = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(linePts), astrolabeWireMat);
+    const trussMesh = new THREE.LineSegments(
+        new THREE.BufferGeometry().setFromPoints(linePts),
+        megaRingWireMat
+    );
     group.add(trussMesh);
+
+    // 3. Вторичное внутреннее концентрическое кольцо астролябии
+    const subMesh = new THREE.Mesh(
+        new THREE.TorusGeometry(mainRadius - tubeWidth * 1.6, tubeWidth * 0.18, 8, Math.floor(segments * 0.75)),
+        secondaryWireMat
+    );
+    group.add(subMesh);
+
     return group;
 }
 
+// 3 гигантские кольцевые структуры
 const astrolabeRings = [];
-const aRing1 = createMassiveTrussRing(136, 7.0, 14, 150);
-const aRing2 = createMassiveTrussRing(106, 5.8, 12, 130);
-const aRing3 = createMassiveTrussRing(78, 4.6, 10, 110);
 
-aRing2.rotation.x = Math.PI / 3;
-aRing3.rotation.y = Math.PI / 4;
+// Внешнее циклопическое кольцо (радиус 340 — намеренно срезается краями 1920x1080)
+const aRing1 = createCyclopeanTrussRing(340, 18.0, 12.0, 180);
+// Среднее кольцо титанического хронометра (радиус 255)
+const aRing2 = createCyclopeanTrussRing(255, 14.0, 10.0, 150);
+// Внутреннее направляющее кольцо (радиус 175)
+const aRing3 = createCyclopeanTrussRing(175, 11.0, 8.0, 130);
+
+aRing2.rotation.x = Math.PI / 3.4;
+aRing2.rotation.z = Math.PI / 6.0;
+aRing3.rotation.y = Math.PI / 3.0;
 
 preGroup.add(aRing1);
 preGroup.add(aRing2);
 preGroup.add(aRing3);
 
+// Медленное, неумолимое, гипнотическое вращение
 astrolabeRings.push(
-    { group: aRing1, sx: 0.0018, sy: 0.0028, sz: 0.0009, px: 0.2, py: 1.1 },
-    { group: aRing2, sx: -0.0022, sy: 0.0015, sz: -0.0018, px: 2.3, py: 0.7 },
-    { group: aRing3, sx: 0.0025, sy: -0.0021, sz: 0.0014, px: 1.5, py: 3.2 }
+    { group: aRing1, sx: 0.00045, sy: 0.00065, sz: 0.00025, px: 0.2, py: 1.1 },
+    { group: aRing2, sx: -0.00055, sy: 0.00040, sz: -0.00045, px: 2.3, py: 0.7 },
+    { group: aRing3, sx: 0.00060, sy: -0.00050, sz: 0.00035, px: 1.5, py: 3.2 }
 );
 
+// Тонкий золотой шейдер линий да Винчи
 function createBlueprintLineMaterial() {
     return new THREE.ShaderMaterial({
         uniforms: {
@@ -777,11 +807,11 @@ function createBlueprintLineMaterial() {
             uniform float uTime;
             varying vec3 vPos;
             void main() {
-                float wave = sin((vPos.x + vPos.y + vPos.z) * 0.16 - uTime * 3.8) * 0.5 + 0.5;
+                float wave = sin((vPos.x + vPos.y + vPos.z) * 0.18 - uTime * 3.5) * 0.5 + 0.5;
                 vec3 baseGold = vec3(0.85, 0.71, 0.25);
                 vec3 brightGlow = vec3(1.0, 0.96, 0.82);
                 vec3 col = mix(baseGold, brightGlow, wave * 0.4 + uHover * 0.6);
-                float alpha = clamp(0.68 + wave * 0.32 + uHover * 0.32, 0.0, 1.0);
+                float alpha = clamp(0.70 + wave * 0.30 + uHover * 0.30, 0.0, 1.0);
                 gl_FragColor = vec4(col, alpha);
             }
         `,
@@ -790,21 +820,23 @@ function createBlueprintLineMaterial() {
     });
 }
 
-/* ПРОСТРАНСТВЕННЫЕ ЧЕРТЕЖИ */
+/* =========================================================================
+   КАРКАСЫ ЧЕРТЕЖЕЙ ДА ВИНЧИ (ПАРИТЬ МЕЖДУ КОЛОССАЛЬНЫМИ КОЛЬЦАМИ)
+   ========================================================================= */
 function buildComplexAerialScrewDraft() {
     const pts = [];
-    const h = 50, radiusMax = 26;
+    const h = 56, radiusMax = 28;
     for (let i = 0; i < 6; i++) {
         const a = (i / 6) * Math.PI * 2;
-        pts.push(new THREE.Vector3(Math.cos(a)*3, -h/2, Math.sin(a)*3), new THREE.Vector3(Math.cos(a)*3, h/2, Math.sin(a)*3));
+        pts.push(new THREE.Vector3(Math.cos(a)*3.5, -h/2, Math.sin(a)*3.5), new THREE.Vector3(Math.cos(a)*3.5, h/2, Math.sin(a)*3.5));
     }
     for (let y = -h/2; y <= h/2; y += 3) {
         for (let i = 0; i < 6; i++) {
             const a1 = (i / 6) * Math.PI * 2, a2 = ((i + 1) / 6) * Math.PI * 2;
-            pts.push(new THREE.Vector3(Math.cos(a1)*3, y, Math.sin(a1)*3), new THREE.Vector3(Math.cos(a2)*3, y, Math.sin(a2)*3));
+            pts.push(new THREE.Vector3(Math.cos(a1)*3.5, y, Math.sin(a1)*3.5), new THREE.Vector3(Math.cos(a2)*3.5, y, Math.sin(a2)*3.5));
         }
     }
-    const coils = 3.6, steps = 160;
+    const coils = 3.6, steps = 180;
     for (let i = 0; i < steps; i++) {
         const t1 = i / steps, t2 = (i + 1) / steps;
         const a1 = t1 * Math.PI * 2 * coils, a2 = t2 * Math.PI * 2 * coils;
@@ -813,7 +845,7 @@ function buildComplexAerialScrewDraft() {
         const p1 = new THREE.Vector3(Math.cos(a1) * r1, y1, Math.sin(a1) * r1);
         const p2 = new THREE.Vector3(Math.cos(a2) * r2, y2, Math.sin(a2) * r2);
         pts.push(p1, p2);
-        if (i % 2 === 0) pts.push(new THREE.Vector3(Math.cos(a1)*3, y1, Math.sin(a1)*3), p1);
+        if (i % 2 === 0) pts.push(new THREE.Vector3(Math.cos(a1)*3.5, y1, Math.sin(a1)*3.5), p1);
     }
     return new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), createBlueprintLineMaterial());
 }
@@ -840,10 +872,10 @@ function buildComplexClockworkGearsDraft() {
             pts.push(new THREE.Vector3(centerX, centerY, zOffset), new THREE.Vector3(centerX + Math.cos(a)*radius, centerY + Math.sin(a)*radius, zOffset));
         }
     }
-    buildGear(-12, 6, 20, 26, 0);
-    buildGear(16, -10, 13, 16, 2);
-    buildGear(13, 18, 8, 10, -2);
-    const b = 32;
+    buildGear(-12, 6, 22, 28, 0);
+    buildGear(18, -10, 14, 18, 2);
+    buildGear(14, 20, 9, 12, -2);
+    const b = 34;
     pts.push(new THREE.Vector3(-b, -b, 0), new THREE.Vector3(b, -b, 0));
     pts.push(new THREE.Vector3(b, -b, 0), new THREE.Vector3(b, b, 0));
     pts.push(new THREE.Vector3(b, b, 0), new THREE.Vector3(-b, b, 0));
@@ -856,43 +888,43 @@ function buildComplexOrnithopterDraft() {
     const sparPts = [];
     for (let i = 0; i <= 36; i++) {
         const t = i / 36;
-        sparPts.push(new THREE.Vector3(-34 + t * 68, Math.sin(t * Math.PI) * 15 - 7, -Math.cos(t * Math.PI) * 8));
+        sparPts.push(new THREE.Vector3(-36 + t * 72, Math.sin(t * Math.PI) * 16 - 8, -Math.cos(t * Math.PI) * 8));
     }
     for (let i = 0; i < sparPts.length - 1; i++) pts.push(sparPts[i], sparPts[i+1]);
     for (let r = 0; r < 14; r++) {
         const t = r / 13;
         const root = sparPts[Math.floor(t * 35)];
-        const chordLen = 26 - Math.abs(t - 0.5) * 15;
+        const chordLen = 28 - Math.abs(t - 0.5) * 16;
         let prevRibPt = null;
         for (let s = 0; s <= 6; s++) {
             const st = s / 6;
-            const ribPt = new THREE.Vector3(root.x + (t - 0.5) * st * 8, root.y - st * chordLen, root.z + Math.sin(st * Math.PI * 0.8) * 8);
+            const ribPt = new THREE.Vector3(root.x + (t - 0.5) * st * 8, root.y - st * chordLen, root.z + Math.sin(st * Math.PI * 0.8) * 9);
             if (prevRibPt) pts.push(prevRibPt, ribPt);
             prevRibPt = ribPt;
-            if (s === 6) { pts.push(root, ribPt); pts.push(new THREE.Vector3(0, -20, 10), ribPt); }
+            if (s === 6) { pts.push(root, ribPt); pts.push(new THREE.Vector3(0, -22, 12), ribPt); }
         }
     }
-    pts.push(new THREE.Vector3(0, -6, 0), new THREE.Vector3(0, -24, 0));
+    pts.push(new THREE.Vector3(0, -6, 0), new THREE.Vector3(0, -26, 0));
     return new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), createBlueprintLineMaterial());
 }
 
 function buildComplexVitruvianDraft() {
     const pts = [];
-    const r = 30;
+    const r = 32;
     for (let i = 0; i < 96; i++) {
         const a1 = (i / 96) * Math.PI * 2, a2 = ((i + 1) / 96) * Math.PI * 2;
         pts.push(new THREE.Vector3(Math.cos(a1)*r, Math.sin(a1)*r, 0), new THREE.Vector3(Math.cos(a2)*r, Math.sin(a2)*r, 0));
     }
-    const s = 24;
+    const s = 26;
     const corners = [new THREE.Vector3(-s, -s, 0), new THREE.Vector3(s, -s, 0), new THREE.Vector3(s, s, 0), new THREE.Vector3(-s, s, 0)];
     for (let i = 0; i < 4; i++) {
         pts.push(corners[i], corners[(i + 1) % 4]);
         pts.push(corners[i], new THREE.Vector3(0, 0, 0));
     }
-    pts.push(new THREE.Vector3(0, 20, 0), new THREE.Vector3(0, -18, 0));
-    pts.push(new THREE.Vector3(-24, 10, 0), new THREE.Vector3(24, 10, 0));
-    pts.push(new THREE.Vector3(0, -18, 0), new THREE.Vector3(-16, -30, 0));
-    pts.push(new THREE.Vector3(0, -18, 0), new THREE.Vector3(16, -30, 0));
+    pts.push(new THREE.Vector3(0, 22, 0), new THREE.Vector3(0, -18, 0));
+    pts.push(new THREE.Vector3(-26, 12, 0), new THREE.Vector3(26, 12, 0));
+    pts.push(new THREE.Vector3(0, -18, 0), new THREE.Vector3(-18, -32, 0));
+    pts.push(new THREE.Vector3(0, -18, 0), new THREE.Vector3(18, -32, 0));
     return new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), createBlueprintLineMaterial());
 }
 
@@ -914,7 +946,7 @@ function createWireframeFromImage(imageUrl, fallbackMesh) {
                     const idx = (y * 64 + x) * 4;
                     const bright = 0.299 * data[idx] + 0.587 * data[idx+1] + 0.114 * data[idx+2];
                     if (bright < 165 || (bright > 60 && bright < 195)) {
-                        detected.push(new THREE.Vector3(((x/64) - 0.5) * 58, -((y/64) - 0.5) * 58, ((bright/255) - 0.5) * 7.0));
+                        detected.push(new THREE.Vector3(((x/64) - 0.5) * 62, -((y/64) - 0.5) * 62, ((bright/255) - 0.5) * 8.0));
                     }
                 }
             }
@@ -924,7 +956,7 @@ function createWireframeFromImage(imageUrl, fallbackMesh) {
                     const p1 = detected[i];
                     for (let j = i + 1; j < Math.min(i + 8, detected.length); j++) {
                         const p2 = detected[j];
-                        if (p1.distanceTo(p2) > 1.2 && p1.distanceTo(p2) < 10.0) linePts.push(p1, p2);
+                        if (p1.distanceTo(p2) > 1.2 && p1.distanceTo(p2) < 11.0) linePts.push(p1, p2);
                     }
                 }
                 if (linePts.length > 80) {
@@ -938,26 +970,27 @@ function createWireframeFromImage(imageUrl, fallbackMesh) {
     return group;
 }
 
+// 4 парящих чертежа на выверенных дистанциях в глубине циклопической сферы
 const floatingInventions = [
     {
         group: createWireframeFromImage("1000400438.jpg", buildComplexAerialScrewDraft()),
-        basePos: new THREE.Vector3(-82, 22, 60),
-        rotSpeed: new THREE.Vector3(0.0022, 0.0019, -0.0012)
+        basePos: new THREE.Vector3(-96, 26, 45),
+        rotSpeed: new THREE.Vector3(0.0018, 0.0015, -0.0010)
     },
     {
         group: createWireframeFromImage("genio2.webp", buildComplexClockworkGearsDraft()),
-        basePos: new THREE.Vector3(86, -18, -50),
-        rotSpeed: new THREE.Vector3(0.0016, 0.0025, 0.0015)
+        basePos: new THREE.Vector3(102, -22, -40),
+        rotSpeed: new THREE.Vector3(0.0014, 0.0020, 0.0012)
     },
     {
         group: createWireframeFromImage("genio3.png", buildComplexOrnithopterDraft()),
-        basePos: new THREE.Vector3(70, 26, 85),
-        rotSpeed: new THREE.Vector3(-0.0018, 0.0022, 0.0014)
+        basePos: new THREE.Vector3(82, 32, 70),
+        rotSpeed: new THREE.Vector3(-0.0015, 0.0018, 0.0011)
     },
     {
         group: createWireframeFromImage("", buildComplexVitruvianDraft()),
-        basePos: new THREE.Vector3(-24, -28, -40),
-        rotSpeed: new THREE.Vector3(0.0012, 0.0018, 0.0008)
+        basePos: new THREE.Vector3(-28, -32, -30),
+        rotSpeed: new THREE.Vector3(0.0010, 0.0014, 0.0007)
     }
 ];
 
@@ -966,7 +999,7 @@ floatingInventions.forEach((item) => {
     item.group.position.copy(item.basePos);
     preGroup.add(item.group);
 
-    const hitGeo = new THREE.SphereGeometry(38, 16, 16);
+    const hitGeo = new THREE.SphereGeometry(42, 16, 16);
     const hitMat = new THREE.MeshBasicMaterial({ visible: false });
     const hitMesh = new THREE.Mesh(hitGeo, hitMat);
     hitMesh.position.copy(item.basePos);
@@ -979,7 +1012,7 @@ floatingInventions.forEach((item) => {
     hoverTargets.push(item);
 });
 
-/* НАВЕДЕНИЕ И ФОКУС КАМЕРЫ */
+/* НАВЕДЕНИЕ: ВЫДЕЛЕНИЕ И НАЕЗД КАМЕРЫ НА ФОНЕ ГИГАНТСКИХ КОЛЕЦ */
 const raycaster = new THREE.Raycaster();
 const mouseVec = new THREE.Vector2(-999, -999);
 let currentHovered = null;
@@ -1011,17 +1044,17 @@ function checkRaycastHover() {
         const found = hoverTargets.find(h => h.hitMesh === hit);
         if (found) {
             found.isHovered = true;
-            found.targetScale = 1.45;
+            found.targetScale = 1.48;
             found.targetZ = 120; 
 
-            // Смещение фокуса камеры точно к объекту
+            // Кинематографический наезд: камера сдвигается в глубину к объекту
             const objPos = found.group.position;
-            targetCamPos.set(objPos.x * 0.42, objPos.y * 0.42, baseCamZ * 0.75);
+            targetCamPos.set(objPos.x * 0.40, objPos.y * 0.40, baseCamZ * 0.68);
             targetLookTarget.set(objPos.x, objPos.y, objPos.z);
 
             found.group.traverse(child => {
                 if (child.isLineSegments && child.material && child.material.uniforms && child.material.uniforms.uHover) {
-                    child.material.uniforms.uHover.value = THREE.MathUtils.lerp(child.material.uniforms.uHover.value, 1.0, 0.2);
+                    child.material.uniforms.uHover.value = THREE.MathUtils.lerp(child.material.uniforms.uHover.value, 1.0, 0.22);
                 }
             });
 
@@ -1037,7 +1070,7 @@ function checkRaycastHover() {
     }
 }
 
-/* ПЕРЕХОД */
+/* ПЕРЕХОД ЖИДКОЙ ВОЛНЫ */
 let isRippling = false;
 let rippleScene, rippleCamera, rippleMaterial, rippleTime = 0;
 const snapshotTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight);
@@ -1086,8 +1119,8 @@ function triggerLiquidTransition(event) {
                 vec2 aspectAdjustedCenter = vec2(uCenter.x * uAspect, uCenter.y);
                 float dist = distance(aspectAdjustedUV, aspectAdjustedCenter);
 
-                float waveRadius = uProgress * 2.4;
-                float waveWidth = 0.38;
+                float waveRadius = uProgress * 2.5;
+                float waveWidth = 0.40;
                 float waveFactor = smoothstep(waveRadius - waveWidth, waveRadius, dist) * smoothstep(waveRadius + waveWidth, waveRadius, dist);
                 float wave = sin((dist - waveRadius) * 36.0) * waveFactor * (1.0 - uProgress);
                 vec2 dir = normalize(aspectAdjustedUV - aspectAdjustedCenter + 0.0001);
@@ -1127,18 +1160,20 @@ function animatePreloader() {
         return;
     }
 
+    // Медленное, неумолимое вращение гигантских конструкций
     astrolabeRings.forEach(item => {
-        item.group.rotation.x += item.sx + Math.sin(t * 0.4 + item.px) * 0.0008;
-        item.group.rotation.y += item.sy + Math.cos(t * 0.35 + item.py) * 0.0009;
-        item.group.rotation.z += item.sz + Math.sin(t * 0.25) * 0.0006;
+        item.group.rotation.x += item.sx + Math.sin(t * 0.25 + item.px) * 0.0004;
+        item.group.rotation.y += item.sy + Math.cos(t * 0.20 + item.py) * 0.0005;
+        item.group.rotation.z += item.sz + Math.sin(t * 0.15) * 0.0003;
     });
 
     checkRaycastHover();
 
+    // Парение чертежей внутри циклопической сферы
     hoverTargets.forEach((item, idx) => {
         if (!item.isHovered) {
-            item.group.position.y = item.basePos.y + Math.sin(t * 1.2 + idx * 1.5) * 8.0;
-            item.group.position.x = item.basePos.x + Math.cos(t * 0.8 + idx * 1.2) * 5.5;
+            item.group.position.y = item.basePos.y + Math.sin(t * 1.1 + idx * 1.5) * 7.5;
+            item.group.position.x = item.basePos.x + Math.cos(t * 0.75 + idx * 1.2) * 5.0;
             item.group.rotation.x += item.rotSpeed.x;
             item.group.rotation.y += item.rotSpeed.y;
             item.group.rotation.z += item.rotSpeed.z;
@@ -1261,8 +1296,6 @@ document.querySelectorAll('.tilt-card').forEach(card => {
 
 window.addEventListener('resize', () => {
     preCamera.aspect = window.innerWidth / window.innerHeight;
-    baseCamZ = computeExactFitZ();
-    if (!currentHovered) targetCamPos.z = baseCamZ;
     preCamera.updateProjectionMatrix();
     preRenderer.setSize(window.innerWidth, window.innerHeight);
 
@@ -1286,13 +1319,15 @@ function toggleTheme() {
         lblNight.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold text-black';
         lblDay.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold opacity-70';
         dashRingMat.color.setHex(0x00aaff);
-        astrolabeWireMat.color.setHex(0x00b4ff);
+        megaRingWireMat.color.setHex(0x00c3ff);
+        secondaryWireMat.color.setHex(0x0077aa);
     } else {
         thumb.style.transform = 'translateX(58px)';
         lblDay.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold text-white';
         lblNight.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold opacity-70';
         dashRingMat.color.setHex(0x0055aa);
-        astrolabeWireMat.color.setHex(0x0066cc);
+        megaRingWireMat.color.setHex(0x0066cc);
+        secondaryWireMat.color.setHex(0x004488);
     }
     playClickSound(900, 0.03);
     dashRenderer.render(dashScene, dashCamera);
@@ -1659,5 +1694,4 @@ window.onload = () => runCalculation();
 </body>
 </html>"""
 
-# components.html монтируется в реальные 100vh контейнера
 components.html(html_code, height=980, scrolling=False)
