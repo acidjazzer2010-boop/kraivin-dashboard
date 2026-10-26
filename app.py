@@ -110,11 +110,20 @@ body { background-color: var(--bg-space); color: var(--text-main); font-family: 
 #preloaderTitle {
     position: absolute; top: 8%; left: 50%; transform: translateX(-50%);
     font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic;
-    font-size: clamp(26px, 3.8vw, 48px); font-weight: 700; letter-spacing: 0.22em;
+    font-size: clamp(28px, 4vw, 52px); font-weight: 700; letter-spacing: 0.22em;
     color: var(--accent-gold); opacity: 0; z-index: 30; pointer-events: none;
     text-shadow: 0 0 35px rgba(212, 175, 55, 0.75);
-    transition: opacity 1.8s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 2s cubic-bezier(0.16, 1, 0.3, 1);
     text-align: center; width: 100%; user-select: none;
+}
+
+#blueprintInfoTag {
+    position: absolute; top: 16%; left: 50%; transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.3em;
+    color: #f4f1ea; opacity: 0; z-index: 30; pointer-events: none;
+    transition: opacity 0.35s ease; text-transform: uppercase;
+    background: rgba(13, 13, 18, 0.75); border: 1px solid var(--accent-gold);
+    padding: 4px 14px; backdrop-filter: blur(8px);
 }
 
 #preloaderHUD {
@@ -201,16 +210,17 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
 <body class="selection:bg-[#d4af37] selection:text-black">
 <div class="film-grain"></div>
 
-<!-- ПРЕЛОАДЕР -->
+<!-- ПРЕЛОАДЕР: АСТРОЛЯБИЯ + ПАРЯЩИЕ КАРКАСНЫЕ ЧЕРТЕЖИ ДА ВИНЧИ -->
 <div id="preloader-stage">
     <canvas id="preloader-webgl"></canvas>
-    
+
     <div id="preloaderTitle">Архитектура финансов</div>
+    <div id="blueprintInfoTag">Чертёж Да Винчи</div>
 
     <div id="preloaderHUD">
         <div class="flex items-center gap-3 text-[#d4af37] text-[10px] tracking-[0.25em] uppercase font-mono">
             <span class="pulse-dot"></span>
-            <span id="loaderStatusText">Построение пространственных каркасов Да Винчи...</span>
+            <span id="loaderStatusText">Генерация каркасов Да Винчи из сотен линий...</span>
             <span id="loaderPercent" class="font-bold">0%</span>
         </div>
         <div class="progress-bar-bg mt-1">
@@ -314,7 +324,7 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
                     </div>
                 </div>
 
-                <!-- БЛОК II: ПАРТИОННЫЙ СКЛАД, СТАВКИ И УСЛОВИЯ ПОСТАВЩИКА -->
+                <!-- БЛОК II -->
                 <div class="alche-block p-5 space-y-4">
                     <div class="flex justify-between items-baseline"><span class="font-serif italic text-base font-semibold">II. Партионный склад и кредитование</span><span class="font-mono text-[9px] opacity-40">02 // 04</span></div>
                     <div>
@@ -529,7 +539,7 @@ const preloaderStartTime = performance.now();
 setTimeout(() => {
     const pt = document.getElementById('preloaderTitle');
     if (pt) { pt.style.opacity = '1'; }
-}, 1000);
+}, 1200);
 
 let drawingCompleted = false;
 
@@ -537,12 +547,12 @@ function updatePreloaderProgress(now) {
     if (preloaderDismissed) return;
     const elapsed = now - preloaderStartTime;
     const progress = Math.min(elapsed / PRELOADER_TOTAL_TIME, 1);
-    
+
     const bar = document.getElementById('loaderProgressBar');
     const pct = document.getElementById('loaderPercent');
     if (bar) bar.style.width = `${(progress * 100).toFixed(0)}%`;
     if (pct) pct.textContent = `${Math.floor(progress * 100)}%`;
-    
+
     if (progress >= 0.96 && !drawingCompleted) {
         drawingCompleted = true;
         const hud = document.getElementById('preloaderHUD');
@@ -550,13 +560,13 @@ function updatePreloaderProgress(now) {
         if (hud) hud.style.opacity = '0';
         if (btn) btn.classList.add('active');
     }
-    
+
     if (progress < 1) requestAnimationFrame(updatePreloaderProgress);
 }
 requestAnimationFrame(updatePreloaderProgress);
 
 /* =========================================================================
-   THREE.JS ПРЕЛОАДЕР: 3D КАРКАСЫ ДА ВИНЧИ + АСТРОЛЯБИЯ
+   THREE.JS ПРЕЛОАДЕР: АСТРОЛЯБИЯ + КАРКАСНЫЕ ЧЕРТЕЖИ ИЗ ИЗОБРАЖЕНИЙ ДА ВИНЧИ
    ========================================================================= */
 const preCanvas = document.getElementById('preloader-webgl');
 const preRenderer = new THREE.WebGLRenderer({ canvas: preCanvas, alpha: true, antialias: true, preserveDrawingBuffer: true });
@@ -576,9 +586,9 @@ const astrolabeWireMat = new THREE.MeshBasicMaterial({
 });
 
 const astrolabeRings = [];
-const aRing1 = new THREE.Mesh(new THREE.TorusGeometry(135, 4.0, 24, 200), astrolabeWireMat);
-const aRing2 = new THREE.Mesh(new THREE.TorusGeometry(105, 3.4, 22, 180), astrolabeWireMat);
-const aRing3 = new THREE.Mesh(new THREE.TorusGeometry(78, 2.8, 20, 160), astrolabeWireMat);
+const aRing1 = new THREE.Mesh(new THREE.TorusGeometry(140, 4.2, 26, 240), astrolabeWireMat);
+const aRing2 = new THREE.Mesh(new THREE.TorusGeometry(108, 3.6, 24, 200), astrolabeWireMat);
+const aRing3 = new THREE.Mesh(new THREE.TorusGeometry(82, 3.0, 22, 180), astrolabeWireMat);
 
 aRing2.rotation.x = Math.PI / 3;
 aRing3.rotation.y = Math.PI / 4;
@@ -593,7 +603,7 @@ astrolabeRings.push(
     { mesh: aRing3, sx: 0.0031, sy: -0.0026, sz: 0.0018, px: 1.5, py: 3.2 }
 );
 
-// Тонкий золотой шейдерный материал для 3D линий
+// Золотой шейдер для каркаса из тонких линий
 function createBlueprintLineMaterial() {
     return new THREE.ShaderMaterial({
         uniforms: {
@@ -612,11 +622,11 @@ function createBlueprintLineMaterial() {
             uniform float uTime;
             varying vec3 vPos;
             void main() {
-                float wave = sin((vPos.x + vPos.y + vPos.z) * 0.1 - uTime * 3.5) * 0.5 + 0.5;
+                float wave = sin((vPos.x + vPos.y + vPos.z) * 0.14 - uTime * 3.5) * 0.5 + 0.5;
                 vec3 baseGold = vec3(0.85, 0.71, 0.25);
-                vec3 highlight = vec3(1.0, 0.94, 0.65);
-                vec3 col = mix(baseGold, highlight, wave * 0.45 + uHover * 0.55);
-                float alpha = clamp(0.75 + wave * 0.25 + uHover * 0.25, 0.0, 1.0);
+                vec3 brightGlow = vec3(1.0, 0.95, 0.75);
+                vec3 col = mix(baseGold, brightGlow, wave * 0.35 + uHover * 0.65);
+                float alpha = clamp(0.70 + wave * 0.30 + uHover * 0.30, 0.0, 1.0);
                 gl_FragColor = vec4(col, alpha);
             }
         `,
@@ -625,158 +635,171 @@ function createBlueprintLineMaterial() {
     });
 }
 
-// 1. ВИТРУВИАНСКИЙ ЧЕЛОВЕК (3D WIREFRAME)
-function buildVitruvianWireframe() {
+// Генерация процедурного каркаса чертежа в стиле Да Винчи
+function createProceduralDaVinciDraft(type = 0) {
     const pts = [];
-    const r = 36;
-    for (let i = 0; i < 48; i++) {
-        const a1 = (i / 48) * Math.PI * 2, a2 = ((i + 1) / 48) * Math.PI * 2;
-        pts.push(new THREE.Vector3(Math.cos(a1) * r, Math.sin(a1) * r, 0));
-        pts.push(new THREE.Vector3(Math.cos(a2) * r, Math.sin(a2) * r, 0));
-    }
-    const s = 30;
-    pts.push(
-        new THREE.Vector3(-s, -s + 3, 0), new THREE.Vector3(s, -s + 3, 0),
-        new THREE.Vector3(s, -s + 3, 0), new THREE.Vector3(s, s + 3, 0),
-        new THREE.Vector3(s, s + 3, 0), new THREE.Vector3(-s, s + 3, 0),
-        new THREE.Vector3(-s, s + 3, 0), new THREE.Vector3(-s, -s + 3, 0)
-    );
-    for (let i = 0; i < 16; i++) {
-        const a1 = (i / 16) * Math.PI * 2, a2 = ((i + 1) / 16) * Math.PI * 2;
-        pts.push(new THREE.Vector3(Math.cos(a1) * 4.2, 20 + Math.sin(a1) * 5.2, 0));
-        pts.push(new THREE.Vector3(Math.cos(a2) * 4.2, 20 + Math.sin(a2) * 5.2, 0));
-    }
-    pts.push(
-        new THREE.Vector3(0, 15, 0), new THREE.Vector3(0, -6, 0),
-        new THREE.Vector3(-31, 9, 0), new THREE.Vector3(31, 9, 0),
-        new THREE.Vector3(0, 13, 0), new THREE.Vector3(-28, 22, 0),
-        new THREE.Vector3(0, 13, 0), new THREE.Vector3(28, 22, 0),
-        new THREE.Vector3(0, -6, 0), new THREE.Vector3(-10, -31, 0),
-        new THREE.Vector3(0, -6, 0), new THREE.Vector3(10, -31, 0),
-        new THREE.Vector3(0, -6, 0), new THREE.Vector3(-22, -28, 0),
-        new THREE.Vector3(0, -6, 0), new THREE.Vector3(22, -28, 0)
-    );
-
-    const geo = new THREE.BufferGeometry().setFromPoints(pts);
-    return new THREE.LineSegments(geo, createBlueprintLineMaterial());
-}
-
-// 2. ОРНИТОПТЕР / ПТИЦЕКРЫЛ (3D WIREFRAME)
-function buildOrnithopterWireframe() {
-    const pts = [];
-    const spar = [];
-    for (let i = -20; i <= 20; i++) {
-        const x = i * 2.1;
-        const y = Math.sin((i / 20) * Math.PI) * 11 - 4;
-        const z = -Math.cos((i / 20) * Math.PI) * 7;
-        spar.push(new THREE.Vector3(x, y, z));
-    }
-    for (let i = 0; i < spar.length - 1; i++) {
-        pts.push(spar[i], spar[i + 1]);
-    }
-    for (let i = 0; i < spar.length; i += 3) {
-        const p = spar[i];
-        const tip = new THREE.Vector3(p.x * 1.12, p.y - 26 + Math.abs(p.x) * 0.18, p.z + 10);
-        pts.push(p, tip);
-        if (i >= 3) {
-            const prevTip = new THREE.Vector3(spar[i - 3].x * 1.12, spar[i - 3].y - 26 + Math.abs(spar[i - 3].x) * 0.18, spar[i - 3].z + 10);
-            pts.push(tip, prevTip);
-        }
-    }
-    const geo = new THREE.BufferGeometry().setFromPoints(pts);
-    return new THREE.LineSegments(geo, createBlueprintLineMaterial());
-}
-
-// 3. ВОЗДУШНЫЙ ВИНТ (3D WIREFRAME)
-function buildAerialScrewWireframe() {
-    const pts = [];
-    pts.push(new THREE.Vector3(0, -26, 0), new THREE.Vector3(0, 30, 0));
-    pts.push(new THREE.Vector3(-16, -26, 0), new THREE.Vector3(16, -26, 0));
-    pts.push(new THREE.Vector3(0, -26, -16), new THREE.Vector3(0, -26, 16));
+    const w = 54, h = 54;
     
-    const steps = 64;
-    for (let i = 0; i < steps; i++) {
-        const t1 = (i / steps) * Math.PI * 4.5;
-        const t2 = ((i + 1) / steps) * Math.PI * 4.5;
-        const y1 = -18 + (i / steps) * 44;
-        const y2 = -18 + ((i + 1) / steps) * 44;
-        const r1 = 10 + (i / steps) * 14;
-        const r2 = 10 + ((i + 1) / steps) * 14;
-        
-        const p1 = new THREE.Vector3(Math.cos(t1) * r1, y1, Math.sin(t1) * r1);
-        const p2 = new THREE.Vector3(Math.cos(t2) * r2, y2, Math.sin(t2) * r2);
-        pts.push(p1, p2);
-        if (i % 6 === 0) {
-            pts.push(new THREE.Vector3(0, y1, 0), p1);
+    // Рамка манускрипта и координатные направляющие
+    pts.push(new THREE.Vector3(-w/2, -h/2, 0), new THREE.Vector3(w/2, -h/2, 0));
+    pts.push(new THREE.Vector3(w/2, -h/2, 0), new THREE.Vector3(w/2, h/2, 0));
+    pts.push(new THREE.Vector3(w/2, h/2, 0), new THREE.Vector3(-w/2, h/2, 0));
+    pts.push(new THREE.Vector3(-w/2, h/2, 0), new THREE.Vector3(-w/2, -h/2, 0));
+    
+    // Перекрестные оси и деления золотого сечения
+    pts.push(new THREE.Vector3(-w/2, 0, 0), new THREE.Vector3(w/2, 0, 0));
+    pts.push(new THREE.Vector3(0, -h/2, 0), new THREE.Vector3(0, h/2, 0));
+    pts.push(new THREE.Vector3(-w/2, -h/2, 0), new THREE.Vector3(w/2, h/2, 0));
+    pts.push(new THREE.Vector3(-w/2, h/2, 0), new THREE.Vector3(w/2, -h/2, 0));
+
+    if (type === 0) {
+        // Чертеж механизмов / зубчатых передач и спиралей
+        for (let r = 8; r <= 24; r += 5) {
+            for (let i = 0; i < 48; i++) {
+                const a1 = (i / 48) * Math.PI * 2, a2 = ((i + 1) / 48) * Math.PI * 2;
+                pts.push(new THREE.Vector3(Math.cos(a1)*r, Math.sin(a1)*r, (i%2 ? 1.5 : -1.5)));
+                pts.push(new THREE.Vector3(Math.cos(a2)*r, Math.sin(a2)*r, ((i+1)%2 ? 1.5 : -1.5)));
+            }
+        }
+        for (let i = 0; i < 24; i++) {
+            const a = (i / 24) * Math.PI * 2;
+            pts.push(new THREE.Vector3(Math.cos(a)*6, Math.sin(a)*6, 0), new THREE.Vector3(Math.cos(a)*26, Math.sin(a)*26, (i%2)*3 - 1.5));
+        }
+    } else if (type === 1) {
+        // Чертеж крыла / аэродинамики
+        for (let j = -20; j <= 20; j += 4) {
+            const y1 = j, y2 = j + 2;
+            const span = 25 - Math.abs(j)*0.4;
+            pts.push(new THREE.Vector3(-span, y1, Math.sin(j*0.2)*4), new THREE.Vector3(span, y2, -Math.sin(j*0.2)*4));
+        }
+        for (let i = 0; i < 120; i++) {
+            const t = (i / 120) * Math.PI * 3;
+            const rad = 2 + i * 0.18;
+            pts.push(new THREE.Vector3(Math.cos(t)*rad, Math.sin(t)*rad - 5, (i%3)*1.5));
+            const tNext = ((i+1) / 120) * Math.PI * 3;
+            const radNext = 2 + (i+1) * 0.18;
+            pts.push(new THREE.Vector3(Math.cos(tNext)*radNext, Math.sin(tNext)*radNext - 5, ((i+1)%3)*1.5));
+        }
+    } else {
+        // Чертеж архитектурной арки и винтовой структуры
+        for (let i = 0; i < 36; i++) {
+            const a = (i / 36) * Math.PI;
+            const nextA = ((i+1) / 36) * Math.PI;
+            pts.push(new THREE.Vector3(Math.cos(a)*22, Math.sin(a)*22 - 12, 6));
+            pts.push(new THREE.Vector3(Math.cos(nextA)*22, Math.sin(nextA)*22 - 12, 6));
+            pts.push(new THREE.Vector3(Math.cos(a)*22, Math.sin(a)*22 - 12, -6));
+            pts.push(new THREE.Vector3(Math.cos(nextA)*22, Math.sin(nextA)*22 - 12, -6));
+            pts.push(new THREE.Vector3(Math.cos(a)*22, Math.sin(a)*22 - 12, -6), new THREE.Vector3(Math.cos(a)*22, Math.sin(a)*22 - 12, 6));
         }
     }
     const geo = new THREE.BufferGeometry().setFromPoints(pts);
     return new THREE.LineSegments(geo, createBlueprintLineMaterial());
 }
 
-// 4. САМОНЕСУЩИЙ АРОЧНЫЙ МОСТ (3D WIREFRAME)
-function buildBridgeWireframe() {
-    const pts = [];
-    const r = 38;
-    const num = 10;
-    for (let side = -10; side <= 10; side += 20) {
-        for (let i = 0; i < num; i++) {
-            const a1 = Math.PI * 0.25 + (i / num) * Math.PI * 0.5;
-            const a2 = Math.PI * 0.25 + ((i + 1) / num) * Math.PI * 0.5;
-            pts.push(new THREE.Vector3(Math.cos(a1) * r, Math.sin(a1) * r - 18, side));
-            pts.push(new THREE.Vector3(Math.cos(a2) * r, Math.sin(a2) * r - 18, side));
+// Преобразование растрового чертежа Да Винчи в облако из сотен пересекающихся золотых 3D-линий
+function createWireframeFromImage(imageUrl, fallbackType = 0, onBuilt = null) {
+    const group = new THREE.Group();
+    const fallbackMesh = createProceduralDaVinciDraft(fallbackType);
+    group.add(fallbackMesh);
+
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+        try {
+            const canvas = document.createElement('canvas');
+            const targetW = 64, targetH = 64;
+            canvas.width = targetW;
+            canvas.height = targetH;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, targetW, targetH);
+            const imgData = ctx.getImageData(0, 0, targetW, targetH).data;
+
+            const detectedPoints = [];
+            for (let y = 0; y < targetH; y += 2) {
+                for (let x = 0; x < targetW; x += 2) {
+                    const idx = (y * targetW + x) * 4;
+                    const r = imgData[idx], g = imgData[idx+1], b = imgData[idx+2];
+                    const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+                    
+                    // Порог штриховки и линий туши на пергаменте
+                    if (brightness < 165 || (brightness > 70 && brightness < 200)) {
+                        const posX = ((x / targetW) - 0.5) * 58;
+                        const posY = -((y / targetH) - 0.5) * 58;
+                        const posZ = ((brightness / 255) - 0.5) * 7.0; // Рельефность чертежа
+                        detectedPoints.push(new THREE.Vector3(posX, posY, posZ));
+                    }
+                }
+            }
+
+            if (detectedPoints.length > 50) {
+                const linePts = [];
+                // Соединение ближайших точек в тонкий каркас пересекающихся линий
+                for (let i = 0; i < detectedPoints.length; i += 2) {
+                    const p1 = detectedPoints[i];
+                    for (let j = i + 1; j < Math.min(i + 8, detectedPoints.length); j++) {
+                        const p2 = detectedPoints[j];
+                        const dist = p1.distanceTo(p2);
+                        if (dist > 1.2 && dist < 12.0) {
+                            linePts.push(p1, p2);
+                        }
+                    }
+                }
+
+                if (linePts.length > 60) {
+                    group.remove(fallbackMesh);
+                    const geo = new THREE.BufferGeometry().setFromPoints(linePts);
+                    const lineMesh = new THREE.LineSegments(geo, createBlueprintLineMaterial());
+                    group.add(lineMesh);
+                }
+            }
+        } catch (e) {
+            // В случае локальных CORS-ограничений браузера используется процедурный чертеж Да Винчи
         }
-    }
-    for (let i = 0; i <= num; i++) {
-        const a = Math.PI * 0.25 + (i / num) * Math.PI * 0.5;
-        const x = Math.cos(a) * r, y = Math.sin(a) * r - 18;
-        pts.push(new THREE.Vector3(x, y, -10), new THREE.Vector3(x, y, 10));
-        if (i < num) {
-            const nextA = Math.PI * 0.25 + ((i + 1) / num) * Math.PI * 0.5;
-            const nextX = Math.cos(nextA) * r, nextY = Math.sin(nextA) * r - 18;
-            pts.push(new THREE.Vector3(x, y, -10), new THREE.Vector3(nextX, nextY, 10));
-            pts.push(new THREE.Vector3(x, y, 10), new THREE.Vector3(nextX, nextY, -10));
-        }
-    }
-    const geo = new THREE.BufferGeometry().setFromPoints(pts);
-    return new THREE.LineSegments(geo, createBlueprintLineMaterial());
+        if (onBuilt) onBuilt(group);
+    };
+    img.onerror = () => {
+        if (onBuilt) onBuilt(group);
+    };
+    img.src = imageUrl;
+
+    return group;
 }
 
-// Сборка массива моделей Да Винчи
+// 4 Парящих каркаса: 3 из файлов пользователя + Витрувианский человек в центре
 const floatingInventions = [
     {
-        mesh: buildVitruvianWireframe(),
-        name: "Витрувианский человек",
-        basePos: new THREE.Vector3(0, 0, 0),
-        rotSpeed: new THREE.Vector3(0.001, 0.002, 0.0005)
+        name: "Кодекс Механики (1000400438.jpg)",
+        group: createWireframeFromImage("1000400438.jpg", 0),
+        basePos: new THREE.Vector3(-85, 24, 75),
+        rotSpeed: new THREE.Vector3(0.0022, 0.0019, -0.0012)
     },
     {
-        mesh: buildOrnithopterWireframe(),
-        name: "Крыло орнитоптера",
-        basePos: new THREE.Vector3(-85, 20, 95),
-        rotSpeed: new THREE.Vector3(0.0022, 0.0015, -0.0015)
+        name: "Аэродинамика Гения (genio2.webp)",
+        group: createWireframeFromImage("genio2.webp", 1),
+        basePos: new THREE.Vector3(88, -20, -60),
+        rotSpeed: new THREE.Vector3(0.0016, 0.0025, 0.0015)
     },
     {
-        mesh: buildAerialScrewWireframe(),
-        name: "Воздушный винт",
-        basePos: new THREE.Vector3(85, -16, -75),
-        rotSpeed: new THREE.Vector3(0.001, 0.008, 0.001)
+        name: "Архитектура Форм (genio3.png)",
+        group: createWireframeFromImage("genio3.png", 2),
+        basePos: new THREE.Vector3(75, 30, 95),
+        rotSpeed: new THREE.Vector3(-0.0018, 0.0022, 0.0014)
     },
     {
-        mesh: buildBridgeWireframe(),
-        name: "Арочный мост",
-        basePos: new THREE.Vector3(70, 24, 165),
-        rotSpeed: new THREE.Vector3(-0.0018, 0.0025, 0.0012)
+        name: "Витрувианский Канон",
+        group: createWireframeFromImage("", 0),
+        basePos: new THREE.Vector3(-30, -32, -45),
+        rotSpeed: new THREE.Vector3(0.0012, 0.0018, 0.0008)
     }
 ];
 
+// Размещение объектов на сцене и привязка невидимых хитбоксов для Raycaster
 const hoverTargets = [];
 floatingInventions.forEach((item) => {
-    item.mesh.position.copy(item.basePos);
-    preGroup.add(item.mesh);
+    item.group.position.copy(item.basePos);
+    preGroup.add(item.group);
 
-    // Невидимый хитбокс для Raycaster
-    const hitGeo = new THREE.SphereGeometry(36, 12, 12);
+    const hitGeo = new THREE.SphereGeometry(38, 16, 16);
     const hitMat = new THREE.MeshBasicMaterial({ visible: false });
     const hitMesh = new THREE.Mesh(hitGeo, hitMat);
     hitMesh.position.copy(item.basePos);
@@ -789,10 +812,11 @@ floatingInventions.forEach((item) => {
     hoverTargets.push(item);
 });
 
-/* RAYCASTER ДЛЯ ИНТЕРАКТИВНОГО ВЫДЕЛЕНИЯ */
+/* RAYCASTER ДЛЯ ИНТЕРАКТИВНОГО ВЫДЕЛЕНИЯ ЧЕРТЕЖЕЙ ПРИ НАВЕДЕНИИ КУРСОРА */
 const raycaster = new THREE.Raycaster();
 const mouseVec = new THREE.Vector2(-999, -999);
 let currentHovered = null;
+const infoTag = document.getElementById('blueprintInfoTag');
 
 window.addEventListener('mousemove', (e) => {
     mouseVec.x = (e.clientX / window.innerWidth) * 2 - 1;
@@ -800,7 +824,7 @@ window.addEventListener('mousemove', (e) => {
 });
 
 function checkRaycastHover() {
-    if (preloaderDismissed || hoverTargets.length === 0) return;
+    if (preloaderDismissed) return;
     raycaster.setFromCamera(mouseVec, preCamera);
     const hitMeshes = hoverTargets.map(h => h.hitMesh);
     const intersects = raycaster.intersectObjects(hitMeshes, false);
@@ -809,9 +833,11 @@ function checkRaycastHover() {
         item.isHovered = false;
         item.targetScale = 1.0;
         item.targetZ = item.basePos.z;
-        if (item.mesh.material && item.mesh.material.uniforms) {
-            item.mesh.material.uniforms.uHover.value = THREE.MathUtils.lerp(item.mesh.material.uniforms.uHover.value, 0.0, 0.1);
-        }
+        item.group.traverse(child => {
+            if (child.isLineSegments && child.material && child.material.uniforms && child.material.uniforms.uHover) {
+                child.material.uniforms.uHover.value = THREE.MathUtils.lerp(child.material.uniforms.uHover.value, 0.0, 0.08);
+            }
+        });
     });
 
     if (intersects.length > 0) {
@@ -819,18 +845,28 @@ function checkRaycastHover() {
         const found = hoverTargets.find(h => h.hitMesh === hit);
         if (found) {
             found.isHovered = true;
+            // Выделение на первый план: выдвижение вперед к камере и масштабирование
             found.targetScale = 1.35;
-            found.targetZ = 65; 
-            if (found.mesh.material && found.mesh.material.uniforms) {
-                found.mesh.material.uniforms.uHover.value = THREE.MathUtils.lerp(found.mesh.material.uniforms.uHover.value, 1.0, 0.2);
-            }
+            found.targetZ = 110; 
+
+            found.group.traverse(child => {
+                if (child.isLineSegments && child.material && child.material.uniforms && child.material.uniforms.uHover) {
+                    child.material.uniforms.uHover.value = THREE.MathUtils.lerp(child.material.uniforms.uHover.value, 1.0, 0.2);
+                }
+            });
+
             if (currentHovered !== found) {
                 playClickSound(1800, 0.015);
                 currentHovered = found;
+                if (infoTag) {
+                    infoTag.textContent = `ЧЕРТЁЖ: ${found.name}`;
+                    infoTag.style.opacity = '1';
+                }
             }
         }
     } else {
         currentHovered = null;
+        if (infoTag) infoTag.style.opacity = '0';
     }
 }
 
@@ -852,6 +888,7 @@ function triggerLiquidTransition(event) {
     document.getElementById('exploreBtnWrapper').style.opacity = '0';
     document.getElementById('preloaderTitle').style.transition = 'opacity 0.4s ease';
     document.getElementById('preloaderTitle').style.opacity = '0';
+    if (infoTag) infoTag.style.opacity = '0';
 
     preRenderer.setRenderTarget(snapshotTarget);
     preRenderer.clear();
@@ -882,21 +919,21 @@ function triggerLiquidTransition(event) {
                 vec2 aspectAdjustedUV = vec2(uv.x * uAspect, uv.y);
                 vec2 aspectAdjustedCenter = vec2(uCenter.x * uAspect, uCenter.y);
                 float dist = distance(aspectAdjustedUV, aspectAdjustedCenter);
-                
+
                 float waveRadius = uProgress * 2.4;
                 float waveWidth = 0.38;
                 float waveFactor = smoothstep(waveRadius - waveWidth, waveRadius, dist) * smoothstep(waveRadius + waveWidth, waveRadius, dist);
                 float wave = sin((dist - waveRadius) * 36.0) * waveFactor * (1.0 - uProgress);
                 vec2 dir = normalize(aspectAdjustedUV - aspectAdjustedCenter + 0.0001);
-                
+
                 vec2 offsetR = dir * wave * 0.09;
                 vec2 offsetG = dir * wave * 0.07;
                 vec2 offsetB = dir * wave * 0.05;
-                
+
                 float r = texture2D(tDiffuse, uv + offsetR).r;
                 float g = texture2D(tDiffuse, uv + offsetG).g;
                 float b = texture2D(tDiffuse, uv + offsetB).b;
-                
+
                 float fadeOut = smoothstep(0.0, 0.95, uProgress);
                 gl_FragColor = vec4(r, g, b, (1.0 - fadeOut));
             }
@@ -911,11 +948,10 @@ function triggerLiquidTransition(event) {
 function animatePreloader() {
     if (preloaderDismissed) return;
     requestAnimationFrame(animatePreloader);
-    
+
     const elapsed = performance.now() - preloaderStartTime;
     const t = elapsed * 0.001;
-    const progress = Math.min(elapsed / PRELOADER_TOTAL_TIME, 1.0);
-    
+
     if (isRippling) {
         rippleTime += 0.016;
         const ripProgress = Math.min(rippleTime / 1.3, 1.0);
@@ -925,7 +961,7 @@ function animatePreloader() {
         if (ripProgress >= 1.0) dismissPreloader();
         return;
     }
-    
+
     // Вращение колец астролябии
     astrolabeRings.forEach(item => {
         item.mesh.rotation.x += item.sx + Math.sin(t * 0.4 + item.px) * 0.0008;
@@ -933,36 +969,43 @@ function animatePreloader() {
         item.mesh.rotation.z += item.sz + Math.sin(t * 0.25) * 0.0006;
     });
 
+    // Интерактивная проверка наведения курсора на каркасы
     checkRaycastHover();
 
-    // Свободное парение 3D-моделей Да Винчи между кольцами
+    // Свободный полет и парение каркасов между кольцами
     hoverTargets.forEach((item, idx) => {
         if (!item.isHovered) {
-            item.mesh.position.y = item.basePos.y + Math.sin(t * 1.3 + idx * 1.6) * 7.0;
-            item.mesh.position.x = item.basePos.x + Math.cos(t * 0.9 + idx * 1.3) * 5.0;
-            item.mesh.rotation.x += item.rotSpeed.x;
-            item.mesh.rotation.y += item.rotSpeed.y;
-            item.mesh.rotation.z += item.rotSpeed.z;
+            item.group.position.y = item.basePos.y + Math.sin(t * 1.2 + idx * 1.5) * 8.5;
+            item.group.position.x = item.basePos.x + Math.cos(t * 0.8 + idx * 1.2) * 6.0;
+            item.group.rotation.x += item.rotSpeed.x;
+            item.group.rotation.y += item.rotSpeed.y;
+            item.group.rotation.z += item.rotSpeed.z;
         } else {
-            item.mesh.rotation.x = THREE.MathUtils.lerp(item.mesh.rotation.x, 0, 0.1);
-            item.mesh.rotation.y = THREE.MathUtils.lerp(item.mesh.rotation.y, 0, 0.1);
+            // При наведении чертеж разворачивается лицевой стороной к зрителю
+            item.group.rotation.x = THREE.MathUtils.lerp(item.group.rotation.x, 0, 0.1);
+            item.group.rotation.y = THREE.MathUtils.lerp(item.group.rotation.y, 0, 0.1);
+            item.group.rotation.z = THREE.MathUtils.lerp(item.group.rotation.z, 0, 0.1);
         }
 
-        item.mesh.position.z = THREE.MathUtils.lerp(item.mesh.position.z, item.targetZ, 0.08);
-        item.hitMesh.position.copy(item.mesh.position);
-        
-        const sc = THREE.MathUtils.lerp(item.mesh.scale.x, item.targetScale, 0.1);
-        item.mesh.scale.set(sc, sc, sc);
+        // Плавная интерполяция координаты Z (выдвижение вперед) и масштаба
+        item.group.position.z = THREE.MathUtils.lerp(item.group.position.z, item.targetZ, 0.08);
+        item.hitMesh.position.copy(item.group.position);
 
-        if (item.mesh.material && item.mesh.material.uniforms) {
-            item.mesh.material.uniforms.uTime.value = t;
-        }
+        const sc = THREE.MathUtils.lerp(item.group.scale.x, item.targetScale, 0.1);
+        item.group.scale.set(sc, sc, sc);
+
+        item.group.traverse(child => {
+            if (child.isLineSegments && child.material && child.material.uniforms && child.material.uniforms.uTime) {
+                child.material.uniforms.uTime.value = t;
+            }
+        });
     });
 
-    preCamera.position.x = Math.sin(t * 0.4) * 8.0;
-    preCamera.position.y = Math.cos(t * 0.35) * 6.0;
+    // Медленное кинематографическое покачивание камеры
+    preCamera.position.x = Math.sin(t * 0.35) * 12.0;
+    preCamera.position.y = Math.cos(t * 0.30) * 8.0;
     preCamera.lookAt(0, 0, 0);
-    
+
     preRenderer.clear();
     preRenderer.render(preScene, preCamera);
 }
@@ -1025,12 +1068,12 @@ function animateDash() {
     mainRings[0].rotation.y += 0.001;
     mainRings[1].rotation.x -= 0.0015;
     mainRings[2].rotation.z += 0.0008;
-    
+
     const t = performance.now() * 0.0002;
     const baseX = Math.sin(t) * 110;
     const baseY = Math.sin(t * 0.8) * 70;
     const baseZ = Math.cos(t * 1.2) * 130;
-    
+
     dashCamera.position.x += (baseX + mouseX * 30 - dashCamera.position.x) * 0.05;
     dashCamera.position.y += (baseY - mouseY * 30 - dashCamera.position.y) * 0.05;
     dashCamera.position.z += (baseZ - dashCamera.position.z) * 0.05;
@@ -1043,7 +1086,7 @@ window.addEventListener('resize', () => {
     preCamera.aspect = window.innerWidth / window.innerHeight;
     preCamera.updateProjectionMatrix();
     preRenderer.setSize(window.innerWidth, window.innerHeight);
-    
+
     dashCamera.aspect = window.innerWidth / window.innerHeight;
     dashCamera.updateProjectionMatrix();
     dashRenderer.setSize(window.innerWidth, window.innerHeight);
@@ -1057,7 +1100,7 @@ function toggleTheme() {
     const thumb = document.getElementById('sliderThumb');
     const lblNight = document.getElementById('lblNight');
     const lblDay = document.getElementById('lblDay');
-    
+
     if (isDark) {
         thumb.style.transform = 'translateX(0px)';
         lblNight.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold text-black';
@@ -1202,7 +1245,7 @@ function runCalculation() {
 
     const shortMonths = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
     const xLabels = [], orders = [], rev = [];
-    
+
     for (let i = 0; i < period; i++) {
         const mIdx = (startMonth + i) % 12;
         const yOff = Math.floor((startMonth + i) / 12);
@@ -1212,41 +1255,41 @@ function runCalculation() {
         orders.push(curOrders);
         rev.push(curOrders * aov);
     }
-    
+
     const cogsPct = 1 - (marginPct / 100);
     const cogsVat = rev.map(r => r * cogsPct * vatMultiplier);
     const cogsPayments = new Array(period).fill(0);
     const inventoryDeliveries = new Array(period).fill(0);
 
-    // ПЕРВАЯ ПАРТИЯ
+    // ПЕРВАЯ ПАРТИЯ: Предоплата и Отсрочка поставщика
     cogsPayments[0] += initialPurchase * (supplierPrepayPct / 100);
     const firstDelayMonth = supplierDelay;
     if (firstDelayMonth < period) {
         cogsPayments[firstDelayMonth] += initialPurchase * ((100 - supplierPrepayPct) / 100);
     }
     inventoryDeliveries[0] = initialPurchase;
-    
-    // ЦИКЛИЧЕСКИЕ ПАРТИИ
+
+    // ЦИКЛИЧЕСКИЕ ПАРТИИ: Предоплата и Отсрочка поставщика
     for (let b = batchCycle; b < period; b += batchCycle) {
         const bEnd = Math.min(b + batchCycle, period);
         let batchTotal = 0;
         for (let k = b; k < bEnd; k++) batchTotal += cogsVat[k];
         inventoryDeliveries[b] = batchTotal;
         cogsPayments[b] += batchTotal * (supplierPrepayPct / 100);
-        
+
         const secondTrancheMonth = b + supplierDelay;
         if (secondTrancheMonth < period) {
             cogsPayments[secondTrancheMonth] += batchTotal * ((100 - supplierPrepayPct) / 100);
         }
     }
-    
+
     const inventoryBalance = [];
     let curStock = 0;
     for (let i = 0; i < period; i++) {
         curStock += inventoryDeliveries[i] - cogsVat[i];
         inventoryBalance.push(Math.max(curStock, 0));
     }
-    
+
     const inflows = new Array(period).fill(0);
     for (let i = 0; i < period; i++) {
         const invVat = rev[i] * vatMultiplier;
@@ -1257,14 +1300,14 @@ function runCalculation() {
             inflows[targetM] += invVat * (factShare / 100) * (1 - factAdvance);
         }
     }
-    
+
     const opex = [], taxes = rev.map(r => r * 0.05), baseOutflows = [];
     for (let i = 0; i < period; i++) {
         const base = 150000 + wh + office + fot;
         opex.push(i >= 6 ? base * 1.2 : base);
         baseOutflows.push(cogsPayments[i] + opex[i] + taxes[i]);
     }
-    
+
     const monthlyInvestments = new Array(period).fill(0), interestPayments = new Array(period).fill(0), debtRepayments = new Array(period).fill(0), debtBalance = new Array(period).fill(0), cashBalance = new Array(period).fill(0);
     let currentDebt = 0, currentCash = 0;
     for (let i = 0; i < period; i++) {
@@ -1288,20 +1331,20 @@ function runCalculation() {
         debtBalance[i] = currentDebt;
         cashBalance[i] = currentCash;
     }
-    
+
     const sumRev = rev.reduce((a, b) => a + b, 0), sumInvestments = monthlyInvestments.reduce((a, b) => a + b, 0), sumInterest = interestPayments.reduce((a, b) => a + b, 0), maxDebt = Math.max(...debtBalance), sumOpex = opex.reduce((a, b) => a + b, 0), sumTaxes = taxes.reduce((a, b) => a + b, 0);
     const netProfit = sumRev * (marginPct / 100) - sumOpex - sumTaxes - sumInterest;
     const roi = sumRev > 0 ? (netProfit / sumRev) * 100 : 0;
-    
+
     latestCalculatedData = { xLabels, monthlyInvestments, interestPayments, debtRepayments, debtBalance, cashBalance, sumRev, netProfit, roi };
-    
+
     scrambleNumber(document.getElementById('kpiRev'), `${formatSpaced(sumRev)} ₽`);
     scrambleNumber(document.getElementById('kpiInjections'), `${formatSpaced(sumInvestments)} ₽`);
     scrambleNumber(document.getElementById('kpiInterest'), `${formatSpaced(sumInterest)} ₽`);
     scrambleNumber(document.getElementById('kpiMaxDebt'), `${formatSpaced(maxDebt)} ₽`);
     scrambleNumber(document.getElementById('kpiProfit'), `${formatSpaced(netProfit)} ₽`);
     document.getElementById('kpiRoiSub').textContent = `Рентабельность: ${roi.toFixed(1)}%`;
-    
+
     const tbody = document.getElementById('tableDebtBody');
     tbody.innerHTML = '';
     for (let i = 0; i < period; i++) {
@@ -1310,10 +1353,10 @@ function runCalculation() {
         tr.innerHTML = `<td class="p-3 font-bold">${xLabels[i]}</td><td class="p-3 text-[#e63946]">${formatSpaced(monthlyInvestments[i])} ₽</td><td class="p-3 text-[#d4af37]">${formatSpaced(interestPayments[i])} ₽</td><td class="p-3 text-[#2a9d8f]">${formatSpaced(debtRepayments[i])} ₽</td><td class="p-3 font-bold">${formatSpaced(debtBalance[i])} ₽</td><td class="p-3">${formatSpaced(cashBalance[i])} ₽</td>`;
         tbody.appendChild(tr);
     }
-    
+
     const chartText = isDark ? '#8e8a80' : '#6b665c';
     const chartGrid = isDark ? 'rgba(212, 175, 55, 0.08)' : 'rgba(184, 134, 11, 0.12)';
-    
+
     if (chartDebtInstance) chartDebtInstance.destroy();
     chartDebtInstance = new Chart(document.getElementById('chartDebt').getContext('2d'), {
         type: 'bar',
