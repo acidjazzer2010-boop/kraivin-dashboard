@@ -76,7 +76,6 @@ html,body{width:100%;height:100%;margin:0;padding:0;overflow:hidden;background:v
 button:focus:not(:focus-visible){outline:none}
 .film-grain{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:999;opacity:var(--grain-opacity);background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 
-/* Вспышка затвора камеры-обскуры */
 #shutter-flash{
     position:fixed;
     inset:0;
@@ -120,7 +119,6 @@ button:focus:not(:focus-visible){outline:none}
 .preset-btn{padding:12px 18px;background:rgba(212,175,55,0.12);border:1px solid var(--accent-gold);color:var(--accent-gold);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;backdrop-filter:blur(10px);transition:all .3s}
 .preset-btn:hover{background:var(--accent-gold);color:#070709}
 
-/* ДАШБОРД И АНИМАЦИЯ ПРОЯВЛЕНИЯ НЕГАТИВА */
 #mainDashboardApp{display:none;position:relative;z-index:10;min-height:100vh}
 #mainDashboardApp.ready{display:flex}
 
@@ -243,6 +241,10 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
             </div>
         </div>
         <div class="flex items-center gap-4">
+            <button id="toggleAudioBtn" onclick="toggleRenaissanceAmbient()" type="button" class="px-3 py-1.5 border border-[#d4af37]/60 text-[#d4af37] font-mono text-[10px] uppercase tracking-widest hover:bg-[#d4af37]/15 transition flex items-center gap-2" title="Включить / заглушить соборный эмбиент">
+                <span id="audioStatusDot" class="pulse-dot"></span>
+                <span id="audioBtnLabel">ЗВУК: ВЫСОКИЙ ХОР</span>
+            </button>
             <button id="downloadExecutiveMemoBtn" onclick="generateExecutiveMemo()" type="button" class="px-3.5 py-1.5 border border-[#d4af37]/60 text-[#d4af37] font-mono text-[10px] uppercase tracking-widest hover:bg-[#d4af37]/15 transition flex items-center gap-2"><span>★ Меморандум (PDF)</span></button>
             <button id="downloadReportBtn" onclick="exportDataToCsv()" type="button" class="px-3.5 py-1.5 border font-mono text-[10px] uppercase tracking-widest hover:border-[#d4af37] hover:bg-[#d4af37]/10 transition flex items-center gap-2"><span>↓ Скачать отчет</span></button>
             <div id="themeSlider" class="hw-slider-track" onclick="toggleTheme()" role="switch" aria-checked="true" aria-label="Переключить режим: Ночь / День" tabindex="0" title="Переключить режим: Ночь / День">
@@ -417,6 +419,205 @@ window.onerror = function(msg, url, line) {
 const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const USER_IMAGES = __JSON_IMAGES_PAYLOAD__;
 
+/* =========================================================================
+   АВТОНОМНЫЙ ЗВУКОВОЙ МОДУЛЬ: RENAISSANCE CATHEDRAL SOUNDSCAPE (WEB AUDIO)
+   ========================================================================= */
+class RenaissanceSoundscapeEngine {
+    constructor() {
+        this.ctx = null;
+        this.isPlaying = false;
+        this.timer = null;
+        this.droneNodes = [];
+        this.masterGain = null;
+        // D-Dorian (Ре-дорийский лад): D3, E3, F3, G3, A3, B3, C4, D4, E4, A4
+        this.scale = [146.83, 164.81, 174.61, 196.00, 220.00, 246.94, 261.63, 293.66, 329.63, 440.00];
+    }
+
+    init() {
+        if (this.ctx) return;
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AudioContextClass();
+
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.setValueAtTime(0.26, this.ctx.currentTime);
+        this.masterGain.connect(this.ctx.destination);
+
+        // Мягкий обрезной фильтр акустики дерева и камня
+        this.warmthFilter = this.ctx.createBiquadFilter();
+        this.warmthFilter.type = 'lowpass';
+        this.warmthFilter.frequency.setValueAtTime(1100, this.ctx.currentTime);
+        this.warmthFilter.Q.setValueAtTime(1.15, this.ctx.currentTime);
+
+        // Импульсный ревербератор собора (Cathedral Reverb) с хвостом 5.5 сек
+        this.convolver = this.ctx.createConvolver();
+        this.convolver.buffer = this.buildCathedralImpulse(5.5, 2.0);
+
+        this.warmthFilter.connect(this.convolver);
+        this.convolver.connect(this.masterGain);
+
+        // Сухой тракт для точности атак
+        const dryGain = this.ctx.createGain();
+        dryGain.gain.setValueAtTime(0.35, this.ctx.currentTime);
+        this.warmthFilter.connect(dryGain);
+        dryGain.connect(this.masterGain);
+    }
+
+    buildCathedralImpulse(duration, decay) {
+        const rate = this.ctx.sampleRate;
+        const length = rate * duration;
+        const impulse = this.ctx.createBuffer(2, length, rate);
+        const left = impulse.getChannelData(0);
+        const right = impulse.getChannelData(1);
+
+        for (let i = 0; i < length; i++) {
+            const factor = Math.exp(-i / (rate * (decay * 0.45)));
+            left[i] = (Math.random() * 2 - 1) * factor;
+            right[i] = (Math.random() * 2 - 1) * factor;
+        }
+        return impulse;
+    }
+
+    startCathedralDrone() {
+        // Органный низкий бурдон: совершенная квинта Ре + Ля (D2 = 73.42Hz, A2 = 110Hz)
+        const roots = [73.42, 110.00];
+        roots.forEach(freq => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+
+            // Дыхание мехов органа через LFO
+            const lfo = this.ctx.createOscillator();
+            const lfoGain = this.ctx.createGain();
+            lfo.frequency.setValueAtTime(0.18, this.ctx.currentTime); // медленное дыхание 0.18 Гц
+            lfoGain.gain.setValueAtTime(0.015, this.ctx.currentTime);
+            lfo.connect(lfoGain);
+            lfoGain.connect(gain.gain);
+
+            gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+
+            osc.connect(gain);
+            gain.connect(this.warmthFilter);
+            osc.start();
+            lfo.start();
+            this.droneNodes.push({ osc, lfo, gain });
+        });
+    }
+
+    playPolyphonicVoice(freq, duration = 6.5) {
+        if (!this.ctx || this.ctx.state === 'suspended') return;
+        const now = this.ctx.currentTime;
+
+        const osc1 = this.ctx.createOscillator();
+        const osc2 = this.ctx.createOscillator();
+        const voiceGain = this.ctx.createGain();
+
+        // Сложение синусоиды (фундаментал трубы) и мягкого треугольника с расстройкой
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(freq, now);
+
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(freq * 1.0016, now);
+
+        voiceGain.gain.setValueAtTime(0.0001, now);
+        voiceGain.gain.exponentialRampToValueAtTime(0.075, now + 2.2);
+        voiceGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+        osc1.connect(voiceGain);
+        osc2.connect(voiceGain);
+        voiceGain.connect(this.warmthFilter);
+
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + duration + 0.1);
+        osc2.stop(now + duration + 0.1);
+    }
+
+    start() {
+        this.init();
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+        if (this.isPlaying) return;
+        this.isPlaying = true;
+
+        this.startCathedralDrone();
+
+        const scheduleVoice = () => {
+            if (!this.isPlaying) return;
+            const note = this.scale[Math.floor(Math.random() * this.scale.length)];
+            const duration = 5.0 + Math.random() * 4.0;
+            this.playPolyphonicVoice(note, duration);
+
+            // Параллельная квинта (+7 полутонов)
+            if (Math.random() > 0.55) {
+                setTimeout(() => {
+                    if (this.isPlaying) this.playPolyphonicVoice(note * 1.5, duration * 0.9);
+                }, 1300);
+            }
+
+            const nextIn = 3200 + Math.random() * 3800;
+            this.timer = setTimeout(scheduleVoice, nextIn);
+        };
+
+        scheduleVoice();
+    }
+
+    toggle() {
+        if (!this.isPlaying) {
+            this.start();
+            return true;
+        } else {
+            this.stop();
+            return false;
+        }
+    }
+
+    stop() {
+        this.isPlaying = false;
+        if (this.timer) clearTimeout(this.timer);
+        if (this.ctx && this.masterGain) {
+            this.masterGain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 1.2);
+            setTimeout(() => {
+                if (!this.isPlaying && this.ctx) this.ctx.suspend();
+            }, 1300);
+        }
+    }
+}
+
+const renaissanceAudio = new RenaissanceSoundscapeEngine();
+
+// Бесшовный запуск эмбиента с момента загрузки
+function attemptAutoStartAudio() {
+    renaissanceAudio.start();
+}
+
+// Обход политики Autoplay браузеров: активация при первой интерактивности
+['click', 'touchstart', 'keydown', 'mousemove'].forEach(evt => {
+    window.addEventListener(evt, () => {
+        if (renaissanceAudio.ctx && renaissanceAudio.ctx.state === 'suspended') {
+            renaissanceAudio.ctx.resume();
+        } else if (!renaissanceAudio.isPlaying) {
+            renaissanceAudio.start();
+        }
+    }, { once: true });
+});
+
+attemptAutoStartAudio();
+
+function toggleRenaissanceAmbient() {
+    const active = renaissanceAudio.toggle();
+    const dot = document.getElementById('audioStatusDot');
+    const label = document.getElementById('audioBtnLabel');
+    if (active) {
+        dot.style.display = 'inline-block';
+        label.textContent = 'ЗВУК: ВЫСОКИЙ ХОР';
+    } else {
+        dot.style.display = 'none';
+        label.textContent = 'ЗВУК: ТИШИНА';
+    }
+}
+
 const BLUEPRINT_PRESETS = [
     {
         name: "Тяга и масштабирование",
@@ -465,65 +666,65 @@ const BLUEPRINT_PRESETS = [
     }
 ];
 
-let audioCtx = null;
 function playClickSound(freq = 1200, duration = 0.02) {
     try {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        if (!renaissanceAudio.ctx) renaissanceAudio.init();
+        const ctx = renaissanceAudio.ctx;
+        if (ctx.state === 'suspended') ctx.resume();
+        const osc = ctx.createOscillator(), gain = ctx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(320, audioCtx.currentTime + duration);
-        gain.gain.setValueAtTime(0.035, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + duration);
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(320, ctx.currentTime + duration);
+        gain.gain.setValueAtTime(0.035, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(); osc.stop(ctx.currentTime + duration);
     } catch (e) {}
 }
 
 function playGearSpinUpSound(duration = 1.4) {
     try {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        if (!renaissanceAudio.ctx) renaissanceAudio.init();
+        const ctx = renaissanceAudio.ctx;
+        if (ctx.state === 'suspended') ctx.resume();
+        const osc = ctx.createOscillator(), gain = ctx.createGain();
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(60, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(380, audioCtx.currentTime + duration);
-        gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + duration * 0.85);
-        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + duration);
+        osc.frequency.setValueAtTime(60, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(380, ctx.currentTime + duration);
+        gain.gain.setValueAtTime(0.02, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + duration * 0.85);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(); osc.stop(ctx.currentTime + duration);
     } catch (e) {}
 }
 
 function playApertureSnapSound() {
     try {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (!renaissanceAudio.ctx) renaissanceAudio.init();
+        const ctx = renaissanceAudio.ctx;
+        if (ctx.state === 'suspended') ctx.resume();
         
-        // Резкий механический удар затвора
-        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        const osc = ctx.createOscillator(), gain = ctx.createGain();
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.12);
-        gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.12);
+        osc.frequency.setValueAtTime(800, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(30, ctx.currentTime + 0.12);
+        gain.gain.setValueAtTime(0.35, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(); osc.stop(ctx.currentTime + 0.12);
 
-        // Шумовой всплеск воздуха диафрагмы
-        const bufferSize = audioCtx.sampleRate * 0.08;
-        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const bufferSize = ctx.sampleRate * 0.08;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-        const noise = audioCtx.createBufferSource();
+        const noise = ctx.createBufferSource();
         noise.buffer = buffer;
-        const noiseGain = audioCtx.createGain();
-        noiseGain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-        noiseGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+        const noiseGain = ctx.createGain();
+        noiseGain.gain.setValueAtTime(0.2, ctx.currentTime);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
         noise.connect(noiseGain);
-        noiseGain.connect(audioCtx.destination);
+        noiseGain.connect(ctx.destination);
         noise.start();
     } catch (e) {}
 }
@@ -949,12 +1150,9 @@ function checkRaycastHover() {
     }
 }
 
-/* =========================================================================
-   НОВЫЙ КИНЕМАТОГРАФИЧНЫЙ ТРАНЗИШН: КАМЕРА-ОБСКУРА И СУЖЕНИЕ ДИАФРАГМЫ
-   ========================================================================= */
 let isObscuraTransition = false;
 let obscuraStartTime = 0;
-const OBSCURA_DURATION = 1.45; // секунды
+const OBSCURA_DURATION = 1.45;
 
 function triggerCameraObscuraTransition(event) {
     if (isObscuraTransition) return;
@@ -963,15 +1161,12 @@ function triggerCameraObscuraTransition(event) {
     
     playGearSpinUpSound(OBSCURA_DURATION);
 
-    // Скрываем плавающий HUD
     const hud = document.querySelector('.preloader-fixed-hud');
     if (hud) hud.style.opacity = '0';
 
-    // Центрируем камеру строго по оптической оси
     targetCamPos.set(0, 0, baseCamZ);
     targetLookTarget.set(0, 0, 0);
 
-    // Сохраняем стартовые эйлеровы углы колец для интерполяции
     astrolabeRings.forEach(ring => {
         ring.startRotX = ring.group.rotation.x;
         ring.startRotY = ring.group.rotation.y;
@@ -984,7 +1179,6 @@ function triggerShutterBlink() {
     const flash = document.getElementById('shutter-flash');
     if (!flash) return;
 
-    // Мгновенное моргание затвора (двойной оптический импульс)
     flash.style.transition = 'none';
     flash.style.opacity = '1';
 
@@ -992,7 +1186,6 @@ function triggerShutterBlink() {
         flash.style.opacity = '0.35';
         setTimeout(() => {
             flash.style.opacity = '0.9';
-            // Открываем дашборд в режиме негатива под вспышкой
             dismissPreloader();
             setTimeout(() => {
                 flash.style.transition = 'opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
@@ -1014,41 +1207,33 @@ function animatePreloader() {
         const obsElapsed = (now - obscuraStartTime) * 0.001;
         const progress = Math.min(obsElapsed / OBSCURA_DURATION, 1.0);
 
-        // Фаза выравнивания в плоскость (0.0 -> 0.45)
         const alignP = Math.min(progress / 0.45, 1.0);
         const easeAlign = alignP * alignP * (3.0 - 2.0 * alignP);
 
-        // Фаза контр-вращения и сжатия к центру диафрагмы (0.2 -> 1.0)
         const shrinkP = Math.max(0, (progress - 0.2) / 0.8);
         const easeShrink = Math.pow(shrinkP, 3.2);
 
-        // Карточки чертежей растворяются и удаляются
         hoverTargets.forEach(item => {
             item.group.scale.multiplyScalar(0.92);
             item.group.position.z -= 8.0;
         });
 
-        // Частицы стягиваются в оптическую сингулярность
         const positions = particleGeo.attributes.position.array;
         for (let i = 0; i < particleCount * 3; i++) {
             positions[i] *= 0.94;
         }
         particleGeo.attributes.position.needsUpdate = true;
 
-        // Механика колец диафрагмы
         megaRingWireMat.opacity = THREE.MathUtils.lerp(megaRingWireMat.opacity, 0.85, 0.08);
-        megaRingWireMat.color.setHex(0xd4af37); // Кольца раскаляются до золотого свечения
+        megaRingWireMat.color.setHex(0xd4af37);
 
         astrolabeRings.forEach((ring, idx) => {
-            // Выравнивание наклона: кольца встают строго плоско перпендикулярно лучу взгляда
             ring.group.rotation.x = THREE.MathUtils.lerp(ring.startRotX, 0, easeAlign);
             ring.group.rotation.y = THREE.MathUtils.lerp(ring.startRotY, 0, easeAlign);
             
-            // Быстрое контр-вращение в противоположные стороны с нарастающим ускорением
             const spinVelocity = (idx % 2 === 0 ? 1 : -1) * (0.05 + progress * 0.42);
             ring.group.rotation.z += spinVelocity;
 
-            // Сжатие масштаба колец к центру (эффект закрывающейся диафрагмы)
             const scaleFactor = Math.max(1.0 - easeShrink * 0.98, 0.01);
             ring.group.scale.set(scaleFactor, scaleFactor, scaleFactor * (1.0 - easeShrink * 0.7));
         });
