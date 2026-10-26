@@ -30,6 +30,7 @@ def get_image_b64(filename):
                 pass
     return ""
 
+# Изображения изобретений Да Винчи (5 чертежей)
 img_files = [
     "1793030578548.jpg",
     "1793030581888.jpg",
@@ -39,6 +40,10 @@ img_files = [
 ]
 b64_images = [get_image_b64(f) for f in img_files]
 json_images_payload = json.dumps(b64_images)
+
+# Фото Спутника-1 (СССР) для трехмерной пасхалки
+sputnik_b64 = get_image_b64("1793046110105.jpg")
+json_sputnik_payload = json.dumps(sputnik_b64)
 
 st.markdown("""
 <style>
@@ -58,5 +63,5 @@ html_path = os.path.join(os.path.dirname(__file__), "index.html") if "__file__" 
 with open(html_path, "r", encoding="utf-8") as f:
     raw_html = f.read()
 
-HTML = raw_html.replace("__JSON_IMAGES_PAYLOAD__", json_images_payload)
+HTML = raw_html.replace("__JSON_IMAGES_PAYLOAD__", json_images_payload).replace("__SPUTNIK_IMAGE_PAYLOAD__", json_sputnik_payload)
 components.html(HTML, height=940, scrolling=False)
