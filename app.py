@@ -440,7 +440,469 @@ function createBlueprintLineMaterial() {
     });
 }
 
-/* [TRUNCATED FOR SPACE - FULL VERSION NEEDS TO BE PROVIDED IN 2 MESSAGES] */
+/* =========================================================================
+   3D-ЧЕРТЕЖИ ДА ВИНЧИ
+   ========================================================================= */
+
+function buildUltra3DAerialScrew() {
+    const pts = [];
+    const h = 70, radiusMax = 36;
+
+    for (let i = 0; i < 6; i++) {
+        const a1 = (i / 6) * Math.PI * 2, a2 = ((i + 1) / 6) * Math.PI * 2;
+        const x1 = Math.cos(a1) * 4, z1 = Math.sin(a1) * 4;
+        const x2 = Math.cos(a2) * 4, z2 = Math.sin(a2) * 4;
+        pts.push(new THREE.Vector3(x1, -h/2, z1), new THREE.Vector3(x1, h/2, z1));
+        for (let y = -h/2; y < h/2; y += 4) {
+            pts.push(new THREE.Vector3(x1, y, z1), new THREE.Vector3(x2, y, z2));
+            pts.push(new THREE.Vector3(x1, y, z1), new THREE.Vector3(x2, y + 4, z2));
+        }
+    }
+
+    const coils = 3.2, steps = 160;
+    for (let helix = 0; helix < 2; helix++) {
+        const hOffset = helix * Math.PI;
+        for (let i = 0; i < steps; i++) {
+            const t1 = i / steps, t2 = (i + 1) / steps;
+            const a1 = t1 * Math.PI * 2 * coils + hOffset;
+            const a2 = t2 * Math.PI * 2 * coils + hOffset;
+            const y1 = -h/2 + t1 * h, y2 = -h/2 + t2 * h;
+            const r1 = 6 + t1 * (radiusMax - 6);
+            const r2 = 6 + t2 * (radiusMax - 6);
+
+            const pEdge1 = new THREE.Vector3(Math.cos(a1) * r1, y1, Math.sin(a1) * r1);
+            const pEdge2 = new THREE.Vector3(Math.cos(a2) * r2, y2, Math.sin(a2) * r2);
+            pts.push(pEdge1, pEdge2);
+
+            if (i % 2 === 0) {
+                const pCenter = new THREE.Vector3(Math.cos(a1) * 4, y1, Math.sin(a1) * 4);
+                pts.push(pCenter, pEdge1);
+                const pMid = new THREE.Vector3(Math.cos(a1 + 0.15) * (r1 * 0.6), y1 + 1.2, Math.sin(a1 + 0.15) * (r1 * 0.6));
+                pts.push(pCenter, pMid, pMid, pEdge1);
+            }
+        }
+    }
+
+    for (let r = 16; r <= 38; r += 10) {
+        for (let i = 0; i < 48; i++) {
+            const a1 = (i / 48) * Math.PI * 2, a2 = ((i + 1) / 48) * Math.PI * 2;
+            pts.push(new THREE.Vector3(Math.cos(a1) * r, -h/2, Math.sin(a1) * r), new THREE.Vector3(Math.cos(a2) * r, -h/2, Math.sin(a2) * r));
+            if (r === 38 && i % 2 === 0) {
+                pts.push(new THREE.Vector3(Math.cos(a1) * r, -h/2, Math.sin(a1) * r), new THREE.Vector3(Math.cos(a1) * (r + 4), -h/2, Math.sin(a1) * (r + 4)));
+            }
+        }
+    }
+    return new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), createBlueprintLineMaterial());
+}
+
+function buildUltra3DClockworkGears() {
+    const pts = [];
+
+    function buildVolumetricGear(cx, cy, cz, radius, thickness, teeth, spokes) {
+        const z1 = cz - thickness / 2, z2 = cz + thickness / 2;
+        for (let i = 0; i < teeth * 2; i++) {
+            const a1 = (i / (teeth * 2)) * Math.PI * 2;
+            const a2 = ((i + 1) / (teeth * 2)) * Math.PI * 2;
+            const r1 = (i % 2 === 0) ? radius + 3.0 : radius - 1.5;
+            const r2 = ((i + 1) % 2 === 0) ? radius + 3.0 : radius - 1.5;
+
+            const pF1 = new THREE.Vector3(cx + Math.cos(a1) * r1, cy + Math.sin(a1) * r1, z1);
+            const pF2 = new THREE.Vector3(cx + Math.cos(a2) * r2, cy + Math.sin(a2) * r2, z1);
+            const pB1 = new THREE.Vector3(cx + Math.cos(a1) * r1, cy + Math.sin(a1) * r1, z2);
+            const pB2 = new THREE.Vector3(cx + Math.cos(a2) * r2, cy + Math.sin(a2) * r2, z2);
+
+            pts.push(pF1, pF2, pB1, pB2);
+            pts.push(pF1, pB1);
+        }
+        for (let s = 0; s < spokes; s++) {
+            const sa = (s / spokes) * Math.PI * 2;
+            pts.push(new THREE.Vector3(cx, cy, z1), new THREE.Vector3(cx + Math.cos(sa) * radius, cy + Math.sin(sa) * radius, z1));
+            pts.push(new THREE.Vector3(cx, cy, z2), new THREE.Vector3(cx + Math.cos(sa) * radius, cy + Math.sin(sa) * radius, z2));
+            pts.push(
+                new THREE.Vector3(cx + Math.cos(sa) * radius * 0.5, cy + Math.sin(sa) * radius * 0.5, z1),
+                new THREE.Vector3(cx + Math.cos(sa + 0.3) * radius * 0.8, cy + Math.sin(sa + 0.3) * radius * 0.8, z2)
+            );
+        }
+    }
+
+    buildVolumetricGear(-16, 8, -6, 26, 6, 28, 6);
+    buildVolumetricGear(18, -12, 6, 18, 5, 20, 5);
+    buildVolumetricGear(16, 22, 0, 11, 4, 12, 4);
+
+    for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * Math.PI * 2;
+        pts.push(new THREE.Vector3(-16 + Math.cos(a) * 3, 8 + Math.sin(a) * 3, -24), new THREE.Vector3(-16 + Math.cos(a) * 3, 8 + Math.sin(a) * 3, 24));
+        pts.push(new THREE.Vector3(18 + Math.cos(a) * 2.5, -12 + Math.sin(a) * 2.5, -20), new THREE.Vector3(18 + Math.cos(a) * 2.5, -12 + Math.sin(a) * 2.5, 20));
+    }
+
+    const b = 42;
+    pts.push(new THREE.Vector3(-b, -b, 0), new THREE.Vector3(b, -b, 0));
+    pts.push(new THREE.Vector3(b, -b, 0), new THREE.Vector3(b, b, 0));
+    pts.push(new THREE.Vector3(b, b, 0), new THREE.Vector3(-b, b, 0));
+    pts.push(new THREE.Vector3(-b, b, 0), new THREE.Vector3(-b, -b, 0));
+    for (let c = -b; c <= b; c += 7) {
+        pts.push(new THREE.Vector3(c, -b, 0), new THREE.Vector3(c, -b + 2, 0));
+        pts.push(new THREE.Vector3(-b, c, 0), new THREE.Vector3(-b + 2, c, 0));
+    }
+    return new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), createBlueprintLineMaterial());
+}
+
+function buildUltra3DOrnithopter() {
+    const pts = [];
+    const ribCount = 14;
+
+    const sparTop = [], sparBot = [];
+    for (let i = 0; i <= 36; i++) {
+        const t = i / 36;
+        const x = -44 + t * 88;
+        const yT = Math.sin(t * Math.PI) * 20 - 6;
+        const zT = -Math.cos(t * Math.PI) * 12;
+        sparTop.push(new THREE.Vector3(x, yT, zT));
+        sparBot.push(new THREE.Vector3(x, yT - 3.5, zT + 2));
+    }
+    for (let i = 0; i < sparTop.length - 1; i++) {
+        pts.push(sparTop[i], sparTop[i + 1]);
+        pts.push(sparBot[i], sparBot[i + 1]);
+        pts.push(sparTop[i], sparBot[i]);
+        pts.push(sparTop[i], sparBot[i + 1]);
+    }
+
+    for (let r = 0; r < ribCount; r++) {
+        const t = r / (ribCount - 1);
+        const idx = Math.floor(t * (sparTop.length - 1));
+        const rootT = sparTop[idx];
+        const chordLen = 34 - Math.abs(t - 0.5) * 22;
+        let prevUpper = null, prevLower = null;
+        for (let s = 0; s <= 6; s++) {
+            const st = s / 6;
+            const ribUpper = new THREE.Vector3(
+                rootT.x + (t - 0.5) * st * 10,
+                rootT.y - st * chordLen,
+                rootT.z + Math.sin(st * Math.PI) * 7
+            );
+            const ribLower = new THREE.Vector3(
+                rootT.x + (t - 0.5) * st * 10,
+                rootT.y - st * chordLen - 2.5 * (1.0 - st),
+                rootT.z + Math.sin(st * Math.PI) * 3
+            );
+            if (prevUpper) {
+                pts.push(prevUpper, ribUpper, prevLower, ribLower);
+                pts.push(ribUpper, ribLower);
+            }
+            prevUpper = ribUpper; prevLower = ribLower;
+            if (s === 6) {
+                pts.push(rootT, ribUpper);
+                pts.push(new THREE.Vector3(0, -28, 14), ribUpper);
+                pts.push(new THREE.Vector3(0, -28, -14), ribLower);
+            }
+        }
+    }
+
+    pts.push(new THREE.Vector3(0, 0, -12), new THREE.Vector3(0, -32, 0));
+    pts.push(new THREE.Vector3(0, 0, 12), new THREE.Vector3(0, -32, 0));
+    pts.push(new THREE.Vector3(-14, -28, 0), new THREE.Vector3(14, -28, 0));
+    return new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), createBlueprintLineMaterial());
+}
+
+function buildUltra3DVitruvian() {
+    const pts = [];
+    const r = 36;
+    for (let axis = 0; axis < 3; axis++) {
+        for (let i = 0; i < 72; i++) {
+            const a1 = (i / 72) * Math.PI * 2, a2 = ((i + 1) / 72) * Math.PI * 2;
+            if (axis === 0) {
+                pts.push(new THREE.Vector3(Math.cos(a1) * r, Math.sin(a1) * r, 0), new THREE.Vector3(Math.cos(a2) * r, Math.sin(a2) * r, 0));
+            } else if (axis === 1) {
+                pts.push(new THREE.Vector3(Math.cos(a1) * r, 0, Math.sin(a1) * r), new THREE.Vector3(Math.cos(a2) * r, 0, Math.sin(a2) * r));
+            } else {
+                pts.push(new THREE.Vector3(0, Math.cos(a1) * r, Math.sin(a1) * r), new THREE.Vector3(0, Math.cos(a2) * r, Math.sin(a2) * r));
+            }
+        }
+    }
+    const s = 28;
+    const boxPts = [
+        new THREE.Vector3(-s, -s, -s), new THREE.Vector3(s, -s, -s),
+        new THREE.Vector3(s, s, -s), new THREE.Vector3(-s, s, -s),
+        new THREE.Vector3(-s, -s, s), new THREE.Vector3(s, -s, s),
+        new THREE.Vector3(s, s, s), new THREE.Vector3(-s, s, s)
+    ];
+    const edges = [
+        [0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],
+        [0,4],[1,5],[2,6],[3,7],[0,6],[1,7],[2,4],[3,5]
+    ];
+    edges.forEach(e => pts.push(boxPts[e[0]], boxPts[e[1]]));
+
+    let prevFib = new THREE.Vector3(0, 0, 0);
+    for (let i = 1; i <= 80; i++) {
+        const theta = i * 0.20;
+        const rad = 0.9 * Math.exp(0.06 * theta);
+        const fibPt = new THREE.Vector3(Math.cos(theta) * rad, Math.sin(theta) * rad, Math.sin(theta * 2) * 6);
+        pts.push(prevFib, fibPt);
+        prevFib = fibPt;
+    }
+
+    pts.push(new THREE.Vector3(0, 24, 0), new THREE.Vector3(0, -20, 0));
+    pts.push(new THREE.Vector3(-28, 14, 4), new THREE.Vector3(28, 14, 4));
+    pts.push(new THREE.Vector3(-26, 26, -4), new THREE.Vector3(26, 26, -4));
+    pts.push(new THREE.Vector3(0, -20, 0), new THREE.Vector3(-18, -34, 5));
+    pts.push(new THREE.Vector3(0, -20, 0), new THREE.Vector3(18, -34, 5));
+    pts.push(new THREE.Vector3(0, -20, 0), new THREE.Vector3(-28, -26, -5));
+    pts.push(new THREE.Vector3(0, -20, 0), new THREE.Vector3(28, -26, -5));
+    return new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), createBlueprintLineMaterial());
+}
+
+function createWireframeFromImage(imageUrl, fallbackMesh) {
+    const group = new THREE.Group();
+    group.add(fallbackMesh);
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64; canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, 64, 64);
+            const data = ctx.getImageData(0, 0, 64, 64).data;
+            const detected = [];
+            for (let y = 0; y < 64; y += 2) {
+                for (let x = 0; x < 64; x += 2) {
+                    const idx = (y * 64 + x) * 4;
+                    const bright = 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
+                    if (bright < 165 || (bright > 60 && bright < 195)) {
+                        detected.push(new THREE.Vector3(
+                            ((x / 64) - 0.5) * 64,
+                            -((y / 64) - 0.5) * 64,
+                            ((bright / 255) - 0.5) * 12.0
+                        ));
+                    }
+                }
+            }
+            if (detected.length > 50) {
+                const linePts = [];
+                for (let i = 0; i < detected.length; i += 2) {
+                    const p1 = detected[i];
+                    for (let j = i + 1; j < Math.min(i + 8, detected.length); j++) {
+                        const p2 = detected[j];
+                        if (p1.distanceTo(p2) > 1.2 && p1.distanceTo(p2) < 11.0) linePts.push(p1, p2);
+                    }
+                }
+                if (linePts.length > 80) {
+                    group.remove(fallbackMesh);
+                    group.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(linePts), createBlueprintLineMaterial()));
+                }
+            }
+        } catch (e) {}
+    };
+    img.src = imageUrl;
+    return group;
+}
+
+/* 4 парящих 3D-чертежа */
+const floatingInventions = [
+    { group: createWireframeFromImage("1000400438.jpg", buildUltra3DAerialScrew()), basePos: new THREE.Vector3(-105, 28, 50), rotSpeed: new THREE.Vector3(0.0016, 0.0014, -0.0008) },
+    { group: createWireframeFromImage("genio2.webp", buildUltra3DClockworkGears()), basePos: new THREE.Vector3(110, -24, -45), rotSpeed: new THREE.Vector3(0.0012, 0.0018, 0.0010) },
+    { group: createWireframeFromImage("genio3.png", buildUltra3DOrnithopter()), basePos: new THREE.Vector3(88, 34, 75), rotSpeed: new THREE.Vector3(-0.0014, 0.0016, 0.0009) },
+    { group: createWireframeFromImage("", buildUltra3DVitruvian()), basePos: new THREE.Vector3(-30, -36, -35), rotSpeed: new THREE.Vector3(0.0008, 0.0012, 0.0006) }
+];
+
+const hoverTargets = [];
+floatingInventions.forEach((item) => {
+    item.group.position.copy(item.basePos);
+    preGroup.add(item.group);
+
+    const hitGeo = new THREE.SphereGeometry(44, 16, 16);
+    const hitMat = new THREE.MeshBasicMaterial({ visible: false });
+    const hitMesh = new THREE.Mesh(hitGeo, hitMat);
+    hitMesh.position.copy(item.basePos);
+    preGroup.add(hitMesh);
+
+    item.hitMesh = hitMesh;
+    item.targetZ = item.basePos.z;
+    item.targetScale = 1.0;
+    item.isHovered = false;
+    hoverTargets.push(item);
+});
+
+/* РАЙКАСТ: НАВЕДЕНИЕ */
+const raycaster = new THREE.Raycaster();
+const mouseVec = new THREE.Vector2(-999, -999);
+let currentHovered = null;
+
+window.addEventListener('mousemove', (e) => {
+    mouseVec.x = (e.clientX / window.innerWidth) * 2 - 1;
+    mouseVec.y = -(e.clientY / window.innerHeight) * 2 + 1;
+});
+
+function checkRaycastHover() {
+    if (preloaderDismissed) return;
+    raycaster.setFromCamera(mouseVec, preCamera);
+    const hitMeshes = hoverTargets.map(h => h.hitMesh);
+    const intersects = raycaster.intersectObjects(hitMeshes, false);
+
+    hoverTargets.forEach(item => {
+        item.isHovered = false;
+        item.targetScale = 1.0;
+        item.targetZ = item.basePos.z;
+        item.group.traverse(child => {
+            if (child.isLineSegments && child.material && child.material.uniforms && child.material.uniforms.uHover) {
+                child.material.uniforms.uHover.value = THREE.MathUtils.lerp(child.material.uniforms.uHover.value, 0.0, 0.08);
+            }
+        });
+    });
+
+    if (intersects.length > 0) {
+        const hit = intersects[0].object;
+        const found = hoverTargets.find(h => h.hitMesh === hit);
+        if (found) {
+            found.isHovered = true;
+            found.targetScale = 1.35;
+            found.targetZ = 135;
+
+            const objPos = found.group.position;
+            targetCamPos.set(objPos.x * 0.95, objPos.y * 0.95, objPos.z + 55);
+            targetLookTarget.set(objPos.x, objPos.y, objPos.z - 10);
+
+            found.group.traverse(child => {
+                if (child.isLineSegments && child.material && child.material.uniforms && child.material.uniforms.uHover) {
+                    child.material.uniforms.uHover.value = THREE.MathUtils.lerp(child.material.uniforms.uHover.value, 1.0, 0.22);
+                }
+            });
+
+            if (currentHovered !== found) {
+                playClickSound(1800, 0.015);
+                currentHovered = found;
+            }
+        }
+    } else {
+        currentHovered = null;
+        targetCamPos.set(0, 0, baseCamZ);
+        targetLookTarget.set(0, 0, 0);
+    }
+}
+
+/* ЖИДКИЙ ПЕРЕХОД (RIPPLE) */
+let isRippling = false;
+let rippleScene, rippleCamera, rippleMaterial, rippleTime = 0;
+const snapshotTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight);
+
+function triggerLiquidTransition(event) {
+    if (isRippling) return;
+    isRippling = true;
+    playClickSound(800, 0.08);
+
+    const rect = event.target.getBoundingClientRect();
+    const clickX = (rect.left + rect.width / 2) / window.innerWidth;
+    const clickY = 1.0 - ((rect.top + rect.height / 2) / window.innerHeight);
+
+    const hud = document.querySelector('.preloader-fixed-hud');
+    if (hud) { hud.style.transition = 'opacity 0.35s ease'; hud.style.opacity = '0'; }
+
+    preRenderer.setRenderTarget(snapshotTarget);
+    preRenderer.clear();
+    preRenderer.render(preScene, preCamera);
+    preRenderer.setRenderTarget(null);
+
+    rippleScene = new THREE.Scene();
+    rippleCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+    rippleMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+            tDiffuse: { value: snapshotTarget.texture },
+            uCenter: { value: new THREE.Vector2(clickX, clickY) },
+            uProgress: { value: 0.0 },
+            uAspect: { value: window.innerWidth / window.innerHeight }
+        },
+        vertexShader: `varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position,1.0);}`,
+        fragmentShader: `
+            uniform sampler2D tDiffuse;
+            uniform vec2 uCenter;
+            uniform float uProgress;
+            uniform float uAspect;
+            varying vec2 vUv;
+            void main() {
+                vec2 uv = vUv;
+                vec2 aspectAdjustedUV = vec2(uv.x * uAspect, uv.y);
+                vec2 aspectAdjustedCenter = vec2(uCenter.x * uAspect, uCenter.y);
+                float dist = distance(aspectAdjustedUV, aspectAdjustedCenter);
+                float waveRadius = uProgress * 2.5;
+                float waveWidth = 0.40;
+                float waveFactor = smoothstep(waveRadius - waveWidth, waveRadius, dist) * smoothstep(waveRadius + waveWidth, waveRadius, dist);
+                float wave = sin((dist - waveRadius) * 36.0) * waveFactor * (1.0 - uProgress);
+                vec2 dir = normalize(aspectAdjustedUV - aspectAdjustedCenter + 0.0001);
+                vec2 offsetR = dir * wave * 0.09;
+                vec2 offsetG = dir * wave * 0.07;
+                vec2 offsetB = dir * wave * 0.05;
+                float r = texture2D(tDiffuse, uv + offsetR).r;
+                float g = texture2D(tDiffuse, uv + offsetG).g;
+                float b = texture2D(tDiffuse, uv + offsetB).b;
+                float fadeOut = smoothstep(0.0, 0.95, uProgress);
+                gl_FragColor = vec4(r, g, b, (1.0 - fadeOut));
+            }
+        `,
+        transparent: true
+    });
+
+    rippleScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), rippleMaterial));
+}
+
+function animatePreloader() {
+    if (preloaderDismissed) return;
+    requestAnimationFrame(animatePreloader);
+
+    const elapsed = performance.now() - preloaderStartTime;
+    const t = elapsed * 0.001;
+
+    if (isRippling) {
+        rippleTime += 0.016;
+        const ripProgress = Math.min(rippleTime / 1.3, 1.0);
+        rippleMaterial.uniforms.uProgress.value = ripProgress;
+        preRenderer.clear();
+        preRenderer.render(rippleScene, rippleCamera);
+        if (ripProgress >= 1.0) dismissPreloader();
+        return;
+    }
+
+    astrolabeRings.forEach(item => {
+        item.group.rotation.x += item.sx + Math.sin(t * 0.25 + item.px) * 0.0004;
+        item.group.rotation.y += item.sy + Math.cos(t * 0.20 + item.py) * 0.0005;
+        item.group.rotation.z += item.sz + Math.sin(t * 0.15) * 0.0003;
+    });
+
+    checkRaycastHover();
+
+    hoverTargets.forEach((item, idx) => {
+        if (!item.isHovered) {
+            item.group.position.y = item.basePos.y + Math.sin(t * 1.1 + idx * 1.5) * 7.5;
+            item.group.position.x = item.basePos.x + Math.cos(t * 0.75 + idx * 1.2) * 5.0;
+            item.group.rotation.x += item.rotSpeed.x;
+            item.group.rotation.y += item.rotSpeed.y;
+            item.group.rotation.z += item.rotSpeed.z;
+        } else {
+            item.group.rotation.y += 0.006;
+            item.group.rotation.x = THREE.MathUtils.lerp(item.group.rotation.x, 0.1, 0.05);
+        }
+
+        item.group.position.z = THREE.MathUtils.lerp(item.group.position.z, item.targetZ, 0.08);
+        item.hitMesh.position.copy(item.group.position);
+
+        const sc = THREE.MathUtils.lerp(item.group.scale.x, item.targetScale, 0.1);
+        item.group.scale.set(sc, sc, sc);
+
+        item.group.traverse(child => {
+            if (child.isLineSegments && child.material && child.material.uniforms && child.material.uniforms.uTime) {
+                child.material.uniforms.uTime.value = t;
+            }
+        });
+    });
+
+    preCamera.position.lerp(targetCamPos, 0.05);
+    currentLookTarget.lerp(targetLookTarget, 0.05);
+    preCamera.lookAt(currentLookTarget);
+
+    preRenderer.clear();
+    preRenderer.render(preScene, preCamera);
+}
+animatePreloader();
 
 /* ДЕКОДЕР ГЛИФОВ */
 const CYRILLIC_GLYPHS = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ0123456789§$%*#@!/[]:;';
@@ -838,3 +1300,4 @@ else runCalculation();
 </html>"""
 
 components.html(HTML, height=1080, scrolling=False)
+
