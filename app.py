@@ -33,7 +33,7 @@ def generate_fallback_vitruvian():
     sq_size = int(size * 0.76)
     sq_top = int(size * 0.16)
     draw.rectangle([center - sq_size//2, sq_top, center + sq_size//2, sq_top + sq_size], outline=gold, width=2)
-    # Силуэт
+    # Силуэт человека
     draw.ellipse([center - 22, int(size * 0.18), center + 22, int(size * 0.25)], outline=gold, width=2)
     draw.line([center, int(size * 0.25), center, int(size * 0.52)], fill=gold, width=2)
     draw.line([center - int(size * 0.38), int(size * 0.30), center + int(size * 0.38), int(size * 0.30)], fill=gold, width=2)
@@ -71,7 +71,7 @@ def get_pure_silhouette_contour(filename):
 
 vitruvian_data_uri = get_pure_silhouette_contour("1000400438.jpg")
 
-html_code = f"""<!DOCTYPE html>
+html_code = r"""<!DOCTYPE html>
 <html lang="ru" class="dark">
 <head>
 <meta charset="UTF-8">
@@ -85,33 +85,33 @@ html_code = f"""<!DOCTYPE html>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
-tailwind.config = {{
+tailwind.config = {
     darkMode: 'class',
-    theme: {{
-        extend: {{
-            fontFamily: {{
+    theme: {
+        extend: {
+            fontFamily: {
                 serif: ['"Cormorant Garamond"', 'Georgia', 'serif'],
                 mono: ['"JetBrains Mono"', 'monospace'],
                 sans: ['"Inter"', 'system-ui', 'sans-serif'],
-            }},
-            colors: {{
+            },
+            colors: {
                 obsidian: '#070709',
                 obsidianCard: '#0d0d12',
                 alabaster: '#f4f1ea',
                 gold: '#d4af37',
                 vermilion: '#e63946',
                 jade: '#2a9d8f',
-            }}
-        }}
-    }}
-}}
+            }
+        }
+    }
+}
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-:root {{
+:root {
     --bg-space: #070709;
     --bg-panel: rgba(13, 13, 18, 0.85);
     --bg-cell-hover: rgba(24, 24, 34, 0.95);
@@ -126,8 +126,8 @@ tailwind.config = {{
     --cursor-glow: rgba(212, 175, 55, 0.2);
     --table-header-bg: rgba(13, 13, 18, 0.98);
     --grain-opacity: 0.035;
-}}
-html:not(.dark) {{
+}
+html:not(.dark) {
     --bg-space: #f4f1ea;
     --bg-panel: rgba(255, 255, 255, 0.92);
     --bg-cell-hover: rgba(246, 243, 235, 0.98);
@@ -142,113 +142,113 @@ html:not(.dark) {{
     --cursor-glow: rgba(184, 134, 11, 0.15);
     --table-header-bg: rgba(244, 241, 234, 0.98);
     --grain-opacity: 0.02;
-}}
+}
 
-* {{ box-sizing: border-box; border-color: var(--border-line); margin: 0; padding: 0; }}
-body {{ background-color: var(--bg-space); color: var(--text-main); font-family: 'JetBrains Mono', monospace; overflow-x: hidden; transition: background-color 0.4s ease, color 0.4s ease; }}
+* { box-sizing: border-box; border-color: var(--border-line); margin: 0; padding: 0; }
+body { background-color: var(--bg-space); color: var(--text-main); font-family: 'JetBrains Mono', monospace; overflow-x: hidden; transition: background-color 0.4s ease, color 0.4s ease; }
 
-.film-grain {{
+.film-grain {
     position: fixed; inset: 0; width: 100vw; height: 100vh;
     pointer-events: none; z-index: 999; opacity: var(--grain-opacity);
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-}}
+}
 
 /* ПРЕЛОАДЕР */
-#preloader-stage {{
+#preloader-stage {
     position: fixed; inset: 0; background: #050508; z-index: 900;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-}}
-#preloader-webgl {{ position: absolute; inset: 0; width: 100vw; height: 100vh; z-index: 10; }}
+}
+#preloader-webgl { position: absolute; inset: 0; width: 100vw; height: 100vh; z-index: 10; }
 
-#preloaderTitle {{
+#preloaderTitle {
     position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
     font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic;
     font-size: clamp(34px, 5.5vw, 62px); font-weight: 700; letter-spacing: 0.25em;
     color: var(--accent-gold); opacity: 0; z-index: 30; pointer-events: none;
     text-shadow: 0 0 35px rgba(212, 175, 55, 0.7);
     transition: opacity 2s cubic-bezier(0.16, 1, 0.3, 1);
-    text-align: center; width: 100%; select-none: none;
-}}
+    text-align: center; width: 100%; user-select: none;
+}
 
-#preloaderHUD {{
+#preloaderHUD {
     position: absolute; bottom: 45px; display: flex; flex-direction: column;
     align-items: center; gap: 6px; z-index: 30; transition: opacity 0.5s ease;
-}}
-.progress-bar-bg {{ width: 280px; height: 2px; background: rgba(255,255,255,0.1); position: relative; overflow: hidden; }}
-#loaderProgressBar {{ position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: var(--accent-gold); transition: width 0.1s linear; }}
+}
+.progress-bar-bg { width: 280px; height: 2px; background: rgba(255,255,255,0.1); position: relative; overflow: hidden; }
+#loaderProgressBar { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: var(--accent-gold); transition: width 0.1s linear; }
 
-#exploreBtnWrapper {{
+#exploreBtnWrapper {
     position: absolute; bottom: 45px; z-index: 40; opacity: 0; pointer-events: none;
     transition: opacity 1.2s cubic-bezier(0.19, 1, 0.22, 1), transform 1.2s cubic-bezier(0.19, 1, 0.22, 1);
     transform: translateY(12px);
-}}
-#exploreBtnWrapper.active {{ opacity: 1; pointer-events: auto; transform: translateY(0); }}
+}
+#exploreBtnWrapper.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
 
-.explore-btn {{
+.explore-btn {
     position: relative; padding: 14px 48px;
     background: rgba(13, 13, 18, 0.7); border: 1px solid rgba(212, 175, 55, 0.8);
     color: #f4f1ea; font-family: 'JetBrains Mono', monospace; font-size: 11px;
     letter-spacing: 0.35em; text-transform: uppercase; cursor: pointer;
     backdrop-filter: blur(12px); overflow: hidden; transition: all 0.4s ease;
     box-shadow: 0 0 30px rgba(212, 175, 55, 0.2), inset 0 0 15px rgba(212, 175, 55, 0.1);
-}}
-.explore-btn::before {{
+}
+.explore-btn::before {
     content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
     background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.35), transparent);
     transition: left 0.7s ease;
-}}
-.explore-btn:hover {{
+}
+.explore-btn:hover {
     border-color: #ffd700; color: #ffd700;
     box-shadow: 0 0 45px rgba(212, 175, 55, 0.5), inset 0 0 20px rgba(212, 175, 55, 0.25);
     transform: scale(1.04);
-}}
-.explore-btn:hover::before {{ left: 100%; }}
+}
+.explore-btn:hover::before { left: 100%; }
 
 /* ФОН ДАШБОРДА */
-#webgl-bg-canvas {{ position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; opacity: 0.45; transition: opacity 0.5s ease; }}
-html:not(.dark) #webgl-bg-canvas {{ opacity: 0.2; }}
+#webgl-bg-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; opacity: 0.45; transition: opacity 0.5s ease; }
+html:not(.dark) #webgl-bg-canvas { opacity: 0.2; }
 
-.alche-block {{
+.alche-block {
     position: relative; background: var(--bg-panel); backdrop-filter: blur(20px);
     border-right: 1px solid var(--border-line); border-bottom: 1px solid var(--border-line);
-}}
-.cross-tl::before {{ content: '+'; position: absolute; top: -6px; left: -4px; font-family: 'JetBrains Mono', monospace; font-size: 10px; line-height: 1; color: var(--accent-gold); pointer-events: none; z-index: 10; }}
-.cross-br::after {{ content: '+'; position: absolute; bottom: -6px; right: -4px; font-family: 'JetBrains Mono', monospace; font-size: 10px; line-height: 1; color: var(--accent-gold); pointer-events: none; z-index: 10; }}
+}
+.cross-tl::before { content: '+'; position: absolute; top: -6px; left: -4px; font-family: 'JetBrains Mono', monospace; font-size: 10px; line-height: 1; color: var(--accent-gold); pointer-events: none; z-index: 10; }
+.cross-br::after { content: '+'; position: absolute; bottom: -6px; right: -4px; font-family: 'JetBrains Mono', monospace; font-size: 10px; line-height: 1; color: var(--accent-gold); pointer-events: none; z-index: 10; }
 
-.tilt-card {{ 
+.tilt-card { 
     position: relative; overflow: hidden; transform-style: preserve-3d; perspective: 1000px; 
     transition: transform 0.25s cubic-bezier(0.2, 0, 0.2, 1), border-color 0.3s ease; 
-}}
-.tilt-card::before {{
+}
+.tilt-card::before {
     content: ''; position: absolute; inset: -1px; border: 1px solid transparent;
     background: radial-gradient(350px circle at var(--mouse-x, 0px) var(--mouse-y, 0px), var(--cursor-glow), transparent 75%);
     opacity: 0; transition: opacity 0.4s ease; pointer-events: none; z-index: 2;
-}}
-.tilt-card:hover::before {{ opacity: 1; }}
+}
+.tilt-card:hover::before { opacity: 1; }
 
-.tab-view-enter {{ animation: tabEntrance 0.6s cubic-bezier(0.19, 1, 0.22, 1) forwards; }}
-@keyframes tabEntrance {{
-    0% {{ opacity: 0; filter: blur(8px); transform: translateY(8px); }}
-    100% {{ opacity: 1; filter: blur(0px); transform: translateY(0); }}
-}}
+.tab-view-enter { animation: tabEntrance 0.6s cubic-bezier(0.19, 1, 0.22, 1) forwards; }
+@keyframes tabEntrance {
+    0% { opacity: 0; filter: blur(8px); transform: translateY(8px); }
+    100% { opacity: 1; filter: blur(0px); transform: translateY(0); }
+}
 
-input[type="range"] {{ -webkit-appearance: none; appearance: none; width: 100%; height: 2px; background: var(--border-line); outline: none; }}
-input[type="range"]::-webkit-slider-thumb {{ -webkit-appearance: none; appearance: none; width: 12px; height: 12px; background: var(--accent-gold); cursor: pointer; border: 1px solid var(--bg-space); transform: rotate(45deg); transition: transform 0.2s ease; }}
-input[type="range"]::-webkit-slider-thumb:hover {{ transform: rotate(45deg) scale(1.4); }}
+input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 2px; background: var(--border-line); outline: none; }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; background: var(--accent-gold); cursor: pointer; border: 1px solid var(--bg-space); transform: rotate(45deg); transition: transform 0.2s ease; }
+input[type="range"]::-webkit-slider-thumb:hover { transform: rotate(45deg) scale(1.4); }
 
-.mono-input {{ background: var(--input-bg); border: 1px solid var(--border-line); color: var(--text-main); font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 6px 9px; width: 100%; border-radius: 0; outline: none; transition: border-color 0.2s ease; }}
-.mono-input:focus {{ border-color: var(--accent-gold); background: rgba(212, 175, 55, 0.06); }}
-select.mono-input option {{ background-color: #0d0d12; color: #f4f1ea; }}
+.mono-input { background: var(--input-bg); border: 1px solid var(--border-line); color: var(--text-main); font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 6px 9px; width: 100%; border-radius: 0; outline: none; transition: border-color 0.2s ease; }
+.mono-input:focus { border-color: var(--accent-gold); background: rgba(212, 175, 55, 0.06); }
+select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
 
-.hw-slider-track {{ position: relative; width: 130px; height: 28px; border: 1px solid var(--border-line); background: var(--input-bg); display: flex; align-items: center; justify-content: space-between; padding: 0 10px; cursor: pointer; user-select: none; }}
-.hw-slider-thumb {{ position: absolute; top: 2px; bottom: 2px; width: 62px; background: var(--accent-gold); transition: transform 0.45s cubic-bezier(0.19, 1, 0.22, 1); }}
-.pulse-dot {{ display: inline-block; width: 6px; height: 6px; border-radius: 9999px; background-color: var(--accent-gold); animation: pulseAnim 2s infinite ease-in-out; }}
-@keyframes pulseAnim {{ 0%, 100% {{ opacity: 0.4; transform: scale(0.9); }} 50% {{ opacity: 1; transform: scale(1.2); }} }}
+.hw-slider-track { position: relative; width: 130px; height: 28px; border: 1px solid var(--border-line); background: var(--input-bg); display: flex; align-items: center; justify-content: space-between; padding: 0 10px; cursor: pointer; user-select: none; }
+.hw-slider-thumb { position: absolute; top: 2px; bottom: 2px; width: 62px; background: var(--accent-gold); transition: transform 0.45s cubic-bezier(0.19, 1, 0.22, 1); }
+.pulse-dot { display: inline-block; width: 6px; height: 6px; border-radius: 9999px; background-color: var(--accent-gold); animation: pulseAnim 2s infinite ease-in-out; }
+@keyframes pulseAnim { 0%, 100% { opacity: 0.4; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.2); } }
 
-::-webkit-scrollbar {{ width: 4px; height: 4px; }}
-::-webkit-scrollbar-track {{ background: transparent; }}
-::-webkit-scrollbar-thumb {{ background: var(--border-line); }}
-::-webkit-scrollbar-thumb:hover {{ background: var(--accent-gold); }}
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-line); }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-gold); }
 </style>
 </head>
 <body class="selection:bg-[#d4af37] selection:text-black">
@@ -532,8 +532,8 @@ select.mono-input option {{ background-color: #0d0d12; color: #f4f1ea; }}
 <script>
 /* ЗВУКОВОЙ ДВИЖОК */
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-function playClickSound(freq = 1200, duration = 0.02) {{
-    try {{
+function playClickSound(freq = 1200, duration = 0.02) {
+    try {
         if (audioCtx.state === 'suspended') audioCtx.resume();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
@@ -546,54 +546,54 @@ function playClickSound(freq = 1200, duration = 0.02) {{
         gain.connect(audioCtx.destination);
         osc.start();
         osc.stop(audioCtx.currentTime + duration);
-    }} catch (e) {{}}
-}}
+    } catch (e) {}
+}
 
 let preloaderDismissed = false;
-function dismissPreloader() {{
+function dismissPreloader() {
     if (preloaderDismissed) return;
     preloaderDismissed = true;
     const stage = document.getElementById('preloader-stage');
     const app = document.getElementById('mainDashboardApp');
-    if (app) {{ app.classList.remove('opacity-0'); app.classList.add('opacity-100'); }}
-    setTimeout(() => {{ if (stage) stage.style.display = 'none'; }}, 600);
-}}
+    if (app) { app.classList.remove('opacity-0'); app.classList.add('opacity-100'); }
+    setTimeout(() => { if (stage) stage.style.display = 'none'; }, 600);
+}
 
 const PRELOADER_TOTAL_TIME = 9000;
 const preloaderStartTime = performance.now();
 
-setTimeout(() => {{
+setTimeout(() => {
     const pt = document.getElementById('preloaderTitle');
-    if (pt) {{ pt.style.opacity = '1'; }}
-}}, 1200);
+    if (pt) { pt.style.opacity = '1'; }
+}, 1200);
 
 let drawingCompleted = false;
 
-function updatePreloaderProgress(now) {{
+function updatePreloaderProgress(now) {
     if (preloaderDismissed) return;
     const elapsed = now - preloaderStartTime;
     const progress = Math.min(elapsed / PRELOADER_TOTAL_TIME, 1);
     
     const bar = document.getElementById('loaderProgressBar');
     const pct = document.getElementById('loaderPercent');
-    if (bar) bar.style.width = `${{(progress * 100).toFixed(0)}}%`;
-    if (pct) pct.textContent = `${{Math.floor(progress * 100)}}%`;
+    if (bar) bar.style.width = `${(progress * 100).toFixed(0)}%`;
+    if (pct) pct.textContent = `${Math.floor(progress * 100)}%`;
     
-    if (progress >= 0.96 && !drawingCompleted) {{
+    if (progress >= 0.96 && !drawingCompleted) {
         drawingCompleted = true;
         const hud = document.getElementById('preloaderHUD');
         const btn = document.getElementById('exploreBtnWrapper');
         if (hud) hud.style.opacity = '0';
         if (btn) btn.classList.add('active');
-    }}
+    }
     
     if (progress < 1) requestAnimationFrame(updatePreloaderProgress);
-}}
+}
 requestAnimationFrame(updatePreloaderProgress);
 
 /* THREE.JS ПРЕЛОАДЕР: АСТРОЛЯБИЯ + СИЛУЭТ */
 const preCanvas = document.getElementById('preloader-webgl');
-const preRenderer = new THREE.WebGLRenderer({{ canvas: preCanvas, alpha: true, antialias: true, preserveDrawingBuffer: true }});
+const preRenderer = new THREE.WebGLRenderer({ canvas: preCanvas, alpha: true, antialias: true, preserveDrawingBuffer: true });
 preRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 preRenderer.setSize(window.innerWidth, window.innerHeight);
 
@@ -606,9 +606,9 @@ const preGroup = new THREE.Group();
 preScene.add(preGroup);
 
 // Чистый небесно-голубой каркас колец астролябии
-const astrolabeWireMat = new THREE.MeshBasicMaterial({{
+const astrolabeWireMat = new THREE.MeshBasicMaterial({
     color: 0x00b4ff, wireframe: true, transparent: true, opacity: 0.36
-}});
+});
 
 const astrolabeRings = [];
 const aRing1 = new THREE.Mesh(new THREE.TorusGeometry(120, 4.2, 26, 240), astrolabeWireMat);
@@ -623,35 +623,35 @@ preGroup.add(aRing2);
 preGroup.add(aRing3);
 
 astrolabeRings.push(
-    {{ mesh: aRing1, sx: 0.0022, sy: 0.0034, sz: 0.0011, px: 0.2, py: 1.1 }},
-    {{ mesh: aRing2, sx: -0.0028, sy: 0.0019, sz: -0.0023, px: 2.3, py: 0.7 }},
-    {{ mesh: aRing3, sx: 0.0031, sy: -0.0026, sz: 0.0018, px: 1.5, py: 3.2 }}
+    { mesh: aRing1, sx: 0.0022, sy: 0.0034, sz: 0.0011, px: 0.2, py: 1.1 },
+    { mesh: aRing2, sx: -0.0028, sy: 0.0019, sz: -0.0023, px: 2.3, py: 0.7 },
+    { mesh: aRing3, sx: 0.0031, sy: -0.0026, sz: 0.0018, px: 1.5, py: 3.2 }
 );
 
 // Шейдер силуэта Витрувианца (трассировка снизу вверх)
-const vitruvianData = "{vitruvian_data_uri}";
+const vitruvianData = "VITRUVIAN_DATA_PLACEHOLDER";
 let vitShaderMat = null;
 
 const vImg = new Image();
 vImg.crossOrigin = "Anonymous";
 vImg.src = vitruvianData;
-vImg.onload = () => {{
+vImg.onload = () => {
     const texture = new THREE.Texture(vImg);
     texture.needsUpdate = true;
     const aspect = vImg.width / vImg.height;
 
-    vitShaderMat = new THREE.ShaderMaterial({{
-        uniforms: {{
-            tDiffuse: {{ value: texture }},
-            uProgress: {{ value: 0.0 }},
-            uTime: {{ value: 0.0 }}
-        }},
+    vitShaderMat = new THREE.ShaderMaterial({
+        uniforms: {
+            tDiffuse: { value: texture },
+            uProgress: { value: 0.0 },
+            uTime: { value: 0.0 }
+        },
         vertexShader: `
             varying vec2 vUv;
-            void main() {{
+            void main() {
                 vUv = uv;
                 gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-            }}
+            }
         `,
         fragmentShader: `
             uniform sampler2D tDiffuse;
@@ -659,7 +659,7 @@ vImg.onload = () => {{
             uniform float uTime;
             varying vec2 vUv;
 
-            void main() {{
+            void main() {
                 vec4 tex = texture2D(tDiffuse, vUv);
                 float front = uProgress * 1.05;
                 float reveal = smoothstep(front, front - 0.04, vUv.y);
@@ -670,26 +670,26 @@ vImg.onload = () => {{
                 float finalAlpha = clamp(reveal + pencilBeam, 0.0, 1.0);
                 vec3 spark = vec3(1.0, 0.94, 0.65) * (pencilBeam * 2.0);
                 gl_FragColor = vec4(tex.rgb + spark, tex.a * finalAlpha);
-            }}
+            }
         `,
         transparent: true,
         depthWrite: false,
         side: THREE.DoubleSide
-    }});
+    });
 
     const h = 95;
     const w = h * aspect;
     const vitMesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), vitShaderMat);
     vitMesh.position.set(0, 0, 0); // Статичен по Z
     preGroup.add(vitMesh);
-}};
+};
 
 /* ЖИДКИЙ ВОЛНОВОЙ МОРФ ПРИ КЛИКЕ НА «ИССЛЕДОВАТЬ» */
 let isRippling = false;
 let rippleScene, rippleCamera, rippleMaterial, rippleTime = 0;
 const snapshotTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight);
 
-function triggerLiquidTransition(event) {{
+function triggerLiquidTransition(event) {
     if (isRippling) return;
     isRippling = true;
     playClickSound(800, 0.08);
@@ -713,14 +713,14 @@ function triggerLiquidTransition(event) {{
     rippleCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
     const quadGeo = new THREE.PlaneGeometry(2, 2);
-    rippleMaterial = new THREE.ShaderMaterial({{
-        uniforms: {{
-            tDiffuse: {{ value: snapshotTarget.texture }},
-            uCenter: {{ value: new THREE.Vector2(clickX, clickY) }},
-            uProgress: {{ value: 0.0 }},
-            uAspect: {{ value: window.innerWidth / window.innerHeight }}
-        }},
-        vertexShader: `varying vec2 vUv; void main() {{ vUv = uv; gl_Position = vec4(position, 1.0); }}`,
+    rippleMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+            tDiffuse: { value: snapshotTarget.texture },
+            uCenter: { value: new THREE.Vector2(clickX, clickY) },
+            uProgress: { value: 0.0 },
+            uAspect: { value: window.innerWidth / window.innerHeight }
+        },
+        vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position, 1.0); }`,
         fragmentShader: `
             uniform sampler2D tDiffuse;
             uniform vec2 uCenter;
@@ -728,7 +728,7 @@ function triggerLiquidTransition(event) {{
             uniform float uAspect;
             varying vec2 vUv;
 
-            void main() {{
+            void main() {
                 vec2 uv = vUv;
                 vec2 aspectAdjustedUV = vec2(uv.x * uAspect, uv.y);
                 vec2 aspectAdjustedCenter = vec2(uCenter.x * uAspect, uCenter.y);
@@ -751,16 +751,16 @@ function triggerLiquidTransition(event) {{
                 
                 float fadeOut = smoothstep(0.0, 0.95, uProgress);
                 gl_FragColor = vec4(r, g, b, (1.0 - fadeOut));
-            }}
+            }
         `,
         transparent: true
-    }});
+    });
 
     const quad = new THREE.Mesh(quadGeo, rippleMaterial);
     rippleScene.add(quad);
-}}
+}
 
-function animatePreloader() {{
+function animatePreloader() {
     if (preloaderDismissed) return;
     requestAnimationFrame(animatePreloader);
     
@@ -768,7 +768,7 @@ function animatePreloader() {{
     const t = elapsed * 0.001;
     const progress = Math.min(elapsed / PRELOADER_TOTAL_TIME, 1.0);
     
-    if (isRippling) {{
+    if (isRippling) {
         rippleTime += 0.016;
         const ripProgress = Math.min(rippleTime / 1.3, 1.0);
         rippleMaterial.uniforms.uProgress.value = ripProgress;
@@ -776,23 +776,23 @@ function animatePreloader() {{
         preRenderer.render(rippleScene, rippleCamera);
         if (ripProgress >= 1.0) dismissPreloader();
         return;
-    }}
+    }
     
     // Медленное вращение колец во всех плоскостях
-    astrolabeRings.forEach(item => {{
+    astrolabeRings.forEach(item => {
         item.mesh.rotation.x += item.sx + Math.sin(t * 0.4 + item.px) * 0.0008;
         item.mesh.rotation.y += item.sy + Math.cos(t * 0.35 + item.py) * 0.0009;
         item.mesh.rotation.z += item.sz + Math.sin(t * 0.25) * 0.0006;
-    }});
+    });
 
-    if (vitShaderMat) {{
+    if (vitShaderMat) {
         vitShaderMat.uniforms.uProgress.value = progress;
         vitShaderMat.uniforms.uTime.value = t;
-    }}
+    }
     
     preRenderer.clear();
     preRenderer.render(preScene, preCamera);
-}}
+}
 animatePreloader();
 
 /* ========================================================
@@ -803,7 +803,7 @@ const dashScene = new THREE.Scene();
 const dashCamera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 2000);
 dashCamera.position.z = 150;
 
-const dashRenderer = new THREE.WebGLRenderer({{ canvas: dashCanvas, alpha: true, antialias: true }});
+const dashRenderer = new THREE.WebGLRenderer({ canvas: dashCanvas, alpha: true, antialias: true });
 dashRenderer.setSize(window.innerWidth, window.innerHeight);
 dashRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
@@ -811,9 +811,9 @@ const dashArmillary = new THREE.Group();
 dashScene.add(dashArmillary);
 
 let ringColor = 0x00aaff;
-const dashRingMat = new THREE.MeshBasicMaterial({{ color: ringColor, wireframe: true, transparent: true, opacity: 0.14 }});
+const dashRingMat = new THREE.MeshBasicMaterial({ color: ringColor, wireframe: true, transparent: true, opacity: 0.14 });
 const mainRings = [];
-[55, 75, 95].forEach((radius, i) => {{
+[55, 75, 95].forEach((radius, i) => {
     const geo = new THREE.TorusGeometry(radius, 6 + i*1.8, 30, 200);
     const ring = new THREE.Mesh(geo, dashRingMat);
     if (i === 0) ring.rotation.x = Math.PI / 2;
@@ -821,35 +821,35 @@ const mainRings = [];
     if (i === 2) ring.rotation.z = Math.PI / 4;
     dashArmillary.add(ring);
     mainRings.push(ring);
-}});
+});
 
 let mouseX = 0, mouseY = 0;
-document.addEventListener('mousemove', (e) => {{
+document.addEventListener('mousemove', (e) => {
     mouseX = (e.clientX - window.innerWidth / 2) * 0.0006;
     mouseY = (e.clientY - window.innerHeight / 2) * 0.0006;
     const coord = document.getElementById('cursorCoordDisplay');
-    if (coord) coord.textContent = `X: ${{e.clientX.toString().padStart(4, '0')}} / Y: ${{e.clientY.toString().padStart(4, '0')}}`;
-}});
+    if (coord) coord.textContent = `X: ${e.clientX.toString().padStart(4, '0')} / Y: ${e.clientY.toString().padStart(4, '0')}`;
+});
 
-document.querySelectorAll('.tilt-card').forEach(card => {{
-    card.addEventListener('mousemove', e => {{
+document.querySelectorAll('.tilt-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
         const rect = card.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-        card.style.setProperty('--mouse-x', `${{x}}px`);
-        card.style.setProperty('--mouse-y', `${{y}}px`);
+        card.style.setProperty('--mouse-x', `${x}px`);
+        card.style.setProperty('--mouse-y', `${y}px`);
         const centerX = rect.width / 2;
         const centerY = rect.height / 2;
         const rotateX = ((y - centerY) / centerY) * -6;
         const rotateY = ((x - centerX) / centerX) * 6;
-        card.style.transform = `perspective(1000px) rotateX(${{rotateX}}deg) rotateY(${{rotateY}}deg) translateY(-3px)`;
-    }});
-    card.addEventListener('mouseleave', () => {{
+        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-3px)`;
+    });
+    card.addEventListener('mouseleave', () => {
         card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)';
-    }});
-}});
+    });
+});
 
-function animateDash() {{
+function animateDash() {
     requestAnimationFrame(animateDash);
     mainRings[0].rotation.y += 0.001;
     mainRings[1].rotation.x -= 0.0015;
@@ -865,10 +865,10 @@ function animateDash() {{
     dashCamera.position.z += (baseZ - dashCamera.position.z) * 0.05;
     dashCamera.lookAt(dashScene.position);
     dashRenderer.render(dashScene, dashCamera);
-}}
+}
 animateDash();
 
-window.addEventListener('resize', () => {{
+window.addEventListener('resize', () => {
     preCamera.aspect = window.innerWidth / window.innerHeight;
     preCamera.updateProjectionMatrix();
     preRenderer.setSize(window.innerWidth, window.innerHeight);
@@ -876,152 +876,152 @@ window.addEventListener('resize', () => {{
     dashCamera.aspect = window.innerWidth / window.innerHeight;
     dashCamera.updateProjectionMatrix();
     dashRenderer.setSize(window.innerWidth, window.innerHeight);
-}});
+});
 
 /* ТЕМА: НОЧЬ / ДЕНЬ */
 let isDark = true;
-function toggleTheme() {{
+function toggleTheme() {
     isDark = !isDark;
     document.documentElement.classList.toggle('dark', isDark);
     const thumb = document.getElementById('sliderThumb');
     const lblNight = document.getElementById('lblNight');
     const lblDay = document.getElementById('lblDay');
     
-    if (isDark) {{
+    if (isDark) {
         thumb.style.transform = 'translateX(0px)';
         lblNight.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold text-black';
         lblDay.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold opacity-70';
         dashRingMat.color.setHex(0x00aaff);
         astrolabeWireMat.color.setHex(0x00b4ff);
-    }} else {{
+    } else {
         thumb.style.transform = 'translateX(58px)';
         lblDay.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold text-white';
         lblNight.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold opacity-70';
         dashRingMat.color.setHex(0x0055aa);
         astrolabeWireMat.color.setHex(0x0066cc);
-    }}
+    }
     playClickSound(900, 0.03);
     runCalculation();
-}}
+}
 
 /* ЭФФЕКТ ДЕКОДЕРА (SCRAMBLE EFFECT) */
 const CYRILLIC_GLYPHS = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ0123456789§$%*#@!/[]:;';
 const NUMERIC_GLYPHS = '0123456789 ';
-function scrambleElementText(el, finalText, duration = 460, useAlphabet = true) {{
+function scrambleElementText(el, finalText, duration = 460, useAlphabet = true) {
     if (!el) return;
     const glyphs = useAlphabet ? CYRILLIC_GLYPHS : NUMERIC_GLYPHS;
     const start = performance.now();
     const len = finalText.length;
     if (el._scrambleTimer) cancelAnimationFrame(el._scrambleTimer);
-    function update(now) {{
+    function update(now) {
         const elapsed = now - start;
         const progress = Math.min(elapsed / duration, 1);
         const revealIdx = Math.floor(progress * len);
         let out = '';
-        for (let i = 0; i < len; i++) {{
+        for (let i = 0; i < len; i++) {
             const char = finalText[i];
             if (i < revealIdx || char === ' ' || char === '₽' || char === '%' || char === '.' || char === ',' || char === '(' || char === ')' || char === '/' || char === '[' || char === ']' || char === ':') out += char;
             else out += glyphs[Math.floor(Math.random() * glyphs.length)];
-        }}
+        }
         el.textContent = out;
         if (progress < 1) el._scrambleTimer = requestAnimationFrame(update);
         else el._scrambleTimer = null;
-    }}
+    }
     el._scrambleTimer = requestAnimationFrame(update);
-}}
-function scrambleNumber(el, finalStr, duration = 400) {{ scrambleElementText(el, finalStr, duration, false); }}
+}
+function scrambleNumber(el, finalStr, duration = 400) { scrambleElementText(el, finalStr, duration, false); }
 
 /* ВКЛАДКИ */
 const TAB_TITLES = ['[01] ОБСЛУЖИВАНИЕ КАПИТАЛА', '[02] СКЛАДСКОЙ ЦИКЛ', '[03] ДЕНЕЖНЫЙ ПОТОК', '[04] ЭКОНОМИКА И ЗАКАЗЫ'];
-function selectTab(index) {{
+function selectTab(index) {
     playClickSound(1400, 0.025);
     const buttons = document.querySelectorAll('#navTabsContainer .tab-btn');
-    buttons.forEach((btn, idx) => {{
-        if (idx === index) {{
+    buttons.forEach((btn, idx) => {
+        if (idx === index) {
             btn.className = 'tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest bg-[#d4af37] text-black font-bold transition shadow-md';
             scrambleElementText(btn, TAB_TITLES[idx], 400, true);
-        }} else {{
+        } else {
             btn.className = 'tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest opacity-70 hover:opacity-100 transition';
             btn.textContent = TAB_TITLES[idx];
-        }}
-    }});
-    for (let i = 0; i < 4; i++) {{
-        const view = document.getElementById(`viewTab${{i}}`);
-        if (i === index) {{
+        }
+    });
+    for (let i = 0; i < 4; i++) {
+        const view = document.getElementById(`viewTab${i}`);
+        if (i === index) {
             view.classList.remove('hidden'); view.classList.remove('tab-view-enter'); void view.offsetWidth; view.classList.add('tab-view-enter');
-        }} else {{
+        } else {
             view.classList.add('hidden');
-        }}
-    }}
-}}
+        }
+    }
+}
 
 let growthMode = 'abs';
-function setGrowthMode(mode) {{
+function setGrowthMode(mode) {
     playClickSound(950, 0.02);
     growthMode = mode;
     const btnAbs = document.getElementById('btnModeAbs');
     const btnPct = document.getElementById('btnModePct');
     const title = document.getElementById('lblGrowthModeTitle');
     const slider = document.getElementById('paramGrowthSlider');
-    if (mode === 'abs') {{
+    if (mode === 'abs') {
         btnAbs.className = 'py-1 font-mono text-[9px] uppercase tracking-wider bg-[#d4af37] text-black font-bold transition';
         btnPct.className = 'py-1 font-mono text-[9px] uppercase tracking-wider opacity-60 hover:opacity-100 transition';
         title.textContent = 'ПРИРОСТ В МЕСЯЦ'; slider.max = 100; slider.value = 5;
-    }} else {{
+    } else {
         btnPct.className = 'py-1 font-mono text-[9px] uppercase tracking-wider bg-[#d4af37] text-black font-bold transition';
         btnAbs.className = 'py-1 font-mono text-[9px] uppercase tracking-wider opacity-60 hover:opacity-100 transition';
         title.textContent = 'ПРИРОСТ В %'; slider.max = 50; slider.value = 10;
-    }}
+    }
     runCalculation();
-}}
+}
 
-function parseCleanNum(val) {{ return typeof val === 'number' ? val : parseFloat(String(val).replace(/[^\\d.-]/g, '')) || 0; }}
-function formatSpaced(num) {{ return Math.round(num).toLocaleString('ru-RU').replace(/,/g, ' '); }}
-function formatInput(input) {{ input.value = formatSpaced(parseCleanNum(input.value)); }}
+function parseCleanNum(val) { return typeof val === 'number' ? val : parseFloat(String(val).replace(/[^\d.-]/g, '')) || 0; }
+function formatSpaced(num) { return Math.round(num).toLocaleString('ru-RU').replace(/,/g, ' '); }
+function formatInput(input) { input.value = formatSpaced(parseCleanNum(input.value)); }
 
 let chartDebtInstance = null, chartStockInstance = null, chartCFInstance = null, chartOrdersInstance = null, chartPieInstance = null, latestCalculatedData = null;
 
-function runCalculation() {{
+function runCalculation() {
     const startMonth = parseInt(document.getElementById('paramStartMonth').value);
     const startYear = parseInt(document.getElementById('paramStartYear').value);
     const period = parseInt(document.getElementById('paramPeriod').value);
     const vatRate = parseFloat(document.getElementById('paramVatRate').value);
     const vatMultiplier = 1 + (vatRate / 100);
     const marginPct = parseFloat(document.getElementById('paramMargin').value);
-    document.getElementById('lblMarginVal').textContent = `${{marginPct}}%`;
+    document.getElementById('lblMarginVal').textContent = `${marginPct}%`;
     const initialPurchase = parseCleanNum(document.getElementById('paramInitialPurchase').value);
     const batchCycle = parseInt(document.getElementById('paramBatchCycle').value) || 5;
     const cbRate = parseFloat(document.getElementById('paramCbRate').value) || 17;
     const commMargin = parseFloat(document.getElementById('paramCommMargin').value) || 2;
     const totalRateAnnual = cbRate + commMargin;
     const monthlyRate = (totalRateAnnual / 100) / 12;
-    document.getElementById('telemetryRate').textContent = `[КАПИТАЛ: ${{totalRateAnnual.toFixed(1)}}% ГОДОВЫХ]`;
-    document.getElementById('kpiRateSub').textContent = `Ставка ${{totalRateAnnual.toFixed(1)}}%`;
+    document.getElementById('telemetryRate').textContent = `[КАПИТАЛ: ${totalRateAnnual.toFixed(1)}% ГОДОВЫХ]`;
+    document.getElementById('kpiRateSub').textContent = `Ставка ${totalRateAnnual.toFixed(1)}%`;
     const aov = parseCleanNum(document.getElementById('paramAov').value);
     const startOrders = parseInt(document.getElementById('paramStartOrders').value) || 40;
     const growthVal = parseFloat(document.getElementById('paramGrowthSlider').value);
-    document.getElementById('lblGrowthVal').textContent = growthMode === 'abs' ? `+${{growthVal}} шт.` : `+${{growthVal}}%`;
+    document.getElementById('lblGrowthVal').textContent = growthMode === 'abs' ? `+${growthVal} шт.` : `+${growthVal}%`;
     const maxOrdersCap = parseInt(document.getElementById('paramMaxOrdersCap').value) || 300;
     const fot = parseCleanNum(document.getElementById('paramFot').value);
     const wh = parseCleanNum(document.getElementById('paramWh').value);
     const office = parseCleanNum(document.getElementById('paramOffice').value);
     const prepPct = parseFloat(document.getElementById('paramPrepaymentPct').value);
-    document.getElementById('lblPrepVal').textContent = `${{prepPct}}%`;
+    document.getElementById('lblPrepVal').textContent = `${prepPct}%`;
     const factShare = parseFloat(document.getElementById('paramFactoringShare').value);
-    document.getElementById('lblFactShareVal').textContent = `${{factShare}}%`;
+    document.getElementById('lblFactShareVal').textContent = `${factShare}%`;
     const factAdvance = 0.8;
     const shortMonths = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
     const xLabels = [], orders = [], rev = [];
     
-    for (let i = 0; i < period; i++) {{
+    for (let i = 0; i < period; i++) {
         const mIdx = (startMonth + i) % 12;
         const yOff = Math.floor((startMonth + i) / 12);
-        xLabels.push(`${{shortMonths[mIdx]}} ${{startYear + yOff}}`);
+        xLabels.push(`${shortMonths[mIdx]} ${startYear + yOff}`);
         let curOrders = i === 0 ? startOrders : (growthMode === 'abs' ? orders[i - 1] + growthVal : orders[i - 1] * (1 + growthVal / 100));
         curOrders = Math.min(curOrders, maxOrdersCap);
         orders.push(curOrders);
         rev.push(curOrders * aov);
-    }}
+    }
     
     const cogsPct = 1 - (marginPct / 100);
     const cogsVat = rev.map(r => r * cogsPct * vatMultiplier);
@@ -1031,210 +1031,213 @@ function runCalculation() {{
     if (1 < period) cogsPayments[1] += initialPurchase * ((100 - prepPct) / 100);
     inventoryDeliveries[0] = initialPurchase;
     
-    for (let b = batchCycle; b < period; b += batchCycle) {{
+    for (let b = batchCycle; b < period; b += batchCycle) {
         const bEnd = Math.min(b + batchCycle, period);
         let batchTotal = 0;
         for (let k = b; k < bEnd; k++) batchTotal += cogsVat[k];
         inventoryDeliveries[b] = batchTotal;
         cogsPayments[b] += batchTotal * (prepPct / 100);
         if (b + 1 < period) cogsPayments[b + 1] += batchTotal * ((100 - prepPct) / 100);
-    }}
+    }
     
     const inventoryBalance = [];
     let curStock = 0;
-    for (let i = 0; i < period; i++) {{
+    for (let i = 0; i < period; i++) {
         curStock += inventoryDeliveries[i] - cogsVat[i];
         inventoryBalance.push(Math.max(curStock, 0));
-    }}
+    }
     
     const inflows = new Array(period).fill(0);
-    for (let i = 0; i < period; i++) {{
+    for (let i = 0; i < period; i++) {
         const invVat = rev[i] * vatMultiplier;
         inflows[i] += invVat * (factShare / 100) * factAdvance;
         const targetM = i + 2;
-        if (targetM < period) {{
+        if (targetM < period) {
             inflows[targetM] += invVat * ((100 - factShare) / 100);
             inflows[targetM] += invVat * (factShare / 100) * (1 - factAdvance);
-        }}
-    }}
+        }
+    }
     
     const opex = [], taxes = rev.map(r => r * 0.05), baseOutflows = [];
-    for (let i = 0; i < period; i++) {{
+    for (let i = 0; i < period; i++) {
         const base = 150000 + wh + office + fot;
         opex.push(i >= 6 ? base * 1.2 : base);
         baseOutflows.push(cogsPayments[i] + opex[i] + taxes[i]);
-    }}
+    }
     
     const monthlyInvestments = new Array(period).fill(0), interestPayments = new Array(period).fill(0), debtRepayments = new Array(period).fill(0), debtBalance = new Array(period).fill(0), cashBalance = new Array(period).fill(0);
     let currentDebt = 0, currentCash = 0;
-    for (let i = 0; i < period; i++) {{
+    for (let i = 0; i < period; i++) {
         const interestDue = currentDebt * monthlyRate;
         interestPayments[i] = interestDue;
         const netBeforeFin = inflows[i] - (baseOutflows[i] + interestDue);
         const potCash = currentCash + netBeforeFin;
-        if (potCash < 0) {{
+        if (potCash < 0) {
             const needed = Math.abs(potCash);
             monthlyInvestments[i] = needed;
             currentDebt += needed;
             currentCash = 0;
             debtRepayments[i] = 0;
-        }} else {{
+        } else {
             monthlyInvestments[i] = 0;
             const repay = Math.min(potCash, currentDebt);
             debtRepayments[i] = repay;
             currentDebt -= repay;
             currentCash = potCash - repay;
-        }}
+        }
         debtBalance[i] = currentDebt;
         cashBalance[i] = currentCash;
-    }}
+    }
     
     const sumRev = rev.reduce((a, b) => a + b, 0), sumInvestments = monthlyInvestments.reduce((a, b) => a + b, 0), sumInterest = interestPayments.reduce((a, b) => a + b, 0), maxDebt = Math.max(...debtBalance), sumOpex = opex.reduce((a, b) => a + b, 0), sumTaxes = taxes.reduce((a, b) => a + b, 0);
     const netProfit = sumRev * (marginPct / 100) - sumOpex - sumTaxes - sumInterest;
     const roi = sumRev > 0 ? (netProfit / sumRev) * 100 : 0;
     
-    latestCalculatedData = {{ xLabels, monthlyInvestments, interestPayments, debtRepayments, debtBalance, cashBalance, sumRev, netProfit, roi }};
+    latestCalculatedData = { xLabels, monthlyInvestments, interestPayments, debtRepayments, debtBalance, cashBalance, sumRev, netProfit, roi };
     
-    scrambleNumber(document.getElementById('kpiRev'), `${{formatSpaced(sumRev)}} ₽`);
-    scrambleNumber(document.getElementById('kpiInjections'), `${{formatSpaced(sumInvestments)}} ₽`);
-    scrambleNumber(document.getElementById('kpiInterest'), `${{formatSpaced(sumInterest)}} ₽`);
-    scrambleNumber(document.getElementById('kpiMaxDebt'), `${{formatSpaced(maxDebt)}} ₽`);
-    scrambleNumber(document.getElementById('kpiProfit'), `${{formatSpaced(netProfit)}} ₽`);
-    document.getElementById('kpiRoiSub').textContent = `Рентабельность: ${{roi.toFixed(1)}}%`;
+    scrambleNumber(document.getElementById('kpiRev'), `${formatSpaced(sumRev)} ₽`);
+    scrambleNumber(document.getElementById('kpiInjections'), `${formatSpaced(sumInvestments)} ₽`);
+    scrambleNumber(document.getElementById('kpiInterest'), `${formatSpaced(sumInterest)} ₽`);
+    scrambleNumber(document.getElementById('kpiMaxDebt'), `${formatSpaced(maxDebt)} ₽`);
+    scrambleNumber(document.getElementById('kpiProfit'), `${formatSpaced(netProfit)} ₽`);
+    document.getElementById('kpiRoiSub').textContent = `Рентабельность: ${roi.toFixed(1)}%`;
     
     const tbody = document.getElementById('tableDebtBody');
     tbody.innerHTML = '';
-    for (let i = 0; i < period; i++) {{
+    for (let i = 0; i < period; i++) {
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-[var(--bg-cell-hover)] transition';
-        tr.innerHTML = `<td class="p-3 font-bold">${{xLabels[i]}}</td><td class="p-3 text-[#e63946]">${{formatSpaced(monthlyInvestments[i])}} ₽</td><td class="p-3 text-[#d4af37]">${{formatSpaced(interestPayments[i])}} ₽</td><td class="p-3 text-[#2a9d8f]">${{formatSpaced(debtRepayments[i])}} ₽</td><td class="p-3 font-bold">${{formatSpaced(debtBalance[i])}} ₽</td><td class="p-3">${{formatSpaced(cashBalance[i])}} ₽</td>`;
+        tr.innerHTML = `<td class="p-3 font-bold">${xLabels[i]}</td><td class="p-3 text-[#e63946]">${formatSpaced(monthlyInvestments[i])} ₽</td><td class="p-3 text-[#d4af37]">${formatSpaced(interestPayments[i])} ₽</td><td class="p-3 text-[#2a9d8f]">${formatSpaced(debtRepayments[i])} ₽</td><td class="p-3 font-bold">${formatSpaced(debtBalance[i])} ₽</td><td class="p-3">${formatSpaced(cashBalance[i])} ₽</td>`;
         tbody.appendChild(tr);
-    }}
+    }
     
     const chartText = isDark ? '#8e8a80' : '#6b665c';
     const chartGrid = isDark ? 'rgba(212, 175, 55, 0.08)' : 'rgba(184, 134, 11, 0.12)';
     
     if (chartDebtInstance) chartDebtInstance.destroy();
-    chartDebtInstance = new Chart(document.getElementById('chartDebt').getContext('2d'), {{
+    chartDebtInstance = new Chart(document.getElementById('chartDebt').getContext('2d'), {
         type: 'bar',
-        data: {{
+        data: {
             labels: xLabels,
             datasets: [
-                {{ label: 'Проценты за месяц', data: interestPayments, backgroundColor: '#d4af37', order: 2 }},
-                {{ label: 'Остаток тела долга', data: debtBalance, type: 'line', borderColor: '#e63946', backgroundColor: '#e63946', borderWidth: 2.5, yAxisID: 'y1', tension: 0.3, order: 1 }}
+                { label: 'Проценты за месяц', data: interestPayments, backgroundColor: '#d4af37', order: 2 },
+                { label: 'Остаток тела долга', data: debtBalance, type: 'line', borderColor: '#e63946', backgroundColor: '#e63946', borderWidth: 2.5, yAxisID: 'y1', tension: 0.3, order: 1 }
             ]
-        }},
-        options: {{
+        },
+        options: {
             responsive: true, maintainAspectRatio: false,
-            scales: {{
-                x: {{ grid: {{ display: false }}, ticks: {{ color: chartText, font: {{ family: 'JetBrains Mono', size: 10 }} }} }},
-                y: {{ grid: {{ color: chartGrid }}, ticks: {{ color: chartText, font: {{ family: 'JetBrains Mono', size: 10 }} }} }},
-                y1: {{ position: 'right', grid: {{ display: false }}, ticks: {{ color: '#e63946', font: {{ family: 'JetBrains Mono', size: 10 }} }} }}
-            }},
-            plugins: {{ legend: {{ labels: {{ color: chartText, font: {{ family: 'JetBrains Mono', size: 11 }} }} }} }}
-        }}
-    }});
+            scales: {
+                x: { grid: { display: false }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } },
+                y: { grid: { color: chartGrid }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } },
+                y1: { position: 'right', grid: { display: false }, ticks: { color: '#e63946', font: { family: 'JetBrains Mono', size: 10 } } }
+            },
+            plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } }
+        }
+    });
 
     if (chartStockInstance) chartStockInstance.destroy();
-    chartStockInstance = new Chart(document.getElementById('chartStock').getContext('2d'), {{
+    chartStockInstance = new Chart(document.getElementById('chartStock').getContext('2d'), {
         type: 'bar',
-        data: {{
+        data: {
             labels: xLabels,
             datasets: [
-                {{ label: 'Оплата партии поставщику', data: cogsPayments, backgroundColor: isDark ? '#52525b' : '#cbd5e1', order: 2 }},
-                {{ label: 'Остаток склада', data: inventoryBalance, type: 'line', borderColor: '#d4af37', borderWidth: 2.5, yAxisID: 'y1', tension: 0.3, order: 1 }}
+                { label: 'Оплата партии поставщику', data: cogsPayments, backgroundColor: isDark ? '#52525b' : '#cbd5e1', order: 2 },
+                { label: 'Остаток склада', data: inventoryBalance, type: 'line', borderColor: '#d4af37', borderWidth: 2.5, yAxisID: 'y1', tension: 0.3, order: 1 }
             ]
-        }},
-        options: {{
+        },
+        options: {
             responsive: true, maintainAspectRatio: false,
-            scales: {{
-                x: {{ grid: {{ display: false }}, ticks: {{ color: chartText, font: {{ family: 'JetBrains Mono', size: 10 }} }} }},
-                y: {{ grid: {{ color: chartGrid }}, ticks: {{ color: chartText, font: {{ family: 'JetBrains Mono', size: 10 }} }} }},
-                y1: {{ position: 'right', grid: {{ display: false }}, ticks: {{ color: '#d4af37', font: {{ family: 'JetBrains Mono', size: 10 }} }} }}
-            }},
-            plugins: {{ legend: {{ labels: {{ color: chartText, font: {{ family: 'JetBrains Mono', size: 11 }} }} }} }}
-        }}
-    }});
+            scales: {
+                x: { grid: { display: false }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } },
+                y: { grid: { color: chartGrid }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } },
+                y1: { position: 'right', grid: { display: false }, ticks: { color: '#d4af37', font: { family: 'JetBrains Mono', size: 10 } } }
+            },
+            plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } }
+        }
+    });
 
     const totalOutflows = baseOutflows.map((b, idx) => b + interestPayments[idx]);
     if (chartCFInstance) chartCFInstance.destroy();
-    chartCFInstance = new Chart(document.getElementById('chartCF').getContext('2d'), {{
+    chartCFInstance = new Chart(document.getElementById('chartCF').getContext('2d'), {
         type: 'bar',
-        data: {{
+        data: {
             labels: xLabels,
             datasets: [
-                {{ label: 'Притоки от продаж', data: inflows, backgroundColor: '#2a9d8f' },
-                {{ label: 'Выплаты (закупки + OPEX + %)', data: totalOutflows.map(v => -v), backgroundColor: '#e63946' }}
+                { label: 'Притоки от продаж', data: inflows, backgroundColor: '#2a9d8f' },
+                { label: 'Выплаты (закупки + OPEX + %)', data: totalOutflows.map(v => -v), backgroundColor: '#e63946' }
             ]
-        }},
-        options: {{
+        },
+        options: {
             responsive: true, maintainAspectRatio: false,
-            scales: {{
-                x: {{ grid: {{ display: false }}, ticks: {{ color: chartText, font: {{ family: 'JetBrains Mono', size: 10 }} }} }},
-                y: {{ grid: {{ color: chartGrid }}, ticks: {{ color: chartText, font: {{ family: 'JetBrains Mono', size: 10 }} }} }}
-            }},
-            plugins: {{ legend: {{ labels: {{ color: chartText, font: {{ family: 'JetBrains Mono', size: 11 }} }} }} }}
-        }}
-    }});
+            scales: {
+                x: { grid: { display: false }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } },
+                y: { grid: { color: chartGrid }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } }
+            },
+            plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } }
+        }
+    });
 
     if (chartOrdersInstance) chartOrdersInstance.destroy();
-    chartOrdersInstance = new Chart(document.getElementById('chartOrders').getContext('2d'), {{
+    chartOrdersInstance = new Chart(document.getElementById('chartOrders').getContext('2d'), {
         type: 'bar',
-        data: {{
+        data: {
             labels: xLabels,
             datasets: [
-                {{ label: 'Заказы, шт.', data: orders, backgroundColor: '#d4af37' }},
-                {{ label: 'Выручка, ₽', data: rev, type: 'line', borderColor: '#2a9d8f', yAxisID: 'y1', borderWidth: 2.5 }}
+                { label: 'Заказы, шт.', data: orders, backgroundColor: '#d4af37' },
+                { label: 'Выручка, ₽', data: rev, type: 'line', borderColor: '#2a9d8f', yAxisID: 'y1', borderWidth: 2.5 }
             ]
-        }},
-        options: {{
+        },
+        options: {
             responsive: true, maintainAspectRatio: false,
-            scales: {{
-                x: {{ grid: {{ display: false }}, ticks: {{ color: chartText, font: {{ family: 'JetBrains Mono', size: 10 }} }} }},
-                y: {{ grid: {{ color: chartGrid }}, ticks: {{ color: chartText, font: {{ family: 'JetBrains Mono', size: 10 }} }} }},
-                y1: {{ position: 'right', grid: {{ display: false }}, ticks: {{ color: '#2a9d8f', font: {{ family: 'JetBrains Mono', size: 10 }} }} }}
-            }},
-            plugins: {{ legend: {{ labels: {{ color: chartText, font: {{ family: 'JetBrains Mono', size: 11 }} }} }} }}
-        }}
-    }});
+            scales: {
+                x: { grid: { display: false }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } },
+                y: { grid: { color: chartGrid }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } },
+                y1: { position: 'right', grid: { display: false }, ticks: { color: '#2a9d8f', font: { family: 'JetBrains Mono', size: 10 } } }
+            },
+            plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } }
+        }
+    });
 
     const sumPurchases = cogsPayments.reduce((a, b) => a + b, 0);
     if (chartPieInstance) chartPieInstance.destroy();
-    chartPieInstance = new Chart(document.getElementById('chartPie').getContext('2d'), {{
+    chartPieInstance = new Chart(document.getElementById('chartPie').getContext('2d'), {
         type: 'doughnut',
-        data: {{
+        data: {
             labels: ['Склад', 'Офис', 'ФОТ', 'Налоги 5%', 'Закупки', 'Проценты по долгу'],
-            datasets: [{{
+            datasets: [{
                 data: [wh * period, office * period, fot * period, sumTaxes, sumPurchases, sumInterest],
                 backgroundColor: ['#52525b', '#71717a', '#d4af37', '#e63946', '#2a9d8f', '#457b9d']
-            }}]
-        }},
-        options: {{
+            }]
+        },
+        options: {
             responsive: true, maintainAspectRatio: false,
-            plugins: {{ legend: {{ position: 'bottom', labels: {{ color: chartText, font: {{ family: 'JetBrains Mono', size: 10 }} }} }} }}
-        }}
-    }});
-}}
+            plugins: { legend: { position: 'bottom', labels: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } } }
+        }
+    });
+}
 
-function exportDataToCsv() {{
+function exportDataToCsv() {
     playClickSound(1600, 0.05);
     if (!latestCalculatedData) return;
-    const {{ xLabels, monthlyInvestments, interestPayments, debtRepayments, debtBalance, cashBalance }} = latestCalculatedData;
-    let csvContent = "data:text/csv;charset=utf-8,\\uFEFF";
-    csvContent += "Период;Дотация (дефицит);Проценты по долгу;Погашение долга;Остаток тела долга;Свободный остаток счета\\n";
-    for (let i = 0; i < xLabels.length; i++) csvContent += `${{xLabels[i]}};${{Math.round(monthlyInvestments[i])}};${{Math.round(interestPayments[i])}};${{Math.round(debtRepayments[i])}};${{Math.round(debtBalance[i])}};${{Math.round(cashBalance[i])}}\\n`;
+    const { xLabels, monthlyInvestments, interestPayments, debtRepayments, debtBalance, cashBalance } = latestCalculatedData;
+    let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+    csvContent += "Период;Дотация (дефицит);Проценты по долгу;Погашение долга;Остаток тела долга;Свободный остаток счета\n";
+    for (let i = 0; i < xLabels.length; i++) csvContent += `${xLabels[i]};${Math.round(monthlyInvestments[i])};${Math.round(interestPayments[i])};${Math.round(debtRepayments[i])};${Math.round(debtBalance[i])};${Math.round(cashBalance[i])}\n`;
     const link = document.createElement("a"); link.setAttribute("href", encodeURI(csvContent)); link.setAttribute("download", "Finansovaya_Model_Kapital.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link);
-}}
+}
 
-setInterval(() => {{ 
+setInterval(() => { 
     const clock = document.getElementById('telemetryClock');
-    if (clock) clock.textContent = `[${{new Date().toTimeString().split(' ')[0]}}]`; 
-}}, 1000);
+    if (clock) clock.textContent = `[${new Date().toTimeString().split(' ')[0]}]`; 
+}, 1000);
 
-function resetDefaults() {{ playClickSound(600, 0.05); document.getElementById('financialInputsForm').reset(); runCalculation(); }}
+function resetDefaults() { playClickSound(600, 0.05); document.getElementById('financialInputsForm').reset(); runCalculation(); }
 window.onload = () => runCalculation();
 </script>
 </body>
 </html>"""
+
+# Безопасная подстановка Data URI без ошибок экранирования скобок в f-строках
+html_code = html_code.replace("VITRUVIAN_DATA_PLACEHOLDER", vitruvian_data_uri)
 
 components.html(html_code, height=1380, scrolling=True)
