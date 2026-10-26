@@ -362,7 +362,7 @@ window.onerror = function(msg, url, line) {
 
 const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 // Подключаем ваше фото спутника как первую текстуру чертежей
-const USER_IMAGES = typeof __JSON_IMAGES_PAYLOAD__ !== 'undefined' ? __JSON_IMAGES_PAYLOAD__ : ['1793030578548.jpg'];
+const USER_IMAGES = typeof __JSON_IMAGES_PAYLOAD__ !== 'undefined' ? __JSON_IMAGES_PAYLOAD__ : ['1793046110105.jpg'];
 
 /* Флаги перехода и тайминги */
 let isObscuraTransition = false;
@@ -902,7 +902,7 @@ function createCyclopeanTrussRing(mainRadius, tubeWidth, tubeDepth, segments, no
             linePts.push(p1_topOut, p2_topIn);
         } else {
             linePts.push(p1_botOut, p2_topOut);
-            linePts.push(p1_botIn, p2_botIn);
+            linePts.push(p1_botIn, p2_topIn);
             linePts.push(p1_botOut, p2_botIn);
         }
 
@@ -933,53 +933,104 @@ astrolabeRings.push(
 /* =========================================================================
    3D МОДЕЛЬ СПУТНИКА, ФОТО И АНИМАЦИЯ ПРОЛЕТА
    ========================================================================= */
+/* =========================================================================
+   ОБЪЕМНЫЙ СПУТНИК ИЗ ФОТОГРАФИИ (1793046110105.jpg) БЕЗ РАМОК
+   ========================================================================= */
 function createSputnikModel() {
     const sputnikGroup = new THREE.Group();
     
-    // Текстурированная фотосфера спутника (если доступно изображение 1793030578548.jpg)
+    // Загрузка оригинальной фотографии спутника
     const textureLoader = new THREE.TextureLoader();
-    let sphereMat;
-    try {
-        const photoTex = textureLoader.load('1793030578548.jpg');
-        sphereMat = new THREE.MeshStandardMaterial({ 
-            map: photoTex, 
-            metalness: 0.85, 
-            roughness: 0.25 
-        });
-    } catch(e) {
-        sphereMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.95, roughness: 0.15 });
-    }
+    const photoTex = textureLoader.load('1793046110105.jpg');
+    photoTex.generateMipmaps = true;
+    photoTex.minFilter = THREE.LinearMipmapLinearFilter;
     
-    const sphereGeo = new THREE.SphereGeometry(14, 32, 32);
-    const sphereMesh = new THREE.Mesh(sphereGeo, sphereMat);
-    sputnikGroup.add(sphereMesh);
+    // Специальный шейдер для бесшовного вырезания фона и создания объема
+    // Удаляет черный/темный прямоугольный фон, оставляя чистый силуэт спутника
+    const cutoutHoloMat = new THREE.ShaderMaterial({
+        uniforms: {
+            uTex: { value: photoTex },
+            uThreshold: { value: 0.12 },
+            uTime: { value: 0.0 }
+        },
+        vertexShader: `
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `,
+        fragmentShader: `
+            uniform sampler2D uTex;
+            uniform float uThreshold;
+            varying vec2 vUv;
+            void main() {
+                vec4 tex = texture2D(uTex, vUv);
+                float brightness = max(tex.r, max(tex.g, tex.b));
+                // Мягкое бесшовное растворение черных границ
+                float alpha = smoothstep(uThreshold, uThreshold + 0.18, brightness);
+                if (alpha < 0.01) discard;
+                gl_FragColor = vec4(tex.rgb * 1.15, alpha);
+            }
+        `,
+        transparent: true,
+        side: THREE.DoubleSide,
+        depthWrite: false
+    });
 
-    // Золотой экваториальный пояс
-    const beltGeo = new THREE.TorusGeometry(14.2, 0.5, 12, 48);
-    const beltMat = new THREE.MeshBasicMaterial({ color: 0xd4af37 });
-    const beltMesh = new THREE.Mesh(beltGeo, beltMat);
-    beltMesh.rotation.x = Math.PI / 2;
-    sputnikGroup.add(beltMesh);
+    // 1. Двусторонний фото-плоскостной билборд высокого разрешения
+    const photoPlaneGeo = new THREE.PlaneGeometry(36, 36);
+    const photoPlane1 = new THREE.Mesh(photoPlaneGeo, cutoutHoloMat);
+    sputnikGroup.add(photoPlane1);
 
-    // Красный импульсный маяк
-    const beaconGeo = new THREE.SphereGeometry(2.0, 16, 16);
-    const beaconMat = new THREE.MeshBasicMaterial({ color: 0xff1111 });
+    // 2. Ортогональная крестовина для создания 3D объема из фото со всех углов обзора
+    const photoPlane2 = new THREE.Mesh(photoPlaneGeo, cutoutHoloMat);
+    photoPlane2.rotation.y = Math.PI / 2;
+    sputnikGroup.add(photoPlane2);
+
+    // 3. Объемная сфера с наложенной текстурой спутника
+    const sphereMat = new THREE.MeshStandardMaterial({
+        map: photoTex,
+        roughness: 0.25,
+        metalness: 0.85,
+        transparent: true,
+        opacity: 0.92
+    });
+    const sphereGeo = new THREE.SphereGeometry(12, 32, 32);
+    const bodyMesh = new THREE.Mesh(sphereGeo, sphereMat);
+    sputnikGroup.add(bodyMesh);
+
+    // 4. Реалистичный импульсный красный сигнал (маяк) на корпусе
+    const beaconGeo = new THREE.SphereGeometry(2.2, 16, 16);
+    const beaconMat = new THREE.MeshBasicMaterial({ color: 0xff0033 });
     const beaconMesh = new THREE.Mesh(beaconGeo, beaconMat);
-    beaconMesh.position.set(0, 14.5, 0);
+    beaconMesh.position.set(0, 13.5, 0);
     sputnikGroup.add(beaconMesh);
     sputnikGroup.beaconMesh = beaconMesh;
 
-    // Четыре характерные антенны
-    const antMat = new THREE.LineBasicMaterial({ color: 0xeeeeee, linewidth: 2 });
-    const antennaLength = 70;
+    // Световой ореол вокруг маяка
+    const glowGeo = new THREE.SphereGeometry(4.5, 16, 16);
+    const glowMat = new THREE.MeshBasicMaterial({ color: 0xff3333, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending });
+    const glowMesh = new THREE.Mesh(glowGeo, glowMat);
+    glowMesh.position.set(0, 13.5, 0);
+    sputnikGroup.add(glowMesh);
+    sputnikGroup.glowMesh = glowMesh;
+
+    // 5. Длинные радиоантенны
+    const antMat = new THREE.LineBasicMaterial({ color: 0xdddddd, linewidth: 2 });
+    const antLen = 85;
     [Math.PI * 0.25, Math.PI * 0.75, Math.PI * 1.25, Math.PI * 1.75].forEach(ang => {
-        const rootX = Math.cos(ang) * 13.5, rootY = Math.sin(ang) * 13.5, rootZ = -3;
-        const tipX = Math.cos(ang) * (14 + antennaLength * 0.45), tipY = Math.sin(ang) * (14 + antennaLength * 0.45), tipZ = -antennaLength;
-        const curvePts = [new THREE.Vector3(rootX, rootY, rootZ), new THREE.Vector3(rootX * 1.35, rootY * 1.35, rootZ - 18), new THREE.Vector3(tipX, tipY, tipZ)];
-        sputnikGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(curvePts), antMat));
+        const rootX = Math.cos(ang) * 11.5, rootY = Math.sin(ang) * 11.5, rootZ = -2;
+        const tipX = Math.cos(ang) * (12 + antLen * 0.4), tipY = Math.sin(ang) * (12 + antLen * 0.4), tipZ = -antLen;
+        const pts = [
+            new THREE.Vector3(rootX, rootY, rootZ),
+            new THREE.Vector3(rootX * 1.3, rootY * 1.3, rootZ - 20),
+            new THREE.Vector3(tipX, tipY, tipZ)
+        ];
+        sputnikGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), antMat));
     });
 
-    sputnikGroup.scale.set(0.7, 0.7, 0.7);
+    sputnikGroup.scale.set(0.85, 0.85, 0.85);
     sputnikGroup.visible = false;
     return sputnikGroup;
 }
@@ -1712,8 +1763,10 @@ function exportDataToCsv() {
     playClickSound(1600, 0.05);
     if (!latestCalculatedData) return;
     const { xLabels, monthlyInvestments, interestPayments, debtRepayments, debtBalance, cashBalance } = latestCalculatedData;
-    let csv = '\uFEFF' + "Период;Дотация (дефицит);Проценты по долгу;Погашение долга;Остаток тела долга;Свободный остаток счета\n";
-    for (let i = 0; i < xLabels.length; i++) csv += `${xLabels[i]};${Math.round(monthlyInvestments[i])};${Math.round(interestPayments[i])};${Math.round(debtRepayments[i])};${Math.round(debtBalance[i])};${Math.round(cashBalance[i])}\n`;
+    let csv = '﻿' + "Период;Дотация (дефицит);Проценты по долгу;Погашение долга;Остаток тела долга;Свободный остаток счета
+";
+    for (let i = 0; i < xLabels.length; i++) csv += `${xLabels[i]};${Math.round(monthlyInvestments[i])};${Math.round(interestPayments[i])};${Math.round(debtRepayments[i])};${Math.round(debtBalance[i])};${Math.round(cashBalance[i])}
+`;
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
