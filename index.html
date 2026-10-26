@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Архитектура Капитала</title>
+<title>Архитектура Капитала // Rota Fortunae</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -35,7 +35,7 @@ button:focus:not(:focus-visible){outline:none}
 #preloader-webgl{position:absolute;inset:0;width:100%;height:100%;z-index:10;cursor:grab}
 #preloader-webgl:active{cursor:grabbing}
 
-.preloader-fixed-hud{position:absolute;inset:0;width:100%;height:100%;z-index:30;pointer-events:none;user-select:none;transition:opacity 0.5s ease}
+.preloader-fixed-hud{position:absolute;inset:0;width:100%;height:100%;z-index:30;pointer-events:none;user-select:none;transition:opacity 0.8s ease}
 #preloaderTitle{position:absolute;top:28px;left:50%;transform:translateX(-50%);font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:clamp(20px,3.2vw,44px);font-weight:700;letter-spacing:.26em;color:var(--accent-gold);opacity:0;text-shadow:0 0 45px rgba(212,175,55,.85);transition:opacity 1.8s cubic-bezier(.16,1,.3,1);text-align:center;white-space:nowrap}
 #preloaderTitle.locked-on{opacity:1!important}
 
@@ -67,21 +67,21 @@ button:focus:not(:focus-visible){outline:none}
 #mainDashboardApp.ready{display:flex}
 
 .camera-obscura-reveal {
-    animation: developNegative 2.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: developNegative 3.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes developNegative {
     0% {
         opacity: 0.95;
         filter: invert(1) grayscale(1) contrast(1.6) brightness(1.2);
-        transform: scale(1.015);
+        transform: scale(1.02);
     }
     30% {
         opacity: 1;
-        filter: invert(0.85) sepia(0.5) contrast(1.4) brightness(1.1);
+        filter: invert(0.85) sepia(0.55) contrast(1.4) brightness(1.1);
     }
-    60% {
-        filter: invert(0.3) sepia(0.3) contrast(1.15) brightness(1.02);
+    65% {
+        filter: invert(0.25) sepia(0.3) contrast(1.15) brightness(1.02);
     }
     100% {
         opacity: 1;
@@ -630,7 +630,8 @@ function playCathedralFocusTone() {
         const ctx = renaissanceAudio.ctx;
         if (ctx.state === 'suspended') ctx.resume();
         
-        const freqs = [146.83, 220.00, 293.66];
+        // Гармонический священный трезвучный аккорд D-moll
+        const freqs = [146.83, 174.61, 220.00, 293.66]; // D3, F3, A3, D4
         freqs.forEach((f, idx) => {
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
@@ -638,29 +639,30 @@ function playCathedralFocusTone() {
             osc.frequency.setValueAtTime(f, ctx.currentTime);
             
             gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.09 / (idx + 1), ctx.currentTime + 0.15);
-            gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 2.8);
+            gain.gain.linearRampToValueAtTime(0.08 / (idx + 1), ctx.currentTime + 0.2);
+            gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 3.4);
             
             osc.connect(gain);
             gain.connect(renaissanceAudio.warmthFilter || ctx.destination);
             osc.start();
-            osc.stop(ctx.currentTime + 2.9);
+            osc.stop(ctx.currentTime + 3.5);
             osc.onended = () => { osc.disconnect(); gain.disconnect(); };
         });
     } catch (e) {}
 }
 
-function playGearSpinUpSound(duration = 5.2) {
+function playGearSpinUpSound(duration = 6.8) {
     try {
         if (!renaissanceAudio.ctx) renaissanceAudio.init();
         const ctx = renaissanceAudio.ctx;
         if (ctx.state === 'suspended') ctx.resume();
         const osc = ctx.createOscillator(), gain = ctx.createGain();
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(42, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(260, ctx.currentTime + duration * 0.92);
-        gain.gain.setValueAtTime(0.012, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.045, ctx.currentTime + duration * 0.85);
+        osc.frequency.setValueAtTime(38, ctx.currentTime);
+        // Неспешный, монументальный рокот священных астрономических колес
+        osc.frequency.exponentialRampToValueAtTime(180, ctx.currentTime + duration * 0.92);
+        gain.gain.setValueAtTime(0.008, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.038, ctx.currentTime + duration * 0.85);
         gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
         osc.connect(gain);
         gain.connect(ctx.destination);
@@ -699,7 +701,7 @@ function dismissPreloader() {
             });
             preRenderer.dispose(); preRenderer.forceContextLoss();
         } catch (e) {}
-    }, 1200);
+    }, 1500);
 }
 
 const PRELOADER_TOTAL_TIME = REDUCE_MOTION ? 1200 : 9000;
@@ -767,8 +769,29 @@ preGroup.add(dustParticles);
 const megaRingWireMat = new THREE.MeshBasicMaterial({ color: 0x00c3ff, wireframe: true, transparent: true, opacity: 0.38 });
 const secondaryWireMat = new THREE.MeshBasicMaterial({ color: 0x0077aa, wireframe: true, transparent: true, opacity: 0.22 });
 
-/* ГЕНЕРАЦИЯ ЛАТИНСКИХ КРУГОВЫХ ГРАВИРОВОК НА ПОЛЯХ КОЛЕЦ */
-function createLatinRingTexture(text) {
+/* =========================================================================
+   ГЕНЕРАЦИЯ ДИСКОВ СУДЬБЫ НОСТРАДАМУСА И РЕНЕССАНСНЫХ ЛАТИНСКИХ КАТРЕНОВ
+   ========================================================================= */
+const NOSTRADAMUS_PROPHECIES = [
+    {
+        innerRing: "ROTA FORTUNAE • FATORUM ORBIS • CENTURIA I • OMNIA FLUXUS",
+        outerRing: "CLARUM COLLUM IMPERII POST TENEBRAS LUX • SOLIS ET LUNAE MOTUS • NOSTRADAMUS VATICINIUM",
+        zodiac: "♈ ♉ ♊ ♋ ♌ ♍ ♎ ♏ ♐ ♑ ♒ ♓ • I • II • III • IV • V • VI • VII • VIII • IX • X • XI • XII"
+    },
+    {
+        innerRing: "VERITAS TEMPORIS FILIA • OCCULTA PHILOSOPHIA • AUREA RATIO",
+        outerRing: "GRANDES ORBES MUTABUNTUR IN DIEBUS ILLIS • SAPIENTIA ARCHITECTI PER ASPERA AD ASTRA",
+        zodiac: "⚡ ☉ ☽ ☿ ♀ ♂ ♃ ♄ • METALLUM • LIQUIDITAS • NUMERUS • PONDUS • MENSURA • PROPORTIO"
+    },
+    {
+        innerRing: "HARMONIA MUNDI • COSMICA PROPORTIO • CENTURIA DECIMA",
+        outerRing: "TEMPORA TEMPORE TEMPERA • ARS LONGA VITA BREVIS • MAGNUM OPUS CAPITALIS",
+        zodiac: "✦ ✧ ⚜ ✠ ✡ ❂ ☸ ✺ • FATUM INELUKTABILE • LUX IN TENEBRIS • AUREA PROPORTIO"
+    }
+];
+
+function createNostradamusDiskTexture(dataIdx) {
+    const data = NOSTRADAMUS_PROPHECIES[dataIdx % 3];
     const size = 2048;
     const canvas = document.createElement('canvas');
     canvas.width = size;
@@ -776,73 +799,77 @@ function createLatinRingTexture(text) {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, size, size);
 
-    const cx = size / 2;
-    const cy = size / 2;
-    const r = size * 0.42;
+    const cx = size / 2, cy = size / 2;
 
+    // Гравированные концентрические линии армиллярного круга судьбы
     ctx.strokeStyle = 'rgba(212, 175, 55, 0.45)';
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.arc(cx, cy, r + 45, 0, Math.PI * 2);
-    ctx.arc(cx, cy, r - 45, 0, Math.PI * 2);
+    ctx.arc(cx, cy, size * 0.46, 0, Math.PI * 2);
+    ctx.arc(cx, cy, size * 0.41, 0, Math.PI * 2);
+    ctx.arc(cx, cy, size * 0.35, 0, Math.PI * 2);
+    ctx.arc(cx, cy, size * 0.29, 0, Math.PI * 2);
     ctx.stroke();
 
-    for (let i = 0; i < 72; i++) {
-        const ang = (i / 72) * Math.PI * 2;
-        const x1 = cx + Math.cos(ang) * (r + (i % 6 === 0 ? 55 : 35));
-        const y1 = cy + Math.sin(ang) * (r + (i % 6 === 0 ? 55 : 35));
-        const x2 = cx + Math.cos(ang) * (r - (i % 6 === 0 ? 55 : 35));
-        const y2 = cy + Math.sin(ang) * (r - (i % 6 === 0 ? 55 : 35));
-        ctx.strokeStyle = i % 6 === 0 ? 'rgba(255, 215, 0, 0.7)' : 'rgba(212, 175, 55, 0.25)';
-        ctx.lineWidth = i % 6 === 0 ? 3 : 1.5;
+    // Засечки астролябии и градусные шкалы
+    for (let i = 0; i < 144; i++) {
+        const ang = (i / 144) * Math.PI * 2;
+        const isMajor = (i % 12 === 0);
+        const isMid = (i % 6 === 0);
+        const len = isMajor ? 32 : (isMid ? 20 : 10);
+        const r1 = size * 0.46;
+        const r2 = r1 - len;
+        ctx.strokeStyle = isMajor ? 'rgba(255, 215, 0, 0.85)' : 'rgba(212, 175, 55, 0.3)';
+        ctx.lineWidth = isMajor ? 3 : 1.2;
         ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
+        ctx.moveTo(cx + Math.cos(ang) * r1, cy + Math.sin(ang) * r1);
+        ctx.lineTo(cx + Math.cos(ang) * r2, cy + Math.sin(ang) * r2);
         ctx.stroke();
     }
 
-    ctx.font = 'italic 600 32px "Cormorant Garamond", Georgia, serif';
-    ctx.fillStyle = '#ffd700';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    const fullText = (text + ' • ').repeat(3);
-    const chars = fullText.split('');
-    const totalAngle = Math.PI * 2;
-    const angleStep = totalAngle / chars.length;
-
-    for (let i = 0; i < chars.length; i++) {
-        const char = chars[i];
-        const angle = i * angleStep;
-        ctx.save();
-        ctx.translate(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r);
-        ctx.rotate(angle + Math.PI / 2);
-        ctx.shadowColor = 'rgba(212, 175, 55, 0.8)';
-        ctx.shadowBlur = 10;
-        ctx.fillText(char, 0, 0);
-        ctx.restore();
+    function drawCurvedText(text, radius, font, color) {
+        ctx.font = font;
+        ctx.fillStyle = color;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const chars = text.split('');
+        const step = (Math.PI * 2) / chars.length;
+        for (let i = 0; i < chars.length; i++) {
+            const angle = i * step;
+            ctx.save();
+            ctx.translate(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
+            ctx.rotate(angle + Math.PI / 2);
+            ctx.shadowColor = 'rgba(212, 175, 55, 0.7)';
+            ctx.shadowBlur = 6;
+            ctx.fillText(chars[i], 0, 0);
+            ctx.restore();
+        }
     }
+
+    // Внешнее кольцо: великие пророчества и катрены Нострадамуса
+    drawCurvedText(data.outerRing, size * 0.435, 'italic 600 25px "Cormorant Garamond", Georgia, serif', '#ffd700');
+
+    // Среднее кольцо: зодиакальный круг и алхимические символы
+    drawCurvedText(data.zodiac, size * 0.38, '400 24px "JetBrains Mono", monospace', 'rgba(244, 241, 234, 0.8)');
+
+    // Внутреннее кольцо: священный девиз Колеса Судьбы
+    drawCurvedText(data.innerRing, size * 0.32, 'italic 700 26px "Cormorant Garamond", Georgia, serif', '#d4af37');
 
     const tex = new THREE.CanvasTexture(canvas);
     tex.anisotropy = 8;
     return tex;
 }
 
-const LATIN_MOTTOES = [
-    "AUREA PROPORTIO • HARMONIA MUNDI • FLUXUS PECUNIAE",
-    "VERITAS TEMPORIS FILIA • MOTUS CONTINUUS • ARS LONGA",
-    "PER ASPERA AD ASTRA • SAPIENTIA ARCHITECTI • VITA BREVIS"
-];
-
-function createCyclopeanTrussRing(mainRadius, tubeWidth, tubeDepth, segments, latinIdx = 0) {
+function createCyclopeanTrussRing(mainRadius, tubeWidth, tubeDepth, segments, nostradamusIdx = 0) {
     const group = new THREE.Group();
     group.add(new THREE.Mesh(new THREE.TorusGeometry(mainRadius, tubeWidth * 0.45, 12, segments), megaRingWireMat));
     
-    const diskGeo = new THREE.RingGeometry(mainRadius - tubeWidth * 2.2, mainRadius + tubeWidth * 1.8, 96);
+    // Плоский гравированный диск Колеса Судьбы внутри кольца
+    const diskGeo = new THREE.RingGeometry(mainRadius - tubeWidth * 2.5, mainRadius + tubeWidth * 2.2, 96);
     const diskMat = new THREE.MeshBasicMaterial({
-        map: createLatinRingTexture(LATIN_MOTTOES[latinIdx % 3]),
+        map: createNostradamusDiskTexture(nostradamusIdx),
         transparent: true,
-        opacity: 0.18,
+        opacity: 0.12,
         side: THREE.DoubleSide,
         depthWrite: false
     });
@@ -1173,7 +1200,7 @@ function checkRaycastHover() {
 
 let isObscuraTransition = false;
 let obscuraStartTime = 0;
-const OBSCURA_DURATION = 5.2;
+const OBSCURA_DURATION = 6.8; // 6.8 секунд величественного превращения Колес Судьбы
 
 function triggerCameraObscuraTransition(event) {
     if (isObscuraTransition) return;
@@ -1208,9 +1235,9 @@ function triggerShutterBlink() {
         flash.style.opacity = '0.75';
         setTimeout(() => {
             dismissPreloader();
-            flash.style.transition = 'opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1)';
+            flash.style.transition = 'opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1)';
             flash.style.opacity = '0';
-        }, 50);
+        }, 60);
     } else {
         dismissPreloader();
     }
@@ -1228,52 +1255,60 @@ function animatePreloader() {
         const obsElapsed = (now - obscuraStartTime) * 0.001;
         const progress = Math.min(obsElapsed / OBSCURA_DURATION, 1.0);
 
-        const alignP = Math.min(progress / 0.48, 1.0);
+        // 1. Медленный и величественный разворот Колес Судьбы в единую фронтальную плоскость (0.0 -> 0.45)
+        const alignP = Math.min(progress / 0.45, 1.0);
+        // Нежнейшая синусоидальная интерполяция
         const easeAlign = 0.5 - 0.5 * Math.cos(alignP * Math.PI);
 
-        const spinProgress = Math.pow(progress, 2.2);
-        const currentSpeed = 0.004 + spinProgress * 0.15;
+        // 2. Торжественное нарастание скорости контр-вращения Колес Судьбы
+        // Начинается с едва уловимых 0.002 рад/кадр, достигая плавных 0.12 рад/кадр
+        const spinProgress = Math.pow(progress, 2.4);
+        const currentSpeed = 0.002 + spinProgress * 0.12;
 
-        const shrinkP = Math.max(0, (progress - 0.40) / 0.60);
-        const easeShrink = Math.pow(shrinkP, 3.2);
+        // 3. Формирование затвора диафрагмы: сужение начинается после осознания текста Нострадамуса (0.42 -> 1.0)
+        const shrinkP = Math.max(0, (progress - 0.42) / 0.58);
+        const easeShrink = Math.pow(shrinkP, 3.4);
 
+        // 4. ГРАВИТАЦИОННЫЙ ВИХРЕВОЙ МОРФ ЧЕРТЕЖЕЙ ВНУТРЬ КОЛЕС СУДЬБЫ
         hoverTargets.forEach((item, idx) => {
             if (item.startPos) {
-                const pull = Math.pow(progress, 1.8);
-                const vortexAngle = progress * Math.PI * 4.0 + idx * (Math.PI * 2 / 5);
-                const currentRadius = (1.0 - pull) * 120.0;
+                const pull = Math.pow(progress, 1.9);
+                const vortexAngle = progress * Math.PI * 3.2 + idx * (Math.PI * 2 / 5);
+                const currentRadius = (1.0 - pull) * 125.0;
                 
                 item.group.position.x = Math.cos(vortexAngle) * currentRadius;
                 item.group.position.y = Math.sin(vortexAngle) * currentRadius;
                 item.group.position.z = THREE.MathUtils.lerp(item.startPos.z, 0, pull);
 
-                item.group.rotation.z += 0.04 + progress * 0.08;
+                item.group.rotation.z += 0.03 + progress * 0.06;
                 item.group.rotation.x = THREE.MathUtils.lerp(item.startRot.x, 0, alignP);
                 item.group.rotation.y = THREE.MathUtils.lerp(item.startRot.y, 0, alignP);
 
-                const s = Math.max((1.0 - pull * 1.05), 0.001);
+                const s = Math.max((1.0 - pull * 1.04), 0.001);
                 item.group.scale.set(s, s, s);
 
                 item.group.traverse(child => {
                     if (child.material) {
-                        child.material.opacity = Math.max(1.0 - progress * 1.3, 0.0);
+                        child.material.opacity = Math.max(1.0 - progress * 1.25, 0.0);
                     }
                 });
             }
         });
 
+        // 5. ВТЯГИВАНИЕ ЧАСТИЦ ЗОЛОТОЙ ПЫЛИ В СИНГУЛЯРНОСТЬ АПЕРТУРЫ
         const positions = particleGeo.attributes.position.array;
         for (let i = 0; i < particleCount * 3; i += 3) {
-            positions[i] += (0 - positions[i]) * (0.015 + progress * 0.05);
-            positions[i + 1] += (0 - positions[i + 1]) * (0.015 + progress * 0.05);
-            positions[i + 2] += (0 - positions[i + 2]) * (0.02 + progress * 0.05);
+            positions[i] += (0 - positions[i]) * (0.012 + progress * 0.045);
+            positions[i + 1] += (0 - positions[i + 1]) * (0.012 + progress * 0.045);
+            positions[i + 2] += (0 - positions[i + 2]) * (0.016 + progress * 0.045);
         }
         particleGeo.attributes.position.needsUpdate = true;
-        particleMat.opacity = Math.max(0.38 * (1.0 - progress * 0.9), 0.0);
+        particleMat.opacity = Math.max(0.38 * (1.0 - progress * 0.92), 0.0);
 
-        megaRingWireMat.opacity = THREE.MathUtils.lerp(megaRingWireMat.opacity, 0.9, 0.03);
-        megaRingWireMat.color.lerp(new THREE.Color(0xd4af37), 0.03);
-        secondaryWireMat.color.lerp(new THREE.Color(0xb8860b), 0.03);
+        // 6. ТРАНСФОРМАЦИЯ КОЛЕС В ЗОЛОТУЮ ДИАФРАГМУ С ПРЕДСКАЗАНИЯМИ
+        megaRingWireMat.opacity = THREE.MathUtils.lerp(megaRingWireMat.opacity, 0.92, 0.025);
+        megaRingWireMat.color.lerp(new THREE.Color(0xd4af37), 0.025);
+        secondaryWireMat.color.lerp(new THREE.Color(0xb8860b), 0.025);
 
         astrolabeRings.forEach((ring, idx) => {
             ring.group.rotation.x = THREE.MathUtils.lerp(ring.startRotX, 0, easeAlign);
@@ -1282,17 +1317,18 @@ function animatePreloader() {
             const direction = ring.dir || (idx % 2 === 0 ? 1 : -1);
             ring.group.rotation.z += direction * currentSpeed;
 
+            // Торжественное проявление латинских катренов Нострадамуса на дисковых полях
             if (ring.group.diskMesh && ring.group.diskMesh.material) {
-                ring.group.diskMesh.material.opacity = Math.min(0.18 + easeAlign * 0.65, 0.85) * (1.0 - easeShrink * 0.95);
+                ring.group.diskMesh.material.opacity = Math.min(0.12 + easeAlign * 0.78, 0.92) * (1.0 - easeShrink * 0.95);
             }
 
-            const scaleFactor = Math.max(1.0 - easeShrink * 0.995, 0.005);
-            const zThinness = Math.max(1.0 - easeAlign * 0.88, 0.08);
+            const scaleFactor = Math.max(1.0 - easeShrink * 0.996, 0.004);
+            const zThinness = Math.max(1.0 - easeAlign * 0.90, 0.06);
             ring.group.scale.set(scaleFactor, scaleFactor, zThinness * scaleFactor);
         });
 
-        preCamera.position.lerp(targetCamPos, 0.04);
-        currentLookTarget.lerp(targetLookTarget, 0.04);
+        preCamera.position.lerp(targetCamPos, 0.035);
+        currentLookTarget.lerp(targetLookTarget, 0.035);
         preCamera.lookAt(currentLookTarget);
 
         preRenderer.clear();
