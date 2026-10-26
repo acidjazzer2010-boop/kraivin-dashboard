@@ -22,7 +22,6 @@ def get_image_b64(path):
             return ""
     return ""
 
-# Загрузка 5 новых файлов из репозитория
 img_files = [
     "1793030578548.jpg",
     "1793030581888.jpg",
@@ -73,12 +72,13 @@ button:focus:not(:focus-visible){outline:none}
 #preloader-webgl:active{cursor:grabbing}
 
 .preloader-fixed-hud{position:absolute;inset:0;width:100%;height:100%;z-index:30;pointer-events:none;user-select:none}
-#preloaderTitle{position:absolute;top:30px;left:50%;transform:translateX(-50%);font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:clamp(20px,3.2vw,44px);font-weight:700;letter-spacing:.26em;color:var(--accent-gold);opacity:0;text-shadow:0 0 45px rgba(212,175,55,.85);transition:opacity 1.8s cubic-bezier(.16,1,.3,1);text-align:center;white-space:nowrap}
+#preloaderTitle{position:absolute;top:28px;left:50%;transform:translateX(-50%);font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:clamp(20px,3.2vw,44px);font-weight:700;letter-spacing:.26em;color:var(--accent-gold);opacity:0;text-shadow:0 0 45px rgba(212,175,55,.85);transition:opacity 1.8s cubic-bezier(.16,1,.3,1);text-align:center;white-space:nowrap}
 #preloaderTitle.locked-on{opacity:1!important}
 
-/* СЛАЙДЕР ДЛЯ МОБИЛЬНЫХ */
+#blueprintSubtitle{position:absolute;top:76px;left:50%;transform:translateX(-50%);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.32em;text-transform:uppercase;color:rgba(212,175,55,0.7);opacity:0;transition:opacity 0.6s ease;text-align:center;white-space:nowrap}
+
 .slider-ui-container{position:absolute;top:50%;left:0;width:100%;transform:translateY(-50%);display:flex;justify-content:space-between;align-items:center;padding:0 14px;pointer-events:none;z-index:40}
-.slide-nav-btn{width:46px;height:46px;border-radius:50%;background:rgba(13,13,18,0.7);border:1px solid rgba(212,175,55,0.4);color:var(--accent-gold);display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;pointer-events:auto;backdrop-filter:blur(10px);transition:all .25s ease}
+.slide-nav-btn{width:46px;height:46px;border-radius:50%;background:rgba(13,13,18,0.75);border:1px solid rgba(212,175,55,0.4);color:var(--accent-gold);display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;pointer-events:auto;backdrop-filter:blur(10px);transition:all .25s ease}
 .slide-nav-btn:hover{background:rgba(212,175,55,0.25);border-color:var(--accent-gold);transform:scale(1.1)}
 .slide-nav-btn:active{transform:scale(0.95)}
 
@@ -86,14 +86,18 @@ button:focus:not(:focus-visible){outline:none}
 .slide-dot{width:8px;height:8px;border-radius:50%;border:1px solid var(--accent-gold);background:transparent;cursor:pointer;transition:all .3s ease}
 .slide-dot.active{background:var(--accent-gold);box-shadow:0 0 10px var(--accent-gold);transform:scale(1.35)}
 
-.bottom-dock{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;width:340px;height:56px}
+.bottom-dock{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;width:380px;height:62px}
 #preloaderHUD{display:flex;flex-direction:column;align-items:center;gap:8px;transition:opacity .4s}
 .progress-bar-bg{width:280px;height:2px;background:rgba(255,255,255,.12);position:relative;overflow:hidden}
 #loaderProgressBar{position:absolute;left:0;top:0;height:100%;width:0;background:var(--accent-gold);box-shadow:0 0 10px var(--accent-gold);transition:width .1s linear}
-#exploreBtnWrapper{position:absolute;opacity:0;pointer-events:none;transition:opacity .6s cubic-bezier(.19,1,.22,1),transform .6s cubic-bezier(.19,1,.22,1);transform:translateY(8px)}
+
+#exploreBtnWrapper{position:absolute;opacity:0;pointer-events:none;transition:opacity .6s cubic-bezier(.19,1,.22,1),transform .6s cubic-bezier(.19,1,.22,1);transform:translateY(8px);display:flex;gap:10px}
 #exploreBtnWrapper.active{opacity:1;pointer-events:auto;transform:translateY(0)}
-.explore-btn{padding:12px 42px;background:rgba(13,13,18,.9);border:1px solid rgba(212,175,55,.95);color:#f4f1ea;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.38em;text-transform:uppercase;cursor:pointer;backdrop-filter:blur(14px);overflow:hidden;transition:all .3s;box-shadow:0 0 40px rgba(212,175,55,.35),inset 0 0 16px rgba(212,175,55,.18)}
+.explore-btn{padding:12px 32px;background:rgba(13,13,18,.9);border:1px solid rgba(212,175,55,.95);color:#f4f1ea;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.32em;text-transform:uppercase;cursor:pointer;backdrop-filter:blur(14px);overflow:hidden;transition:all .3s;box-shadow:0 0 40px rgba(212,175,55,.35),inset 0 0 16px rgba(212,175,55,.18)}
 .explore-btn:hover{border-color:#ffd700;color:#ffd700;box-shadow:0 0 60px rgba(212,175,55,.7),inset 0 0 24px rgba(212,175,55,.35);transform:scale(1.04)}
+
+.preset-btn{padding:12px 18px;background:rgba(212,175,55,0.12);border:1px solid var(--accent-gold);color:var(--accent-gold);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;backdrop-filter:blur(10px);transition:all .3s}
+.preset-btn:hover{background:var(--accent-gold);color:#070709}
 
 #mainDashboardApp{display:none;position:relative;z-index:10;min-height:100vh}
 #mainDashboardApp.ready{display:flex}
@@ -127,12 +131,13 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
 <body class="selection:bg-[#d4af37] selection:text-black">
 <div class="film-grain" aria-hidden="true"></div>
 
-<!-- ПРЕЛОАДЕР: 5 3D-ЧЕРТЕЖЕЙ ДА ВИНЧИ БЕЗ ФОНА С КАРКАСАМИ -->
+<!-- ПРЕЛОАДЕР С ЧАСТИЦАМИ И СМЫСЛОВЫМИ ПРЕСЕТАМИ -->
 <div id="preloader-stage">
     <canvas id="preloader-webgl"></canvas>
     
     <div class="preloader-fixed-hud">
         <div id="preloaderTitle">Архитектура финансов</div>
+        <div id="blueprintSubtitle">Тяга и масштабирование выручки</div>
         
         <div class="slider-ui-container">
             <button class="slide-nav-btn" onclick="prevSlide()" aria-label="Предыдущий чертеж">‹</button>
@@ -157,6 +162,7 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
                 <div class="progress-bar-bg mt-1"><div id="loaderProgressBar"></div></div>
             </div>
             <div id="exploreBtnWrapper">
+                <button id="applyPresetBtn" onclick="applySelectedPresetAndEnter(event)" class="preset-btn">Применить пресет</button>
                 <button id="exploreBtn" onclick="triggerLiquidTransition(event)" class="explore-btn">Исследовать</button>
             </div>
         </div>
@@ -189,6 +195,7 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
             </div>
         </div>
         <div class="flex items-center gap-4">
+            <button id="downloadExecutiveMemoBtn" onclick="generateExecutiveMemo()" type="button" class="px-3.5 py-1.5 border border-[#d4af37]/60 text-[#d4af37] font-mono text-[10px] uppercase tracking-widest hover:bg-[#d4af37]/15 transition flex items-center gap-2"><span>★ Меморандум (PDF)</span></button>
             <button id="downloadReportBtn" onclick="exportDataToCsv()" type="button" class="px-3.5 py-1.5 border font-mono text-[10px] uppercase tracking-widest hover:border-[#d4af37] hover:bg-[#d4af37]/10 transition flex items-center gap-2"><span>↓ Скачать отчет</span></button>
             <div id="themeSlider" class="hw-slider-track" onclick="toggleTheme()" role="switch" aria-checked="true" aria-label="Переключить режим: Ночь / День" tabindex="0" title="Переключить режим: Ночь / День">
                 <div id="sliderThumb" class="hw-slider-thumb" style="transform: translateX(0)"></div>
@@ -364,6 +371,55 @@ const USER_IMAGES = [
     "__IMG_4__"
 ];
 
+/* СМЫСЛОВЫЕ ПРЕСЕТЫ МОДЕЛИ ДА ВИНЧИ */
+const BLUEPRINT_PRESETS = [
+    {
+        name: "Тяга и масштабирование",
+        subtitle: "Сверхбыстрый прирост заказов (+15 шт./мес)",
+        apply: () => {
+            setGrowthMode('abs');
+            document.getElementById('paramGrowthSlider').value = 15;
+            document.getElementById('paramMargin').value = 25;
+            document.getElementById('paramStartOrders').value = 50;
+        }
+    },
+    {
+        name: "Механика оборачиваемости",
+        subtitle: "Короткий 3-месячный цикл закупки партий",
+        apply: () => {
+            document.getElementById('paramBatchCycle').value = 3;
+            document.getElementById('paramSupplierPrepay').value = 30;
+            document.getElementById('paramSupplierDelay').value = 2;
+        }
+    },
+    {
+        name: "Аэродинамика кассовых разрывов",
+        subtitle: "Факторинг 80% для ликвидации дефицита",
+        apply: () => {
+            document.getElementById('paramFactoringShare').value = 80;
+            document.getElementById('paramMargin').value = 22;
+        }
+    },
+    {
+        name: "Золотая пропорция (Канон)",
+        subtitle: "Сбалансированная модель 1 : 1.618",
+        apply: () => {
+            document.getElementById('paramMargin').value = 20;
+            document.getElementById('paramFactoringShare').value = 50;
+            document.getElementById('paramBatchCycle').value = 5;
+        }
+    },
+    {
+        name: "Защита резервов и баланс",
+        subtitle: "Минимизация долга и удержание ликвидности",
+        apply: () => {
+            document.getElementById('paramSupplierPrepay').value = 20;
+            document.getElementById('paramSupplierDelay').value = 3;
+            document.getElementById('paramMaxOrdersCap').value = 180;
+        }
+    }
+];
+
 let audioCtx = null;
 function playClickSound(freq = 1200, duration = 0.02) {
     try {
@@ -377,6 +433,22 @@ function playClickSound(freq = 1200, duration = 0.02) {
         gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
         osc.connect(gain); gain.connect(audioCtx.destination);
         osc.start(); osc.stop(audioCtx.currentTime + duration);
+    } catch (e) {}
+}
+
+/* НИЗКОЧАСТОТНЫЙ РОКОТ ШЕСТЕРЕН ДА ВИНЧИ ПРИ СВАЙПАХ */
+function playGearDroneSound() {
+    try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(65, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(45, audioCtx.currentTime + 0.28);
+        gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.28);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.28);
     } catch (e) {}
 }
 
@@ -453,10 +525,30 @@ preCamera.position.copy(targetCamPos);
 const preGroup = new THREE.Group();
 preScene.add(preGroup);
 
+/* 1. ЗОЛОТАЯ ВЗВЕСЬ ЧАСТИЦ ПЫЛИ (DUST MOTES) */
+const particleCount = 450;
+const particleGeo = new THREE.BufferGeometry();
+const particlePos = new Float32Array(particleCount * 3);
+for (let i = 0; i < particleCount * 3; i += 3) {
+    particlePos[i] = (Math.random() - 0.5) * 600;
+    particlePos[i + 1] = (Math.random() - 0.5) * 450;
+    particlePos[i + 2] = (Math.random() - 0.5) * 500;
+}
+particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePos, 3));
+const particleMat = new THREE.PointsMaterial({
+    color: 0xd4af37,
+    size: 2.2,
+    transparent: true,
+    opacity: 0.38,
+    blending: THREE.AdditiveBlending
+});
+const dustParticles = new THREE.Points(particleGeo, particleMat);
+preGroup.add(dustParticles);
+
 const megaRingWireMat = new THREE.MeshBasicMaterial({ color: 0x00c3ff, wireframe: true, transparent: true, opacity: 0.38 });
 const secondaryWireMat = new THREE.MeshBasicMaterial({ color: 0x0077aa, wireframe: true, transparent: true, opacity: 0.22 });
 
-/* ИСПРАВЛЕННЫЙ ГЕНЕРАТОР ЦИКЛОПИЧЕСКИХ КОЛЕЦ */
+/* ЦИКЛОПИЧЕСКИЕ КОЛЬЦА БЕЗ АРТЕФАКТОВ */
 function createCyclopeanTrussRing(mainRadius, tubeWidth, tubeDepth, segments) {
     const group = new THREE.Group();
     group.add(new THREE.Mesh(new THREE.TorusGeometry(mainRadius, tubeWidth * 0.45, 12, segments), megaRingWireMat));
@@ -478,22 +570,31 @@ function createCyclopeanTrussRing(mainRadius, tubeWidth, tubeDepth, segments) {
         const p1_botIn = new THREE.Vector3(Math.cos(a1) * rInner, Math.sin(a1) * rInner, -zOffset);
         const p2_botIn = new THREE.Vector3(Math.cos(a2) * rInner, Math.sin(a2) * rInner, -zOffset);
 
-        linePts.push(p1_topOut, p2_topOut, p1_botOut, p2_botOut);
-        linePts.push(p1_topIn, p2_topIn, p1_botIn, p2_botIn);
+        linePts.push(p1_topOut, p2_topOut);
+        linePts.push(p1_botOut, p2_botOut);
+        linePts.push(p1_topIn, p2_topIn);
+        linePts.push(p1_botIn, p2_botIn);
 
-        linePts.push(p1_topOut, p1_botOut, p1_topIn, p1_botIn);
-        linePts.push(p1_topOut, p1_topIn, p1_botOut, p1_botIn);
+        linePts.push(p1_topOut, p1_botOut);
+        linePts.push(p1_topIn, p1_botIn);
+        linePts.push(p1_topOut, p1_topIn);
+        linePts.push(p1_botOut, p1_botIn);
 
         if (i % 2 === 0) {
-            linePts.push(p1_topOut, p2_botOut, p1_topIn, p2_botIn, p1_topOut, p2_topIn);
+            linePts.push(p1_topOut, p2_botOut);
+            linePts.push(p1_topIn, p2_botIn);
+            linePts.push(p1_topOut, p2_topIn);
         } else {
-            linePts.push(p1_botOut, p2_topOut, p1_botIn, p2_topIn, p1_botOut, p2_botIn);
+            linePts.push(p1_botOut, p2_topOut);
+            linePts.push(p1_botIn, p2_topIn);
+            linePts.push(p1_botOut, p2_botIn);
         }
 
         if (i % 3 === 0) {
             const toothR = rOuter + tubeWidth * 0.42;
             const pTooth = new THREE.Vector3(Math.cos(a1) * toothR, Math.sin(a1) * toothR, 0);
-            linePts.push(p1_topOut, pTooth, pTooth, p1_botOut);
+            linePts.push(p1_topOut, pTooth);
+            linePts.push(pTooth, p1_botOut);
         }
     }
     group.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(linePts), megaRingWireMat));
@@ -513,7 +614,6 @@ astrolabeRings.push(
     { group: aRing3, sx: 0.00060, sy: -0.00050, sz: 0.00035, px: 1.5, py: 3.2 }
 );
 
-/* ШЕЙДЕР ДЛЯ ВЫРЕЗАНИЯ ФОНА КАРТИНКИ (LUMA KEYING) И ПРЕВРАЩЕНИЯ В ЗОЛОТОЙ ЧЕРТЕЖ */
 function createDaVinciHoloMaterial(texture) {
     return new THREE.ShaderMaterial({
         uniforms: {
@@ -535,11 +635,9 @@ function createDaVinciHoloMaterial(texture) {
             varying vec2 vUv;
             void main() {
                 vec4 tex = texture2D(uTex, vUv);
-                // Яркость пикселя
                 float lum = dot(tex.rgb, vec3(0.299, 0.587, 0.114));
-                // Если картинка на темном фоне — инвертируем, если на светлом — берем штрих
                 float stroke = smoothstep(0.12, 0.65, lum);
-                if (lum > 0.85) stroke = 1.0 - stroke; // вырезаем пересвет
+                if (lum > 0.85) stroke = 1.0 - stroke;
                 
                 vec3 baseGold = vec3(0.85, 0.71, 0.25);
                 vec3 highlight = vec3(1.0, 0.95, 0.78);
@@ -566,13 +664,11 @@ function createBlueprintWireMaterial() {
     });
 }
 
-/* ОБЪЕМНЫЙ 3D-КАРКАС ЧЕРТЕЖА: СОТНИ ПЕРЕСЕЧЕНИЙ, ШЕСТЕРНИ, ВИЗИРЫ И КАРТИНКА БЕЗ ФОНА */
-function createVolumetricBlueprintCard(b64Image, typeIdx) {
+function createVolumetricBlueprintCard(b64Image) {
     const cardGroup = new THREE.Group();
     const w = 58, h = 58, d = 24;
     const pts = [];
 
-    // 1. Координатный куб золотого сечения вокруг чертежа (3D каркас)
     const corners = [
         new THREE.Vector3(-w/2, -h/2, -d/2), new THREE.Vector3(w/2, -h/2, -d/2),
         new THREE.Vector3(w/2, h/2, -d/2), new THREE.Vector3(-w/2, h/2, -d/2),
@@ -585,7 +681,6 @@ function createVolumetricBlueprintCard(b64Image, typeIdx) {
     ];
     boxEdges.forEach(e => pts.push(corners[e[0]], corners[e[1]]));
 
-    // 2. Сетка пересечений по горизонтали и вертикали
     for (let x = -w/2; x <= w/2; x += 11.6) {
         pts.push(new THREE.Vector3(x, -h/2, 0), new THREE.Vector3(x, h/2, 0));
         pts.push(new THREE.Vector3(x, -h/2, -d/2), new THREE.Vector3(x, -h/2, d/2));
@@ -595,7 +690,6 @@ function createVolumetricBlueprintCard(b64Image, typeIdx) {
         pts.push(new THREE.Vector3(-w/2, y, -d/2), new THREE.Vector3(-w/2, y, d/2));
     }
 
-    // 3. Кинематические кольца и зубья астрономического подвеса внутри чертежа
     const rLimb = 32;
     for (let i = 0; i < 48; i++) {
         const nextI = (i + 1) % 48;
@@ -612,7 +706,6 @@ function createVolumetricBlueprintCard(b64Image, typeIdx) {
     );
     cardGroup.add(wireframeMesh);
 
-    // 4. Картинка без фона в центре объемного каркаса (Luma/Dark-Alpha Keying)
     if (b64Image && b64Image.startsWith('data:image')) {
         const loader = new THREE.TextureLoader();
         loader.load(b64Image, (texture) => {
@@ -623,20 +716,18 @@ function createVolumetricBlueprintCard(b64Image, typeIdx) {
             const planeMesh = new THREE.Mesh(planeGeo, planeMat);
             planeMesh.position.z = 0;
             cardGroup.add(planeMesh);
-            cardGroup._planeMat = planeMat;
         });
     }
 
     return cardGroup;
 }
 
-// 5 позиций для 5 новых чертежей Да Винчи на круговой орбите
 const floatingInventions = [
-    { group: createVolumetricBlueprintCard(USER_IMAGES[0], 0), basePos: new THREE.Vector3(-110, 34, 45), rotSpeed: new THREE.Vector3(0.0016, 0.0014, -0.0008), name: "Чертёж I" },
-    { group: createVolumetricBlueprintCard(USER_IMAGES[1], 1), basePos: new THREE.Vector3(115, -28, -40), rotSpeed: new THREE.Vector3(0.0012, 0.0018, 0.0010), name: "Чертёж II" },
-    { group: createVolumetricBlueprintCard(USER_IMAGES[2], 2), basePos: new THREE.Vector3(90, 36, 75), rotSpeed: new THREE.Vector3(-0.0014, 0.0016, 0.0009), name: "Чертёж III" },
-    { group: createVolumetricBlueprintCard(USER_IMAGES[3], 3), basePos: new THREE.Vector3(-36, -42, -35), rotSpeed: new THREE.Vector3(0.0008, 0.0012, 0.0006), name: "Чертёж IV" },
-    { group: createVolumetricBlueprintCard(USER_IMAGES[4], 4), basePos: new THREE.Vector3(-85, -25, 80), rotSpeed: new THREE.Vector3(-0.0012, 0.0015, -0.0007), name: "Чертёж V" }
+    { group: createVolumetricBlueprintCard(USER_IMAGES[0]), basePos: new THREE.Vector3(-110, 34, 45), rotSpeed: new THREE.Vector3(0.0016, 0.0014, -0.0008), name: "Чертёж I" },
+    { group: createVolumetricBlueprintCard(USER_IMAGES[1]), basePos: new THREE.Vector3(115, -28, -40), rotSpeed: new THREE.Vector3(0.0012, 0.0018, 0.0010), name: "Чертёж II" },
+    { group: createVolumetricBlueprintCard(USER_IMAGES[2]), basePos: new THREE.Vector3(90, 36, 75), rotSpeed: new THREE.Vector3(-0.0014, 0.0016, 0.0009), name: "Чертёж III" },
+    { group: createVolumetricBlueprintCard(USER_IMAGES[3]), basePos: new THREE.Vector3(-36, -42, -35), rotSpeed: new THREE.Vector3(0.0008, 0.0012, 0.0006), name: "Чертёж IV" },
+    { group: createVolumetricBlueprintCard(USER_IMAGES[4]), basePos: new THREE.Vector3(-85, -25, 80), rotSpeed: new THREE.Vector3(-0.0012, 0.0015, -0.0007), name: "Чертёж V" }
 ];
 
 const hoverTargets = [];
@@ -657,9 +748,6 @@ floatingInventions.forEach((item) => {
     hoverTargets.push(item);
 });
 
-/* =========================================================================
-   ЛОГИКА СЛАЙДЕРА (СВАЙПЫ И СЕНСОРНОЕ ПЕРЕКЛЮЧЕНИЕ)
-   ========================================================================= */
 let currentSlideIndex = -1;
 
 function updateSlideDots() {
@@ -673,7 +761,16 @@ function updateSlideDots() {
 function focusSlide(idx) {
     if (idx < 0 || idx >= hoverTargets.length) return;
     currentSlideIndex = idx;
+    
+    /* 1. Тактильный отклик (Haptic Feedback) */
+    if (navigator.vibrate) {
+        try { navigator.vibrate(12); } catch (_) {}
+    }
+    
+    /* 2. Звуковой отклик шестерней */
     playClickSound(1800, 0.015);
+    playGearDroneSound();
+    
     updateSlideDots();
 
     hoverTargets.forEach((item, i) => {
@@ -696,9 +793,15 @@ function focusSlide(idx) {
     targetCamPos.set(objPos.x * 0.72, objPos.y * 0.72, objPos.z + zOffset);
     targetLookTarget.set(objPos.x, objPos.y, objPos.z);
 
+    const preset = BLUEPRINT_PRESETS[idx];
     const status = document.getElementById('loaderStatusText');
-    if (status && floatingInventions[idx]) {
-        status.textContent = `[${idx + 1}/5] ${floatingInventions[idx].name}`;
+    const sub = document.getElementById('blueprintSubtitle');
+    if (status && preset) {
+        status.textContent = `[${idx + 1}/5] ${preset.name}`;
+    }
+    if (sub && preset) {
+        sub.textContent = preset.subtitle;
+        sub.style.opacity = '1';
     }
 }
 
@@ -718,7 +821,15 @@ window.goToSlide = function(idx) {
     focusSlide(idx);
 };
 
-/* TOUCH SWIPE ДЛЯ СМАРТФОНОВ */
+window.applySelectedPresetAndEnter = function(e) {
+    if (currentSlideIndex >= 0 && BLUEPRINT_PRESETS[currentSlideIndex]) {
+        BLUEPRINT_PRESETS[currentSlideIndex].apply();
+        runCalculation();
+    }
+    triggerLiquidTransition(e);
+};
+
+/* СЕНСОРНЫЙ СВАЙП */
 let touchStartX = 0, touchStartY = 0;
 window.addEventListener('touchstart', (e) => {
     if (e.touches.length > 0) {
@@ -845,6 +956,15 @@ function animatePreloader() {
         return;
     }
 
+    /* Броуновское движение золотой пыли */
+    dustParticles.rotation.y = t * 0.02;
+    dustParticles.rotation.x = Math.sin(t * 0.015) * 0.1;
+
+    /* Глубина резкости: притухание колец при фокусе на чертеже */
+    const isFocused = currentSlideIndex !== -1;
+    const ringTargetOpacity = isFocused ? 0.12 : 0.38;
+    megaRingWireMat.opacity = THREE.MathUtils.lerp(megaRingWireMat.opacity, ringTargetOpacity, 0.05);
+
     astrolabeRings.forEach(item => {
         item.group.rotation.x += item.sx + Math.sin(t * 0.25 + item.px) * 0.0004;
         item.group.rotation.y += item.sy + Math.cos(t * 0.20 + item.py) * 0.0005;
@@ -891,7 +1011,7 @@ setTimeout(() => {
     }
 }, 1200);
 
-/* ДАШБОРД ТАБЫ И РАСЧЁТЫ */
+/* ДЕКОДЕР ГЛИФОВ */
 const CYRILLIC_GLYPHS = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ0123456789§$%*#@!/[]:;';
 const NUMERIC_GLYPHS = '0123456789 ';
 function scrambleElementText(el, finalText, duration = 460, useAlphabet = true) {
@@ -1166,6 +1286,49 @@ function exportDataToCsv() {
     URL.revokeObjectURL(url);
 }
 
+/* ГЕНЕРАЦИЯ МЕМОРАНДУМА ДЛЯ ИНВЕСТОРОВ И БАНКОВ */
+function generateExecutiveMemo() {
+    playClickSound(1800, 0.04);
+    if (!latestCalculatedData) return;
+    const { sumRev, netProfit, roi } = latestCalculatedData;
+    const memoHtml = `
+    <!DOCTYPE html>
+    <html lang="ru">
+    <head>
+        <meta charset="UTF-8">
+        <title>Меморандум Капитала // Executive Summary</title>
+        <style>
+            body { background: #070709; color: #f4f1ea; font-family: 'Georgia', serif; padding: 40px; margin: 0; }
+            .memo-card { max-width: 800px; margin: 0 auto; border: 1px solid rgba(212,175,55,0.4); padding: 40px; background: rgba(13,13,18,0.95); box-shadow: 0 0 50px rgba(0,0,0,0.8); }
+            h1 { font-family: 'Cormorant Garamond', serif; color: #d4af37; font-style: italic; font-size: 32px; border-bottom: 1px solid rgba(212,175,55,0.3); padding-bottom: 15px; margin-top: 0; }
+            .meta { font-family: 'Courier New', monospace; font-size: 11px; color: #8e8a80; margin-bottom: 30px; }
+            .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 30px 0; }
+            .metric { border: 1px solid rgba(212,175,55,0.2); padding: 15px; background: rgba(255,255,255,0.02); }
+            .val { font-size: 24px; color: #d4af37; font-weight: bold; margin-top: 5px; }
+            p { font-size: 14px; line-height: 1.8; color: #ccc; }
+            @media print { body { background: white; color: black; } .memo-card { border: none; box-shadow: none; } }
+        </style>
+    </head>
+    <body>
+        <div class="memo-card">
+            <div class="meta">AUREA PROPORTIO // ФИНАНСОВЫЙ МЕМОРАНДУМ // 1 : 1.618</div>
+            <h1>Архитектура Капитала и Ликвидности</h1>
+            <p>Настоящий меморандум фиксирует расчётные показатели финансовой модели оборотных средств, партионных поставок и факторингового плеча.</p>
+            <div class="grid">
+                <div class="metric"><div>СОВОКУПНАЯ ВЫРУЧКА</div><div class="val">${formatSpaced(sumRev)} ₽</div></div>
+                <div class="metric"><div>ЧИСТАЯ ПРИБЫЛЬ</div><div class="val">${formatSpaced(netProfit)} ₽</div></div>
+                <div class="metric"><div>РЕНТАБЕЛЬНОСТЬ (ROI)</div><div class="val">${roi.toFixed(1)}%</div></div>
+            </div>
+            <p>Модель учитывает дискретные закупки, отсрочки поставщиков, налог на добавленную стоимость и стоимость заёмного капитала. Сгенерировано автоматически в защищённом контуре моделирования.</p>
+            <div style="margin-top: 40px; text-align: right;"><button onclick="window.print()" style="padding: 10px 24px; background: #d4af37; color: black; font-weight: bold; border: none; cursor: pointer;">Печать / Сохранить в PDF</button></div>
+        </div>
+    </body>
+    </html>`;
+    const win = window.open('', '_blank');
+    win.document.write(memoHtml);
+    win.document.close();
+}
+
 let isDark = true;
 function toggleTheme() {
     isDark = !isDark;
@@ -1281,7 +1444,6 @@ else runCalculation();
 </body>
 </html>"""
 
-# Безопасная замена меток 5 файлов в шаблоне
 HTML = HTML_TEMPLATE
 for idx in range(5):
     val = b64_images[idx] if idx < len(b64_images) else ""
