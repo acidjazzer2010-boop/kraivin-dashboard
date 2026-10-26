@@ -24,7 +24,6 @@ def get_image_b64(filename):
                 with open(path, "rb") as f:
                     ext = path.split('.')[-1].lower()
                     mime = "image/jpeg" if ext in ["jpg", "jpeg"] else f"image/{ext}"
-                    # Убираем любые переносы строк в base64
                     clean_b64 = base64.b64encode(f.read()).decode('utf-8').replace("\n", "").replace("\r", "")
                     return f"data:{mime};base64,{clean_b64}"
             except Exception:
@@ -39,7 +38,6 @@ img_files = [
     "1793030590445.jpg"
 ]
 b64_images = [get_image_b64(f) for f in img_files]
-# Безопасная сериализация в валидный JSON-массив
 json_images_payload = json.dumps(b64_images)
 
 st.markdown("""
@@ -78,11 +76,23 @@ html,body{width:100%;height:100%;margin:0;padding:0;overflow:hidden;background:v
 button:focus:not(:focus-visible){outline:none}
 .film-grain{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:999;opacity:var(--grain-opacity);background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 
+/* Вспышка затвора камеры-обскуры */
+#shutter-flash{
+    position:fixed;
+    inset:0;
+    width:100vw;
+    height:100vh;
+    background:#f4f1ea;
+    z-index:950;
+    pointer-events:none;
+    opacity:0;
+}
+
 #preloader-stage{position:fixed;top:0;left:0;width:100vw;height:100vh;background:radial-gradient(circle at center,#0d0e17 0%,#030306 100%);z-index:900;overflow:hidden;touch-action:none}
 #preloader-webgl{position:absolute;inset:0;width:100%;height:100%;z-index:10;cursor:grab}
 #preloader-webgl:active{cursor:grabbing}
 
-.preloader-fixed-hud{position:absolute;inset:0;width:100%;height:100%;z-index:30;pointer-events:none;user-select:none}
+.preloader-fixed-hud{position:absolute;inset:0;width:100%;height:100%;z-index:30;pointer-events:none;user-select:none;transition:opacity 0.5s ease}
 #preloaderTitle{position:absolute;top:28px;left:50%;transform:translateX(-50%);font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:clamp(20px,3.2vw,44px);font-weight:700;letter-spacing:.26em;color:var(--accent-gold);opacity:0;text-shadow:0 0 45px rgba(212,175,55,.85);transition:opacity 1.8s cubic-bezier(.16,1,.3,1);text-align:center;white-space:nowrap}
 #preloaderTitle.locked-on{opacity:1!important}
 
@@ -110,8 +120,34 @@ button:focus:not(:focus-visible){outline:none}
 .preset-btn{padding:12px 18px;background:rgba(212,175,55,0.12);border:1px solid var(--accent-gold);color:var(--accent-gold);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;backdrop-filter:blur(10px);transition:all .3s}
 .preset-btn:hover{background:var(--accent-gold);color:#070709}
 
+/* ДАШБОРД И АНИМАЦИЯ ПРОЯВЛЕНИЯ НЕГАТИВА */
 #mainDashboardApp{display:none;position:relative;z-index:10;min-height:100vh}
 #mainDashboardApp.ready{display:flex}
+
+.camera-obscura-reveal {
+    animation: developNegative 2.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes developNegative {
+    0% {
+        opacity: 0.95;
+        filter: invert(1) grayscale(1) contrast(1.6) brightness(1.2);
+        transform: scale(1.015);
+    }
+    30% {
+        opacity: 1;
+        filter: invert(0.85) sepia(0.5) contrast(1.4) brightness(1.1);
+    }
+    60% {
+        filter: invert(0.3) sepia(0.3) contrast(1.15) brightness(1.02);
+    }
+    100% {
+        opacity: 1;
+        filter: invert(0) sepia(0) contrast(1) brightness(1);
+        transform: scale(1);
+    }
+}
+
 #webgl-bg-canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;pointer-events:none;opacity:.35}
 html:not(.dark) #webgl-bg-canvas{opacity:.18}
 .alche-block{position:relative;background:var(--bg-panel);backdrop-filter:blur(20px);border-right:1px solid var(--border-line);border-bottom:1px solid var(--border-line)}
@@ -141,6 +177,7 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
 </head>
 <body class="selection:bg-[#d4af37] selection:text-black">
 <div class="film-grain" aria-hidden="true"></div>
+<div id="shutter-flash"></div>
 
 <!-- ПРЕЛОАДЕР -->
 <div id="preloader-stage">
@@ -174,7 +211,7 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
             </div>
             <div id="exploreBtnWrapper">
                 <button id="applyPresetBtn" onclick="applySelectedPresetAndEnter(event)" class="preset-btn">Применить пресет</button>
-                <button id="exploreBtn" onclick="triggerIrisShutterTransition(event)" class="explore-btn">Исследовать</button>
+                <button id="exploreBtn" onclick="triggerCameraObscuraTransition(event)" class="explore-btn">Исследовать</button>
             </div>
         </div>
     </div>
@@ -183,7 +220,7 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
 <canvas id="webgl-bg-canvas"></canvas>
 
 <!-- ДАШБОРД -->
-<div id="mainDashboardApp" class="flex-col border-t border-l opacity-0 transition-opacity duration-1000">
+<div id="mainDashboardApp" class="flex-col border-t border-l">
     <header class="alche-block px-5 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4 border-b">
         <div class="flex items-center gap-6">
             <div class="flex items-center gap-3 cursor-pointer" onclick="playClickSound(1500,0.04)">
@@ -372,7 +409,6 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
 
 <script>
 'use strict';
-// ЗАЩИТА: Глобальный перехват ошибок, чтобы UI никогда не падал в черный экран
 window.onerror = function(msg, url, line) {
     console.error("Critical Runtime Error:", msg, "line:", line);
     return false;
@@ -445,33 +481,50 @@ function playClickSound(freq = 1200, duration = 0.02) {
     } catch (e) {}
 }
 
-function playGearDroneSound() {
-    try {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(65, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(45, audioCtx.currentTime + 0.28);
-        gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.28);
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.28);
-    } catch (e) {}
-}
-
-function playIrisShutterSound() {
+function playGearSpinUpSound(duration = 1.4) {
     try {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state === 'suspended') audioCtx.resume();
         const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(140, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.35);
-        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.35);
+        osc.frequency.setValueAtTime(60, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(380, audioCtx.currentTime + duration);
+        gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + duration * 0.85);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
         osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.35);
+        osc.start(); osc.stop(audioCtx.currentTime + duration);
+    } catch (e) {}
+}
+
+function playApertureSnapSound() {
+    try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        
+        // Резкий механический удар затвора
+        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.12);
+        gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.12);
+
+        // Шумовой всплеск воздуха диафрагмы
+        const bufferSize = audioCtx.sampleRate * 0.08;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        const noiseGain = audioCtx.createGain();
+        noiseGain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+        noise.connect(noiseGain);
+        noiseGain.connect(audioCtx.destination);
+        noise.start();
     } catch (e) {}
 }
 
@@ -489,10 +542,12 @@ function dismissPreloader() {
     const app = document.getElementById('mainDashboardApp');
     document.documentElement.style.overflow = 'auto';
     document.body.style.overflow = 'auto';
+    
     if (app) {
-        app.classList.add('ready'); void app.offsetWidth;
-        app.classList.remove('opacity-0'); app.classList.add('opacity-100');
+        app.classList.add('ready');
+        app.classList.add('camera-obscura-reveal');
     }
+    
     setTimeout(() => {
         if (stage) stage.style.display = 'none';
         try {
@@ -501,9 +556,8 @@ function dismissPreloader() {
                 if (o.material) { Array.isArray(o.material) ? o.material.forEach(m => m.dispose()) : o.material.dispose(); }
             });
             preRenderer.dispose(); preRenderer.forceContextLoss();
-            snapshotTarget.dispose();
         } catch (e) {}
-    }, 1450);
+    }, 1200);
 }
 
 const PRELOADER_TOTAL_TIME = REDUCE_MOTION ? 1200 : 9000;
@@ -631,9 +685,9 @@ const aRing3 = createCyclopeanTrussRing(175, 11.0, 8.0, 130);
 aRing2.rotation.x = Math.PI / 3.4; aRing2.rotation.z = Math.PI / 6.0; aRing3.rotation.y = Math.PI / 3.0;
 preGroup.add(aRing1); preGroup.add(aRing2); preGroup.add(aRing3);
 astrolabeRings.push(
-    { group: aRing1, sx: 0.00045, sy: 0.00065, sz: 0.00025, px: 0.2, py: 1.1 },
-    { group: aRing2, sx: -0.00055, sy: 0.00040, sz: -0.00045, px: 2.3, py: 0.7 },
-    { group: aRing3, sx: 0.00060, sy: -0.00050, sz: 0.00035, px: 1.5, py: 3.2 }
+    { group: aRing1, sx: 0.00045, sy: 0.00065, sz: 0.00025, px: 0.2, py: 1.1, dir: 1.0 },
+    { group: aRing2, sx: -0.00055, sy: 0.00040, sz: -0.00045, px: 2.3, py: 0.7, dir: -1.0 },
+    { group: aRing3, sx: 0.00060, sy: -0.00050, sz: 0.00035, px: 1.5, py: 3.2, dir: 1.2 }
 );
 
 function createDaVinciHoloMaterial(texture) {
@@ -680,12 +734,11 @@ function createBlueprintWireMaterial() {
     return new THREE.ShaderMaterial({
         uniforms: { uHover: { value: 0.0 }, uTime: { value: 0.0 } },
         vertexShader: `varying vec3 vPos;void main(){vPos=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
-        fragmentShader: `uniform float uHover;uniform float uTime;varying vec3 vPos;void main(){float wave=sin((vPos.x+vPos.y+vPos.z)*0.2-uTime*3.5)*0.5+0.5;vec3 baseGold=vec3(0.85,0.71,0.25);vec3 brightGlow=vec3(1.0,0.96,0.82);vec3 col=mix(baseGold,brightGlow,wave*0.4+uHover*0.6);float alpha=clamp(0.70+wave*0.30+uHover*0.30,0.0,1.0);gl_FragColor=vec4(col,alpha);}`,
+        fragmentShader: `uniform float uHover;uniform float uTime;varying vec3 vPos;float wave=sin((vPos.x+vPos.y+vPos.z)*0.2-uTime*3.5)*0.5+0.5;vec3 baseGold=vec3(0.85,0.71,0.25);vec3 brightGlow=vec3(1.0,0.96,0.82);vec3 col=mix(baseGold,brightGlow,wave*0.4+uHover*0.6);float alpha=clamp(0.70+wave*0.30+uHover*0.30,0.0,1.0);gl_FragColor=vec4(col,alpha);`,
         transparent: true, depthWrite: false
     });
 }
 
-/* БЕЗОПАСНАЯ ГЕНЕРАЦИЯ ОБЪЕМНЫХ КАРТОЧЕК С 3D-ЧЕРТЕЖОМ */
 function createSafeVolumetricBlueprintCard(b64Image, typeIdx) {
     const cardGroup = new THREE.Group();
     const w = 58, h = 58, d = 26;
@@ -729,7 +782,6 @@ function createSafeVolumetricBlueprintCard(b64Image, typeIdx) {
     );
     cardGroup.add(wireframeMesh);
 
-    // Безопасное подключение текстуры
     if (typeof b64Image === 'string' && b64Image.length > 50 && b64Image.startsWith('data:image')) {
         try {
             const imgEl = new Image();
@@ -743,9 +795,7 @@ function createSafeVolumetricBlueprintCard(b64Image, typeIdx) {
                 cardGroup.add(planeMesh);
             };
             imgEl.src = b64Image;
-        } catch (e) {
-            console.warn("Texture exception handled:", e);
-        }
+        } catch (e) {}
     }
 
     return cardGroup;
@@ -777,7 +827,6 @@ floatingInventions.forEach((item) => {
     hoverTargets.push(item);
 });
 
-// ПЕРВЫЙ РЕНДЕР
 preRenderer.render(preScene, preCamera);
 
 let currentSlideIndex = -1;
@@ -799,8 +848,6 @@ function focusSlide(idx) {
     }
     
     playClickSound(1800, 0.015);
-    playGearDroneSound();
-    
     updateSlideDots();
 
     hoverTargets.forEach((item, i) => {
@@ -856,10 +903,9 @@ window.applySelectedPresetAndEnter = function(e) {
         BLUEPRINT_PRESETS[currentSlideIndex].apply();
         runCalculation();
     }
-    triggerIrisShutterTransition(e);
+    triggerCameraObscuraTransition(e);
 };
 
-/* TOUCH SWIPE */
 let touchStartX = 0, touchStartY = 0;
 window.addEventListener('touchstart', (e) => {
     if (e.touches.length > 0) {
@@ -879,7 +925,6 @@ window.addEventListener('touchend', (e) => {
     }
 }, { passive: true });
 
-/* ДЕСКТОПНЫЙ РАЙКАСТЕР */
 const raycaster = new THREE.Raycaster();
 const mouseVec = new THREE.Vector2(-999, -999);
 
@@ -890,7 +935,7 @@ window.addEventListener('mousemove', (e) => {
 });
 
 function checkRaycastHover() {
-    if (preloaderDismissed || window.innerWidth < 768) return;
+    if (preloaderDismissed || isObscuraTransition || window.innerWidth < 768) return;
     raycaster.setFromCamera(mouseVec, preCamera);
     const hitMeshes = hoverTargets.map(h => h.hitMesh);
     const intersects = raycaster.intersectObjects(hitMeshes, false);
@@ -904,125 +949,119 @@ function checkRaycastHover() {
     }
 }
 
-/* МЕХАНИЧЕСКАЯ ИРИСОВАЯ ДИАФРАГМА */
-let isIrisTransition = false;
-let irisScene, irisCamera, irisMaterial, irisTime = 0;
-const snapshotTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight);
+/* =========================================================================
+   НОВЫЙ КИНЕМАТОГРАФИЧНЫЙ ТРАНЗИШН: КАМЕРА-ОБСКУРА И СУЖЕНИЕ ДИАФРАГМЫ
+   ========================================================================= */
+let isObscuraTransition = false;
+let obscuraStartTime = 0;
+const OBSCURA_DURATION = 1.45; // секунды
 
-function triggerIrisShutterTransition(event) {
-    if (isIrisTransition) return;
-    isIrisTransition = true;
+function triggerCameraObscuraTransition(event) {
+    if (isObscuraTransition) return;
+    isObscuraTransition = true;
+    obscuraStartTime = performance.now();
     
-    playGearDroneSound();
-    playIrisShutterSound();
+    playGearSpinUpSound(OBSCURA_DURATION);
 
+    // Скрываем плавающий HUD
     const hud = document.querySelector('.preloader-fixed-hud');
-    if (hud) { 
-        hud.style.transition = 'opacity 0.25s ease'; 
-        hud.style.opacity = '0'; 
-    }
+    if (hud) hud.style.opacity = '0';
 
-    preRenderer.setRenderTarget(snapshotTarget);
-    preRenderer.clear();
-    preRenderer.render(preScene, preCamera);
-    preRenderer.setRenderTarget(null);
+    // Центрируем камеру строго по оптической оси
+    targetCamPos.set(0, 0, baseCamZ);
+    targetLookTarget.set(0, 0, 0);
 
-    irisScene = new THREE.Scene();
-    irisCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-
-    irisMaterial = new THREE.ShaderMaterial({
-        uniforms: {
-            tDiffuse: { value: snapshotTarget.texture },
-            uProgress: { value: 0.0 },
-            uAspect: { value: window.innerWidth / window.innerHeight },
-            uTime: { value: 0.0 }
-        },
-        vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position, 1.0); }`,
-        fragmentShader: `
-            uniform sampler2D tDiffuse;
-            uniform float uProgress;
-            uniform float uAspect;
-            uniform float uTime;
-            varying vec2 vUv;
-
-            #define BLADES 12.0
-            #define PI 3.14159265359
-
-            void main() {
-                vec2 p = vUv - 0.5;
-                p.x *= uAspect;
-                float r = length(p);
-                float theta = atan(p.y, p.x);
-
-                float closeProgress = smoothstep(0.0, 0.72, uProgress);
-                float flashProgress = smoothstep(0.72, 1.0, uProgress);
-
-                float twist = theta + closeProgress * 2.8;
-                float bladePattern = cos(twist * BLADES);
-                
-                float aperture = (1.0 - closeProgress) * 1.35;
-                float bladeEdge = aperture + bladePattern * 0.08 * (1.0 - closeProgress);
-
-                vec4 sceneCol = texture2D(tDiffuse, vUv);
-
-                vec3 brassDark = vec3(0.08, 0.07, 0.04);
-                vec3 brassGold = vec3(0.85, 0.71, 0.25);
-                vec3 brassEdge = vec3(1.0, 0.92, 0.65);
-
-                float rib = smoothstep(0.85, 0.98, sin(twist * BLADES * 2.0));
-                vec3 bladeColor = mix(brassDark, brassGold, 0.25 + rib * 0.35);
-
-                float edgeGlow = smoothstep(bladeEdge - 0.02, bladeEdge, r) * smoothstep(bladeEdge + 0.02, bladeEdge, r);
-
-                vec3 col;
-                float alpha = 1.0;
-
-                if (r > bladeEdge) {
-                    col = bladeColor + edgeGlow * brassEdge * 1.5;
-                } else {
-                    col = sceneCol.rgb;
-                    col += edgeGlow * brassEdge * 2.0;
-                }
-
-                if (uProgress > 0.65 && uProgress < 0.85) {
-                    float burst = 1.0 - abs(uProgress - 0.75) / 0.10;
-                    col += vec3(1.0, 0.95, 0.75) * burst * 2.2;
-                }
-
-                alpha = 1.0 - flashProgress;
-                gl_FragColor = vec4(col, alpha);
-            }
-        `,
-        transparent: true
+    // Сохраняем стартовые эйлеровы углы колец для интерполяции
+    astrolabeRings.forEach(ring => {
+        ring.startRotX = ring.group.rotation.x;
+        ring.startRotY = ring.group.rotation.y;
+        ring.startRotZ = ring.group.rotation.z;
     });
+}
 
-    irisScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), irisMaterial));
+function triggerShutterBlink() {
+    playApertureSnapSound();
+    const flash = document.getElementById('shutter-flash');
+    if (!flash) return;
+
+    // Мгновенное моргание затвора (двойной оптический импульс)
+    flash.style.transition = 'none';
+    flash.style.opacity = '1';
+
+    setTimeout(() => {
+        flash.style.opacity = '0.35';
+        setTimeout(() => {
+            flash.style.opacity = '0.9';
+            // Открываем дашборд в режиме негатива под вспышкой
+            dismissPreloader();
+            setTimeout(() => {
+                flash.style.transition = 'opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
+                flash.style.opacity = '0';
+            }, 60);
+        }, 35);
+    }, 45);
 }
 
 function animatePreloader() {
     if (preloaderDismissed) return;
     requestAnimationFrame(animatePreloader);
 
-    const elapsed = performance.now() - preloaderStartTime;
+    const now = performance.now();
+    const elapsed = now - preloaderStartTime;
     const t = elapsed * 0.001;
 
-    if (isIrisTransition) {
-        irisTime += 0.016;
-        const transProgress = Math.min(irisTime / 1.35, 1.0);
-        irisMaterial.uniforms.uProgress.value = transProgress;
-        irisMaterial.uniforms.uTime.value = t;
+    if (isObscuraTransition) {
+        const obsElapsed = (now - obscuraStartTime) * 0.001;
+        const progress = Math.min(obsElapsed / OBSCURA_DURATION, 1.0);
 
-        preGroup.scale.multiplyScalar(0.96);
-        astrolabeRings.forEach(item => {
-            item.group.rotation.x += item.sx * 6.0;
-            item.group.rotation.y += item.sy * 6.0;
+        // Фаза выравнивания в плоскость (0.0 -> 0.45)
+        const alignP = Math.min(progress / 0.45, 1.0);
+        const easeAlign = alignP * alignP * (3.0 - 2.0 * alignP);
+
+        // Фаза контр-вращения и сжатия к центру диафрагмы (0.2 -> 1.0)
+        const shrinkP = Math.max(0, (progress - 0.2) / 0.8);
+        const easeShrink = Math.pow(shrinkP, 3.2);
+
+        // Карточки чертежей растворяются и удаляются
+        hoverTargets.forEach(item => {
+            item.group.scale.multiplyScalar(0.92);
+            item.group.position.z -= 8.0;
         });
 
-        preRenderer.clear();
-        preRenderer.render(irisScene, irisCamera);
+        // Частицы стягиваются в оптическую сингулярность
+        const positions = particleGeo.attributes.position.array;
+        for (let i = 0; i < particleCount * 3; i++) {
+            positions[i] *= 0.94;
+        }
+        particleGeo.attributes.position.needsUpdate = true;
 
-        if (transProgress >= 1.0) {
-            dismissPreloader();
+        // Механика колец диафрагмы
+        megaRingWireMat.opacity = THREE.MathUtils.lerp(megaRingWireMat.opacity, 0.85, 0.08);
+        megaRingWireMat.color.setHex(0xd4af37); // Кольца раскаляются до золотого свечения
+
+        astrolabeRings.forEach((ring, idx) => {
+            // Выравнивание наклона: кольца встают строго плоско перпендикулярно лучу взгляда
+            ring.group.rotation.x = THREE.MathUtils.lerp(ring.startRotX, 0, easeAlign);
+            ring.group.rotation.y = THREE.MathUtils.lerp(ring.startRotY, 0, easeAlign);
+            
+            // Быстрое контр-вращение в противоположные стороны с нарастающим ускорением
+            const spinVelocity = (idx % 2 === 0 ? 1 : -1) * (0.05 + progress * 0.42);
+            ring.group.rotation.z += spinVelocity;
+
+            // Сжатие масштаба колец к центру (эффект закрывающейся диафрагмы)
+            const scaleFactor = Math.max(1.0 - easeShrink * 0.98, 0.01);
+            ring.group.scale.set(scaleFactor, scaleFactor, scaleFactor * (1.0 - easeShrink * 0.7));
+        });
+
+        preCamera.position.lerp(targetCamPos, 0.12);
+        currentLookTarget.lerp(targetLookTarget, 0.12);
+        preCamera.lookAt(currentLookTarget);
+
+        preRenderer.clear();
+        preRenderer.render(preScene, preCamera);
+
+        if (progress >= 1.0) {
+            triggerShutterBlink();
         }
         return;
     }
@@ -1073,7 +1112,6 @@ function animatePreloader() {
     preRenderer.render(preScene, preCamera);
 }
 
-// Запуск цикла анимации
 animatePreloader();
 
 setTimeout(() => {
@@ -1514,7 +1552,5 @@ else runCalculation();
 </body>
 </html>"""
 
-# Безопасная инъекция сериализованного массива изображений
 HTML = HTML_TEMPLATE.replace("__JSON_IMAGES_PAYLOAD__", json_images_payload)
-
 components.html(HTML, height=940, scrolling=False)
