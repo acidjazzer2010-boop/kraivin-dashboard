@@ -1127,120 +1127,237 @@ window.applySelectedPresetAndEnter = function(e) {
 /* =========================================================================
    3D СПУТНИК (1793046110105.jpg) БЕЗ РАМОК, МИГАЮЩИЙ МАЯК И СИГНАЛ
    ========================================================================= */
+/* =========================================================================
+   ВЫСОКОДЕТАЛИЗИРОВАННАЯ 3D-МОДЕЛЬ СПУТНИКА-1 (BLUEPRINT WIREFRAME X-RAY)
+   Точная реплика инженерного чертежа: фланец с болтами, внутренние блоки
+   аппаратуры, кронштейны антенн, телескопические вибраторы и маяк.
+   ========================================================================= */
 function createSputnikModel() {
     const sputnikGroup = new THREE.Group();
-    
-    // Загрузка точного файла 1793046110105.jpg
-    const textureLoader = new THREE.TextureLoader();
-    const photoTex = textureLoader.load('1793046110105.jpg', function(tex) {
-        tex.wrapS = THREE.ClampToEdgeWrapping;
-        tex.wrapT = THREE.ClampToEdgeWrapping;
-        tex.minFilter = THREE.LinearFilter;
-        tex.magFilter = THREE.LinearFilter;
-        tex.generateMipmaps = false;
-        tex.needsUpdate = true;
+
+    // Неоновые материалы сетки чертежа (как на референсе)
+    const cyanWireMat = new THREE.MeshBasicMaterial({ 
+        color: 0x4deeea, 
+        wireframe: true, 
+        transparent: true, 
+        opacity: 0.45 
     });
-    photoTex.wrapS = THREE.ClampToEdgeWrapping;
-    photoTex.wrapT = THREE.ClampToEdgeWrapping;
-    photoTex.minFilter = THREE.LinearFilter;
-    photoTex.generateMipmaps = false;
-    
-    // Шейдер вырезания черного фона (без рамки)
-    const cutoutMat = new THREE.ShaderMaterial({
-        uniforms: {
-            uTex: { value: photoTex },
-            uThreshold: { value: 0.08 }
-        },
-        vertexShader: `
-            varying vec2 vUv;
-            void main() {
-                vUv = uv;
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-            }
-        `,
-        fragmentShader: `
-            precision mediump float;
-            uniform sampler2D uTex;
-            uniform float uThreshold;
-            varying vec2 vUv;
-            void main() {
-                vec4 tex = texture2D(uTex, vUv);
-                float brightness = max(tex.r, max(tex.g, tex.b));
-                float alpha = smoothstep(uThreshold, uThreshold + 0.16, brightness);
-                if (alpha < 0.02) discard;
-                gl_FragColor = vec4(tex.rgb * 1.15, alpha);
-            }
-        `,
+    const cyanGlowMat = new THREE.LineBasicMaterial({ 
+        color: 0x74ee15, 
+        transparent: true, 
+        opacity: 0.7 
+    });
+    const mainLineMat = new THREE.LineBasicMaterial({ 
+        color: 0x00f0ff, 
+        transparent: true, 
+        opacity: 0.85 
+    });
+    const dimLineMat = new THREE.LineBasicMaterial({ 
+        color: 0x007799, 
+        transparent: true, 
+        opacity: 0.35 
+    });
+
+    const R = 15.0; // Базовый радиус сферы
+
+    // 1. ВНЕШНЯЯ СФЕРА (СЕТЧАТЫЙ КОРПУС С ВЫСОКОЙ ПЛОТНОСТЬЮ)
+    const sphereGeo = new THREE.SphereGeometry(R, 36, 28);
+    const sphereWire = new THREE.Mesh(sphereGeo, cyanWireMat);
+    sputnikGroup.add(sphereWire);
+
+    // Внутренняя полупрозрачная оболочка для глубины
+    const shellMat = new THREE.MeshBasicMaterial({
+        color: 0x051824,
         transparent: true,
-        side: THREE.DoubleSide,
+        opacity: 0.35,
+        side: THREE.BackSide,
         depthWrite: false
     });
+    sputnikGroup.add(new THREE.Mesh(new THREE.SphereGeometry(R * 0.98, 24, 20), shellMat));
 
-    // 1. Фронтальная фото-плоскость
-    const photoPlaneGeo = new THREE.PlaneGeometry(38, 38);
-    const photoPlane1 = new THREE.Mesh(photoPlaneGeo, cutoutMat);
-    sputnikGroup.add(photoPlane1);
+    // 2. СТЫКОВОЧНЫЙ ЦЕНТРАЛЬНЫЙ ПОЯС / ШОВ (ЭКВАТОР С ДВОЙНЫМ БУРТИКОМ)
+    const beltPts1 = [], beltPts2 = [];
+    const beltSegs = 64;
+    for (let i = 0; i <= beltSegs; i++) {
+        const a = (i / beltSegs) * Math.PI * 2;
+        beltPts1.push(new THREE.Vector3(Math.cos(a) * (R + 0.35), 0.3, Math.sin(a) * (R + 0.35)));
+        beltPts2.push(new THREE.Vector3(Math.cos(a) * (R + 0.35), -0.3, Math.sin(a) * (R + 0.35)));
+    }
+    sputnikGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(beltPts1), mainLineMat));
+    sputnikGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(beltPts2), mainLineMat));
 
-    // 2. Ортогональная фото-проекция (для 3D объема со всех ракурсов)
-    const photoPlane2 = new THREE.Mesh(photoPlaneGeo, cutoutMat);
-    photoPlane2.rotation.y = Math.PI / 2;
-    sputnikGroup.add(photoPlane2);
+    // Продольные соединительные заклепки пояса
+    const beltRivets = [];
+    for (let i = 0; i < 32; i++) {
+        const a = (i / 32) * Math.PI * 2;
+        beltRivets.push(
+            new THREE.Vector3(Math.cos(a) * (R + 0.35), 0.3, Math.sin(a) * (R + 0.35)),
+            new THREE.Vector3(Math.cos(a) * (R + 0.35), -0.3, Math.sin(a) * (R + 0.35))
+        );
+    }
+    sputnikGroup.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(beltRivets), mainLineMat));
 
-    // 3. Сферическое металлизированное ядро с наложенной фото-текстурой
-    const sphereMat = new THREE.MeshStandardMaterial({
-        map: photoTex,
-        metalness: 0.88,
-        roughness: 0.22,
-        transparent: true,
-        opacity: 0.88
+    // 3. НОСОВОЙ ЛЮК / ФЛАНЕЦ С БОЛТОВЫМ КОЛЬЦОМ (ОСЕВОЙ УЗЕЛ)
+    const hatchGroup = new THREE.Group();
+    hatchGroup.position.set(0, 0, R * 0.96);
+    
+    // Концентрические кольца фланца
+    [2.2, 3.8, 5.0, 5.8].forEach(rRing => {
+        const pts = [];
+        for (let i = 0; i <= 36; i++) {
+            const a = (i / 36) * Math.PI * 2;
+            pts.push(new THREE.Vector3(Math.cos(a) * rRing, Math.sin(a) * rRing, 0));
+        }
+        hatchGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mainLineMat));
     });
-    const sphereGeo = new THREE.SphereGeometry(12.5, 32, 32);
-    const sphereMesh = new THREE.Mesh(sphereGeo, sphereMat);
-    sputnikGroup.add(sphereMesh);
 
-    // Золотой экваториальный пояс
-    const beltGeo = new THREE.TorusGeometry(12.8, 0.45, 12, 48);
-    const beltMat = new THREE.MeshBasicMaterial({ color: 0xd4af37 });
-    const beltMesh = new THREE.Mesh(beltGeo, beltMat);
-    beltMesh.rotation.x = Math.PI / 2;
-    sputnikGroup.add(beltMesh);
+    // Болты по окружности фланца
+    const boltPts = [];
+    for (let i = 0; i < 16; i++) {
+        const a = (i / 16) * Math.PI * 2;
+        const bx = Math.cos(a) * 4.4, by = Math.sin(a) * 4.4;
+        boltPts.push(
+            new THREE.Vector3(bx, by, 0),
+            new THREE.Vector3(bx, by, 0.45)
+        );
+        // Маленькие шестиугольники болтиков
+        const boltHead = [];
+        for (let j = 0; j <= 6; j++) {
+            const aj = (j / 6) * Math.PI * 2;
+            boltHead.push(new THREE.Vector3(bx + Math.cos(aj) * 0.28, by + Math.sin(aj) * 0.28, 0.45));
+        }
+        hatchGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(boltHead), mainLineMat));
+    }
+    hatchGroup.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(boltPts), mainLineMat));
+    sputnikGroup.add(hatchGroup);
 
-    // 4. Красный импульсный сигнал (маяк)
-    const beaconGeo = new THREE.SphereGeometry(2.4, 16, 16);
+    // 4. ВНУТРЕННИЙ БЛОК АППАРАТУРЫ (ПЕРЕДАТЧИК И АККУМУЛЯТОРЫ)
+    const internalBoxGroup = new THREE.Group();
+    
+    // Главный радиопередатчик
+    const mainBoxGeo = new THREE.BoxGeometry(6.5, 5.2, 9.5);
+    const mainBoxWire = new THREE.LineSegments(
+        new THREE.EdgesGeometry(mainBoxGeo),
+        new THREE.LineBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.75 })
+    );
+    mainBoxWire.position.set(-1.2, 0.4, -0.5);
+    internalBoxGroup.add(mainBoxWire);
+
+    // Блок батарей питания
+    const batteryBoxGeo = new THREE.BoxGeometry(5.0, 4.0, 7.0);
+    const batteryBoxWire = new THREE.LineSegments(
+        new THREE.EdgesGeometry(batteryBoxGeo),
+        new THREE.LineBasicMaterial({ color: 0x4deeea, transparent: true, opacity: 0.6 })
+    );
+    batteryBoxWire.position.set(2.2, -1.0, -1.0);
+    internalBoxGroup.add(batteryBoxWire);
+
+    // Внутренние платы и монтажные шины
+    const rackPts = [
+        new THREE.Vector3(-4, -2, -4), new THREE.Vector3(4, -2, -4),
+        new THREE.Vector3(-4, -2, 4), new THREE.Vector3(4, -2, 4),
+        new THREE.Vector3(-4, 3, -4), new THREE.Vector3(-4, 3, 4),
+        new THREE.Vector3(4, 3, -4), new THREE.Vector3(4, 3, 4),
+        // Соединительные стойки каркаса к оболочке
+        new THREE.Vector3(-4, 0, -4), new THREE.Vector3(-10, 0, -8),
+        new THREE.Vector3(4, 0, -4), new THREE.Vector3(10, 0, -8),
+        new THREE.Vector3(0, -2, -4), new THREE.Vector3(0, -9, -9)
+    ];
+    internalBoxGroup.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(rackPts), dimLineMat));
+    sputnikGroup.add(internalBoxGroup);
+
+    // 5. ЧЕТЫРЕ КРОНШТЕЙНА И ТЕЛЕСКОПИЧЕСКИЕ АНТЕННЫ
+    // На чертеже: 4 антенны выходят из боковых узлов под углом назад (угол раствора ~35°)
+    const antennaAngles = [
+        { azim: Math.PI * 0.25, tiltY: 0.32, tiltX: 0.32 },
+        { azim: Math.PI * 0.75, tiltY: -0.32, tiltX: 0.32 },
+        { azim: Math.PI * 1.25, tiltY: -0.32, tiltX: -0.32 },
+        { azim: Math.PI * 1.75, tiltY: 0.32, tiltX: -0.32 }
+    ];
+
+    const antennaTotalLen = 95.0; // Длинные реалистичные усы
+
+    antennaAngles.forEach(angCfg => {
+        const rootRadius = R * 0.88;
+        const rx = Math.cos(angCfg.azim) * rootRadius;
+        const ry = Math.sin(angCfg.azim) * rootRadius;
+        const rz = -R * 0.45;
+
+        // Кронштейн крепления на корпусе (цилиндрическая муфта с гофром)
+        const mountGroup = new THREE.Group();
+        mountGroup.position.set(rx, ry, rz);
+        mountGroup.lookAt(new THREE.Vector3(rx * 2, ry * 2, rz - 30));
+
+        // Цилиндр кронштейна
+        const cylGeo = new THREE.CylinderGeometry(0.85, 1.1, 4.2, 12, 3, true);
+        const cylWire = new THREE.Mesh(cylGeo, new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true }));
+        cylWire.rotation.x = Math.PI / 2;
+        cylWire.position.z = 2.1;
+        mountGroup.add(cylWire);
+
+        // Шарнир
+        const hingeGeo = new THREE.SphereGeometry(1.2, 8, 8);
+        const hingeWire = new THREE.Mesh(hingeGeo, new THREE.MeshBasicMaterial({ color: 0x4deeea, wireframe: true }));
+        mountGroup.add(hingeWire);
+
+        sputnikGroup.add(mountGroup);
+
+        // Сама антенна с 3 телескопическими сочленениями (муфтами)
+        const antDir = new THREE.Vector3(
+            Math.cos(angCfg.azim) * 0.35 + angCfg.tiltX * 0.15,
+            Math.sin(angCfg.azim) * 0.35 + angCfg.tiltY * 0.15,
+            -1.0
+        ).normalize();
+
+        const pStart = new THREE.Vector3(rx, ry, rz);
+        const pEnd = pStart.clone().add(antDir.clone().multiplyScalar(antennaTotalLen));
+
+        // Главный стержень антенны
+        const antLineGeo = new THREE.BufferGeometry().setFromPoints([pStart, pEnd]);
+        sputnikGroup.add(new THREE.Line(antLineGeo, new THREE.LineBasicMaterial({ color: 0x00f0ff, linewidth: 2 })));
+
+        // Телескопические муфты на расстояниях 25%, 55%, 85%
+        [0.22, 0.52, 0.82].forEach(ratio => {
+            const jointP = pStart.clone().lerp(pEnd, ratio);
+            const jointCircle = [];
+            for (let j = 0; j <= 12; j++) {
+                const aj = (j / 12) * Math.PI * 2;
+                jointCircle.push(new THREE.Vector3(
+                    jointP.x + Math.cos(aj) * 0.45,
+                    jointP.y + Math.sin(aj) * 0.45,
+                    jointP.z
+                ));
+            }
+            sputnikGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(jointCircle), mainLineMat));
+        });
+    });
+
+    // 6. КРАСНЫЙ СВЕТЯЩИЙСЯ ИМПУЛЬСНЫЙ МАЯК НА ВЕРШИНЕ
+    const beaconGeo = new THREE.SphereGeometry(1.8, 16, 16);
     const beaconMat = new THREE.MeshBasicMaterial({ color: 0xff1122 });
     const beaconMesh = new THREE.Mesh(beaconGeo, beaconMat);
-    beaconMesh.position.set(0, 13.8, 0);
+    beaconMesh.position.set(0, R + 1.2, 0);
     sputnikGroup.add(beaconMesh);
     sputnikGroup.beaconMesh = beaconMesh;
 
-    // Световой ореол вокруг маяка
-    const glowGeo = new THREE.SphereGeometry(5.2, 16, 16);
-    const glowMat = new THREE.MeshBasicMaterial({ color: 0xff3333, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending });
+    // Пульсирующий ореол маяка
+    const glowGeo = new THREE.SphereGeometry(4.8, 16, 16);
+    const glowMat = new THREE.MeshBasicMaterial({ 
+        color: 0xff3344, 
+        transparent: true, 
+        opacity: 0.55, 
+        blending: THREE.AdditiveBlending,
+        depthWrite: false 
+    });
     const glowMesh = new THREE.Mesh(glowGeo, glowMat);
-    glowMesh.position.set(0, 13.8, 0);
+    glowMesh.position.set(0, R + 1.2, 0);
     sputnikGroup.add(glowMesh);
     sputnikGroup.glowMesh = glowMesh;
 
-    // 5. Четыре длинные радиоантенны
-    const antMat = new THREE.LineBasicMaterial({ color: 0xdddddd, linewidth: 2 });
-    const antLen = 85;
-    [Math.PI * 0.25, Math.PI * 0.75, Math.PI * 1.25, Math.PI * 1.75].forEach(ang => {
-        const rootX = Math.cos(ang) * 12.0, rootY = Math.sin(ang) * 12.0, rootZ = -2;
-        const tipX = Math.cos(ang) * (13 + antLen * 0.42), tipY = Math.sin(ang) * (13 + antLen * 0.42), tipZ = -antLen;
-        const pts = [
-            new THREE.Vector3(rootX, rootY, rootZ),
-            new THREE.Vector3(rootX * 1.35, rootY * 1.35, rootZ - 20),
-            new THREE.Vector3(tipX, tipY, tipZ)
-        ];
-        sputnikGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), antMat));
-    });
-
-    sputnikGroup.scale.set(0.85, 0.85, 0.85);
+    sputnikGroup.scale.set(0.9, 0.9, 0.9);
     sputnikGroup.visible = false;
     return sputnikGroup;
-}
-
-const sputnik = createSputnikModel();
+}\n\nconst sputnik = createSputnikModel();
 preScene.add(sputnik);
 
 function playSputnikBeep(volumeRatio = 1.0) {
