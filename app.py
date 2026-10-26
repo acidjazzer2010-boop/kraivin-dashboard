@@ -105,10 +105,10 @@ body { background-color: var(--bg-space); color: var(--text-main); font-family: 
     background: #050508; z-index: 900; overflow: hidden;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
 }
-#preloader-webgl { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 10; }
+#preloader-webgl { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 10; cursor: pointer; }
 
 #preloaderTitle {
-    position: absolute; top: 12%; left: 50%; transform: translateX(-50%);
+    position: absolute; top: 10%; left: 50%; transform: translateX(-50%);
     font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic;
     font-size: clamp(28px, 4vw, 52px); font-weight: 700; letter-spacing: 0.22em;
     color: var(--accent-gold); opacity: 0; z-index: 30; pointer-events: none;
@@ -201,7 +201,7 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
 <body class="selection:bg-[#d4af37] selection:text-black">
 <div class="film-grain"></div>
 
-<!-- ПРЕЛОАДЕР: АСТРОЛЯБИЯ + ПАРЯЩИЕ ИЗОБРАЖЕНИЯ ИЗ РЕПОЗИТОРИЯ -->
+<!-- ПРЕЛОАДЕР: АСТРОЛЯБИЯ + ИНТЕРАКТИВНЫЕ 3D КАРКАСЫ ДА ВИНЧИ -->
 <div id="preloader-stage">
     <canvas id="preloader-webgl"></canvas>
     
@@ -210,7 +210,7 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
     <div id="preloaderHUD">
         <div class="flex items-center gap-3 text-[#d4af37] text-[10px] tracking-[0.25em] uppercase font-mono">
             <span class="pulse-dot"></span>
-            <span id="loaderStatusText">Загрузка чертежей Да Винчи...</span>
+            <span id="loaderStatusText">Трассировка 3D-механизмов Да Винчи...</span>
             <span id="loaderPercent" class="font-bold">0%</span>
         </div>
         <div class="progress-bar-bg mt-1">
@@ -556,7 +556,7 @@ function updatePreloaderProgress(now) {
 requestAnimationFrame(updatePreloaderProgress);
 
 /* =========================================================================
-   THREE.JS ПРЕЛОАДЕР: АСТРОЛЯБИЯ + ПАРЯЩИЕ ИЗОБРАЖЕНИЯ ИЗ GITHUB
+   THREE.JS ПРЕЛОАДЕР: АСТРОЛЯБИЯ + СВОБОДНЫЕ 3D-КАРКАСНЫЕ МОДЕЛИ ДА ВИНЧИ
    ========================================================================= */
 const preCanvas = document.getElementById('preloader-webgl');
 const preRenderer = new THREE.WebGLRenderer({ canvas: preCanvas, alpha: true, antialias: true, preserveDrawingBuffer: true });
@@ -565,7 +565,7 @@ preRenderer.setSize(window.innerWidth, window.innerHeight);
 
 const preScene = new THREE.Scene();
 const preCamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 3500);
-preCamera.position.set(0, 0, 290);
+preCamera.position.set(0, 0, 310);
 
 const preGroup = new THREE.Group();
 preScene.add(preGroup);
@@ -593,171 +593,250 @@ astrolabeRings.push(
     { mesh: aRing3, sx: 0.0031, sy: -0.0026, sz: 0.0018, px: 1.5, py: 3.2 }
 );
 
-// ПРЯМЫЕ ССЫЛКИ НА ИЗОБРАЖЕНИЯ ИЗ РЕПОЗИТОРИЯ GITHUB
-const imagesData = [
-    {
-        url: "https://raw.githubusercontent.com/acidjazzer2010-boop/kraivin-dashboard/main/1000400438.jpg",
-        name: "Витрувианский человек",
-        scale: 75,
-        orbitX: 0, orbitY: 0, orbitZ: 0,
-        speedRot: 0.0015
-    },
-    {
-        url: "https://raw.githubusercontent.com/acidjazzer2010-boop/kraivin-dashboard/main/genio2.webp",
-        name: "Изобретение Да Винчи II",
-        scale: 64,
-        orbitX: -85, orbitY: 20, orbitZ: 100,
-        speedRot: -0.002
-    },
-    {
-        url: "https://raw.githubusercontent.com/acidjazzer2010-boop/kraivin-dashboard/main/genio3.png",
-        name: "Изобретение Да Винчи III",
-        scale: 64,
-        orbitX: 85, orbitY: -15, orbitZ: -80,
-        speedRot: 0.0025
-    }
-];
-
-// Шейдер для фильтрации и подсветки чертежей тонким золотым каркасом
-function createDaVinciImageMaterial(texture) {
+// Шейдер золотого каркаса для тонких линий изобретений Да Винчи
+function createBlueprintLineMaterial() {
     return new THREE.ShaderMaterial({
         uniforms: {
-            tDiffuse: { value: texture },
             uHover: { value: 0.0 },
             uTime: { value: 0.0 }
         },
         vertexShader: `
-            varying vec2 vUv;
+            varying vec3 vPos;
             void main() {
-                vUv = uv;
+                vPos = position;
                 gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
             }
         `,
         fragmentShader: `
-            uniform sampler2D tDiffuse;
             uniform float uHover;
             uniform float uTime;
-            varying vec2 vUv;
-
+            varying vec3 vPos;
             void main() {
-                vec4 tex = texture2D(tDiffuse, vUv);
-                
-                // Выделение контуров и придание благородного золотистого оттенка чертежа
-                float luminance = dot(tex.rgb, vec3(0.299, 0.587, 0.114));
-                vec3 baseGold = vec3(0.92, 0.78, 0.38) * (1.0 - luminance * 0.45);
-                
-                // Тонкая каркасная золотая рамка вокруг полотна
-                float borderX = step(0.015, vUv.x) * step(vUv.x, 0.985);
-                float borderY = step(0.015, vUv.y) * step(vUv.y, 0.985);
-                float borderMask = 1.0 - (borderX * borderY);
-                
-                // Световой импульс при наведении курсора
-                float pulse = sin(uTime * 4.0) * 0.5 + 0.5;
-                vec3 frameGlow = vec3(1.0, 0.9, 0.45) * borderMask * (0.8 + uHover * 1.5 * pulse);
-                
-                vec3 finalColor = mix(baseGold, tex.rgb * 1.2 + vec3(0.2, 0.16, 0.05), uHover * 0.4) + frameGlow;
-                float finalAlpha = clamp(tex.a * 0.92 + borderMask * 0.8 + uHover * 0.15, 0.0, 1.0);
-                
-                gl_FragColor = vec4(finalColor, finalAlpha);
+                // Мягкий бегущий световой импульс по линиям каркаса
+                float wave = sin((vPos.x + vPos.y + vPos.z) * 0.12 - uTime * 4.0) * 0.5 + 0.5;
+                vec3 baseGold = vec3(0.85, 0.71, 0.25);
+                vec3 highlight = vec3(1.0, 0.94, 0.65);
+                vec3 col = mix(baseGold, highlight, wave * 0.4 + uHover * 0.6);
+                float alpha = clamp(0.75 + wave * 0.25 + uHover * 0.25, 0.0, 1.0);
+                gl_FragColor = vec4(col, alpha);
             }
         `,
         transparent: true,
-        depthWrite: false,
-        side: THREE.DoubleSide
+        depthWrite: false
     });
 }
 
-const textureLoader = new THREE.TextureLoader();
-textureLoader.setCrossOrigin("anonymous");
+// 1. ВИТРУВИАНСКИЙ ЧЕЛОВЕК (3D WIREFRAME)
+function buildVitruvianWireframe() {
+    const pts = [];
+    const r = 36;
+    // Описанная окружность
+    for (let i = 0; i <= 64; i++) {
+        const a1 = (i / 64) * Math.PI * 2, a2 = ((i + 1) / 64) * Math.PI * 2;
+        pts.push(new THREE.Vector3(Math.cos(a1) * r, Math.sin(a1) * r, 0));
+        pts.push(new THREE.Vector3(Math.cos(a2) * r, Math.sin(a2) * r, 0));
+    }
+    // Квадрат пропорций
+    const s = 31;
+    const sq = [
+        new THREE.Vector3(-s, -s + 3, 0), new THREE.Vector3(s, -s + 3, 0),
+        new THREE.Vector3(s, -s + 3, 0), new THREE.Vector3(s, s + 3, 0),
+        new THREE.Vector3(s, s + 3, 0), new THREE.Vector3(-s, s + 3, 0),
+        new THREE.Vector3(-s, s + 3, 0), new THREE.Vector3(-s, -s + 3, 0)
+    ];
+    pts.push(...sq);
+    // Голова
+    for (let i = 0; i < 16; i++) {
+        const a1 = (i / 16) * Math.PI * 2, a2 = ((i + 1) / 16) * Math.PI * 2;
+        pts.push(new THREE.Vector3(Math.cos(a1) * 4.2, 20 + Math.sin(a1) * 5.2, 0));
+        pts.push(new THREE.Vector3(Math.cos(a2) * 4.2, 20 + Math.sin(a2) * 5.2, 0));
+    }
+    // Оси торса и конечностей
+    pts.push(new THREE.Vector3(0, 15, 0), new THREE.Vector3(0, -6, 0));
+    pts.push(new THREE.Vector3(-31, 9, 0), new THREE.Vector3(31, 9, 0));
+    pts.push(new THREE.Vector3(0, 13, 0), new THREE.Vector3(-28, 22, 0));
+    pts.push(new THREE.Vector3(0, 13, 0), new THREE.Vector3(28, 22, 0));
+    pts.push(new THREE.Vector3(0, -6, 0), new THREE.Vector3(-10, -31, 0));
+    pts.push(new THREE.Vector3(0, -6, 0), new THREE.Vector3(10, -31, 0));
+    pts.push(new THREE.Vector3(0, -6, 0), new THREE.Vector3(-22, -28, 0));
+    pts.push(new THREE.Vector3(0, -6, 0), new THREE.Vector3(22, -28, 0));
 
-const interactivePlanes = [];
+    const geo = new THREE.BufferGeometry().setFromPoints(pts);
+    return new THREE.LineSegments(geo, createBlueprintLineMaterial());
+}
 
-imagesData.forEach(item => {
-    textureLoader.load(
-        item.url,
-        (texture) => {
-            texture.needsUpdate = true;
-            const aspect = (texture.image && texture.image.height) ? (texture.image.width / texture.image.height) : 1.0;
-            const mat = createDaVinciImageMaterial(texture);
-            
-            const w = item.scale * aspect;
-            const h = item.scale;
-            const geo = new THREE.PlaneGeometry(w, h);
-            const mesh = new THREE.Mesh(geo, mat);
-            
-            mesh.position.set(item.orbitX, item.orbitY, item.orbitZ);
-            preGroup.add(mesh);
-            
-            // Также добавляем тонкий габаритный каркас (wireframe box) вокруг каждого чертежа
-            const wireBox = new THREE.LineSegments(
-                new THREE.EdgesGeometry(new THREE.PlaneGeometry(w * 1.02, h * 1.02)),
-                new THREE.LineBasicMaterial({ color: 0xd4af37, transparent: true, opacity: 0.55 })
-            );
-            mesh.add(wireBox);
-            
-            interactivePlanes.push({
-                mesh: mesh,
-                mat: mat,
-                wireBox: wireBox,
-                basePos: new THREE.Vector3(item.orbitX, item.orbitY, item.orbitZ),
-                targetPos: new THREE.Vector3(item.orbitX, item.orbitY, item.orbitZ),
-                baseScale: 1.0,
-                targetScale: 1.0,
-                speedRot: item.speedRot,
-                isHovered: false
-            });
-        },
-        undefined,
-        (err) => {
-            console.warn("Не удалось загрузить изображение из GitHub:", item.url);
+// 2. ОРНИТОПТЕР / ПТИЦЕКРЫЛ (3D WIREFRAME)
+function buildOrnithopterWireframe() {
+    const pts = [];
+    const spar = [];
+    for (let i = -24; i <= 24; i++) {
+        const x = i * 2.0;
+        const y = Math.sin((i / 24) * Math.PI) * 11 - 4;
+        const z = -Math.cos((i / 24) * Math.PI) * 7;
+        spar.push(new THREE.Vector3(x, y, z));
+    }
+    for (let i = 0; i < spar.length - 1; i++) {
+        pts.push(spar[i], spar[i + 1]);
+    }
+    for (let i = 0; i < spar.length; i += 4) {
+        const p = spar[i];
+        const tip = new THREE.Vector3(p.x * 1.12, p.y - 26 + Math.abs(p.x) * 0.18, p.z + 10);
+        pts.push(p, tip);
+        if (i > 0) {
+            const prevTip = new THREE.Vector3(spar[i - 4].x * 1.12, spar[i - 4].y - 26 + Math.abs(spar[i - 4].x) * 0.18, spar[i - 4].z + 10);
+            pts.push(tip, prevTip);
         }
-    );
+    }
+    const geo = new THREE.BufferGeometry().setFromPoints(pts);
+    return new THREE.LineSegments(geo, createBlueprintLineMaterial());
+}
+
+// 3. ВОЗДУШНЫЙ ВИНТ ДА ВИНЧИ (3D WIREFRAME)
+function buildAerialScrewWireframe() {
+    const pts = [];
+    pts.push(new THREE.Vector3(0, -26, 0), new THREE.Vector3(0, 30, 0));
+    pts.push(new THREE.Vector3(-16, -26, 0), new THREE.Vector3(16, -26, 0));
+    pts.push(new THREE.Vector3(0, -26, -16), new THREE.Vector3(0, -26, 16));
+    
+    const steps = 96;
+    for (let i = 0; i < steps; i++) {
+        const t1 = (i / steps) * Math.PI * 4.5;
+        const t2 = ((i + 1) / steps) * Math.PI * 4.5;
+        const y1 = -18 + (i / steps) * 44;
+        const y2 = -18 + ((i + 1) / steps) * 44;
+        const r1 = 10 + (i / steps) * 14;
+        const r2 = 10 + ((i + 1) / steps) * 14;
+        
+        const p1 = new THREE.Vector3(Math.cos(t1) * r1, y1, Math.sin(t1) * r1);
+        const p2 = new THREE.Vector3(Math.cos(t2) * r2, y2, Math.sin(t2) * r2);
+        pts.push(p1, p2);
+        if (i % 6 === 0) {
+            pts.push(new THREE.Vector3(0, y1, 0), p1);
+        }
+    }
+    const geo = new THREE.BufferGeometry().setFromPoints(pts);
+    return new THREE.LineSegments(geo, createBlueprintLineMaterial());
+}
+
+// 4. САМОНЕСУЩИЙ АРОЧНЫЙ МОСТ (3D WIREFRAME)
+function buildBridgeWireframe() {
+    const pts = [];
+    const r = 38;
+    const num = 10;
+    for (let side = -10; side <= 10; side += 20) {
+        for (let i = 0; i < num; i++) {
+            const a1 = Math.PI * 0.25 + (i / num) * Math.PI * 0.5;
+            const a2 = Math.PI * 0.25 + ((i + 1) / num) * Math.PI * 0.5;
+            pts.push(new THREE.Vector3(Math.cos(a1) * r, Math.sin(a1) * r - 18, side));
+            pts.push(new THREE.Vector3(Math.cos(a2) * r, Math.sin(a2) * r - 18, side));
+        }
+    }
+    for (let i = 0; i <= num; i++) {
+        const a = Math.PI * 0.25 + (i / num) * Math.PI * 0.5;
+        const x = Math.cos(a) * r, y = Math.sin(a) * r - 18;
+        pts.push(new THREE.Vector3(x, y, -10), new THREE.Vector3(x, y, 10));
+        if (i < num) {
+            const nextA = Math.PI * 0.25 + ((i + 1) / num) * Math.PI * 0.5;
+            const nextX = Math.cos(nextA) * r, nextY = Math.sin(nextA) * r - 18;
+            pts.push(new THREE.Vector3(x, y, -10), new THREE.Vector3(nextX, nextY, 10));
+            pts.push(new THREE.Vector3(x, y, 10), new THREE.Vector3(nextX, nextY, -10));
+        }
+    }
+    const geo = new THREE.BufferGeometry().setFromPoints(pts);
+    return new THREE.LineSegments(geo, createBlueprintLineMaterial());
+}
+
+// Сборка массива свободных 3D моделей изобретений на независимых орбитах
+const floatingInventions = [
+    {
+        mesh: buildVitruvianWireframe(),
+        name: "Витрувианский человек",
+        basePos: new THREE.Vector3(0, 0, 0),
+        rotSpeed: new THREE.Vector3(0.001, 0.002, 0.0005)
+    },
+    {
+        mesh: buildOrnithopterWing(),
+        name: "Крыло орнитоптера",
+        basePos: new THREE.Vector3(-85, 22, 95),
+        rotSpeed: new THREE.Vector3(0.0025, 0.0018, -0.0015)
+    },
+    {
+        mesh: buildAerialScrewWireframe(),
+        name: "Воздушный винт",
+        basePos: new THREE.Vector3(85, -16, -75),
+        rotSpeed: new THREE.Vector3(0.001, 0.008, 0.001)
+    },
+    {
+        mesh: buildBridgeWireframe(),
+        name: "Арочный мост",
+        basePos: new THREE.Vector3(70, 26, 175),
+        rotSpeed: new THREE.Vector3(-0.0018, 0.0028, 0.0012)
+    }
+];
+
+// Добавляем модели в группу сцены и навешиваем невидимые хитбоксы для точного наведения курсора
+const hoverTargets = [];
+floatingInventions.forEach((item, idx) => {
+    item.mesh.position.copy(item.basePos);
+    preGroup.add(item.mesh);
+
+    // Невидимый хитбокс для Raycaster
+    const hitGeo = new THREE.SphereGeometry(36, 16, 16);
+    const hitMat = new THREE.MeshBasicMaterial({ visible: false });
+    const hitMesh = new THREE.Mesh(hitGeo, hitMat);
+    hitMesh.position.copy(item.basePos);
+    preGroup.add(hitMesh);
+
+    item.hitMesh = hitMesh;
+    item.targetZ = item.basePos.z;
+    item.targetScale = 1.0;
+    item.isHovered = false;
+    hoverTargets.push(item);
 });
 
-/* RAYCASTER ДЛЯ ВЫДЕЛЕНИЯ ЧЕРТЕЖЕЙ ПРИ НАВЕДЕНИИ КУРСОРА */
+/* RAYCASTER ДЛЯ ИНТЕРАКТИВНОГО ВЫДЕЛЕНИЯ ПРИ НАВЕДЕНИИ КУРСОРА */
 const raycaster = new THREE.Raycaster();
 const mouseVec = new THREE.Vector2(-999, -999);
-let hoveredItem = null;
+let currentHovered = null;
 
 window.addEventListener('mousemove', (e) => {
     mouseVec.x = (e.clientX / window.innerWidth) * 2 - 1;
     mouseVec.y = -(e.clientY / window.innerHeight) * 2 + 1;
 });
 
-function checkHoverInteraction() {
-    if (preloaderDismissed || interactivePlanes.length === 0) return;
-    
+function checkRaycastHover() {
+    if (preloaderDismissed) return;
     raycaster.setFromCamera(mouseVec, preCamera);
-    const meshes = interactivePlanes.map(p => p.mesh);
-    const intersects = raycaster.intersectObjects(meshes, false);
-    
-    interactivePlanes.forEach(plane => {
-        plane.isHovered = false;
-        plane.targetScale = 1.0;
-        // Возвращение на свою орбиту между кольцами
-        plane.targetPos.z = plane.basePos.z;
-        plane.mat.uniforms.uHover.value = THREE.MathUtils.lerp(plane.mat.uniforms.uHover.value, 0.0, 0.1);
-        plane.wireBox.material.opacity = THREE.MathUtils.lerp(plane.wireBox.material.opacity, 0.5, 0.1);
+    const hitMeshes = hoverTargets.map(h => h.hitMesh);
+    const intersects = raycaster.intersectObjects(hitMeshes, false);
+
+    hoverTargets.forEach(item => {
+        item.isHovered = false;
+        item.targetScale = 1.0;
+        item.targetZ = item.basePos.z;
+        if (item.mesh.material && item.mesh.material.uniforms) {
+            item.mesh.material.uniforms.uHover.value = THREE.MathUtils.lerp(item.mesh.material.uniforms.uHover.value, 0.0, 0.1);
+        }
     });
-    
+
     if (intersects.length > 0) {
-        const hitMesh = intersects[0].object;
-        const found = interactivePlanes.find(p => p.mesh === hitMesh);
+        const hit = intersects[0].object;
+        const found = hoverTargets.find(h => h.hitMesh === hit);
         if (found) {
             found.isHovered = true;
-            // Выделение на первый план: выдвижение вперед к камере и увеличение
+            // Выделение на первый план: устремление вперед к камере и масштабирование
             found.targetScale = 1.35;
-            found.targetPos.z = 70; // На первый план
-            found.mat.uniforms.uHover.value = THREE.MathUtils.lerp(found.mat.uniforms.uHover.value, 1.0, 0.2);
-            found.wireBox.material.opacity = 1.0;
-            
-            if (hoveredItem !== found) {
+            found.targetZ = 65; 
+            if (found.mesh.material && found.mesh.material.uniforms) {
+                found.mesh.material.uniforms.uHover.value = THREE.MathUtils.lerp(found.mesh.material.uniforms.uHover.value, 1.0, 0.2);
+            }
+            if (currentHovered !== found) {
                 playClickSound(1800, 0.015);
-                hoveredItem = found;
+                currentHovered = found;
             }
         }
     } else {
-        hoveredItem = null;
+        currentHovered = null;
     }
 }
 
@@ -860,34 +939,39 @@ function animatePreloader() {
         item.mesh.rotation.z += item.sz + Math.sin(t * 0.25) * 0.0006;
     });
 
-    // Интерактивный фокус Raycaster при наведении
-    checkHoverInteraction();
+    // Проверка наведения курсора для выделения на первый план
+    checkRaycastHover();
 
-    // Свободный 3D полет и плавное движение чертежей между кольцами
-    interactivePlanes.forEach((plane, idx) => {
-        if (!plane.isHovered) {
-            // Естественный космический дрейф
-            plane.mesh.position.y = plane.basePos.y + Math.sin(t * 1.2 + idx * 2.0) * 8.0;
-            plane.mesh.position.x = plane.basePos.x + Math.cos(t * 0.9 + idx * 1.5) * 6.0;
-            plane.mesh.rotation.y += plane.speedRot;
-            plane.mesh.rotation.x = Math.sin(t * 0.8 + idx) * 0.08;
+    // Свободный 3D-дрейф и анимация моделей изобретений между кольцами
+    hoverTargets.forEach((item, idx) => {
+        if (!item.isHovered) {
+            item.mesh.position.y = item.basePos.y + Math.sin(t * 1.3 + idx * 1.6) * 7.0;
+            item.mesh.position.x = item.basePos.x + Math.cos(t * 0.9 + idx * 1.3) * 5.0;
+            item.mesh.rotation.x += item.rotSpeed.x;
+            item.mesh.rotation.y += item.rotSpeed.y;
+            item.mesh.rotation.z += item.rotSpeed.z;
         } else {
-            // Плавное выравнивание лицом к камере при наведении
-            plane.mesh.rotation.y = THREE.MathUtils.lerp(plane.mesh.rotation.y, 0, 0.1);
-            plane.mesh.rotation.x = THREE.MathUtils.lerp(plane.mesh.rotation.x, 0, 0.1);
+            // Выравнивание перед зрителем при ховере
+            item.mesh.rotation.x = THREE.MathUtils.lerp(item.mesh.rotation.x, 0, 0.1);
+            item.mesh.rotation.y = THREE.MathUtils.lerp(item.mesh.rotation.y, 0, 0.1);
         }
+
+        // Плавная интерполяция координаты Z и масштаба
+        item.mesh.position.z = THREE.MathUtils.lerp(item.mesh.position.z, item.targetZ, 0.08);
+        item.hitMesh.position.copy(item.mesh.position);
         
-        // Плавная интерполяция позиции Z (на первый план и обратно)
-        plane.mesh.position.z = THREE.MathUtils.lerp(plane.mesh.position.z, plane.targetPos.z, 0.08);
-        
-        // Плавное масштабирование
-        const s = THREE.MathUtils.lerp(plane.mesh.scale.x, plane.targetScale, 0.1);
-        plane.mesh.scale.set(s, s, s);
-        
-        if (plane.mat && plane.mat.uniforms) {
-            plane.mat.uniforms.uTime.value = t;
+        const sc = THREE.MathUtils.lerp(item.mesh.scale.x, item.targetScale, 0.1);
+        item.mesh.scale.set(sc, sc, sc);
+
+        if (item.mesh.material && item.mesh.material.uniforms) {
+            item.mesh.material.uniforms.uTime.value = t;
         }
     });
+
+    // Медленное плавное покачивание камеры
+    preCamera.position.x = Math.sin(t * 0.4) * 10.0;
+    preCamera.position.y = Math.cos(t * 0.35) * 7.0;
+    preCamera.lookAt(0, 0, 0);
     
     preRenderer.clear();
     preRenderer.render(preScene, preCamera);
