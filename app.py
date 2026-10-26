@@ -93,7 +93,7 @@ button:focus:not(:focus-visible){outline:none}
 
 #exploreBtnWrapper{position:absolute;opacity:0;pointer-events:none;transition:opacity .6s cubic-bezier(.19,1,.22,1),transform .6s cubic-bezier(.19,1,.22,1);transform:translateY(8px);display:flex;gap:10px}
 #exploreBtnWrapper.active{opacity:1;pointer-events:auto;transform:translateY(0)}
-.explore-btn{padding:12px 32px;background:rgba(13,13,18,.9);border:1px solid rgba(212,175,55,.95);color:#f4f1ea;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.32em;text-transform:uppercase;cursor:pointer;backdrop-filter:blur(14px);overflow:hidden;transition:all .3s;box-shadow:0 0 40px rgba(212,175,55,.35),inset 0 0 16px rgba(212,175,55,.18)}
+.explore-btn{padding:12px 34px;background:rgba(13,13,18,.9);border:1px solid rgba(212,175,55,.95);color:#f4f1ea;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.32em;text-transform:uppercase;cursor:pointer;backdrop-filter:blur(14px);overflow:hidden;transition:all .3s;box-shadow:0 0 40px rgba(212,175,55,.35),inset 0 0 16px rgba(212,175,55,.18)}
 .explore-btn:hover{border-color:#ffd700;color:#ffd700;box-shadow:0 0 60px rgba(212,175,55,.7),inset 0 0 24px rgba(212,175,55,.35);transform:scale(1.04)}
 
 .preset-btn{padding:12px 18px;background:rgba(212,175,55,0.12);border:1px solid var(--accent-gold);color:var(--accent-gold);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;backdrop-filter:blur(10px);transition:all .3s}
@@ -131,7 +131,7 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
 <body class="selection:bg-[#d4af37] selection:text-black">
 <div class="film-grain" aria-hidden="true"></div>
 
-<!-- ПРЕЛОАДЕР С ЧАСТИЦАМИ И СМЫСЛОВЫМИ ПРЕСЕТАМИ -->
+<!-- ПРЕЛОАДЕР: АСТРОЛЯБИЯ + МЕХАНИЧЕСКАЯ ИРИСОВАЯ ДИАФРАГМА -->
 <div id="preloader-stage">
     <canvas id="preloader-webgl"></canvas>
     
@@ -163,7 +163,7 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
             </div>
             <div id="exploreBtnWrapper">
                 <button id="applyPresetBtn" onclick="applySelectedPresetAndEnter(event)" class="preset-btn">Применить пресет</button>
-                <button id="exploreBtn" onclick="triggerLiquidTransition(event)" class="explore-btn">Исследовать</button>
+                <button id="exploreBtn" onclick="triggerIrisShutterTransition(event)" class="explore-btn">Исследовать</button>
             </div>
         </div>
     </div>
@@ -371,7 +371,6 @@ const USER_IMAGES = [
     "__IMG_4__"
 ];
 
-/* СМЫСЛОВЫЕ ПРЕСЕТЫ МОДЕЛИ ДА ВИНЧИ */
 const BLUEPRINT_PRESETS = [
     {
         name: "Тяга и масштабирование",
@@ -436,7 +435,6 @@ function playClickSound(freq = 1200, duration = 0.02) {
     } catch (e) {}
 }
 
-/* НИЗКОЧАСТОТНЫЙ РОКОТ ШЕСТЕРЕН ДА ВИНЧИ ПРИ СВАЙПАХ */
 function playGearDroneSound() {
     try {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -449,6 +447,22 @@ function playGearDroneSound() {
         gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.28);
         osc.connect(gain); gain.connect(audioCtx.destination);
         osc.start(); osc.stop(audioCtx.currentTime + 0.28);
+    } catch (e) {}
+}
+
+/* ЗВУК ЗАТВОРА КАМЕРЫ-ОБСКУРЫ */
+function playIrisShutterSound() {
+    try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(140, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.35);
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.35);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.35);
     } catch (e) {}
 }
 
@@ -480,7 +494,7 @@ function dismissPreloader() {
             preRenderer.dispose(); preRenderer.forceContextLoss();
             snapshotTarget.dispose();
         } catch (e) {}
-    }, 1350);
+    }, 1450);
 }
 
 const PRELOADER_TOTAL_TIME = REDUCE_MOTION ? 1200 : 9000;
@@ -525,7 +539,7 @@ preCamera.position.copy(targetCamPos);
 const preGroup = new THREE.Group();
 preScene.add(preGroup);
 
-/* 1. ЗОЛОТАЯ ВЗВЕСЬ ЧАСТИЦ ПЫЛИ (DUST MOTES) */
+/* ЗОЛОТАЯ ВЗВЕСЬ ЧАСТИЦ */
 const particleCount = 450;
 const particleGeo = new THREE.BufferGeometry();
 const particlePos = new Float32Array(particleCount * 3);
@@ -548,7 +562,6 @@ preGroup.add(dustParticles);
 const megaRingWireMat = new THREE.MeshBasicMaterial({ color: 0x00c3ff, wireframe: true, transparent: true, opacity: 0.38 });
 const secondaryWireMat = new THREE.MeshBasicMaterial({ color: 0x0077aa, wireframe: true, transparent: true, opacity: 0.22 });
 
-/* ЦИКЛОПИЧЕСКИЕ КОЛЬЦА БЕЗ АРТЕФАКТОВ */
 function createCyclopeanTrussRing(mainRadius, tubeWidth, tubeDepth, segments) {
     const group = new THREE.Group();
     group.add(new THREE.Mesh(new THREE.TorusGeometry(mainRadius, tubeWidth * 0.45, 12, segments), megaRingWireMat));
@@ -762,12 +775,10 @@ function focusSlide(idx) {
     if (idx < 0 || idx >= hoverTargets.length) return;
     currentSlideIndex = idx;
     
-    /* 1. Тактильный отклик (Haptic Feedback) */
     if (navigator.vibrate) {
         try { navigator.vibrate(12); } catch (_) {}
     }
     
-    /* 2. Звуковой отклик шестерней */
     playClickSound(1800, 0.015);
     playGearDroneSound();
     
@@ -826,10 +837,10 @@ window.applySelectedPresetAndEnter = function(e) {
         BLUEPRINT_PRESETS[currentSlideIndex].apply();
         runCalculation();
     }
-    triggerLiquidTransition(e);
+    triggerIrisShutterTransition(e);
 };
 
-/* СЕНСОРНЫЙ СВАЙП */
+/* TOUCH SWIPE */
 let touchStartX = 0, touchStartY = 0;
 window.addEventListener('touchstart', (e) => {
     if (e.touches.length > 0) {
@@ -874,69 +885,116 @@ function checkRaycastHover() {
     }
 }
 
-/* ЖИДКИЙ ПЕРЕХОД (RIPPLE) */
-let isRippling = false;
-let rippleScene, rippleCamera, rippleMaterial, rippleTime = 0;
+/* =========================================================================
+   НОВЫЙ ТРАНЗИШН: ДИАФРАГМА КАМЕРЫ-ОБСКУРЫ (MECHANICAL IRIS SHUTTER)
+   ========================================================================= */
+let isIrisTransition = false;
+let irisScene, irisCamera, irisMaterial, irisTime = 0;
 const snapshotTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight);
 
-function triggerLiquidTransition(event) {
-    if (isRippling) return;
-    isRippling = true;
-    playClickSound(800, 0.08);
-
-    const rect = event.target.getBoundingClientRect();
-    const clickX = (rect.left + rect.width / 2) / window.innerWidth;
-    const clickY = 1.0 - ((rect.top + rect.height / 2) / window.innerHeight);
+function triggerIrisShutterTransition(event) {
+    if (isIrisTransition) return;
+    isIrisTransition = true;
+    
+    // Звуковой запуск: вращение колец + захлопывание латунного затвора
+    playGearDroneSound();
+    playIrisShutterSound();
 
     const hud = document.querySelector('.preloader-fixed-hud');
-    if (hud) { hud.style.transition = 'opacity 0.35s ease'; hud.style.opacity = '0'; }
+    if (hud) { 
+        hud.style.transition = 'opacity 0.25s ease'; 
+        hud.style.opacity = '0'; 
+    }
 
+    // Сохранение текущего кадра сцены
     preRenderer.setRenderTarget(snapshotTarget);
     preRenderer.clear();
     preRenderer.render(preScene, preCamera);
     preRenderer.setRenderTarget(null);
 
-    rippleScene = new THREE.Scene();
-    rippleCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    irisScene = new THREE.Scene();
+    irisCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-    rippleMaterial = new THREE.ShaderMaterial({
+    // Шейдер 12-лепестковой латунной ирисовой диафрагмы эпохи Галилея
+    irisMaterial = new THREE.ShaderMaterial({
         uniforms: {
             tDiffuse: { value: snapshotTarget.texture },
-            uCenter: { value: new THREE.Vector2(clickX, clickY) },
             uProgress: { value: 0.0 },
-            uAspect: { value: window.innerWidth / window.innerHeight }
+            uAspect: { value: window.innerWidth / window.innerHeight },
+            uTime: { value: 0.0 }
         },
-        vertexShader: `varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position,1.0);}`,
+        vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position, 1.0); }`,
         fragmentShader: `
             uniform sampler2D tDiffuse;
-            uniform vec2 uCenter;
             uniform float uProgress;
             uniform float uAspect;
+            uniform float uTime;
             varying vec2 vUv;
+
+            #define BLADES 12.0
+            #define PI 3.14159265359
+
             void main() {
-                vec2 uv = vUv;
-                vec2 aspectAdjustedUV = vec2(uv.x * uAspect, uv.y);
-                vec2 aspectAdjustedCenter = vec2(uCenter.x * uAspect, uCenter.y);
-                float dist = distance(aspectAdjustedUV, aspectAdjustedCenter);
-                float waveRadius = uProgress * 2.5;
-                float waveWidth = 0.40;
-                float waveFactor = smoothstep(waveRadius - waveWidth, waveRadius, dist) * smoothstep(waveRadius + waveWidth, waveRadius, dist);
-                float wave = sin((dist - waveRadius) * 36.0) * waveFactor * (1.0 - uProgress);
-                vec2 dir = normalize(aspectAdjustedUV - aspectAdjustedCenter + 0.0001);
-                vec2 offsetR = dir * wave * 0.09;
-                vec2 offsetG = dir * wave * 0.07;
-                vec2 offsetB = dir * wave * 0.05;
-                float r = texture2D(tDiffuse, uv + offsetR).r;
-                float g = texture2D(tDiffuse, uv + offsetG).g;
-                float b = texture2D(tDiffuse, uv + offsetB).b;
-                float fadeOut = smoothstep(0.0, 0.95, uProgress);
-                gl_FragColor = vec4(r, g, b, (1.0 - fadeOut));
+                vec2 p = vUv - 0.5;
+                p.x *= uAspect;
+                float r = length(p);
+                float theta = atan(p.y, p.x);
+
+                // Фаза 1: Схлопывание лепестков затвора (0.0 -> 0.75)
+                // Фаза 2: Оптическая вспышка и раскрытие (0.75 -> 1.0)
+                float closeProgress = smoothstep(0.0, 0.72, uProgress);
+                float flashProgress = smoothstep(0.72, 1.0, uProgress);
+
+                // Кинематическое закручивание лепестков по спирали
+                float twist = theta + closeProgress * 2.8;
+                float bladePattern = cos(twist * BLADES);
+                
+                // Апертура диафрагмы: от полного экрана до точки
+                float aperture = (1.0 - closeProgress) * 1.35;
+                float bladeEdge = aperture + bladePattern * 0.08 * (1.0 - closeProgress);
+
+                vec4 sceneCol = texture2D(tDiffuse, vUv);
+
+                // Латунная текстура лепестков диафрагмы
+                vec3 brassDark = vec3(0.08, 0.07, 0.04);
+                vec3 brassGold = vec3(0.85, 0.71, 0.25);
+                vec3 brassEdge = vec3(1.0, 0.92, 0.65);
+
+                // Линии гравировки на лепестках
+                float rib = smoothstep(0.85, 0.98, sin(twist * BLADES * 2.0));
+                vec3 bladeColor = mix(brassDark, brassGold, 0.25 + rib * 0.35);
+
+                // Окантовка лезвий
+                float edgeGlow = smoothstep(bladeEdge - 0.02, bladeEdge, r) * smoothstep(bladeEdge + 0.02, bladeEdge, r);
+
+                vec3 col;
+                float alpha = 1.0;
+
+                if (r > bladeEdge) {
+                    // Зона закрывающихся механических лепестков
+                    col = bladeColor + edgeGlow * brassEdge * 1.5;
+                } else {
+                    // Видимая зона через апертуру
+                    col = sceneCol.rgb;
+                    col += edgeGlow * brassEdge * 2.0; // отблеск на границе среза линзы
+                }
+
+                // Фокальная оптическая вспышка в момент полного смыкания
+                if (uProgress > 0.65 && uProgress < 0.85) {
+                    float burst = 1.0 - abs(uProgress - 0.75) / 0.10;
+                    col += vec3(1.0, 0.95, 0.75) * burst * 2.2;
+                }
+
+                // Плавное растворение затвора в дашборд
+                alpha = 1.0 - flashProgress;
+
+                gl_FragColor = vec4(col, alpha);
             }
         `,
         transparent: true
     });
 
-    rippleScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), rippleMaterial));
+    irisScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), irisMaterial));
 }
 
 function animatePreloader() {
@@ -946,21 +1004,32 @@ function animatePreloader() {
     const elapsed = performance.now() - preloaderStartTime;
     const t = elapsed * 0.001;
 
-    if (isRippling) {
-        rippleTime += 0.016;
-        const ripProgress = Math.min(rippleTime / 1.3, 1.0);
-        rippleMaterial.uniforms.uProgress.value = ripProgress;
+    // ОБРАБОТКА МЕХАНИЧЕСКОЙ ДИАФРАГМЫ ПРИ ВЫХОДЕ
+    if (isIrisTransition) {
+        irisTime += 0.016;
+        const transProgress = Math.min(irisTime / 1.35, 1.0);
+        irisMaterial.uniforms.uProgress.value = transProgress;
+        irisMaterial.uniforms.uTime.value = t;
+
+        // Кольца астролябии ускоряются и стягиваются в точку
+        preGroup.scale.multiplyScalar(0.96);
+        astrolabeRings.forEach(item => {
+            item.group.rotation.x += item.sx * 6.0;
+            item.group.rotation.y += item.sy * 6.0;
+        });
+
         preRenderer.clear();
-        preRenderer.render(rippleScene, rippleCamera);
-        if (ripProgress >= 1.0) dismissPreloader();
+        preRenderer.render(irisScene, irisCamera);
+
+        if (transProgress >= 1.0) {
+            dismissPreloader();
+        }
         return;
     }
 
-    /* Броуновское движение золотой пыли */
     dustParticles.rotation.y = t * 0.02;
     dustParticles.rotation.x = Math.sin(t * 0.015) * 0.1;
 
-    /* Глубина резкости: притухание колец при фокусе на чертеже */
     const isFocused = currentSlideIndex !== -1;
     const ringTargetOpacity = isFocused ? 0.12 : 0.38;
     megaRingWireMat.opacity = THREE.MathUtils.lerp(megaRingWireMat.opacity, ringTargetOpacity, 0.05);
@@ -1286,7 +1355,6 @@ function exportDataToCsv() {
     URL.revokeObjectURL(url);
 }
 
-/* ГЕНЕРАЦИЯ МЕМОРАНДУМА ДЛЯ ИНВЕСТОРОВ И БАНКОВ */
 function generateExecutiveMemo() {
     playClickSound(1800, 0.04);
     if (!latestCalculatedData) return;
