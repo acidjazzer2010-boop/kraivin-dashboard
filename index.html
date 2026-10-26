@@ -364,10 +364,6 @@ const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matc
 const USER_IMAGES = typeof __JSON_IMAGES_PAYLOAD__ !== 'undefined' ? __JSON_IMAGES_PAYLOAD__ : [];
 
 /* =========================================================================
-   АВТОНОМНЫЙ ЗВУКОВОЙ МОДУЛЬ: RENAISSANCE CATHEDRAL SOUNDSCAPE
-   ========================================================================= */
-
-/* =========================================================================
    СТАБИЛИЗИРОВАННЫЙ RENAISSANCE WEB AUDIO ДВИЖОК С ЛИМИТЕРОМ И УПРАВЛЕНИЕМ ФОНОМ
    ========================================================================= */
 class RenaissanceSoundscapeEngine {
@@ -378,13 +374,12 @@ class RenaissanceSoundscapeEngine {
         this.masterGain = null;
         this.limiter = null;
         this.activeVoices = 0;
-        this.maxVoices = 2; // Строгий лимит голосов для предотвращения искажений
+        this.maxVoices = 2;
         this.scale = [146.83, 164.81, 174.61, 196.00, 220.00, 246.94, 261.63, 293.66, 329.63];
         this.setupVisibilityListener();
     }
 
     setupVisibilityListener() {
-        // Защита от зависания и вылезания звука за пределы вкладки
         document.addEventListener('visibilitychange', () => {
             if (!this.ctx) return;
             if (document.hidden) {
@@ -400,7 +395,6 @@ class RenaissanceSoundscapeEngine {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         this.ctx = new AudioContextClass({ latencyHint: 'playback' });
 
-        // Мастер-лимитер/компрессор (предотвращает клиппинг, треск и перегрузку)
         this.limiter = this.ctx.createDynamicsCompressor();
         this.limiter.threshold.setValueAtTime(-12, this.ctx.currentTime);
         this.limiter.knee.setValueAtTime(30, this.ctx.currentTime);
@@ -413,13 +407,11 @@ class RenaissanceSoundscapeEngine {
         this.masterGain.gain.setValueAtTime(0.22, this.ctx.currentTime);
         this.masterGain.connect(this.limiter);
 
-        // Теплый срез верхних частот
         this.warmthFilter = this.ctx.createBiquadFilter();
         this.warmthFilter.type = 'lowpass';
         this.warmthFilter.frequency.setValueAtTime(950, this.ctx.currentTime);
         this.warmthFilter.Q.setValueAtTime(1.0, this.ctx.currentTime);
 
-        // Компактный и легкий импульс собора (3.2 сек вместо тяжелых 5.5 сек)
         this.convolver = this.ctx.createConvolver();
         this.convolver.buffer = this.buildCathedralImpulse(3.2, 1.8);
 
@@ -451,7 +443,7 @@ class RenaissanceSoundscapeEngine {
         if (!this.ctx || this.droneStarted) return;
         this.droneStarted = true;
 
-        const roots = [73.42, 110.00]; // D2, A2
+        const roots = [73.42, 110.00];
         roots.forEach(freq => {
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
@@ -477,7 +469,6 @@ class RenaissanceSoundscapeEngine {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(freq, now);
 
-        // Мягкая бесклиппинговая огибающая
         voiceGain.gain.setValueAtTime(0.0001, now);
         voiceGain.gain.linearRampToValueAtTime(0.065, now + 1.8);
         voiceGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
@@ -573,7 +564,6 @@ function toggleRenaissanceAmbient() {
     }
 }
 
-
 const BLUEPRINT_PRESETS = [
     {
         name: "Тяга и масштабирование",
@@ -644,8 +634,7 @@ function playCathedralFocusTone() {
         const ctx = renaissanceAudio.ctx;
         if (ctx.state === 'suspended') ctx.resume();
         
-        // Гармонический священный трезвучный аккорд D-moll
-        const freqs = [146.83, 174.61, 220.00, 293.66]; // D3, F3, A3, D4
+        const freqs = [146.83, 174.61, 220.00, 293.66];
         freqs.forEach((f, idx) => {
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
@@ -673,7 +662,6 @@ function playGearSpinUpSound(duration = 6.8) {
         const osc = ctx.createOscillator(), gain = ctx.createGain();
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(38, ctx.currentTime);
-        // Неспешный, монументальный рокот священных астрономических колес
         osc.frequency.exponentialRampToValueAtTime(180, ctx.currentTime + duration * 0.92);
         gain.gain.setValueAtTime(0.008, ctx.currentTime);
         gain.gain.linearRampToValueAtTime(0.038, ctx.currentTime + duration * 0.85);
@@ -760,7 +748,6 @@ preCamera.position.copy(targetCamPos);
 const preGroup = new THREE.Group();
 preScene.add(preGroup);
 
-/* ЗОЛОТАЯ ВЗВЕСЬ ЧАСТИЦ */
 const particleCount = 450;
 const particleGeo = new THREE.BufferGeometry();
 const particlePos = new Float32Array(particleCount * 3);
@@ -783,9 +770,6 @@ preGroup.add(dustParticles);
 const megaRingWireMat = new THREE.MeshBasicMaterial({ color: 0x00c3ff, wireframe: true, transparent: true, opacity: 0.38 });
 const secondaryWireMat = new THREE.MeshBasicMaterial({ color: 0x0077aa, wireframe: true, transparent: true, opacity: 0.22 });
 
-/* =========================================================================
-   ГЕНЕРАЦИЯ ДИСКОВ СУДЬБЫ НОСТРАДАМУСА И РЕНЕССАНСНЫХ ЛАТИНСКИХ КАТРЕНОВ
-   ========================================================================= */
 const NOSTRADAMUS_PROPHECIES = [
     {
         innerRing: "ROTA FORTUNAE • FATORUM ORBIS • CENTURIA I • OMNIA FLUXUS",
@@ -815,7 +799,6 @@ function createNostradamusDiskTexture(dataIdx) {
 
     const cx = size / 2, cy = size / 2;
 
-    // Гравированные концентрические линии армиллярного круга судьбы
     ctx.strokeStyle = 'rgba(212, 175, 55, 0.45)';
     ctx.lineWidth = 3;
     ctx.beginPath();
@@ -825,7 +808,6 @@ function createNostradamusDiskTexture(dataIdx) {
     ctx.arc(cx, cy, size * 0.29, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Засечки астролябии и градусные шкалы
     for (let i = 0; i < 144; i++) {
         const ang = (i / 144) * Math.PI * 2;
         const isMajor = (i % 12 === 0);
@@ -860,13 +842,8 @@ function createNostradamusDiskTexture(dataIdx) {
         }
     }
 
-    // Внешнее кольцо: великие пророчества и катрены Нострадамуса
     drawCurvedText(data.outerRing, size * 0.435, 'italic 600 25px "Cormorant Garamond", Georgia, serif', '#ffd700');
-
-    // Среднее кольцо: зодиакальный круг и алхимические символы
     drawCurvedText(data.zodiac, size * 0.38, '400 24px "JetBrains Mono", monospace', 'rgba(244, 241, 234, 0.8)');
-
-    // Внутреннее кольцо: священный девиз Колеса Судьбы
     drawCurvedText(data.innerRing, size * 0.32, 'italic 700 26px "Cormorant Garamond", Georgia, serif', '#d4af37');
 
     const tex = new THREE.CanvasTexture(canvas);
@@ -878,7 +855,6 @@ function createCyclopeanTrussRing(mainRadius, tubeWidth, tubeDepth, segments, no
     const group = new THREE.Group();
     group.add(new THREE.Mesh(new THREE.TorusGeometry(mainRadius, tubeWidth * 0.45, 12, segments), megaRingWireMat));
     
-    // Плоский гравированный диск Колеса Судьбы внутри кольца
     const diskGeo = new THREE.RingGeometry(mainRadius - tubeWidth * 2.5, mainRadius + tubeWidth * 2.2, 96);
     const diskMat = new THREE.MeshBasicMaterial({
         map: createNostradamusDiskTexture(nostradamusIdx),
@@ -953,32 +929,19 @@ astrolabeRings.push(
     { group: aRing3, sx: 0.00060, sy: -0.00050, sz: 0.00035, px: 1.5, py: 3.2, dir: 1.0 }
 );
 
-
-/* =========================================================================
-   ПАСХАЛКА: СПУТНИК-1 (СССР), ПРОЛЕТАЮЩИЙ СКВОЗЬ КОЛЬЦА
-   ========================================================================= */
 function createSputnikModel() {
     const sputnikGroup = new THREE.Group();
-
-    // 1. Полированная сферическая оболочка Спутника (алюминиево-титановый сплав АМг6)
     const sphereGeo = new THREE.SphereGeometry(14, 32, 32);
-    const sphereMat = new THREE.MeshStandardMaterial({
-        color: 0xcccccc,
-        metalness: 0.95,
-        roughness: 0.15,
-        wireframe: false
-    });
+    const sphereMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.95, roughness: 0.15 });
     const sphereMesh = new THREE.Mesh(sphereGeo, sphereMat);
     sputnikGroup.add(sphereMesh);
 
-    // Золотистый экваториальный стыковочный пояс
     const beltGeo = new THREE.TorusGeometry(14.2, 0.45, 12, 48);
     const beltMat = new THREE.MeshBasicMaterial({ color: 0xd4af37 });
     const beltMesh = new THREE.Mesh(beltGeo, beltMat);
     beltMesh.rotation.x = Math.PI / 2;
     sputnikGroup.add(beltMesh);
 
-    // Рубиновый мерцающий маяк-индикатор радиопередатчика
     const beaconGeo = new THREE.SphereGeometry(1.6, 12, 12);
     const beaconMat = new THREE.MeshBasicMaterial({ color: 0xff2222 });
     const beaconMesh = new THREE.Mesh(beaconGeo, beaconMat);
@@ -986,34 +949,13 @@ function createSputnikModel() {
     sputnikGroup.add(beaconMesh);
     sputnikGroup.beaconMesh = beaconMesh;
 
-    // 2. Четыре длинные антенны (усы Спутника), отведенные назад под углом 35 градусов
-    const antMat = new THREE.LineBasicMaterial({ color: 0xdddddd, linewidth: 2 });
+    const antMat = new THREE.LineBasicMaterial({ color: 0xdddddd });
     const antennaLength = 65;
-    const angles = [
-        Math.PI * 0.25,
-        Math.PI * 0.75,
-        Math.PI * 1.25,
-        Math.PI * 1.75
-    ];
-
-    angles.forEach(ang => {
-        const rootX = Math.cos(ang) * 13.5;
-        const rootY = Math.sin(ang) * 13.5;
-        const rootZ = -3;
-
-        // Концы антенн уходят назад по Z с легким изгибом
-        const tipX = Math.cos(ang) * (14 + antennaLength * 0.45);
-        const tipY = Math.sin(ang) * (14 + antennaLength * 0.45);
-        const tipZ = -antennaLength;
-
-        const curvePts = [
-            new THREE.Vector3(rootX, rootY, rootZ),
-            new THREE.Vector3(rootX * 1.4, rootY * 1.4, rootZ - 18),
-            new THREE.Vector3(tipX, tipY, tipZ)
-        ];
-        const antGeo = new THREE.BufferGeometry().setFromPoints(curvePts);
-        const antLine = new THREE.Line(antGeo, antMat);
-        sputnikGroup.add(antLine);
+    [Math.PI * 0.25, Math.PI * 0.75, Math.PI * 1.25, Math.PI * 1.75].forEach(ang => {
+        const rootX = Math.cos(ang) * 13.5, rootY = Math.sin(ang) * 13.5, rootZ = -3;
+        const tipX = Math.cos(ang) * (14 + antennaLength * 0.45), tipY = Math.sin(ang) * (14 + antennaLength * 0.45), tipZ = -antennaLength;
+        const curvePts = [new THREE.Vector3(rootX, rootY, rootZ), new THREE.Vector3(rootX * 1.4, rootY * 1.4, rootZ - 18), new THREE.Vector3(tipX, tipY, tipZ)];
+        sputnikGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(curvePts), antMat));
     });
 
     sputnikGroup.scale.set(0.65, 0.65, 0.65);
@@ -1024,23 +966,18 @@ function createSputnikModel() {
 const sputnik = createSputnikModel();
 preScene.add(sputnik);
 
-// Синтез легендарного бип-сигнала Спутника-1 (20.005 МГц)
 function playSputnikBeep() {
     try {
-        if (!renaissanceAudio.ctx) return;
+        if (!renaissanceAudio.ctx || renaissanceAudio.ctx.state !== 'running') return;
         const ctx = renaissanceAudio.ctx;
-        if (ctx.state !== 'running') return;
-
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
         osc.frequency.setValueAtTime(1080, ctx.currentTime);
-
         gain.gain.setValueAtTime(0.0001, ctx.currentTime);
         gain.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 0.02);
         gain.gain.setValueAtTime(0.04, ctx.currentTime + 0.18);
         gain.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + 0.22);
-
         osc.connect(gain);
         gain.connect(renaissanceAudio.masterGain || ctx.destination);
         osc.start();
@@ -1049,28 +986,14 @@ function playSputnikBeep() {
     } catch (_) {}
 }
 
-let sputnikFlight = {
-    active: false,
-    startTime: 0,
-    duration: 11.5, // Медленный, величавый 11.5-секундный полет
-    startP: new THREE.Vector3(),
-    endP: new THREE.Vector3(),
-    lastBeep: 0
-};
+let sputnikFlight = { active: false, startTime: 0, duration: 11.5, startP: new THREE.Vector3(), endP: new THREE.Vector3(), lastBeep: 0 };
 
 function launchSputnik() {
     if (preloaderDismissed || isObscuraTransition || sputnikFlight.active) return;
-    
-    // Рандомные точки влета и вылета сквозь кольца (Z от дальнего плана к ближнему)
     const sideX = (Math.random() - 0.5) * 450;
     const sideY = (Math.random() - 0.5) * 320;
     sputnikFlight.startP.set(sideX, sideY, -750);
-
-    // Точка выхода далеко за гранями экрана на передний план
-    const outX = -sideX * 1.3 + (Math.random() - 0.5) * 150;
-    const outY = -sideY * 1.3 + (Math.random() - 0.5) * 150;
-    sputnikFlight.endP.set(outX, outY, 700);
-
+    sputnikFlight.endP.set(-sideX * 1.3 + (Math.random() - 0.5) * 150, -sideY * 1.3 + (Math.random() - 0.5) * 150, 700);
     sputnikFlight.active = true;
     sputnikFlight.startTime = performance.now();
     sputnikFlight.lastBeep = performance.now();
@@ -1078,124 +1001,72 @@ function launchSputnik() {
     sputnik.position.copy(sputnikFlight.startP);
 }
 
-// Контроль бездействия: 30 секунд первый запуск, затем каждые 60 секунд
-let lastUserInteraction = performance.now();
-['mousemove', 'click', 'touchstart', 'keydown'].forEach(evt => {
-    window.addEventListener(evt, () => {
-        lastUserInteraction = performance.now();
-    }, { passive: true });
-});
-
 let sputnikTimerStarted = false;
 function checkSputnikScheduler(now) {
     if (preloaderDismissed || isObscuraTransition) return;
     const idleTime = (now - preloaderStartTime) * 0.001;
-    
-    // Первый старт на 30-й секунде
     if (idleTime >= 30 && !sputnikTimerStarted) {
         sputnikTimerStarted = true;
         launchSputnik();
         setInterval(() => {
-            if (!preloaderDismissed && !isObscuraTransition) {
-                launchSputnik();
-            }
+            if (!preloaderDismissed && !isObscuraTransition) launchSputnik();
         }, 60000);
     }
 }
 
-
-
-
 function createDaVinciHoloMaterial(texture) {
     return new THREE.ShaderMaterial({
-        uniforms: {
-            uTex: { value: texture },
-            uHover: { value: 0.0 },
-            uTime: { value: 0.0 }
-        },
-        vertexShader: `
-            varying vec2 vUv;
-            void main() {
-                vUv = uv;
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-            }
-        `,
+        uniforms: { uTex: { value: texture }, uHover: { value: 0.0 }, uTime: { value: 0.0 } },
+        vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
         fragmentShader: `
-            uniform sampler2D uTex;
-            uniform float uHover;
-            uniform float uTime;
-            varying vec2 vUv;
+            uniform sampler2D uTex; uniform float uHover; uniform float uTime; varying vec2 vUv;
             void main() {
                 vec4 tex = texture2D(uTex, vUv);
                 float lum = dot(tex.rgb, vec3(0.299, 0.587, 0.114));
                 float stroke = smoothstep(0.10, 0.60, lum);
                 if (lum > 0.88) stroke = 1.0 - stroke;
-                
                 vec3 baseGold = vec3(0.85, 0.71, 0.25);
                 vec3 highlight = vec3(1.0, 0.95, 0.78);
                 float wave = sin((vUv.x + vUv.y) * 12.0 - uTime * 4.0) * 0.5 + 0.5;
                 vec3 finalColor = mix(baseGold, highlight, wave * 0.4 + uHover * 0.6);
-                
-                float alpha = stroke * (0.65 + uHover * 0.35);
-                gl_FragColor = vec4(finalColor, alpha);
+                gl_FragColor = vec4(finalColor, stroke * (0.65 + uHover * 0.35));
             }
         `,
-        transparent: true,
-        side: THREE.DoubleSide,
-        depthWrite: false
+        transparent: true, side: THREE.DoubleSide, depthWrite: false
     });
 }
 
 function createBlueprintWireMaterial() {
     return new THREE.ShaderMaterial({
         uniforms: { uHover: { value: 0.0 }, uTime: { value: 0.0 } },
-        vertexShader: `varying vec3 vPos;void main(){vPos=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
-        fragmentShader: `uniform float uHover;uniform float uTime;varying vec3 vPos;float wave=sin((vPos.x+vPos.y+vPos.z)*0.2-uTime*3.5)*0.5+0.5;vec3 baseGold=vec3(0.85,0.71,0.25);vec3 brightGlow=vec3(1.0,0.96,0.82);vec3 col=mix(baseGold,brightGlow,wave*0.4+uHover*0.6);float alpha=clamp(0.70+wave*0.30+uHover*0.30,0.0,1.0);gl_FragColor=vec4(col,alpha);}`,
+        vertexShader: `varying vec3 vPos; void main() { vPos = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+        fragmentShader: `
+            uniform float uHover; uniform float uTime; varying vec3 vPos;
+            void main() {
+                float wave = sin((vPos.x + vPos.y + vPos.z) * 0.2 - uTime * 3.5) * 0.5 + 0.5;
+                vec3 baseGold = vec3(0.85, 0.71, 0.25);
+                vec3 brightGlow = vec3(1.0, 0.96, 0.82);
+                vec3 col = mix(baseGold, brightGlow, wave * 0.4 + uHover * 0.6);
+                gl_FragColor = vec4(col, clamp(0.70 + wave * 0.30 + uHover * 0.30, 0.0, 1.0));
+            }
+        `,
         transparent: true, depthWrite: false
     });
 }
 
-function createSafeVolumetricBlueprintCard(b64Image, typeIdx) {
+function createSafeVolumetricBlueprintCard(b64Image) {
     const cardGroup = new THREE.Group();
     const w = 58, h = 58, d = 26;
     const pts = [];
-
     const corners = [
         new THREE.Vector3(-w/2, -h/2, -d/2), new THREE.Vector3(w/2, -h/2, -d/2),
         new THREE.Vector3(w/2, h/2, -d/2), new THREE.Vector3(-w/2, h/2, -d/2),
         new THREE.Vector3(-w/2, -h/2, d/2), new THREE.Vector3(w/2, -h/2, d/2),
         new THREE.Vector3(w/2, h/2, d/2), new THREE.Vector3(-w/2, h/2, d/2)
     ];
-    const boxEdges = [
-        [0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],
-        [0,4],[1,5],[2,6],[3,7],[0,6],[1,7],[2,4],[3,5]
-    ];
-    boxEdges.forEach(e => pts.push(corners[e[0]], corners[e[1]]));
+    [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7],[0,6],[1,7],[2,4],[3,5]].forEach(e => pts.push(corners[e[0]], corners[e[1]]));
 
-    for (let x = -w/2; x <= w/2; x += 11.6) {
-        pts.push(new THREE.Vector3(x, -h/2, 0), new THREE.Vector3(x, h/2, 0));
-        pts.push(new THREE.Vector3(x, -h/2, -d/2), new THREE.Vector3(x, -h/2, d/2));
-    }
-    for (let y = -h/2; y <= h/2; y += 11.6) {
-        pts.push(new THREE.Vector3(-w/2, y, 0), new THREE.Vector3(w/2, y, 0));
-        pts.push(new THREE.Vector3(-w/2, y, -d/2), new THREE.Vector3(-w/2, y, d/2));
-    }
-
-    const rLimb = 32;
-    for (let i = 0; i < 48; i++) {
-        const nextI = (i + 1) % 48;
-        const a1 = (i / 48) * Math.PI * 2, a2 = (nextI / 48) * Math.PI * 2;
-        pts.push(new THREE.Vector3(Math.cos(a1)*rLimb, Math.sin(a1)*rLimb, 0), new THREE.Vector3(Math.cos(a2)*rLimb, Math.sin(a2)*rLimb, 0));
-        if (i % 4 === 0) {
-            pts.push(new THREE.Vector3(Math.cos(a1)*(rLimb-3), Math.sin(a1)*(rLimb-3), 0), new THREE.Vector3(Math.cos(a1)*(rLimb+3), Math.sin(a1)*(rLimb+3), 0));
-            pts.push(new THREE.Vector3(0, 0, 0), new THREE.Vector3(Math.cos(a1)*rLimb*0.5, Math.sin(a1)*rLimb*0.5, (i%8===0?4:-4)));
-        }
-    }
-
-    const wireframeMesh = new THREE.LineSegments(
-        new THREE.BufferGeometry().setFromPoints(pts),
-        createBlueprintWireMaterial()
-    );
+    const wireframeMesh = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), createBlueprintWireMaterial());
     cardGroup.add(wireframeMesh);
 
     if (typeof b64Image === 'string' && b64Image.length > 50 && b64Image.startsWith('data:image')) {
@@ -1204,25 +1075,20 @@ function createSafeVolumetricBlueprintCard(b64Image, typeIdx) {
             imgEl.onload = function() {
                 const texture = new THREE.Texture(imgEl);
                 texture.needsUpdate = true;
-                const planeGeo = new THREE.PlaneGeometry(50, 50);
-                const planeMat = createDaVinciHoloMaterial(texture);
-                const planeMesh = new THREE.Mesh(planeGeo, planeMat);
-                planeMesh.position.z = 0;
-                cardGroup.add(planeMesh);
+                cardGroup.add(new THREE.Mesh(new THREE.PlaneGeometry(50, 50), createDaVinciHoloMaterial(texture)));
             };
             imgEl.src = b64Image;
         } catch (e) {}
     }
-
     return cardGroup;
 }
 
 const floatingInventions = [
-    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[0], 0), basePos: new THREE.Vector3(-110, 34, 45), rotSpeed: new THREE.Vector3(0.0016, 0.0014, -0.0008), name: "Чертёж I" },
-    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[1], 1), basePos: new THREE.Vector3(115, -28, -40), rotSpeed: new THREE.Vector3(0.0012, 0.0018, 0.0010), name: "Чертёж II" },
-    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[2], 2), basePos: new THREE.Vector3(90, 36, 75), rotSpeed: new THREE.Vector3(-0.0014, 0.0016, 0.0009), name: "Чертёж III" },
-    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[3], 3), basePos: new THREE.Vector3(-36, -42, -35), rotSpeed: new THREE.Vector3(0.0008, 0.0012, 0.0006), name: "Чертёж IV" },
-    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[4], 4), basePos: new THREE.Vector3(-85, -25, 80), rotSpeed: new THREE.Vector3(-0.0012, 0.0015, -0.0007), name: "Чертёж V" }
+    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[0]), basePos: new THREE.Vector3(-110, 34, 45), rotSpeed: new THREE.Vector3(0.0016, 0.0014, -0.0008) },
+    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[1]), basePos: new THREE.Vector3(115, -28, -40), rotSpeed: new THREE.Vector3(0.0012, 0.0018, 0.0010) },
+    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[2]), basePos: new THREE.Vector3(90, 36, 75), rotSpeed: new THREE.Vector3(-0.0014, 0.0016, 0.0009) },
+    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[3]), basePos: new THREE.Vector3(-36, -42, -35), rotSpeed: new THREE.Vector3(0.0008, 0.0012, 0.0006) },
+    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[4]), basePos: new THREE.Vector3(-85, -25, 80), rotSpeed: new THREE.Vector3(-0.0012, 0.0015, -0.0007) }
 ];
 
 const hoverTargets = [];
@@ -1230,9 +1096,7 @@ floatingInventions.forEach((item) => {
     item.group.position.copy(item.basePos);
     preGroup.add(item.group);
 
-    const hitGeo = new THREE.SphereGeometry(48, 16, 16);
-    const hitMat = new THREE.MeshBasicMaterial({ visible: false });
-    const hitMesh = new THREE.Mesh(hitGeo, hitMat);
+    const hitMesh = new THREE.Mesh(new THREE.SphereGeometry(48, 16, 16), new THREE.MeshBasicMaterial({ visible: false }));
     hitMesh.position.copy(item.basePos);
     preGroup.add(hitMesh);
 
@@ -1243,13 +1107,10 @@ floatingInventions.forEach((item) => {
     hoverTargets.push(item);
 });
 
-preRenderer.render(preScene, preCamera);
-
 let currentSlideIndex = -1;
 
 function updateSlideDots() {
-    const dots = document.querySelectorAll('.slide-dot');
-    dots.forEach((d, idx) => {
+    document.querySelectorAll('.slide-dot').forEach((d, idx) => {
         if (idx === currentSlideIndex) d.classList.add('active');
         else d.classList.remove('active');
     });
@@ -1258,11 +1119,6 @@ function updateSlideDots() {
 function focusSlide(idx) {
     if (idx < 0 || idx >= hoverTargets.length) return;
     currentSlideIndex = idx;
-    
-    if (navigator.vibrate) {
-        try { navigator.vibrate(12); } catch (_) {}
-    }
-    
     playClickSound(1800, 0.015);
     updateSlideDots();
 
@@ -1271,7 +1127,6 @@ function focusSlide(idx) {
         item.isHovered = isCurrent;
         item.targetScale = isCurrent ? 1.35 : 1.0;
         item.targetZ = isCurrent ? 120 : item.basePos.z;
-
         item.group.traverse(child => {
             if (child.material && child.material.uniforms && child.material.uniforms.uHover) {
                 child.material.uniforms.uHover.value = isCurrent ? 1.0 : 0.0;
@@ -1280,39 +1135,21 @@ function focusSlide(idx) {
     });
 
     const target = hoverTargets[idx];
-    const objPos = target.group.position;
-    const isMobile = window.innerWidth < 768;
-    const zOffset = isMobile ? 125 : 105;
-    targetCamPos.set(objPos.x * 0.72, objPos.y * 0.72, objPos.z + zOffset);
-    targetLookTarget.set(objPos.x, objPos.y, objPos.z);
+    targetCamPos.set(target.group.position.x * 0.72, target.group.position.y * 0.72, target.group.position.z + 105);
+    targetLookTarget.copy(target.group.position);
 
     const preset = BLUEPRINT_PRESETS[idx];
-    const status = document.getElementById('loaderStatusText');
-    const sub = document.getElementById('blueprintSubtitle');
-    if (status && preset) {
-        status.textContent = `[${idx + 1}/5] ${preset.name}`;
-    }
-    if (sub && preset) {
+    if (preset) {
+        document.getElementById('loaderStatusText').textContent = `[${idx + 1}/5] ${preset.name}`;
+        const sub = document.getElementById('blueprintSubtitle');
         sub.textContent = preset.subtitle;
         sub.style.opacity = '1';
     }
 }
 
-window.nextSlide = function() {
-    let next = currentSlideIndex + 1;
-    if (next >= hoverTargets.length) next = 0;
-    focusSlide(next);
-};
-
-window.prevSlide = function() {
-    let prev = currentSlideIndex - 1;
-    if (prev < 0) prev = hoverTargets.length - 1;
-    focusSlide(prev);
-};
-
-window.goToSlide = function(idx) {
-    focusSlide(idx);
-};
+window.nextSlide = function() { focusSlide((currentSlideIndex + 1) % hoverTargets.length); };
+window.prevSlide = function() { focusSlide((currentSlideIndex - 1 + hoverTargets.length) % hoverTargets.length); };
+window.goToSlide = function(idx) { focusSlide(idx); };
 
 window.applySelectedPresetAndEnter = function(e) {
     if (currentSlideIndex >= 0 && BLUEPRINT_PRESETS[currentSlideIndex]) {
@@ -1322,58 +1159,14 @@ window.applySelectedPresetAndEnter = function(e) {
     triggerCameraObscuraTransition(e);
 };
 
-let touchStartX = 0, touchStartY = 0;
-window.addEventListener('touchstart', (e) => {
-    if (e.touches.length > 0) {
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-    }
-}, { passive: true });
-
-window.addEventListener('touchend', (e) => {
-    if (e.changedTouches.length > 0) {
-        const diffX = e.changedTouches[0].clientX - touchStartX;
-        const diffY = e.changedTouches[0].clientY - touchStartY;
-        if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
-            if (diffX < 0) nextSlide();
-            else prevSlide();
-        }
-    }
-}, { passive: true });
-
-const raycaster = new THREE.Raycaster();
-const mouseVec = new THREE.Vector2(-999, -999);
-
-window.addEventListener('mousemove', (e) => {
-    mouseVec.x = (e.clientX / window.innerWidth) * 2 - 1;
-    mouseVec.y = -(e.clientY / window.innerHeight) * 2 + 1;
-    checkRaycastHover();
-});
-
-function checkRaycastHover() {
-    if (preloaderDismissed || isObscuraTransition || window.innerWidth < 768) return;
-    raycaster.setFromCamera(mouseVec, preCamera);
-    const hitMeshes = hoverTargets.map(h => h.hitMesh);
-    const intersects = raycaster.intersectObjects(hitMeshes, false);
-
-    if (intersects.length > 0) {
-        const hit = intersects[0].object;
-        const idx = hoverTargets.findIndex(h => h.hitMesh === hit);
-        if (idx !== -1 && idx !== currentSlideIndex) {
-            focusSlide(idx);
-        }
-    }
-}
-
 let isObscuraTransition = false;
 let obscuraStartTime = 0;
-const OBSCURA_DURATION = 6.8; // 6.8 секунд величественного превращения Колес Судьбы
+const OBSCURA_DURATION = 6.8;
 
 function triggerCameraObscuraTransition(event) {
     if (isObscuraTransition) return;
     isObscuraTransition = true;
     obscuraStartTime = performance.now();
-    
     playGearSpinUpSound(OBSCURA_DURATION);
 
     const hud = document.querySelector('.preloader-fixed-hud');
@@ -1388,7 +1181,7 @@ function triggerCameraObscuraTransition(event) {
         ring.startRotZ = ring.group.rotation.z;
     });
 
-    hoverTargets.forEach((item, idx) => {
+    hoverTargets.forEach((item) => {
         item.startPos = item.group.position.clone();
         item.startRot = item.group.rotation.clone();
     });
@@ -1418,27 +1211,16 @@ function animatePreloader() {
     const elapsed = now - preloaderStartTime;
     const t = elapsed * 0.001;
 
-    // Проверка таймера пасхалки Спутника СССР
     checkSputnikScheduler(now);
 
-    // Анимация полета Спутника-1
     if (sputnikFlight.active) {
         const flightP = (now - sputnikFlight.startTime) / (sputnikFlight.duration * 1000);
         if (flightP < 1.0) {
-            // Плавная траектория пролета по дуге через центр сцены
             sputnik.position.lerpVectors(sputnikFlight.startP, sputnikFlight.endP, flightP);
-            sputnik.position.y += Math.sin(flightP * Math.PI) * 45; // изгиб траектории
-            
-            // Медленное вращение вокруг продольной оси
+            sputnik.position.y += Math.sin(flightP * Math.PI) * 45;
             sputnik.rotation.y += 0.012;
             sputnik.rotation.x += 0.008;
-
-            // Мерцание красного светодиода
-            if (sputnik.beaconMesh) {
-                sputnik.beaconMesh.visible = (Math.floor(now / 350) % 2 === 0);
-            }
-
-            // Звуковой бип-сигнал каждые 1.1 секунды
+            if (sputnik.beaconMesh) sputnik.beaconMesh.visible = (Math.floor(now / 350) % 2 === 0);
             if (now - sputnikFlight.lastBeep > 1100) {
                 playSputnikBeep();
                 sputnikFlight.lastBeep = now;
@@ -1453,21 +1235,16 @@ function animatePreloader() {
         const obsElapsed = (now - obscuraStartTime) * 0.001;
         const progress = Math.min(obsElapsed / OBSCURA_DURATION, 1.0);
 
-        // 1. Медленный и величественный разворот Колес Судьбы в единую плоскость (0.0 -> 0.44)
         const alignP = Math.min(progress / 0.44, 1.0);
         const easeAlign = 0.5 - 0.5 * Math.cos(alignP * Math.PI);
 
-        // 2. ВРАЩЕНИЕ: НАЧИНАЕТСЯ СВЕРХ-МЕДЛЕННО И ПОСТЕПЕННО УСКОРЯЕТСЯ
-        // Начальная скорость: 0.0003 рад/кадр (глаз видит почти застывшие диски с надписями)
-        // Экспоненциальное ускорение (progress^3.4) до скорости 0.17 рад/кадр перед смыканием
+        // Плавный и величественный разгон вращения кругов судьбы
         const accelCurve = Math.pow(progress, 3.4);
         const currentSpeed = 0.0003 + accelCurve * 0.17;
 
-        // 3. Формирование затвора диафрагмы: сужение начинается после полного проявления надписей (0.42 -> 1.0)
         const shrinkP = Math.max(0, (progress - 0.42) / 0.58);
         const easeShrink = Math.pow(shrinkP, 3.6);
 
-        // 4. ГРАВИТАЦИОННЫЙ ВИХРЕВОЙ МОРФ ЧЕРТЕЖЕЙ ВНУТРЬ КОЛЕС СУДЬБЫ
         hoverTargets.forEach((item, idx) => {
             if (item.startPos) {
                 const pull = Math.pow(progress, 1.85);
@@ -1486,14 +1263,11 @@ function animatePreloader() {
                 item.group.scale.set(s, s, s);
 
                 item.group.traverse(child => {
-                    if (child.material) {
-                        child.material.opacity = Math.max(1.0 - progress * 1.25, 0.0);
-                    }
+                    if (child.material) child.material.opacity = Math.max(1.0 - progress * 1.25, 0.0);
                 });
             }
         });
 
-        // 5. ВТЯГИВАНИЕ ЧАСТИЦ ЗОЛОТОЙ ПЫЛИ В СИНГУЛЯРНОСТЬ АПЕРТУРЫ
         const positions = particleGeo.attributes.position.array;
         for (let i = 0; i < particleCount * 3; i += 3) {
             positions[i] += (0 - positions[i]) * (0.012 + progress * 0.045);
@@ -1503,7 +1277,6 @@ function animatePreloader() {
         particleGeo.attributes.position.needsUpdate = true;
         particleMat.opacity = Math.max(0.38 * (1.0 - progress * 0.92), 0.0);
 
-        // 6. ТРАНСФОРМАЦИЯ КОЛЕС В ЗОЛОТУЮ ДИАФРАГМУ С ПРЕДСКАЗАНИЯМИ
         megaRingWireMat.opacity = THREE.MathUtils.lerp(megaRingWireMat.opacity, 0.92, 0.025);
         megaRingWireMat.color.lerp(new THREE.Color(0xd4af37), 0.025);
         secondaryWireMat.color.lerp(new THREE.Color(0xb8860b), 0.025);
@@ -1512,11 +1285,9 @@ function animatePreloader() {
             ring.group.rotation.x = THREE.MathUtils.lerp(ring.startRotX, 0, easeAlign);
             ring.group.rotation.y = THREE.MathUtils.lerp(ring.startRotY, 0, easeAlign);
             
-            // Вращение в противоположные стороны с непрерывным постепенным разгоном
             const direction = ring.dir || (idx % 2 === 0 ? 1 : -1);
             ring.group.rotation.z += direction * currentSpeed;
 
-            // Торжественное проявление латинских катренов Нострадамуса на дисковых полях
             if (ring.group.diskMesh && ring.group.diskMesh.material) {
                 ring.group.diskMesh.material.opacity = Math.min(0.12 + easeAlign * 0.78, 0.92) * (1.0 - easeShrink * 0.95);
             }
@@ -1533,9 +1304,7 @@ function animatePreloader() {
         preRenderer.clear();
         preRenderer.render(preScene, preCamera);
 
-        if (progress >= 1.0) {
-            triggerShutterBlink();
-        }
+        if (progress >= 1.0) triggerShutterBlink();
         return;
     }
 
@@ -1543,38 +1312,23 @@ function animatePreloader() {
     dustParticles.rotation.x = Math.sin(t * 0.015) * 0.1;
 
     const isFocused = currentSlideIndex !== -1;
-    const ringTargetOpacity = isFocused ? 0.12 : 0.38;
-    megaRingWireMat.opacity = THREE.MathUtils.lerp(megaRingWireMat.opacity, ringTargetOpacity, 0.05);
+    megaRingWireMat.opacity = THREE.MathUtils.lerp(megaRingWireMat.opacity, isFocused ? 0.12 : 0.38, 0.05);
 
     astrolabeRings.forEach(item => {
-        item.group.rotation.x += item.sx + Math.sin(t * 0.25 + item.px) * 0.0004;
-        item.group.rotation.y += item.sy + Math.cos(t * 0.20 + item.py) * 0.0005;
-        item.group.rotation.z += item.sz + Math.sin(t * 0.15) * 0.0003;
+        item.group.rotation.x += item.sx;
+        item.group.rotation.y += item.sy;
+        item.group.rotation.z += item.sz;
     });
 
     hoverTargets.forEach((item, idx) => {
         if (!item.isHovered) {
             item.group.position.y = item.basePos.y + Math.sin(t * 1.1 + idx * 1.5) * 7.5;
             item.group.position.x = item.basePos.x + Math.cos(t * 0.75 + idx * 1.2) * 5.0;
-            item.group.rotation.x += item.rotSpeed.x;
-            item.group.rotation.y += item.rotSpeed.y;
-            item.group.rotation.z += item.rotSpeed.z;
-        } else {
-            item.group.rotation.y += 0.006;
-            item.group.rotation.x = THREE.MathUtils.lerp(item.group.rotation.x, 0.1, 0.05);
         }
-
         item.group.position.z = THREE.MathUtils.lerp(item.group.position.z, item.targetZ, 0.08);
         item.hitMesh.position.copy(item.group.position);
-
         const sc = THREE.MathUtils.lerp(item.group.scale.x, item.targetScale, 0.1);
         item.group.scale.set(sc, sc, sc);
-
-        item.group.traverse(child => {
-            if (child.material && child.material.uniforms && child.material.uniforms.uTime) {
-                child.material.uniforms.uTime.value = t;
-            }
-        });
     });
 
     preCamera.position.lerp(targetCamPos, 0.05);
@@ -1585,8 +1339,14 @@ function animatePreloader() {
     preRenderer.render(preScene, preCamera);
 }
 
+// Принудительный старт анимации прелоадера
+animatePreloader();
 
-/* ДЕКОДЕР ГЛИФОВ */
+setTimeout(() => {
+    if (!preloaderDismissed && currentSlideIndex === -1) focusSlide(0);
+}, 1200);
+
+// Декодер глифов и бизнес-логика дашборда
 const CYRILLIC_GLYPHS = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ0123456789§$%*#@!/[]:;';
 const NUMERIC_GLYPHS = '0123456789 ';
 function scrambleElementText(el, finalText, duration = 460, useAlphabet = true) {
