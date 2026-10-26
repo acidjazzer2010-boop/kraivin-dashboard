@@ -1,9 +1,5 @@
 import streamlit as st
 import streamlit.components.v1 as components
-import base64
-import os
-import io
-from PIL import Image, ImageFilter, ImageDraw
 
 st.set_page_config(
     page_title="Архитектура Капитала // Финансовое Моделирование",
@@ -21,55 +17,6 @@ iframe { border: none !important; width: 100% !important; }
 </style>
 """, unsafe_allow_html=True)
 
-def generate_fallback_vitruvian():
-    size = 1000
-    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(img)
-    gold = (229, 193, 88, 255)
-    center = size // 2
-    r = int(size * 0.44)
-    draw.ellipse([center - r, center - r, center + r, center + r], outline=gold, width=2)
-    sq_size = int(size * 0.76)
-    sq_top = int(size * 0.16)
-    draw.rectangle([center - sq_size//2, sq_top, center + sq_size//2, sq_top + sq_size], outline=gold, width=2)
-    
-    draw.ellipse([center - 22, int(size * 0.18), center + 22, int(size * 0.25)], outline=gold, width=2)
-    draw.line([center, int(size * 0.25), center, int(size * 0.52)], fill=gold, width=2)
-    draw.line([center - int(size * 0.38), int(size * 0.30), center + int(size * 0.38), int(size * 0.30)], fill=gold, width=2)
-    draw.line([center, int(size * 0.28), center - int(size * 0.36), int(size * 0.20)], fill=gold, width=2)
-    draw.line([center, int(size * 0.28), center + int(size * 0.36), int(size * 0.20)], fill=gold, width=2)
-    draw.line([center, int(size * 0.52), center - 70, int(size * 0.88)], fill=gold, width=2)
-    draw.line([center, int(size * 0.52), center + 70, int(size * 0.88)], fill=gold, width=2)
-    draw.line([center, int(size * 0.52), center - 190, int(size * 0.84)], fill=gold, width=2)
-    draw.line([center, int(size * 0.52), center + 190, int(size * 0.84)], fill=gold, width=2)
-    
-    buffered = io.BytesIO()
-    img.save(buffered, format="PNG")
-    return f"data:image/png;base64,{base64.b64encode(buffered.getvalue()).decode()}"
-
-def get_pure_silhouette_contour(filename):
-    if not os.path.exists(filename):
-        return generate_fallback_vitruvian()
-    try:
-        img = Image.open(filename).convert("L")
-        smoothed = img.filter(ImageFilter.GaussianBlur(radius=0.35))
-        edges = smoothed.filter(ImageFilter.FIND_EDGES)
-        
-        def isolate_lines(p):
-            return 0 if p < 22 else int(min(255, (p - 22) * 4.6))
-            
-        alpha_channel = edges.point(isolate_lines)
-        gold_canvas = Image.new("RGBA", img.size, (229, 193, 88, 255))
-        gold_canvas.putalpha(alpha_channel)
-        
-        buffered = io.BytesIO()
-        gold_canvas.save(buffered, format="PNG")
-        return f"data:image/png;base64,{base64.b64encode(buffered.getvalue()).decode()}"
-    except Exception:
-        return generate_fallback_vitruvian()
-
-vitruvian_data_uri = get_pure_silhouette_contour("1000400438.jpg")
-
 html_code = r"""<!DOCTYPE html>
 <html lang="ru" class="dark">
 <head>
@@ -77,6 +24,7 @@ html_code = r"""<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Архитектура Капитала // Финансовое Моделирование</title>
 
+<!-- Типографика -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -151,7 +99,7 @@ body { background-color: var(--bg-space); color: var(--text-main); font-family: 
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
-/* ПРЕЛОАДЕР: АБСОЛЮТНО ФИКСИРОВАН НА ЭКРАНЕ (БЕЗ СКРОЛЛА) */
+/* ПРЕЛОАДЕР */
 #preloader-stage {
     position: fixed; inset: 0; width: 100vw; height: 100vh;
     background: #050508; z-index: 900; overflow: hidden;
@@ -203,7 +151,7 @@ body { background-color: var(--bg-space); color: var(--text-main); font-family: 
 }
 .explore-btn:hover::before { left: 100%; }
 
-/* ФОН ДАШБОРДА */
+/* ДАШБОРД */
 #webgl-bg-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; opacity: 0.45; transition: opacity 0.5s ease; }
 html:not(.dark) #webgl-bg-canvas { opacity: 0.2; }
 
@@ -253,7 +201,7 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
 <body class="selection:bg-[#d4af37] selection:text-black">
 <div class="film-grain"></div>
 
-<!-- ПРЕЛОАДЕР -->
+<!-- ПРЕЛОАДЕР: ГАЛЕРЕЯ ИЗОБРЕТЕНИЙ ДА ВИНЧИ МЕЖДУ КОЛЬЦАМИ -->
 <div id="preloader-stage">
     <canvas id="preloader-webgl"></canvas>
     
@@ -262,7 +210,7 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
     <div id="preloaderHUD">
         <div class="flex items-center gap-3 text-[#d4af37] text-[10px] tracking-[0.25em] uppercase font-mono">
             <span class="pulse-dot"></span>
-            <span>Трассировка пропорций...</span>
+            <span id="loaderStatusText">Трассировка механизмов Да Винчи...</span>
             <span id="loaderPercent" class="font-bold">0%</span>
         </div>
         <div class="progress-bar-bg mt-1">
@@ -378,7 +326,6 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
                         <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">ЦБ РФ, %</label><input type="number" id="paramCbRate" value="14.0" step="0.5" class="mono-input text-center font-bold text-[#d4af37]" oninput="runCalculation()"></div>
                         <div><label class="block font-mono text-[8px] uppercase opacity-70 mb-1" title="Коммерческая наценка кредитора за пользование средствами">Комиссия, %</label><input type="number" id="paramCommMargin" value="2.0" step="0.5" class="mono-input text-center" oninput="runCalculation()"></div>
                     </div>
-                    <!-- УСЛОВИЯ РАСЧЕТОВ С ПОСТАВЩИКОМ -->
                     <div class="p-3 border space-y-3" style="border-color: rgba(212, 175, 55, 0.25); background: rgba(212, 175, 55, 0.02);">
                         <div class="font-mono text-[8px] uppercase tracking-widest text-[#d4af37] font-bold">[УСЛОВИЯ ПОСТАВЩИКА]</div>
                         <div>
@@ -608,32 +555,30 @@ function updatePreloaderProgress(now) {
 }
 requestAnimationFrame(updatePreloaderProgress);
 
-/* THREE.JS ПРЕЛОАДЕР: ОПТИМИЗИРОВАННЫЙ МАСШТАБ ДЛЯ 1080p */
+/* =========================================================================
+   THREE.JS ПРЕЛОАДЕР: ГАЛЕРЕЯ КАРКАСНЫХ ИЗОБРЕТЕНИЙ ДА ВИНЧИ + АСТРОЛЯБИЯ
+   ========================================================================= */
 const preCanvas = document.getElementById('preloader-webgl');
 const preRenderer = new THREE.WebGLRenderer({ canvas: preCanvas, alpha: true, antialias: true, preserveDrawingBuffer: true });
 preRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 preRenderer.setSize(window.innerWidth, window.innerHeight);
 
 const preScene = new THREE.Scene();
-
-// Камера отодвинута на Z=190 для комфортного обзора всей астролябии и человека без скролла
-const preCamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 3000);
-preCamera.position.set(0, 0, 190);
-preCamera.lookAt(0, 0, 0);
+const preCamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 3500);
+preCamera.position.set(0, 0, 320); // Начальная дистанция для кинематографического пролёта
 
 const preGroup = new THREE.Group();
 preScene.add(preGroup);
 
 // Небесно-голубой каркас колец астролябии
 const astrolabeWireMat = new THREE.MeshBasicMaterial({
-    color: 0x00b4ff, wireframe: true, transparent: true, opacity: 0.36
+    color: 0x00b4ff, wireframe: true, transparent: true, opacity: 0.32
 });
 
 const astrolabeRings = [];
-// Кольца сбалансированного диаметра под окно 1080p
-const aRing1 = new THREE.Mesh(new THREE.TorusGeometry(105, 3.6, 26, 240), astrolabeWireMat);
-const aRing2 = new THREE.Mesh(new THREE.TorusGeometry(84, 3.2, 24, 200), astrolabeWireMat);
-const aRing3 = new THREE.Mesh(new THREE.TorusGeometry(65, 2.8, 22, 180), astrolabeWireMat);
+const aRing1 = new THREE.Mesh(new THREE.TorusGeometry(140, 4.2, 26, 240), astrolabeWireMat);
+const aRing2 = new THREE.Mesh(new THREE.TorusGeometry(108, 3.6, 24, 200), astrolabeWireMat);
+const aRing3 = new THREE.Mesh(new THREE.TorusGeometry(82, 3.0, 22, 180), astrolabeWireMat);
 
 aRing2.rotation.x = Math.PI / 3;
 aRing3.rotation.y = Math.PI / 4;
@@ -648,19 +593,123 @@ astrolabeRings.push(
     { mesh: aRing3, sx: 0.0031, sy: -0.0026, sz: 0.0018, px: 1.5, py: 3.2 }
 );
 
-// Шейдер силуэта Витрувианца (трассировка снизу вверх)
-const vitruvianData = "VITRUVIAN_DATA_PLACEHOLDER";
-let vitShaderMat = null;
+// Функция генерации текстур изобретений Да Винчи (тонкие золотые линии)
+function createInventionTexture(drawType) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 1024;
+    const ctx = canvas.getContext('2d');
+    ctx.strokeStyle = 'rgba(229, 193, 88, 0.95)';
+    ctx.lineWidth = 2.0;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
 
-const vImg = new Image();
-vImg.crossOrigin = "Anonymous";
-vImg.src = vitruvianData;
-vImg.onload = () => {
-    const texture = new THREE.Texture(vImg);
+    const cx = 512, cy = 512;
+
+    if (drawType === 'vitruvian') {
+        // Канон Витрувианца: золотой круг и квадрат
+        ctx.beginPath();
+        ctx.arc(cx, cy, 420, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.strokeRect(cx - 370, cy - 350, 740, 740);
+
+        // Каркас анатомических пропорций
+        ctx.beginPath();
+        ctx.arc(cx, cy - 250, 35, 0, Math.PI * 2); // Голова
+        ctx.moveTo(cx, cy - 215); ctx.lineTo(cx, cy + 60); // Позвоночник / торс
+        // Прямые и поднятые руки
+        ctx.moveTo(cx - 360, cy - 170); ctx.lineTo(cx + 360, cy - 170);
+        ctx.moveTo(cx, cy - 190); ctx.lineTo(cx - 320, cy - 290);
+        ctx.moveTo(cx, cy - 190); ctx.lineTo(cx + 320, cy - 290);
+        // Ноги прямые и расставленные
+        ctx.moveTo(cx, cy + 60); ctx.lineTo(cx - 90, cy + 390);
+        ctx.moveTo(cx, cy + 60); ctx.lineTo(cx + 90, cy + 390);
+        ctx.moveTo(cx, cy + 60); ctx.lineTo(cx - 240, cy + 360);
+        ctx.moveTo(cx, cy + 60); ctx.lineTo(cx + 240, cy + 360);
+        ctx.stroke();
+
+        // Пропорциональные координатные оси
+        ctx.setLineDash([4, 6]);
+        ctx.beginPath();
+        ctx.moveTo(cx - 420, cy); ctx.lineTo(cx + 420, cy);
+        ctx.moveTo(cx, cy - 420); ctx.lineTo(cx, cy + 420);
+        ctx.stroke();
+    } else if (drawType === 'bird') {
+        // Орнитоптер / Механическое крыло птицы
+        ctx.beginPath();
+        ctx.moveTo(cx - 400, cy);
+        ctx.bezierCurveTo(cx - 200, cy - 240, cx - 100, cy - 120, cx, cy - 80);
+        ctx.bezierCurveTo(cx + 100, cy - 120, cx + 200, cy - 240, cx + 400, cy);
+        ctx.stroke();
+
+        // Шарнирные нервюры и тяги крыльев
+        for (let i = -6; i <= 6; i++) {
+            if (i === 0) continue;
+            ctx.beginPath();
+            const startX = cx + i * 55;
+            const startY = cy - 80 - Math.abs(i) * 12;
+            const endX = cx + i * 65;
+            const endY = cy + 180 - Math.abs(i) * 15;
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+        }
+
+        // Центральная рама и суставы
+        ctx.beginPath();
+        ctx.strokeRect(cx - 45, cy - 120, 90, 260);
+        ctx.arc(cx, cy, 20, 0, Math.PI * 2);
+        ctx.stroke();
+    } else if (drawType === 'helix') {
+        // Воздушный винт (Vite Aerea / Aerial Screw)
+        ctx.beginPath();
+        ctx.arc(cx, cy + 240, 160, 0, Math.PI); // Опорный обод
+        ctx.stroke();
+
+        // Центральная мачта
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - 320);
+        ctx.lineTo(cx, cy + 320);
+        ctx.stroke();
+
+        // Архимедова спираль винта
+        ctx.beginPath();
+        for (let a = 0; a < Math.PI * 6; a += 0.05) {
+            const rad = 25 + a * 20;
+            const x = cx + Math.cos(a) * rad * 0.8;
+            const y = cy - 240 + a * 55;
+            if (a === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+    } else if (drawType === 'bridge') {
+        // Самонесущий мост Да Винчи (Ponte Autoportante)
+        const yBase = cy + 120;
+        ctx.beginPath();
+        // Арочные сегменты
+        ctx.arc(cx, yBase + 400, 520, Math.PI * 1.25, Math.PI * 1.75);
+        ctx.stroke();
+
+        // Перекрестная геометрическая ферма
+        for (let x = cx - 350; x <= cx + 350; x += 55) {
+            ctx.beginPath();
+            ctx.moveTo(x, yBase - 80 + Math.sin((x - cx) * 0.005) * 40);
+            ctx.lineTo(x + 35, yBase + 80);
+            ctx.lineTo(x - 35, yBase + 80);
+            ctx.closePath();
+            ctx.stroke();
+        }
+    }
+
+    const texture = new THREE.CanvasTexture(canvas);
     texture.needsUpdate = true;
-    const aspect = vImg.width / vImg.height;
+    return texture;
+}
 
-    vitShaderMat = new THREE.ShaderMaterial({
+// Каркасные шейдерные материалы для парящих чертежей
+function createBlueprintShaderMaterial(texture) {
+    return new THREE.ShaderMaterial({
         uniforms: {
             tDiffuse: { value: texture },
             uProgress: { value: 0.0 },
@@ -681,29 +730,46 @@ vImg.onload = () => {
 
             void main() {
                 vec4 tex = texture2D(tDiffuse, vUv);
-                float front = uProgress * 1.05;
+                
+                // Трассировка снизу вверх
+                float front = uProgress * 1.08;
                 float reveal = smoothstep(front, front - 0.04, vUv.y);
-                float leadEdge = smoothstep(front - 0.03, front, vUv.y) * smoothstep(front + 0.008, front, vUv.y);
-                float pencilHatch = sin((vUv.x * 120.0) - (uTime * 14.0)) * 0.5 + 0.5;
-                float pencilBeam = pow(pencilHatch, 3.2) * leadEdge * 4.2;
+                float leadEdge = smoothstep(front - 0.035, front, vUv.y) * smoothstep(front + 0.01, front, vUv.y);
+                
+                // Бегущий импульс карандашной штриховки
+                float pencilHatch = sin((vUv.x * 100.0) - (uTime * 14.0)) * 0.5 + 0.5;
+                float pencilBeam = pow(pencilHatch, 3.0) * leadEdge * 4.0;
                 
                 float finalAlpha = clamp(reveal + pencilBeam, 0.0, 1.0);
                 vec3 spark = vec3(1.0, 0.94, 0.65) * (pencilBeam * 2.0);
-                gl_FragColor = vec4(tex.rgb + spark, tex.a * finalAlpha);
+                gl_FragColor = vec4(tex.rgb + spark, tex.a * finalAlpha * 0.92);
             }
         `,
         transparent: true,
         depthWrite: false,
         side: THREE.DoubleSide
     });
+}
 
-    // Высота подобрана так, чтобы фигура идеально центрировалась внутри колец
-    const h = 82;
-    const w = h * aspect;
-    const vitMesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), vitShaderMat);
-    vitMesh.position.set(0, 0, 0);
-    preGroup.add(vitMesh);
-};
+// Парящие в 3D изобретения между кольцами
+const inventionsList = [
+    { type: 'vitruvian', z: 0, scale: 78, x: 0, y: 0, rotY: 0 },
+    { type: 'bird', z: 120, scale: 65, x: -75, y: 15, rotY: 0.25 },
+    { type: 'helix', z: -110, scale: 70, x: 70, y: -10, rotY: -0.3 },
+    { type: 'bridge', z: 210, scale: 68, x: 60, y: 25, rotY: -0.2 }
+];
+
+const inventionMeshes = [];
+inventionsList.forEach(inv => {
+    const tex = createInventionTexture(inv.type);
+    const mat = createBlueprintShaderMaterial(tex);
+    const geo = new THREE.PlaneGeometry(inv.scale, inv.scale);
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(inv.x, inv.y, inv.z);
+    mesh.rotation.y = inv.rotY;
+    preGroup.add(mesh);
+    inventionMeshes.push({ mesh, mat, origX: inv.x, origY: inv.y, z: inv.z });
+});
 
 /* ЖИДКИЙ ВОЛНОВОЙ МОРФ ПРИ КЛИКЕ НА «ИССЛЕДОВАТЬ» */
 let isRippling = false;
@@ -797,16 +863,29 @@ function animatePreloader() {
         return;
     }
     
+    // Вращение колец астролябии
     astrolabeRings.forEach(item => {
         item.mesh.rotation.x += item.sx + Math.sin(t * 0.4 + item.px) * 0.0008;
         item.mesh.rotation.y += item.sy + Math.cos(t * 0.35 + item.py) * 0.0009;
         item.mesh.rotation.z += item.sz + Math.sin(t * 0.25) * 0.0006;
     });
 
-    if (vitShaderMat) {
-        vitShaderMat.uniforms.uProgress.value = progress;
-        vitShaderMat.uniforms.uTime.value = t;
-    }
+    // Плавный кинематографичный пролёт камеры сквозь строй изобретений к Витрувианцу
+    const flyProgress = Math.pow(progress, 1.25);
+    preCamera.position.z = 320 - (flyProgress * 155); // 320 -> 165
+    preCamera.position.x = Math.sin(t * 0.6) * 12;
+    preCamera.position.y = Math.cos(t * 0.5) * 8;
+    preCamera.lookAt(0, 0, 0);
+
+    // Покачивание и трассировка каждого изобретения
+    inventionMeshes.forEach((item, idx) => {
+        item.mesh.position.y = item.origY + Math.sin(t * 1.2 + idx * 1.5) * 3.5;
+        item.mesh.position.x = item.origX + Math.cos(t * 0.9 + idx * 1.2) * 2.5;
+        if (item.mat) {
+            item.mat.uniforms.uProgress.value = progress;
+            item.mat.uniforms.uTime.value = t;
+        }
+    });
     
     preRenderer.clear();
     preRenderer.render(preScene, preCamera);
@@ -1282,7 +1361,5 @@ window.onload = () => runCalculation();
 </script>
 </body>
 </html>"""
-
-html_code = html_code.replace("VITRUVIAN_DATA_PLACEHOLDER", vitruvian_data_uri)
 
 components.html(html_code, height=1380, scrolling=True)
