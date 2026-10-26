@@ -1125,239 +1125,218 @@ window.applySelectedPresetAndEnter = function(e) {
 };
 
 /* =========================================================================
-   3D СПУТНИК (1793046110105.jpg) БЕЗ РАМОК, МИГАЮЩИЙ МАЯК И СИГНАЛ
+   ВЫСОКОДЕТАЛИЗИРОВАННАЯ 3D-МОДЕЛЬ СПУТНИКА (BLUEPRINT WIREFRAME ПО ФОТО)
    ========================================================================= */
-/* =========================================================================
-   ВЫСОКОДЕТАЛИЗИРОВАННАЯ 3D-МОДЕЛЬ СПУТНИКА-1 (BLUEPRINT WIREFRAME X-RAY)
-   Точная реплика инженерного чертежа: фланец с болтами, внутренние блоки
-   аппаратуры, кронштейны антенн, телескопические вибраторы и маяк.
-   ========================================================================= */
-function createSputnikModel() {
-    const sputnikGroup = new THREE.Group();
-
-    // Неоновые материалы сетки чертежа (как на референсе)
-    const cyanWireMat = new THREE.MeshBasicMaterial({ 
-        color: 0x4deeea, 
-        wireframe: true, 
-        transparent: true, 
-        opacity: 0.45 
-    });
-    const cyanGlowMat = new THREE.LineBasicMaterial({ 
-        color: 0x74ee15, 
-        transparent: true, 
-        opacity: 0.7 
-    });
-    const mainLineMat = new THREE.LineBasicMaterial({ 
-        color: 0x00f0ff, 
-        transparent: true, 
-        opacity: 0.85 
-    });
-    const dimLineMat = new THREE.LineBasicMaterial({ 
-        color: 0x007799, 
-        transparent: true, 
-        opacity: 0.35 
-    });
-
-    const R = 15.0; // Базовый радиус сферы
-
-    // 1. ВНЕШНЯЯ СФЕРА (СЕТЧАТЫЙ КОРПУС С ВЫСОКОЙ ПЛОТНОСТЬЮ)
-    const sphereGeo = new THREE.SphereGeometry(R, 36, 28);
-    const sphereWire = new THREE.Mesh(sphereGeo, cyanWireMat);
-    sputnikGroup.add(sphereWire);
-
-    // Внутренняя полупрозрачная оболочка для глубины
-    const shellMat = new THREE.MeshBasicMaterial({
-        color: 0x051824,
+function createDetailedSputnikModel() {
+    const sputnik = new THREE.Group();
+    
+    // Стиль сетки (аутентичный cyan / blueprint цвет как на рендере)
+    const wireCyanMat = new THREE.MeshBasicMaterial({
+        color: 0x38bdf8,
+        wireframe: true,
         transparent: true,
-        opacity: 0.35,
-        side: THREE.BackSide,
+        opacity: 0.55
+    });
+    
+    const wireAccentMat = new THREE.MeshBasicMaterial({
+        color: 0x7dd3fc,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.85
+    });
+
+    const innerHoloMat = new THREE.MeshBasicMaterial({
+        color: 0x0284c7,
+        transparent: true,
+        opacity: 0.12,
+        side: THREE.DoubleSide,
         depthWrite: false
     });
-    sputnikGroup.add(new THREE.Mesh(new THREE.SphereGeometry(R * 0.98, 24, 20), shellMat));
 
-    // 2. СТЫКОВОЧНЫЙ ЦЕНТРАЛЬНЫЙ ПОЯС / ШОВ (ЭКВАТОР С ДВОЙНЫМ БУРТИКОМ)
-    const beltPts1 = [], beltPts2 = [];
-    const beltSegs = 64;
-    for (let i = 0; i <= beltSegs; i++) {
-        const a = (i / beltSegs) * Math.PI * 2;
-        beltPts1.push(new THREE.Vector3(Math.cos(a) * (R + 0.35), 0.3, Math.sin(a) * (R + 0.35)));
-        beltPts2.push(new THREE.Vector3(Math.cos(a) * (R + 0.35), -0.3, Math.sin(a) * (R + 0.35)));
-    }
-    sputnikGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(beltPts1), mainLineMat));
-    sputnikGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(beltPts2), mainLineMat));
+    const lineMat = new THREE.LineBasicMaterial({
+        color: 0x7dd3fc,
+        transparent: true,
+        opacity: 0.75
+    });
 
-    // Продольные соединительные заклепки пояса
-    const beltRivets = [];
+    const thickLineMat = new THREE.LineBasicMaterial({
+        color: 0xbae6fd,
+        transparent: true,
+        opacity: 0.95
+    });
+
+    const R = 18; // Базовый радиус сферы спутника
+
+    // 1. ОСНОВНАЯ СФЕРИЧЕСКАЯ ОБОЛОЧКА (Сетка высокой плотности + объемная подсветка)
+    const sphereGeo = new THREE.SphereGeometry(R, 44, 44);
+    const sphereWire = new THREE.Mesh(sphereGeo, wireCyanMat);
+    sputnik.add(sphereWire);
+
+    const sphereInner = new THREE.Mesh(new THREE.SphereGeometry(R * 0.99, 32, 32), innerHoloMat);
+    sputnik.add(sphereInner);
+
+    // 2. ЭКВАТАРИАЛЬНЫЙ СТЫКОВОЧНЫЙ ПОЯС ПОЛУСФЕР (Двойной фланец с ребрами)
+    const belt1 = new THREE.Mesh(new THREE.TorusGeometry(R + 0.35, 0.35, 8, 64), wireAccentMat);
+    const belt2 = new THREE.Mesh(new THREE.TorusGeometry(R + 0.35, 0.35, 8, 64), wireAccentMat);
+    belt1.position.z = 1.0;
+    belt2.position.z = -1.0;
+    sputnik.add(belt1);
+    sputnik.add(belt2);
+
+    // Перемычки фланца соединения
+    const beltLines = [];
     for (let i = 0; i < 32; i++) {
-        const a = (i / 32) * Math.PI * 2;
-        beltRivets.push(
-            new THREE.Vector3(Math.cos(a) * (R + 0.35), 0.3, Math.sin(a) * (R + 0.35)),
-            new THREE.Vector3(Math.cos(a) * (R + 0.35), -0.3, Math.sin(a) * (R + 0.35))
-        );
+        const ang = (i / 32) * Math.PI * 2;
+        const bx = Math.cos(ang) * (R + 0.4);
+        const by = Math.sin(ang) * (R + 0.4);
+        beltLines.push(new THREE.Vector3(bx, by, -1.0), new THREE.Vector3(bx, by, 1.0));
     }
-    sputnikGroup.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(beltRivets), mainLineMat));
+    sputnik.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(beltLines), lineMat));
 
-    // 3. НОСОВОЙ ЛЮК / ФЛАНЕЦ С БОЛТОВЫМ КОЛЬЦОМ (ОСЕВОЙ УЗЕЛ)
+    // 3. ПЕРЕДНИЙ ТОРЦЕВОЙ ЛЮК / ФЛАНЕЦ С БОЛТОВЫМИ ЗАКЛЕПКАМИ
     const hatchGroup = new THREE.Group();
-    hatchGroup.position.set(0, 0, R * 0.96);
-    
-    // Концентрические кольца фланца
-    [2.2, 3.8, 5.0, 5.8].forEach(rRing => {
-        const pts = [];
-        for (let i = 0; i <= 36; i++) {
-            const a = (i / 36) * Math.PI * 2;
-            pts.push(new THREE.Vector3(Math.cos(a) * rRing, Math.sin(a) * rRing, 0));
-        }
-        hatchGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mainLineMat));
-    });
+    hatchGroup.position.set(-R * 0.88, 0, 0);
+    hatchGroup.rotation.y = Math.PI / 2;
 
-    // Болты по окружности фланца
-    const boltPts = [];
-    for (let i = 0; i < 16; i++) {
-        const a = (i / 16) * Math.PI * 2;
-        const bx = Math.cos(a) * 4.4, by = Math.sin(a) * 4.4;
-        boltPts.push(
-            new THREE.Vector3(bx, by, 0),
-            new THREE.Vector3(bx, by, 0.45)
-        );
-        // Маленькие шестиугольники болтиков
-        const boltHead = [];
-        for (let j = 0; j <= 6; j++) {
-            const aj = (j / 6) * Math.PI * 2;
-            boltHead.push(new THREE.Vector3(bx + Math.cos(aj) * 0.28, by + Math.sin(aj) * 0.28, 0.45));
-        }
-        hatchGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(boltHead), mainLineMat));
+    const flangeRing1 = new THREE.Mesh(new THREE.TorusGeometry(7.5, 0.35, 8, 36), wireAccentMat);
+    const flangeRing2 = new THREE.Mesh(new THREE.TorusGeometry(6.0, 0.3, 8, 32), wireAccentMat);
+    const flangeCap = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.6, 1.2, 24, 2, true), wireAccentMat);
+    flangeCap.rotation.x = Math.PI / 2;
+    hatchGroup.add(flangeRing1);
+    hatchGroup.add(flangeRing2);
+    hatchGroup.add(flangeCap);
+
+    // 16 болтов по окружности фланца
+    for (let b = 0; b < 16; b++) {
+        const bAng = (b / 16) * Math.PI * 2;
+        const bolt = new THREE.Mesh(new THREE.SphereGeometry(0.42, 6, 6), wireAccentMat);
+        bolt.position.set(Math.cos(bAng) * 6.75, Math.sin(bAng) * 6.75, 0.3);
+        hatchGroup.add(bolt);
     }
-    hatchGroup.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(boltPts), mainLineMat));
-    sputnikGroup.add(hatchGroup);
+    sputnik.add(hatchGroup);
 
-    // 4. ВНУТРЕННИЙ БЛОК АППАРАТУРЫ (ПЕРЕДАТЧИК И АККУМУЛЯТОРЫ)
-    const internalBoxGroup = new THREE.Group();
+    // 4. ВЕРХНИЙ И НИЖНИЙ ОБТЕКАТЕЛИ / КОЖУХИ ДАТЧИКОВ
+    [-1, 1].forEach(dir => {
+        const podGeo = new THREE.CylinderGeometry(2.4, 3.2, 3.8, 12, 2, true);
+        const pod = new THREE.Mesh(podGeo, wireAccentMat);
+        pod.position.set(0, dir * (R * 0.92), 0);
+        pod.rotation.z = dir * 0.35;
+        sputnik.add(pod);
+    });
+
+    // 5. ВНУТРЕННИЙ ПРИБОРНЫЙ ОТСЕК (РАДИОПЕРЕДАТЧИК И АККУМУЛЯТОРЫ)
+    const internalRig = new THREE.Group();
     
-    // Главный радиопередатчик
-    const mainBoxGeo = new THREE.BoxGeometry(6.5, 5.2, 9.5);
-    const mainBoxWire = new THREE.LineSegments(
-        new THREE.EdgesGeometry(mainBoxGeo),
-        new THREE.LineBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.75 })
-    );
-    mainBoxWire.position.set(-1.2, 0.4, -0.5);
-    internalBoxGroup.add(mainBoxWire);
+    // Несущая рама
+    const frameGeo = new THREE.BoxGeometry(10, 8, 14);
+    const frameMesh = new THREE.Mesh(frameGeo, new THREE.MeshBasicMaterial({ color: 0x0284c7, wireframe: true, transparent: true, opacity: 0.4 }));
+    internalRig.add(frameMesh);
 
-    // Блок батарей питания
-    const batteryBoxGeo = new THREE.BoxGeometry(5.0, 4.0, 7.0);
-    const batteryBoxWire = new THREE.LineSegments(
-        new THREE.EdgesGeometry(batteryBoxGeo),
-        new THREE.LineBasicMaterial({ color: 0x4deeea, transparent: true, opacity: 0.6 })
-    );
-    batteryBoxWire.position.set(2.2, -1.0, -1.0);
-    internalBoxGroup.add(batteryBoxWire);
+    // Блок радиопередатчика
+    const radioGeo = new THREE.BoxGeometry(5.5, 5, 6);
+    const radioMesh = new THREE.Mesh(radioGeo, wireAccentMat);
+    radioMesh.position.set(-1.8, 0.5, 1.5);
+    internalRig.add(radioMesh);
 
-    // Внутренние платы и монтажные шины
-    const rackPts = [
-        new THREE.Vector3(-4, -2, -4), new THREE.Vector3(4, -2, -4),
-        new THREE.Vector3(-4, -2, 4), new THREE.Vector3(4, -2, 4),
-        new THREE.Vector3(-4, 3, -4), new THREE.Vector3(-4, 3, 4),
-        new THREE.Vector3(4, 3, -4), new THREE.Vector3(4, 3, 4),
-        // Соединительные стойки каркаса к оболочке
-        new THREE.Vector3(-4, 0, -4), new THREE.Vector3(-10, 0, -8),
-        new THREE.Vector3(4, 0, -4), new THREE.Vector3(10, 0, -8),
-        new THREE.Vector3(0, -2, -4), new THREE.Vector3(0, -9, -9)
-    ];
-    internalBoxGroup.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(rackPts), dimLineMat));
-    sputnikGroup.add(internalBoxGroup);
+    // Блок серебряно-цинковых батарей
+    const battGeo = new THREE.BoxGeometry(6, 4.2, 5.5);
+    const battMesh = new THREE.Mesh(battGeo, wireAccentMat);
+    battMesh.position.set(2.0, -1.0, -2.0);
+    internalRig.add(battMesh);
 
-    // 5. ЧЕТЫРЕ КРОНШТЕЙНА И ТЕЛЕСКОПИЧЕСКИЕ АНТЕННЫ
-    // На чертеже: 4 антенны выходят из боковых узлов под углом назад (угол раствора ~35°)
-    const antennaAngles = [
-        { azim: Math.PI * 0.25, tiltY: 0.32, tiltX: 0.32 },
-        { azim: Math.PI * 0.75, tiltY: -0.32, tiltX: 0.32 },
-        { azim: Math.PI * 1.25, tiltY: -0.32, tiltX: -0.32 },
-        { azim: Math.PI * 1.75, tiltY: 0.32, tiltX: -0.32 }
-    ];
+    // Внутренний термовентилятор / диск диффузора
+    const fanDisk = new THREE.Mesh(new THREE.TorusGeometry(3.6, 0.25, 6, 24), wireAccentMat);
+    fanDisk.position.set(-3.2, 0, 0);
+    fanDisk.rotation.y = Math.PI / 2;
+    internalRig.add(fanDisk);
 
-    const antennaTotalLen = 95.0; // Длинные реалистичные усы
+    sputnik.add(internalRig);
 
-    antennaAngles.forEach(angCfg => {
-        const rootRadius = R * 0.88;
-        const rx = Math.cos(angCfg.azim) * rootRadius;
-        const ry = Math.sin(angCfg.azim) * rootRadius;
-        const rz = -R * 0.45;
+    // 6. МАССИВНЫЕ ТРУБЧАТЫЕ КРЕПЛЕНИЯ АНТЕНН (ШАРНИРЫ И НАПРАВЛЯЮЩИЕ ПАТРУБКИ)
+    // 4 антенны: 2 по 2.4 м и 2 по 2.9 м (в масштабе модели ~80-105 единиц)
+    const antAngles = [Math.PI * 0.25, Math.PI * 0.75, Math.PI * 1.25, Math.PI * 1.75];
+    const antLengths = [92, 108, 92, 108]; // Характерная разная длина антенн первого спутника
 
-        // Кронштейн крепления на корпусе (цилиндрическая муфта с гофром)
+    antAngles.forEach((ang, idx) => {
+        const rootRadius = R * 0.95;
+        const rootX = Math.cos(ang) * (rootRadius * 0.72);
+        const rootY = Math.sin(ang) * (rootRadius * 0.72);
+        const rootZ = R * 0.45;
+
+        // Массивный шарнирный стакан крепления
         const mountGroup = new THREE.Group();
-        mountGroup.position.set(rx, ry, rz);
-        mountGroup.lookAt(new THREE.Vector3(rx * 2, ry * 2, rz - 30));
+        mountGroup.position.set(rootX, rootY, rootZ);
 
-        // Цилиндр кронштейна
-        const cylGeo = new THREE.CylinderGeometry(0.85, 1.1, 4.2, 12, 3, true);
-        const cylWire = new THREE.Mesh(cylGeo, new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true }));
-        cylWire.rotation.x = Math.PI / 2;
-        cylWire.position.z = 2.1;
-        mountGroup.add(cylWire);
+        const socketGeo = new THREE.CylinderGeometry(1.3, 1.6, 7.5, 12, 3, true);
+        const socketMesh = new THREE.Mesh(socketGeo, wireAccentMat);
+        
+        // Направление антенны: назад под углом 35 градусов конусом
+        const coneSpreadX = Math.cos(ang) * 0.55;
+        const coneSpreadY = Math.sin(ang) * 0.55;
+        const dirVec = new THREE.Vector3(coneSpreadX, coneSpreadY, 1.0).normalize();
+        
+        socketMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirVec);
+        mountGroup.add(socketMesh);
 
-        // Шарнир
-        const hingeGeo = new THREE.SphereGeometry(1.2, 8, 8);
-        const hingeWire = new THREE.Mesh(hingeGeo, new THREE.MeshBasicMaterial({ color: 0x4deeea, wireframe: true }));
-        mountGroup.add(hingeWire);
+        // Муфта стыковки
+        const ringCoupling = new THREE.Mesh(new THREE.TorusGeometry(1.4, 0.25, 6, 16), wireAccentMat);
+        ringCoupling.position.copy(dirVec.clone().multiplyScalar(4.0));
+        ringCoupling.quaternion.copy(socketMesh.quaternion);
+        mountGroup.add(ringCoupling);
 
-        sputnikGroup.add(mountGroup);
+        sputnik.add(mountGroup);
 
-        // Сама антенна с 3 телескопическими сочленениями (муфтами)
-        const antDir = new THREE.Vector3(
-            Math.cos(angCfg.azim) * 0.35 + angCfg.tiltX * 0.15,
-            Math.sin(angCfg.azim) * 0.35 + angCfg.tiltY * 0.15,
-            -1.0
-        ).normalize();
+        // Длинный телескопический штырь антенны со звеньями
+        const len = antLengths[idx];
+        const tipPos = new THREE.Vector3(
+            rootX + dirVec.x * len,
+            rootY + dirVec.y * len,
+            rootZ + dirVec.z * len
+        );
+        const midPos = new THREE.Vector3(
+            rootX + dirVec.x * (len * 0.45),
+            rootY + dirVec.y * (len * 0.45),
+            rootZ + dirVec.z * (len * 0.45)
+        );
 
-        const pStart = new THREE.Vector3(rx, ry, rz);
-        const pEnd = pStart.clone().add(antDir.clone().multiplyScalar(antennaTotalLen));
+        // Основное колено антенны
+        const antPts1 = [new THREE.Vector3(rootX, rootY, rootZ), midPos];
+        sputnik.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(antPts1), thickLineMat));
 
-        // Главный стержень антенны
-        const antLineGeo = new THREE.BufferGeometry().setFromPoints([pStart, pEnd]);
-        sputnikGroup.add(new THREE.Line(antLineGeo, new THREE.LineBasicMaterial({ color: 0x00f0ff, linewidth: 2 })));
+        // Второе телескопическое колено
+        const antPts2 = [midPos, tipPos];
+        sputnik.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(antPts2), lineMat));
 
-        // Телескопические муфты на расстояниях 25%, 55%, 85%
-        [0.22, 0.52, 0.82].forEach(ratio => {
-            const jointP = pStart.clone().lerp(pEnd, ratio);
-            const jointCircle = [];
-            for (let j = 0; j <= 12; j++) {
-                const aj = (j / 12) * Math.PI * 2;
-                jointCircle.push(new THREE.Vector3(
-                    jointP.x + Math.cos(aj) * 0.45,
-                    jointP.y + Math.sin(aj) * 0.45,
-                    jointP.z
-                ));
-            }
-            sputnikGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(jointCircle), mainLineMat));
-        });
+        // Стыковочная муфта на антенне
+        const midRing = new THREE.Mesh(new THREE.SphereGeometry(0.5, 8, 8), wireAccentMat);
+        midRing.position.copy(midPos);
+        sputnik.add(midRing);
     });
 
-    // 6. КРАСНЫЙ СВЕТЯЩИЙСЯ ИМПУЛЬСНЫЙ МАЯК НА ВЕРШИНЕ
-    const beaconGeo = new THREE.SphereGeometry(1.8, 16, 16);
-    const beaconMat = new THREE.MeshBasicMaterial({ color: 0xff1122 });
-    const beaconMesh = new THREE.Mesh(beaconGeo, beaconMat);
-    beaconMesh.position.set(0, R + 1.2, 0);
-    sputnikGroup.add(beaconMesh);
-    sputnikGroup.beaconMesh = beaconMesh;
+    // 7. КРАСНЫЙ СИГНАЛЬНЫЙ МАЯК (РАДИОИМПУЛЬС)
+    const beaconGroup = new THREE.Group();
+    beaconGroup.position.set(-R * 0.88 - 1.2, 0, 0); // На передней крышке приборного люка
 
-    // Пульсирующий ореол маяка
-    const glowGeo = new THREE.SphereGeometry(4.8, 16, 16);
-    const glowMat = new THREE.MeshBasicMaterial({ 
-        color: 0xff3344, 
-        transparent: true, 
-        opacity: 0.55, 
-        blending: THREE.AdditiveBlending,
-        depthWrite: false 
-    });
-    const glowMesh = new THREE.Mesh(glowGeo, glowMat);
-    glowMesh.position.set(0, R + 1.2, 0);
-    sputnikGroup.add(glowMesh);
-    sputnikGroup.glowMesh = glowMesh;
+    const beaconCore = new THREE.Mesh(new THREE.SphereGeometry(1.6, 16, 16), new THREE.MeshBasicMaterial({ color: 0xff1744 }));
+    beaconGroup.add(beaconCore);
 
-    sputnikGroup.scale.set(0.9, 0.9, 0.9);
-    sputnikGroup.visible = false;
-    return sputnikGroup;
-}\n\nconst sputnik = createSputnikModel();
+    const beaconHalo = new THREE.Mesh(
+        new THREE.SphereGeometry(4.2, 16, 16),
+        new THREE.MeshBasicMaterial({ color: 0xff3d71, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending })
+    );
+    beaconGroup.add(beaconHalo);
+
+    sputnik.add(beaconGroup);
+    sputnik.beaconGroup = beaconGroup;
+
+    // Масштаб и исходное состояние
+    sputnik.scale.set(0.72, 0.72, 0.72);
+    sputnik.visible = false;
+    return sputnik;
+}
+
+const sputnik = createDetailedSputnikModel();
+
 preScene.add(sputnik);
 
 function playSputnikBeep(volumeRatio = 1.0) {
@@ -1540,8 +1519,7 @@ function animatePreloader() {
                 sputnik.rotation.x += 0.010;
                 
                 const blinkState = (Math.floor(now / 300) % 2 === 0);
-                if (sputnik.beaconMesh) sputnik.beaconMesh.visible = blinkState;
-                if (sputnik.glowMesh) sputnik.glowMesh.visible = blinkState;
+                if (sputnik.beaconGroup) sputnik.beaconGroup.visible = blinkState;
                 
                 // Нарастающий и стихающий сигнал "бип-бип-бип"
                 if (now - sputnikFlight.lastBeep > 950) {
