@@ -33,6 +33,7 @@ def generate_fallback_vitruvian():
     sq_size = int(size * 0.76)
     sq_top = int(size * 0.16)
     draw.rectangle([center - sq_size//2, sq_top, center + sq_size//2, sq_top + sq_size], outline=gold, width=2)
+    
     # Силуэт человека
     draw.ellipse([center - 22, int(size * 0.18), center + 22, int(size * 0.25)], outline=gold, width=2)
     draw.line([center, int(size * 0.25), center, int(size * 0.52)], fill=gold, width=2)
@@ -423,29 +424,30 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
 
         <!-- ПРАВАЯ ЧАСТЬ: KPI, ТАБЫ И ГРАФИКИ -->
         <section class="lg:col-span-9 flex flex-col">
+            <!-- КАРТОЧКИ METRIC С ДЕКОДЕРОМ ПО ХОВЕРУ -->
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 border-b">
-                <div class="alche-block tilt-card p-5">
-                    <div class="flex justify-between items-center opacity-60 mb-1"><span class="font-mono text-[9px] uppercase tracking-widest">[01] Выручка</span></div>
+                <div class="alche-block tilt-card p-5" onmouseenter="scrambleTitle(this)">
+                    <div class="flex justify-between items-center opacity-60 mb-1"><span class="metric-title font-mono text-[9px] uppercase tracking-widest" data-original="[01] Выручка">[01] Выручка</span></div>
                     <div id="kpiRev" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#f4f1ea]">0 ₽</div>
                     <div class="font-mono text-[9px] text-[#d4af37] mt-1.5 opacity-90" id="kpiRevSub">Маржа: 20%</div>
                 </div>
-                <div class="alche-block tilt-card p-5">
-                    <div class="flex justify-between items-center opacity-60 mb-1"><span class="font-mono text-[9px] uppercase tracking-widest">[02] Дефицит</span></div>
+                <div class="alche-block tilt-card p-5" onmouseenter="scrambleTitle(this)">
+                    <div class="flex justify-between items-center opacity-60 mb-1"><span class="metric-title font-mono text-[9px] uppercase tracking-widest" data-original="[02] Дефицит">[02] Дефицит</span></div>
                     <div id="kpiInjections" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#e63946]">0 ₽</div>
                     <div class="font-mono text-[9px] text-[#e63946] mt-1.5 opacity-90">Внешние дотации</div>
                 </div>
-                <div class="alche-block tilt-card p-5">
-                    <div class="flex justify-between items-center opacity-60 mb-1"><span class="font-mono text-[9px] uppercase tracking-widest">[03] Проценты</span></div>
+                <div class="alche-block tilt-card p-5" onmouseenter="scrambleTitle(this)">
+                    <div class="flex justify-between items-center opacity-60 mb-1"><span class="metric-title font-mono text-[9px] uppercase tracking-widest" data-original="[03] Проценты">[03] Проценты</span></div>
                     <div id="kpiInterest" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#d4af37]">0 ₽</div>
                     <div id="kpiRateSub" class="font-mono text-[9px] text-[#d4af37] mt-1.5 opacity-90">Ставка 19.0%</div>
                 </div>
-                <div class="alche-block tilt-card p-5">
-                    <div class="flex justify-between items-center opacity-60 mb-1"><span class="font-mono text-[9px] uppercase tracking-widest">[04] Пиковый долг</span></div>
+                <div class="alche-block tilt-card p-5" onmouseenter="scrambleTitle(this)">
+                    <div class="flex justify-between items-center opacity-60 mb-1"><span class="metric-title font-mono text-[9px] uppercase tracking-widest" data-original="[04] Пиковый долг">[04] Пиковый долг</span></div>
                     <div id="kpiMaxDebt" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#f4f1ea]">0 ₽</div>
                     <div class="font-mono text-[9px] opacity-60 mt-1.5">Максимум тела</div>
                 </div>
-                <div class="alche-block tilt-card p-5 col-span-2 sm:col-span-1">
-                    <div class="flex justify-between items-center opacity-60 mb-1"><span class="font-mono text-[9px] uppercase tracking-widest">[05] Прибыль</span></div>
+                <div class="alche-block tilt-card p-5 col-span-2 sm:col-span-1" onmouseenter="scrambleTitle(this)">
+                    <div class="flex justify-between items-center opacity-60 mb-1"><span class="metric-title font-mono text-[9px] uppercase tracking-widest" data-original="[05] Прибыль">[05] Прибыль</span></div>
                     <div id="kpiProfit" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#2a9d8f]">0 ₽</div>
                     <div id="kpiRoiSub" class="font-mono text-[9px] text-[#2a9d8f] mt-1.5 opacity-90">Рентабельность: 0%</div>
                 </div>
@@ -931,6 +933,16 @@ function scrambleElementText(el, finalText, duration = 460, useAlphabet = true) 
 }
 function scrambleNumber(el, finalStr, duration = 400) { scrambleElementText(el, finalStr, duration, false); }
 
+// Перебор символов при наведении на заголовок карточки
+function scrambleTitle(card) {
+    playClickSound(1600, 0.015);
+    const titleEl = card.querySelector('.metric-title');
+    if (!titleEl) return;
+    const orig = titleEl.getAttribute('data-original') || titleEl.textContent;
+    titleEl.setAttribute('data-original', orig);
+    scrambleElementText(titleEl, orig, 380, true);
+}
+
 /* ВКЛАДКИ */
 const TAB_TITLES = ['[01] ОБСЛУЖИВАНИЕ КАПИТАЛА', '[02] СКЛАДСКОЙ ЦИКЛ', '[03] ДЕНЕЖНЫЙ ПОТОК', '[04] ЭКОНОМИКА И ЗАКАЗЫ'];
 function selectTab(index) {
@@ -1237,7 +1249,7 @@ window.onload = () => runCalculation();
 </body>
 </html>"""
 
-# Безопасная подстановка Data URI без ошибок экранирования скобок в f-строках
+# Безопасная подстановка без риска конфликта синтаксиса скобок в Python
 html_code = html_code.replace("VITRUVIAN_DATA_PLACEHOLDER", vitruvian_data_uri)
 
 components.html(html_code, height=1380, scrolling=True)
