@@ -54,7 +54,6 @@ iframe[title="streamlit_component"]{
 </style>
 """, unsafe_allow_html=True)
 
-# Читаем HTML-шаблон напрямую из файла index.html
 html_path = os.path.join(os.path.dirname(__file__), "index.html") if "__file__" in locals() else "index.html"
 with open(html_path, "r", encoding="utf-8") as f:
     raw_html = f.read()
