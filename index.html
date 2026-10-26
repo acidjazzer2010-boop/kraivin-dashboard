@@ -629,17 +629,18 @@ function playClickSound(freq = 1200, duration = 0.02) {
     } catch (e) {}
 }
 
-function playGearSpinUpSound(duration = 1.4) {
+function playGearSpinUpSound(duration = 3.8) {
     try {
         if (!renaissanceAudio.ctx) renaissanceAudio.init();
         const ctx = renaissanceAudio.ctx;
         if (ctx.state === 'suspended') ctx.resume();
         const osc = ctx.createOscillator(), gain = ctx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(60, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(380, ctx.currentTime + duration);
-        gain.gain.setValueAtTime(0.02, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + duration * 0.85);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(45, ctx.currentTime);
+        // Медленный, бархатный механический разгон до высоких оборотов
+        osc.frequency.exponentialRampToValueAtTime(420, ctx.currentTime + duration * 0.95);
+        gain.gain.setValueAtTime(0.015, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.07, ctx.currentTime + duration * 0.88);
         gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
         osc.connect(gain); gain.connect(ctx.destination);
         osc.start(); osc.stop(ctx.currentTime + duration);
@@ -1098,7 +1099,7 @@ function checkRaycastHover() {
 
 let isObscuraTransition = false;
 let obscuraStartTime = 0;
-const OBSCURA_DURATION = 1.45;
+const OBSCURA_DURATION = 3.8; // Увеличенное время для медитативного и глубокого эффекта
 
 function triggerCameraObscuraTransition(event) {
     if (isObscuraTransition) return;
@@ -1110,7 +1111,7 @@ function triggerCameraObscuraTransition(event) {
     const hud = document.querySelector('.preloader-fixed-hud');
     if (hud) hud.style.opacity = '0';
 
-    targetCamPos.set(0, 0, baseCamZ);
+    targetCamPos.set(0, 0, baseCamZ + 20);
     targetLookTarget.set(0, 0, 0);
 
     astrolabeRings.forEach(ring => {
@@ -1153,39 +1154,59 @@ function animatePreloader() {
         const obsElapsed = (now - obscuraStartTime) * 0.001;
         const progress = Math.min(obsElapsed / OBSCURA_DURATION, 1.0);
 
-        const alignP = Math.min(progress / 0.45, 1.0);
-        const easeAlign = alignP * alignP * (3.0 - 2.0 * alignP);
+        // 1. Медленный плавный разворот колец в строго плоские диски (0.0 -> 0.42)
+        const alignP = Math.min(progress / 0.42, 1.0);
+        // Кубическая интерполяция для благородного замедления в конце выравнивания
+        const easeAlign = 1.0 - Math.pow(1.0 - alignP, 3.0);
 
-        const shrinkP = Math.max(0, (progress - 0.2) / 0.8);
-        const easeShrink = Math.pow(shrinkP, 3.2);
+        // 2. Фаза нарастания скорости вращения (от едва заметной до стремительной)
+        // Кольца разгоняются плавно по экспоненциальной кривой
+        const spinAccel = Math.pow(progress, 2.6);
+        const baseSpeed = 0.008;
+        const maxSpeed = 0.48;
+        const currentSpeed = baseSpeed + spinAccel * maxSpeed;
 
+        // 3. Закрытие диафрагмы: начинается плавно с середины и схлопывается к концу (0.35 -> 1.0)
+        const shrinkP = Math.max(0, (progress - 0.35) / 0.65);
+        // Степенное схлопывание диафрагмы в сингулярность
+        const easeShrink = Math.pow(shrinkP, 3.6);
+
+        // Карточки чертежей плавно и мягко растворяются назад в глубь пространства
         hoverTargets.forEach(item => {
-            item.group.scale.multiplyScalar(0.92);
-            item.group.position.z -= 8.0;
+            item.group.scale.multiplyScalar(0.96);
+            item.group.position.z -= 4.0;
         });
 
+        // Частицы пыли втягиваются в гравитационный центр диафрагмы
         const positions = particleGeo.attributes.position.array;
         for (let i = 0; i < particleCount * 3; i++) {
-            positions[i] *= 0.94;
+            positions[i] *= (1.0 - progress * 0.035);
         }
         particleGeo.attributes.position.needsUpdate = true;
 
-        megaRingWireMat.opacity = THREE.MathUtils.lerp(megaRingWireMat.opacity, 0.85, 0.08);
-        megaRingWireMat.color.setHex(0xd4af37);
+        // Постепенное превращение цвета колец в теплое золото диафрагмы
+        megaRingWireMat.opacity = THREE.MathUtils.lerp(megaRingWireMat.opacity, 0.95, 0.04);
+        megaRingWireMat.color.lerp(new THREE.Color(0xd4af37), 0.05);
+        secondaryWireMat.color.lerp(new THREE.Color(0xb8860b), 0.05);
 
         astrolabeRings.forEach((ring, idx) => {
+            // Выравнивание в плоскость X/Y: кольца становятся идеальными плоскими кругами
             ring.group.rotation.x = THREE.MathUtils.lerp(ring.startRotX, 0, easeAlign);
             ring.group.rotation.y = THREE.MathUtils.lerp(ring.startRotY, 0, easeAlign);
             
-            const spinVelocity = (idx % 2 === 0 ? 1 : -1) * (0.05 + progress * 0.42);
-            ring.group.rotation.z += spinVelocity;
+            // Противоположное вращение соседних колец диафрагмы с постепенным набором скорости
+            const direction = (idx % 2 === 0 ? 1 : -1);
+            ring.group.rotation.z += direction * currentSpeed;
 
-            const scaleFactor = Math.max(1.0 - easeShrink * 0.98, 0.01);
-            ring.group.scale.set(scaleFactor, scaleFactor, scaleFactor * (1.0 - easeShrink * 0.7));
+            // Концентрическое сужение диафрагмы
+            const scaleFactor = Math.max(1.0 - easeShrink * 0.992, 0.008);
+            // По толщине Z диск становится тонким, образуя плоское металлическое лезвие
+            const zThinness = Math.max(1.0 - easeAlign * 0.85, 0.1);
+            ring.group.scale.set(scaleFactor, scaleFactor, zThinness * scaleFactor);
         });
 
-        preCamera.position.lerp(targetCamPos, 0.12);
-        currentLookTarget.lerp(targetLookTarget, 0.12);
+        preCamera.position.lerp(targetCamPos, 0.06);
+        currentLookTarget.lerp(targetLookTarget, 0.06);
         preCamera.lookAt(currentLookTarget);
 
         preRenderer.clear();
