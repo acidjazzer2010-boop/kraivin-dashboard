@@ -108,12 +108,12 @@ body { background-color: var(--bg-space); color: var(--text-main); font-family: 
 #preloader-webgl { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 10; cursor: pointer; }
 
 #preloaderTitle {
-    position: absolute; top: 10%; left: 50%; transform: translateX(-50%);
+    position: absolute; top: 8%; left: 50%; transform: translateX(-50%);
     font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic;
-    font-size: clamp(28px, 4vw, 52px); font-weight: 700; letter-spacing: 0.22em;
+    font-size: clamp(26px, 3.8vw, 48px); font-weight: 700; letter-spacing: 0.22em;
     color: var(--accent-gold); opacity: 0; z-index: 30; pointer-events: none;
     text-shadow: 0 0 35px rgba(212, 175, 55, 0.75);
-    transition: opacity 2s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 1.8s cubic-bezier(0.16, 1, 0.3, 1);
     text-align: center; width: 100%; user-select: none;
 }
 
@@ -201,7 +201,7 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
 <body class="selection:bg-[#d4af37] selection:text-black">
 <div class="film-grain"></div>
 
-<!-- ПРЕЛОАДЕР: АСТРОЛЯБИЯ + ИНТЕРАКТИВНЫЕ 3D КАРКАСЫ ДА ВИНЧИ -->
+<!-- ПРЕЛОАДЕР -->
 <div id="preloader-stage">
     <canvas id="preloader-webgl"></canvas>
     
@@ -210,7 +210,7 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
     <div id="preloaderHUD">
         <div class="flex items-center gap-3 text-[#d4af37] text-[10px] tracking-[0.25em] uppercase font-mono">
             <span class="pulse-dot"></span>
-            <span id="loaderStatusText">Трассировка 3D-механизмов Да Винчи...</span>
+            <span id="loaderStatusText">Построение пространственных каркасов Да Винчи...</span>
             <span id="loaderPercent" class="font-bold">0%</span>
         </div>
         <div class="progress-bar-bg mt-1">
@@ -529,7 +529,7 @@ const preloaderStartTime = performance.now();
 setTimeout(() => {
     const pt = document.getElementById('preloaderTitle');
     if (pt) { pt.style.opacity = '1'; }
-}, 1200);
+}, 1000);
 
 let drawingCompleted = false;
 
@@ -556,7 +556,7 @@ function updatePreloaderProgress(now) {
 requestAnimationFrame(updatePreloaderProgress);
 
 /* =========================================================================
-   THREE.JS ПРЕЛОАДЕР: АСТРОЛЯБИЯ + СВОБОДНЫЕ 3D-КАРКАСНЫЕ МОДЕЛИ ДА ВИНЧИ
+   THREE.JS ПРЕЛОАДЕР: 3D КАРКАСЫ ДА ВИНЧИ + АСТРОЛЯБИЯ
    ========================================================================= */
 const preCanvas = document.getElementById('preloader-webgl');
 const preRenderer = new THREE.WebGLRenderer({ canvas: preCanvas, alpha: true, antialias: true, preserveDrawingBuffer: true });
@@ -576,9 +576,9 @@ const astrolabeWireMat = new THREE.MeshBasicMaterial({
 });
 
 const astrolabeRings = [];
-const aRing1 = new THREE.Mesh(new THREE.TorusGeometry(140, 4.2, 26, 240), astrolabeWireMat);
-const aRing2 = new THREE.Mesh(new THREE.TorusGeometry(108, 3.6, 24, 200), astrolabeWireMat);
-const aRing3 = new THREE.Mesh(new THREE.TorusGeometry(82, 3.0, 22, 180), astrolabeWireMat);
+const aRing1 = new THREE.Mesh(new THREE.TorusGeometry(135, 4.0, 24, 200), astrolabeWireMat);
+const aRing2 = new THREE.Mesh(new THREE.TorusGeometry(105, 3.4, 22, 180), astrolabeWireMat);
+const aRing3 = new THREE.Mesh(new THREE.TorusGeometry(78, 2.8, 20, 160), astrolabeWireMat);
 
 aRing2.rotation.x = Math.PI / 3;
 aRing3.rotation.y = Math.PI / 4;
@@ -593,7 +593,7 @@ astrolabeRings.push(
     { mesh: aRing3, sx: 0.0031, sy: -0.0026, sz: 0.0018, px: 1.5, py: 3.2 }
 );
 
-// Шейдер золотого каркаса для тонких линий изобретений Да Винчи
+// Тонкий золотой шейдерный материал для 3D линий
 function createBlueprintLineMaterial() {
     return new THREE.ShaderMaterial({
         uniforms: {
@@ -612,11 +612,10 @@ function createBlueprintLineMaterial() {
             uniform float uTime;
             varying vec3 vPos;
             void main() {
-                // Мягкий бегущий световой импульс по линиям каркаса
-                float wave = sin((vPos.x + vPos.y + vPos.z) * 0.12 - uTime * 4.0) * 0.5 + 0.5;
+                float wave = sin((vPos.x + vPos.y + vPos.z) * 0.1 - uTime * 3.5) * 0.5 + 0.5;
                 vec3 baseGold = vec3(0.85, 0.71, 0.25);
                 vec3 highlight = vec3(1.0, 0.94, 0.65);
-                vec3 col = mix(baseGold, highlight, wave * 0.4 + uHover * 0.6);
+                vec3 col = mix(baseGold, highlight, wave * 0.45 + uHover * 0.55);
                 float alpha = clamp(0.75 + wave * 0.25 + uHover * 0.25, 0.0, 1.0);
                 gl_FragColor = vec4(col, alpha);
             }
@@ -630,36 +629,33 @@ function createBlueprintLineMaterial() {
 function buildVitruvianWireframe() {
     const pts = [];
     const r = 36;
-    // Описанная окружность
-    for (let i = 0; i <= 64; i++) {
-        const a1 = (i / 64) * Math.PI * 2, a2 = ((i + 1) / 64) * Math.PI * 2;
+    for (let i = 0; i < 48; i++) {
+        const a1 = (i / 48) * Math.PI * 2, a2 = ((i + 1) / 48) * Math.PI * 2;
         pts.push(new THREE.Vector3(Math.cos(a1) * r, Math.sin(a1) * r, 0));
         pts.push(new THREE.Vector3(Math.cos(a2) * r, Math.sin(a2) * r, 0));
     }
-    // Квадрат пропорций
-    const s = 31;
-    const sq = [
+    const s = 30;
+    pts.push(
         new THREE.Vector3(-s, -s + 3, 0), new THREE.Vector3(s, -s + 3, 0),
         new THREE.Vector3(s, -s + 3, 0), new THREE.Vector3(s, s + 3, 0),
         new THREE.Vector3(s, s + 3, 0), new THREE.Vector3(-s, s + 3, 0),
         new THREE.Vector3(-s, s + 3, 0), new THREE.Vector3(-s, -s + 3, 0)
-    ];
-    pts.push(...sq);
-    // Голова
+    );
     for (let i = 0; i < 16; i++) {
         const a1 = (i / 16) * Math.PI * 2, a2 = ((i + 1) / 16) * Math.PI * 2;
         pts.push(new THREE.Vector3(Math.cos(a1) * 4.2, 20 + Math.sin(a1) * 5.2, 0));
         pts.push(new THREE.Vector3(Math.cos(a2) * 4.2, 20 + Math.sin(a2) * 5.2, 0));
     }
-    // Оси торса и конечностей
-    pts.push(new THREE.Vector3(0, 15, 0), new THREE.Vector3(0, -6, 0));
-    pts.push(new THREE.Vector3(-31, 9, 0), new THREE.Vector3(31, 9, 0));
-    pts.push(new THREE.Vector3(0, 13, 0), new THREE.Vector3(-28, 22, 0));
-    pts.push(new THREE.Vector3(0, 13, 0), new THREE.Vector3(28, 22, 0));
-    pts.push(new THREE.Vector3(0, -6, 0), new THREE.Vector3(-10, -31, 0));
-    pts.push(new THREE.Vector3(0, -6, 0), new THREE.Vector3(10, -31, 0));
-    pts.push(new THREE.Vector3(0, -6, 0), new THREE.Vector3(-22, -28, 0));
-    pts.push(new THREE.Vector3(0, -6, 0), new THREE.Vector3(22, -28, 0));
+    pts.push(
+        new THREE.Vector3(0, 15, 0), new THREE.Vector3(0, -6, 0),
+        new THREE.Vector3(-31, 9, 0), new THREE.Vector3(31, 9, 0),
+        new THREE.Vector3(0, 13, 0), new THREE.Vector3(-28, 22, 0),
+        new THREE.Vector3(0, 13, 0), new THREE.Vector3(28, 22, 0),
+        new THREE.Vector3(0, -6, 0), new THREE.Vector3(-10, -31, 0),
+        new THREE.Vector3(0, -6, 0), new THREE.Vector3(10, -31, 0),
+        new THREE.Vector3(0, -6, 0), new THREE.Vector3(-22, -28, 0),
+        new THREE.Vector3(0, -6, 0), new THREE.Vector3(22, -28, 0)
+    );
 
     const geo = new THREE.BufferGeometry().setFromPoints(pts);
     return new THREE.LineSegments(geo, createBlueprintLineMaterial());
@@ -669,21 +665,21 @@ function buildVitruvianWireframe() {
 function buildOrnithopterWireframe() {
     const pts = [];
     const spar = [];
-    for (let i = -24; i <= 24; i++) {
-        const x = i * 2.0;
-        const y = Math.sin((i / 24) * Math.PI) * 11 - 4;
-        const z = -Math.cos((i / 24) * Math.PI) * 7;
+    for (let i = -20; i <= 20; i++) {
+        const x = i * 2.1;
+        const y = Math.sin((i / 20) * Math.PI) * 11 - 4;
+        const z = -Math.cos((i / 20) * Math.PI) * 7;
         spar.push(new THREE.Vector3(x, y, z));
     }
     for (let i = 0; i < spar.length - 1; i++) {
         pts.push(spar[i], spar[i + 1]);
     }
-    for (let i = 0; i < spar.length; i += 4) {
+    for (let i = 0; i < spar.length; i += 3) {
         const p = spar[i];
         const tip = new THREE.Vector3(p.x * 1.12, p.y - 26 + Math.abs(p.x) * 0.18, p.z + 10);
         pts.push(p, tip);
-        if (i > 0) {
-            const prevTip = new THREE.Vector3(spar[i - 4].x * 1.12, spar[i - 4].y - 26 + Math.abs(spar[i - 4].x) * 0.18, spar[i - 4].z + 10);
+        if (i >= 3) {
+            const prevTip = new THREE.Vector3(spar[i - 3].x * 1.12, spar[i - 3].y - 26 + Math.abs(spar[i - 3].x) * 0.18, spar[i - 3].z + 10);
             pts.push(tip, prevTip);
         }
     }
@@ -691,14 +687,14 @@ function buildOrnithopterWireframe() {
     return new THREE.LineSegments(geo, createBlueprintLineMaterial());
 }
 
-// 3. ВОЗДУШНЫЙ ВИНТ ДА ВИНЧИ (3D WIREFRAME)
+// 3. ВОЗДУШНЫЙ ВИНТ (3D WIREFRAME)
 function buildAerialScrewWireframe() {
     const pts = [];
     pts.push(new THREE.Vector3(0, -26, 0), new THREE.Vector3(0, 30, 0));
     pts.push(new THREE.Vector3(-16, -26, 0), new THREE.Vector3(16, -26, 0));
     pts.push(new THREE.Vector3(0, -26, -16), new THREE.Vector3(0, -26, 16));
     
-    const steps = 96;
+    const steps = 64;
     for (let i = 0; i < steps; i++) {
         const t1 = (i / steps) * Math.PI * 4.5;
         const t2 = ((i + 1) / steps) * Math.PI * 4.5;
@@ -746,7 +742,7 @@ function buildBridgeWireframe() {
     return new THREE.LineSegments(geo, createBlueprintLineMaterial());
 }
 
-// Сборка массива свободных 3D моделей изобретений на независимых орбитах
+// Сборка массива моделей Да Винчи
 const floatingInventions = [
     {
         mesh: buildVitruvianWireframe(),
@@ -755,10 +751,10 @@ const floatingInventions = [
         rotSpeed: new THREE.Vector3(0.001, 0.002, 0.0005)
     },
     {
-        mesh: buildOrnithopterWing(),
+        mesh: buildOrnithopterWireframe(),
         name: "Крыло орнитоптера",
-        basePos: new THREE.Vector3(-85, 22, 95),
-        rotSpeed: new THREE.Vector3(0.0025, 0.0018, -0.0015)
+        basePos: new THREE.Vector3(-85, 20, 95),
+        rotSpeed: new THREE.Vector3(0.0022, 0.0015, -0.0015)
     },
     {
         mesh: buildAerialScrewWireframe(),
@@ -769,19 +765,18 @@ const floatingInventions = [
     {
         mesh: buildBridgeWireframe(),
         name: "Арочный мост",
-        basePos: new THREE.Vector3(70, 26, 175),
-        rotSpeed: new THREE.Vector3(-0.0018, 0.0028, 0.0012)
+        basePos: new THREE.Vector3(70, 24, 165),
+        rotSpeed: new THREE.Vector3(-0.0018, 0.0025, 0.0012)
     }
 ];
 
-// Добавляем модели в группу сцены и навешиваем невидимые хитбоксы для точного наведения курсора
 const hoverTargets = [];
-floatingInventions.forEach((item, idx) => {
+floatingInventions.forEach((item) => {
     item.mesh.position.copy(item.basePos);
     preGroup.add(item.mesh);
 
     // Невидимый хитбокс для Raycaster
-    const hitGeo = new THREE.SphereGeometry(36, 16, 16);
+    const hitGeo = new THREE.SphereGeometry(36, 12, 12);
     const hitMat = new THREE.MeshBasicMaterial({ visible: false });
     const hitMesh = new THREE.Mesh(hitGeo, hitMat);
     hitMesh.position.copy(item.basePos);
@@ -794,7 +789,7 @@ floatingInventions.forEach((item, idx) => {
     hoverTargets.push(item);
 });
 
-/* RAYCASTER ДЛЯ ИНТЕРАКТИВНОГО ВЫДЕЛЕНИЯ ПРИ НАВЕДЕНИИ КУРСОРА */
+/* RAYCASTER ДЛЯ ИНТЕРАКТИВНОГО ВЫДЕЛЕНИЯ */
 const raycaster = new THREE.Raycaster();
 const mouseVec = new THREE.Vector2(-999, -999);
 let currentHovered = null;
@@ -805,7 +800,7 @@ window.addEventListener('mousemove', (e) => {
 });
 
 function checkRaycastHover() {
-    if (preloaderDismissed) return;
+    if (preloaderDismissed || hoverTargets.length === 0) return;
     raycaster.setFromCamera(mouseVec, preCamera);
     const hitMeshes = hoverTargets.map(h => h.hitMesh);
     const intersects = raycaster.intersectObjects(hitMeshes, false);
@@ -824,7 +819,6 @@ function checkRaycastHover() {
         const found = hoverTargets.find(h => h.hitMesh === hit);
         if (found) {
             found.isHovered = true;
-            // Выделение на первый план: устремление вперед к камере и масштабирование
             found.targetScale = 1.35;
             found.targetZ = 65; 
             if (found.mesh.material && found.mesh.material.uniforms) {
@@ -939,10 +933,9 @@ function animatePreloader() {
         item.mesh.rotation.z += item.sz + Math.sin(t * 0.25) * 0.0006;
     });
 
-    // Проверка наведения курсора для выделения на первый план
     checkRaycastHover();
 
-    // Свободный 3D-дрейф и анимация моделей изобретений между кольцами
+    // Свободное парение 3D-моделей Да Винчи между кольцами
     hoverTargets.forEach((item, idx) => {
         if (!item.isHovered) {
             item.mesh.position.y = item.basePos.y + Math.sin(t * 1.3 + idx * 1.6) * 7.0;
@@ -951,12 +944,10 @@ function animatePreloader() {
             item.mesh.rotation.y += item.rotSpeed.y;
             item.mesh.rotation.z += item.rotSpeed.z;
         } else {
-            // Выравнивание перед зрителем при ховере
             item.mesh.rotation.x = THREE.MathUtils.lerp(item.mesh.rotation.x, 0, 0.1);
             item.mesh.rotation.y = THREE.MathUtils.lerp(item.mesh.rotation.y, 0, 0.1);
         }
 
-        // Плавная интерполяция координаты Z и масштаба
         item.mesh.position.z = THREE.MathUtils.lerp(item.mesh.position.z, item.targetZ, 0.08);
         item.hitMesh.position.copy(item.mesh.position);
         
@@ -968,9 +959,8 @@ function animatePreloader() {
         }
     });
 
-    // Медленное плавное покачивание камеры
-    preCamera.position.x = Math.sin(t * 0.4) * 10.0;
-    preCamera.position.y = Math.cos(t * 0.35) * 7.0;
+    preCamera.position.x = Math.sin(t * 0.4) * 8.0;
+    preCamera.position.y = Math.cos(t * 0.35) * 6.0;
     preCamera.lookAt(0, 0, 0);
     
     preRenderer.clear();
@@ -1228,7 +1218,7 @@ function runCalculation() {
     const cogsPayments = new Array(period).fill(0);
     const inventoryDeliveries = new Array(period).fill(0);
 
-    // ПЕРВАЯ ПАРТИЯ: Предоплата и Отсрочка поставщика
+    // ПЕРВАЯ ПАРТИЯ
     cogsPayments[0] += initialPurchase * (supplierPrepayPct / 100);
     const firstDelayMonth = supplierDelay;
     if (firstDelayMonth < period) {
@@ -1236,7 +1226,7 @@ function runCalculation() {
     }
     inventoryDeliveries[0] = initialPurchase;
     
-    // ЦИКЛИЧЕСКИЕ ПАРТИИ: Предоплата и Отсрочка поставщика
+    // ЦИКЛИЧЕСКИЕ ПАРТИИ
     for (let b = batchCycle; b < period; b += batchCycle) {
         const bEnd = Math.min(b + batchCycle, period);
         let batchTotal = 0;
