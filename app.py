@@ -11,9 +11,10 @@ st.set_page_config(
 st.markdown("""
 <style>
 #MainMenu, header, footer, .stDeployButton { visibility: hidden !important; display: none !important; }
-.block-container { padding: 0 !important; max-width: 100% !important; }
-section.main { background-color: #070709 !important; }
-iframe { border: none !important; width: 100% !important; }
+.block-container { padding: 0 !important; max-width: 100% !important; margin: 0 !important; }
+section.main { background-color: #070709 !important; padding: 0 !important; }
+iframe { border: none !important; width: 100vw !important; height: 100vh !important; display: block !important; }
+body { overflow: hidden !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -21,7 +22,7 @@ html_code = r"""<!DOCTYPE html>
 <html lang="ru" class="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Архитектура Капитала // Финансовое Моделирование</title>
 
 <!-- Типографика -->
@@ -91,7 +92,17 @@ html:not(.dark) {
 }
 
 * { box-sizing: border-box; border-color: var(--border-line); margin: 0; padding: 0; }
-body { background-color: var(--bg-space); color: var(--text-main); font-family: 'JetBrains Mono', monospace; overflow-x: hidden; transition: background-color 0.4s ease, color 0.4s ease; }
+
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Блокировка скролла на этапе прелоадера */
+    background-color: var(--bg-space);
+    color: var(--text-main);
+    font-family: 'JetBrains Mono', monospace;
+}
 
 .film-grain {
     position: fixed; inset: 0; width: 100vw; height: 100vh;
@@ -99,78 +110,153 @@ body { background-color: var(--bg-space); color: var(--text-main); font-family: 
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
-/* ПРЕЛОАДЕР */
+/* =========================================================================
+   МОНОЛИТНЫЙ ПРЕЛОАДЕР (СТРОГО 100VH, БЕЗ СКРОЛЛА)
+   ========================================================================= */
 #preloader-stage {
-    position: fixed; inset: 0; width: 100vw; height: 100vh;
-    background: #050508; z-index: 900; overflow: hidden;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #050508;
+    z-index: 900;
+    overflow: hidden;
 }
-#preloader-webgl { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 10; cursor: grab; }
+
+#preloader-webgl {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    cursor: grab;
+}
 #preloader-webgl:active { cursor: grabbing; }
 
-/* ФИКСИРОВАННЫЙ ЭКРАННЫЙ СЛОЙ UI (НЕ ЗАВИСИТ ОТ 3D-КАМЕРЫ) */
-.preloader-ui-layer {
-    position: fixed; inset: 0; width: 100vw; height: 100vh;
-    z-index: 30; pointer-events: none;
-    display: flex; flex-direction: column; justify-content: space-between; align-items: center;
-    padding: clamp(24px, 4.5vh, 48px) 20px clamp(20px, 4.5vh, 40px) 20px;
-    box-sizing: border-box;
+/* ЕДИНЫЙ ЖЕСТКИЙ ЭКРАННЫЙ СЛОЙ ТИПОГРАФИКИ И КНОПОК */
+.preloader-fixed-hud {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 30;
+    pointer-events: none;
+    user-select: none;
 }
 
+/* Заголовок строго над астролябией */
 #preloaderTitle {
-    font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic;
-    font-size: clamp(24px, 3.6vw, 46px); font-weight: 700; letter-spacing: 0.22em;
-    color: var(--accent-gold); opacity: 0; pointer-events: none;
+    position: absolute;
+    top: 52px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(26px, 3.2vw, 44px);
+    font-weight: 700;
+    letter-spacing: 0.24em;
+    color: var(--accent-gold);
+    opacity: 0;
     text-shadow: 0 0 35px rgba(212, 175, 55, 0.75);
-    transition: opacity 1.8s cubic-bezier(0.16, 1, 0.3, 1);
-    text-align: center; width: 100%; user-select: none;
+    transition: opacity 1.6s cubic-bezier(0.16, 1, 0.3, 1);
+    text-align: center;
+    white-space: nowrap;
 }
-#preloaderTitle.locked-visible {
+#preloaderTitle.locked-on {
     opacity: 1 !important;
 }
 
-.bottom-action-container {
-    position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    width: 100%; min-height: 52px; pointer-events: none;
+/* Нижний блок строго под кольцами */
+.bottom-dock {
+    position: absolute;
+    bottom: 46px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 320px;
+    height: 54px;
 }
 
 #preloaderHUD {
-    display: flex; flex-direction: column; align-items: center; gap: 8px;
-    transition: opacity 0.4s ease; pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transition: opacity 0.4s ease;
 }
-.progress-bar-bg { width: min(280px, 75vw); height: 2px; background: rgba(255,255,255,0.1); position: relative; overflow: hidden; }
-#loaderProgressBar { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: var(--accent-gold); transition: width 0.1s linear; }
+.progress-bar-bg {
+    width: 260px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.12);
+    position: relative;
+    overflow: hidden;
+}
+#loaderProgressBar {
+    position: absolute;
+    left: 0; top: 0;
+    height: 100%; width: 0%;
+    background: var(--accent-gold);
+    transition: width 0.1s linear;
+}
 
 #exploreBtnWrapper {
-    opacity: 0; pointer-events: none; position: absolute;
-    transition: opacity 0.8s cubic-bezier(0.19, 1, 0.22, 1), transform 0.8s cubic-bezier(0.19, 1, 0.22, 1);
-    transform: translateY(10px);
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.6s cubic-bezier(0.19, 1, 0.22, 1), transform 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+    transform: translateY(8px);
 }
 #exploreBtnWrapper.active {
-    opacity: 1; pointer-events: auto; transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
 }
 
 .explore-btn {
-    position: relative; padding: 13px 44px;
-    background: rgba(13, 13, 18, 0.85); border: 1px solid rgba(212, 175, 55, 0.9);
-    color: #f4f1ea; font-family: 'JetBrains Mono', monospace; font-size: 11px;
-    letter-spacing: 0.35em; text-transform: uppercase; cursor: pointer;
-    backdrop-filter: blur(14px); overflow: hidden; transition: all 0.35s ease;
-    box-shadow: 0 0 30px rgba(212, 175, 55, 0.25), inset 0 0 15px rgba(212, 175, 55, 0.12);
+    padding: 12px 42px;
+    background: rgba(13, 13, 18, 0.88);
+    border: 1px solid rgba(212, 175, 55, 0.95);
+    color: #f4f1ea;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    cursor: pointer;
+    backdrop-filter: blur(14px);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 35px rgba(212, 175, 55, 0.3), inset 0 0 16px rgba(212, 175, 55, 0.15);
 }
 .explore-btn::before {
     content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.35), transparent);
+    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.4), transparent);
     transition: left 0.7s ease;
 }
 .explore-btn:hover {
     border-color: #ffd700; color: #ffd700;
-    box-shadow: 0 0 45px rgba(212, 175, 55, 0.55), inset 0 0 20px rgba(212, 175, 55, 0.25);
-    transform: scale(1.04);
+    box-shadow: 0 0 50px rgba(212, 175, 55, 0.6), inset 0 0 20px rgba(212, 175, 55, 0.3);
+    transform: scale(1.05);
 }
 .explore-btn:hover::before { left: 100%; }
 
 /* ДАШБОРД */
-#webgl-bg-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; opacity: 0.35; transition: opacity 0.5s ease; }
+#mainDashboardApp {
+    display: none;
+    position: relative;
+    z-index: 10;
+    min-height: 100vh;
+}
+#mainDashboardApp.ready {
+    display: flex;
+}
+
+#webgl-bg-canvas {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    z-index: 0; pointer-events: none; opacity: 0.35;
+}
 html:not(.dark) #webgl-bg-canvas { opacity: 0.18; }
 
 .alche-block {
@@ -219,19 +305,18 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
 <body class="selection:bg-[#d4af37] selection:text-black">
 <div class="film-grain"></div>
 
-<!-- ПРЕЛОАДЕР -->
+<!-- ПРЕЛОАДЕР (СТРОГО ОДИН ЭКРАН 1920x1080) -->
 <div id="preloader-stage">
     <canvas id="preloader-webgl"></canvas>
 
-    <!-- СТАБИЛЬНЫЙ HUD ЭКРАНА: НЕ СМЕЩАЕТСЯ КАМЕРОЙ -->
-    <div class="preloader-ui-layer">
+    <div class="preloader-fixed-hud">
         <div id="preloaderTitle">Архитектура финансов</div>
 
-        <div class="bottom-action-container">
+        <div class="bottom-dock">
             <div id="preloaderHUD">
                 <div class="flex items-center gap-3 text-[#d4af37] text-[10px] tracking-[0.25em] uppercase font-mono">
                     <span class="pulse-dot"></span>
-                    <span id="loaderStatusText">Сборка пространственных конструкций Да Винчи...</span>
+                    <span id="loaderStatusText">Сборка конструкций Да Винчи...</span>
                     <span id="loaderPercent" class="font-bold">0%</span>
                 </div>
                 <div class="progress-bar-bg mt-1">
@@ -250,8 +335,8 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
 
 <canvas id="webgl-bg-canvas"></canvas>
 
-<!-- ДАШБОРД -->
-<div id="mainDashboardApp" class="relative z-10 min-h-screen flex flex-col border-t border-l opacity-0 transition-opacity duration-1000">
+<!-- ДАШБОРД (СКРОЛЛ ТОЛЬКО ЗДЕСЬ ПОСЛЕ ВХОДА) -->
+<div id="mainDashboardApp" class="flex-col border-t border-l opacity-0 transition-opacity duration-1000">
     <header class="alche-block px-5 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4 border-b">
         <div class="flex items-center gap-6">
             <div class="flex items-center gap-3 cursor-pointer" onclick="playClickSound(1500, 0.04)">
@@ -337,7 +422,6 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
                     </div>
                 </div>
 
-                <!-- БЛОК II -->
                 <div class="alche-block p-5 space-y-4">
                     <div class="flex justify-between items-baseline"><span class="font-serif italic text-base font-semibold">II. Партионный склад и кредитование</span><span class="font-mono text-[9px] opacity-40">02 // 04</span></div>
                     <div>
@@ -542,20 +626,28 @@ function dismissPreloader() {
     preloaderDismissed = true;
     const stage = document.getElementById('preloader-stage');
     const app = document.getElementById('mainDashboardApp');
-    if (app) { app.classList.remove('opacity-0'); app.classList.add('opacity-100'); }
+    
+    // Включаем скролл только для дашборда
+    document.documentElement.style.overflow = 'auto';
+    document.body.style.overflow = 'auto';
+    
+    if (app) { 
+        app.classList.add('ready');
+        void app.offsetWidth;
+        app.classList.remove('opacity-0');
+        app.classList.add('opacity-100'); 
+    }
     setTimeout(() => { if (stage) stage.style.display = 'none'; }, 600);
 }
 
 const PRELOADER_TOTAL_TIME = 9000;
 const preloaderStartTime = performance.now();
 
-// Проявление и жесткая фиксация заголовка без возможности исчезновения от движений камеры
+// Проявление заголовка без возможности исчезновения
 setTimeout(() => {
     const pt = document.getElementById('preloaderTitle');
-    if (pt) { 
-        pt.classList.add('locked-visible');
-    }
-}, 1200);
+    if (pt) pt.classList.add('locked-on');
+}, 900);
 
 let drawingCompleted = false;
 
@@ -573,10 +665,7 @@ function updatePreloaderProgress(now) {
         drawingCompleted = true;
         const hud = document.getElementById('preloaderHUD');
         const btn = document.getElementById('exploreBtnWrapper');
-        if (hud) {
-            hud.style.opacity = '0';
-            setTimeout(() => { hud.style.display = 'none'; }, 400);
-        }
+        if (hud) hud.style.opacity = '0';
         if (btn) btn.classList.add('active');
     }
 
@@ -585,7 +674,7 @@ function updatePreloaderProgress(now) {
 requestAnimationFrame(updatePreloaderProgress);
 
 /* =========================================================================
-   THREE.JS ПРЕЛОАДЕР: АДАПТИВНАЯ КАМЕРА, МАССИВНЫЕ КОЛЬЦА И КАРКАСЫ
+   THREE.JS ПРЕЛОАДЕР: ГАРАНТИЯ 1920x1080 (ВСЁ В ПОЛЕ ЗРЕНИЯ)
    ========================================================================= */
 const preCanvas = document.getElementById('preloader-webgl');
 const preRenderer = new THREE.WebGLRenderer({ canvas: preCanvas, alpha: true, antialias: true, preserveDrawingBuffer: true });
@@ -595,18 +684,19 @@ preRenderer.setSize(window.innerWidth, window.innerHeight);
 const preScene = new THREE.Scene();
 const preCamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 4000);
 
-function computeCameraFitZ() {
-    const aspect = window.innerWidth / window.innerHeight;
-    const maxBound = 180;
+// Динамический расчёт Z камеры: объекты всегда занимают центр и не наезжают на заголовок и кнопку
+function computeExactFitZ() {
     const vFovRad = (preCamera.fov * Math.PI) / 180;
-    let dist = (maxBound / Math.tan(vFovRad / 2));
-    if (aspect < 1.0) {
-        dist = dist / aspect;
+    const requiredRadius = 160; 
+    let z = requiredRadius / Math.tan(vFovRad / 2);
+    const aspect = window.innerWidth / window.innerHeight;
+    if (aspect < 1.77) { // Меньше стандарта 16:9
+        z = z * (1.77 / Math.max(aspect, 0.7));
     }
-    return Math.max(dist * 1.08, 280);
+    return Math.max(z * 1.05, 340);
 }
 
-let baseCamZ = computeCameraFitZ();
+let baseCamZ = computeExactFitZ();
 let targetCamPos = new THREE.Vector3(0, 0, baseCamZ);
 let currentLookTarget = new THREE.Vector3(0, 0, 0);
 let targetLookTarget = new THREE.Vector3(0, 0, 0);
@@ -622,51 +712,39 @@ const astrolabeWireMat = new THREE.MeshBasicMaterial({
 
 function createMassiveTrussRing(mainRadius, tubeRadius, segmentsRadial, segmentsTubular) {
     const group = new THREE.Group();
-    const mainGeo = new THREE.TorusGeometry(mainRadius, tubeRadius, segmentsRadial, segmentsTubular);
-    const mainMesh = new THREE.Mesh(mainGeo, astrolabeWireMat);
+    const mainMesh = new THREE.Mesh(new THREE.TorusGeometry(mainRadius, tubeRadius, segmentsRadial, segmentsTubular), astrolabeWireMat);
     group.add(mainMesh);
 
     const linePts = [];
     const rIn = mainRadius - tubeRadius * 1.05;
     const rOut = mainRadius + tubeRadius * 1.05;
-    const ringSteps = segmentsTubular;
 
-    for (let i = 0; i < ringSteps; i++) {
-        const a1 = (i / ringSteps) * Math.PI * 2;
-        const a2 = ((i + 1) / ringSteps) * Math.PI * 2;
-        
+    for (let i = 0; i < segmentsTubular; i++) {
+        const a1 = (i / segmentsTubular) * Math.PI * 2;
+        const a2 = ((i + 1) / segmentsTubular) * Math.PI * 2;
         const pIn1 = new THREE.Vector3(Math.cos(a1) * rIn, Math.sin(a1) * rIn, 0);
         const pIn2 = new THREE.Vector3(Math.cos(a2) * rIn, Math.sin(a2) * rIn, 0);
         const pOut1 = new THREE.Vector3(Math.cos(a1) * rOut, Math.sin(a1) * rOut, 0);
         const pOut2 = new THREE.Vector3(Math.cos(a2) * rOut, Math.sin(a2) * rOut, 0);
 
-        linePts.push(pIn1, pIn2);
-        linePts.push(pOut1, pOut2);
-
-        if (i % 2 === 0) {
-            linePts.push(pIn1, pOut2);
-            linePts.push(pOut1, pIn2);
-        }
+        linePts.push(pIn1, pIn2, pOut1, pOut2);
+        if (i % 2 === 0) linePts.push(pIn1, pOut2, pOut1, pIn2);
 
         const zOff = tubeRadius * 0.9;
         const pZTop = new THREE.Vector3(Math.cos(a1) * mainRadius, Math.sin(a1) * mainRadius, zOff);
         const pZBot = new THREE.Vector3(Math.cos(a1) * mainRadius, Math.sin(a1) * mainRadius, -zOff);
-        linePts.push(pZTop, pZBot);
-        linePts.push(pIn1, pZTop);
-        linePts.push(pOut1, pZTop);
+        linePts.push(pZTop, pZBot, pIn1, pZTop, pOut1, pZTop);
     }
 
-    const trussGeo = new THREE.BufferGeometry().setFromPoints(linePts);
-    const trussMesh = new THREE.LineSegments(trussGeo, astrolabeWireMat);
+    const trussMesh = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(linePts), astrolabeWireMat);
     group.add(trussMesh);
-
     return group;
 }
 
 const astrolabeRings = [];
-const aRing1 = createMassiveTrussRing(145, 7.5, 14, 160);
-const aRing2 = createMassiveTrussRing(112, 6.2, 12, 140);
-const aRing3 = createMassiveTrussRing(84, 5.0, 10, 120);
+const aRing1 = createMassiveTrussRing(136, 7.0, 14, 150);
+const aRing2 = createMassiveTrussRing(106, 5.8, 12, 130);
+const aRing3 = createMassiveTrussRing(78, 4.6, 10, 110);
 
 aRing2.rotation.x = Math.PI / 3;
 aRing3.rotation.y = Math.PI / 4;
@@ -712,43 +790,30 @@ function createBlueprintLineMaterial() {
     });
 }
 
-/* КАРКАСЫ ДА ВИНЧИ */
+/* ПРОСТРАНСТВЕННЫЕ ЧЕРТЕЖИ */
 function buildComplexAerialScrewDraft() {
     const pts = [];
-    const h = 54, radiusMax = 28;
+    const h = 50, radiusMax = 26;
     for (let i = 0; i < 6; i++) {
         const a = (i / 6) * Math.PI * 2;
-        const x = Math.cos(a) * 3.5, z = Math.sin(a) * 3.5;
-        pts.push(new THREE.Vector3(x, -h/2, z), new THREE.Vector3(x, h/2, z));
+        pts.push(new THREE.Vector3(Math.cos(a)*3, -h/2, Math.sin(a)*3), new THREE.Vector3(Math.cos(a)*3, h/2, Math.sin(a)*3));
     }
     for (let y = -h/2; y <= h/2; y += 3) {
         for (let i = 0; i < 6; i++) {
             const a1 = (i / 6) * Math.PI * 2, a2 = ((i + 1) / 6) * Math.PI * 2;
-            pts.push(new THREE.Vector3(Math.cos(a1)*3.5, y, Math.sin(a1)*3.5), new THREE.Vector3(Math.cos(a2)*3.5, y, Math.sin(a2)*3.5));
-            if (y < h/2) pts.push(new THREE.Vector3(Math.cos(a1)*3.5, y, Math.sin(a1)*3.5), new THREE.Vector3(Math.cos(a2)*3.5, y + 3, Math.sin(a2)*3.5));
+            pts.push(new THREE.Vector3(Math.cos(a1)*3, y, Math.sin(a1)*3), new THREE.Vector3(Math.cos(a2)*3, y, Math.sin(a2)*3));
         }
     }
-    const coils = 3.6, steps = 180;
+    const coils = 3.6, steps = 160;
     for (let i = 0; i < steps; i++) {
         const t1 = i / steps, t2 = (i + 1) / steps;
         const a1 = t1 * Math.PI * 2 * coils, a2 = t2 * Math.PI * 2 * coils;
         const y1 = -h/2 + t1 * h, y2 = -h/2 + t2 * h;
-        const r1 = 6 + t1 * (radiusMax - 6), r2 = 6 + t2 * (radiusMax - 6);
-        const edgeP1 = new THREE.Vector3(Math.cos(a1) * r1, y1, Math.sin(a1) * r1);
-        const edgeP2 = new THREE.Vector3(Math.cos(a2) * r2, y2, Math.sin(a2) * r2);
-        pts.push(edgeP1, edgeP2);
-        if (i % 2 === 0) {
-            pts.push(new THREE.Vector3(Math.cos(a1) * 3.5, y1, Math.sin(a1) * 3.5), edgeP1);
-            if (i > 0) pts.push(edgeP1, new THREE.Vector3(Math.cos(a1 - 0.2) * (r1 - 2), y1 - 2, Math.sin(a1 - 0.2) * (r1 - 2)));
-        }
-    }
-    const gearR = 28;
-    for (let i = 0; i < 48; i++) {
-        const a1 = (i / 48) * Math.PI * 2, a2 = ((i + 1) / 48) * Math.PI * 2;
-        const modR = (i % 2 === 0) ? gearR : gearR - 4;
-        const nextModR = ((i + 1) % 2 === 0) ? gearR : gearR - 4;
-        pts.push(new THREE.Vector3(Math.cos(a1)*modR, -h/2, Math.sin(a1)*modR), new THREE.Vector3(Math.cos(a2)*nextModR, -h/2, Math.sin(a2)*nextModR));
-        pts.push(new THREE.Vector3(Math.cos(a1)*modR, -h/2, Math.sin(a1)*modR), new THREE.Vector3(0, -h/2, 0));
+        const r1 = 5 + t1 * (radiusMax - 5), r2 = 5 + t2 * (radiusMax - 5);
+        const p1 = new THREE.Vector3(Math.cos(a1) * r1, y1, Math.sin(a1) * r1);
+        const p2 = new THREE.Vector3(Math.cos(a2) * r2, y2, Math.sin(a2) * r2);
+        pts.push(p1, p2);
+        if (i % 2 === 0) pts.push(new THREE.Vector3(Math.cos(a1)*3, y1, Math.sin(a1)*3), p1);
     }
     return new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), createBlueprintLineMaterial());
 }
@@ -773,19 +838,12 @@ function buildComplexClockworkGearsDraft() {
         for (let i = 0; i < 8; i++) {
             const a = (i / 8) * Math.PI * 2;
             pts.push(new THREE.Vector3(centerX, centerY, zOffset), new THREE.Vector3(centerX + Math.cos(a)*radius, centerY + Math.sin(a)*radius, zOffset));
-            pts.push(new THREE.Vector3(centerX + Math.cos(a)*(radius*0.5), centerY + Math.sin(a)*(radius*0.5), zOffset),
-                     new THREE.Vector3(centerX + Math.cos(a + 0.4)*(radius*0.9), centerY + Math.sin(a + 0.4)*(radius*0.9), zOffset));
         }
     }
-    buildGear(-12, 6, 22, 28, 0);
-    buildGear(18, -10, 14, 18, 2);
-    buildGear(14, 20, 9, 12, -2);
-    for (let i = 0; i < 16; i++) {
-        const a = (i / 16) * Math.PI * 2;
-        pts.push(new THREE.Vector3(-12 + Math.cos(a)*3, 6 + Math.sin(a)*3, -12), new THREE.Vector3(-12 + Math.cos(a)*3, 6 + Math.sin(a)*3, 12));
-        pts.push(new THREE.Vector3(18 + Math.cos(a)*2, -10 + Math.sin(a)*2, -10), new THREE.Vector3(18 + Math.cos(a)*2, -10 + Math.sin(a)*2, 10));
-    }
-    const b = 34;
+    buildGear(-12, 6, 20, 26, 0);
+    buildGear(16, -10, 13, 16, 2);
+    buildGear(13, 18, 8, 10, -2);
+    const b = 32;
     pts.push(new THREE.Vector3(-b, -b, 0), new THREE.Vector3(b, -b, 0));
     pts.push(new THREE.Vector3(b, -b, 0), new THREE.Vector3(b, b, 0));
     pts.push(new THREE.Vector3(b, b, 0), new THREE.Vector3(-b, b, 0));
@@ -798,53 +856,43 @@ function buildComplexOrnithopterDraft() {
     const sparPts = [];
     for (let i = 0; i <= 36; i++) {
         const t = i / 36;
-        sparPts.push(new THREE.Vector3(-35 + t * 70, Math.sin(t * Math.PI) * 16 - 8, -Math.cos(t * Math.PI) * 8));
+        sparPts.push(new THREE.Vector3(-34 + t * 68, Math.sin(t * Math.PI) * 15 - 7, -Math.cos(t * Math.PI) * 8));
     }
     for (let i = 0; i < sparPts.length - 1; i++) pts.push(sparPts[i], sparPts[i+1]);
     for (let r = 0; r < 14; r++) {
         const t = r / 13;
         const root = sparPts[Math.floor(t * 35)];
-        const chordLen = 28 - Math.abs(t - 0.5) * 16;
+        const chordLen = 26 - Math.abs(t - 0.5) * 15;
         let prevRibPt = null;
         for (let s = 0; s <= 6; s++) {
             const st = s / 6;
-            const ribPt = new THREE.Vector3(root.x + (t - 0.5) * st * 8, root.y - st * chordLen, root.z + Math.sin(st * Math.PI * 0.8) * 9);
+            const ribPt = new THREE.Vector3(root.x + (t - 0.5) * st * 8, root.y - st * chordLen, root.z + Math.sin(st * Math.PI * 0.8) * 8);
             if (prevRibPt) pts.push(prevRibPt, ribPt);
             prevRibPt = ribPt;
-            if (s === 6) { pts.push(root, ribPt); pts.push(new THREE.Vector3(0, -22, 12), ribPt); }
+            if (s === 6) { pts.push(root, ribPt); pts.push(new THREE.Vector3(0, -20, 10), ribPt); }
         }
     }
-    pts.push(new THREE.Vector3(0, -6, 0), new THREE.Vector3(0, -26, 0));
-    pts.push(new THREE.Vector3(-12, -22, 6), new THREE.Vector3(12, -22, 6));
+    pts.push(new THREE.Vector3(0, -6, 0), new THREE.Vector3(0, -24, 0));
     return new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), createBlueprintLineMaterial());
 }
 
 function buildComplexVitruvianDraft() {
     const pts = [];
-    const r = 32;
+    const r = 30;
     for (let i = 0; i < 96; i++) {
         const a1 = (i / 96) * Math.PI * 2, a2 = ((i + 1) / 96) * Math.PI * 2;
         pts.push(new THREE.Vector3(Math.cos(a1)*r, Math.sin(a1)*r, 0), new THREE.Vector3(Math.cos(a2)*r, Math.sin(a2)*r, 0));
-        if (i % 8 === 0) pts.push(new THREE.Vector3(Math.cos(a1)*r, Math.sin(a1)*r, 0), new THREE.Vector3(0, 0, 0));
     }
-    const s = 26;
-    const corners = [new THREE.Vector3(-s, -s + 2, 0), new THREE.Vector3(s, -s + 2, 0), new THREE.Vector3(s, s + 2, 0), new THREE.Vector3(-s, s + 2, 0)];
+    const s = 24;
+    const corners = [new THREE.Vector3(-s, -s, 0), new THREE.Vector3(s, -s, 0), new THREE.Vector3(s, s, 0), new THREE.Vector3(-s, s, 0)];
     for (let i = 0; i < 4; i++) {
         pts.push(corners[i], corners[(i + 1) % 4]);
-        pts.push(corners[i], new THREE.Vector3(0, 2, 0));
+        pts.push(corners[i], new THREE.Vector3(0, 0, 0));
     }
-    let prevFib = new THREE.Vector3(0, 0, 0);
-    for (let i = 1; i <= 60; i++) {
-        const theta = i * 0.22, rad = 0.8 * Math.exp(0.065 * theta);
-        const fibPt = new THREE.Vector3(Math.cos(theta)*rad, Math.sin(theta)*rad, (i%3)*0.8 - 0.4);
-        pts.push(prevFib, fibPt);
-        prevFib = fibPt;
-    }
-    pts.push(new THREE.Vector3(0, 22, 0), new THREE.Vector3(0, -18, 0));
-    pts.push(new THREE.Vector3(-26, 12, 0), new THREE.Vector3(26, 12, 0));
-    pts.push(new THREE.Vector3(-24, 24, 3), new THREE.Vector3(24, 24, 3));
-    pts.push(new THREE.Vector3(0, -18, 0), new THREE.Vector3(-18, -32, 0));
-    pts.push(new THREE.Vector3(0, -18, 0), new THREE.Vector3(18, -32, 0));
+    pts.push(new THREE.Vector3(0, 20, 0), new THREE.Vector3(0, -18, 0));
+    pts.push(new THREE.Vector3(-24, 10, 0), new THREE.Vector3(24, 10, 0));
+    pts.push(new THREE.Vector3(0, -18, 0), new THREE.Vector3(-16, -30, 0));
+    pts.push(new THREE.Vector3(0, -18, 0), new THREE.Vector3(16, -30, 0));
     return new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), createBlueprintLineMaterial());
 }
 
@@ -866,7 +914,7 @@ function createWireframeFromImage(imageUrl, fallbackMesh) {
                     const idx = (y * 64 + x) * 4;
                     const bright = 0.299 * data[idx] + 0.587 * data[idx+1] + 0.114 * data[idx+2];
                     if (bright < 165 || (bright > 60 && bright < 195)) {
-                        detected.push(new THREE.Vector3(((x/64) - 0.5) * 62, -((y/64) - 0.5) * 62, ((bright/255) - 0.5) * 8.0));
+                        detected.push(new THREE.Vector3(((x/64) - 0.5) * 58, -((y/64) - 0.5) * 58, ((bright/255) - 0.5) * 7.0));
                     }
                 }
             }
@@ -876,7 +924,7 @@ function createWireframeFromImage(imageUrl, fallbackMesh) {
                     const p1 = detected[i];
                     for (let j = i + 1; j < Math.min(i + 8, detected.length); j++) {
                         const p2 = detected[j];
-                        if (p1.distanceTo(p2) > 1.2 && p1.distanceTo(p2) < 11.0) linePts.push(p1, p2);
+                        if (p1.distanceTo(p2) > 1.2 && p1.distanceTo(p2) < 10.0) linePts.push(p1, p2);
                     }
                 }
                 if (linePts.length > 80) {
@@ -893,22 +941,22 @@ function createWireframeFromImage(imageUrl, fallbackMesh) {
 const floatingInventions = [
     {
         group: createWireframeFromImage("1000400438.jpg", buildComplexAerialScrewDraft()),
-        basePos: new THREE.Vector3(-88, 26, 65),
+        basePos: new THREE.Vector3(-82, 22, 60),
         rotSpeed: new THREE.Vector3(0.0022, 0.0019, -0.0012)
     },
     {
         group: createWireframeFromImage("genio2.webp", buildComplexClockworkGearsDraft()),
-        basePos: new THREE.Vector3(92, -20, -55),
+        basePos: new THREE.Vector3(86, -18, -50),
         rotSpeed: new THREE.Vector3(0.0016, 0.0025, 0.0015)
     },
     {
         group: createWireframeFromImage("genio3.png", buildComplexOrnithopterDraft()),
-        basePos: new THREE.Vector3(75, 30, 95),
+        basePos: new THREE.Vector3(70, 26, 85),
         rotSpeed: new THREE.Vector3(-0.0018, 0.0022, 0.0014)
     },
     {
         group: createWireframeFromImage("", buildComplexVitruvianDraft()),
-        basePos: new THREE.Vector3(-26, -34, -45),
+        basePos: new THREE.Vector3(-24, -28, -40),
         rotSpeed: new THREE.Vector3(0.0012, 0.0018, 0.0008)
     }
 ];
@@ -918,7 +966,7 @@ floatingInventions.forEach((item) => {
     item.group.position.copy(item.basePos);
     preGroup.add(item.group);
 
-    const hitGeo = new THREE.SphereGeometry(42, 16, 16);
+    const hitGeo = new THREE.SphereGeometry(38, 16, 16);
     const hitMat = new THREE.MeshBasicMaterial({ visible: false });
     const hitMesh = new THREE.Mesh(hitGeo, hitMat);
     hitMesh.position.copy(item.basePos);
@@ -931,7 +979,7 @@ floatingInventions.forEach((item) => {
     hoverTargets.push(item);
 });
 
-/* RAYCASTER + СМЕЩЕНИЕ КАМЕРЫ К ЧЕРТЕЖУ */
+/* НАВЕДЕНИЕ И ФОКУС КАМЕРЫ */
 const raycaster = new THREE.Raycaster();
 const mouseVec = new THREE.Vector2(-999, -999);
 let currentHovered = null;
@@ -964,10 +1012,11 @@ function checkRaycastHover() {
         if (found) {
             found.isHovered = true;
             found.targetScale = 1.45;
-            found.targetZ = 125; 
+            found.targetZ = 120; 
 
+            // Смещение фокуса камеры точно к объекту
             const objPos = found.group.position;
-            targetCamPos.set(objPos.x * 0.45, objPos.y * 0.45, baseCamZ * 0.72);
+            targetCamPos.set(objPos.x * 0.42, objPos.y * 0.42, baseCamZ * 0.75);
             targetLookTarget.set(objPos.x, objPos.y, objPos.z);
 
             found.group.traverse(child => {
@@ -988,7 +1037,7 @@ function checkRaycastHover() {
     }
 }
 
-/* ПЕРЕХОД ЖИДКОЙ ВОЛНЫ */
+/* ПЕРЕХОД */
 let isRippling = false;
 let rippleScene, rippleCamera, rippleMaterial, rippleTime = 0;
 const snapshotTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight);
@@ -1002,10 +1051,10 @@ function triggerLiquidTransition(event) {
     const clickX = (rect.left + rect.width / 2) / window.innerWidth;
     const clickY = 1.0 - ((rect.top + rect.height / 2) / window.innerHeight);
 
-    const uiLayer = document.querySelector('.preloader-ui-layer');
-    if (uiLayer) {
-        uiLayer.style.transition = 'opacity 0.4s ease';
-        uiLayer.style.opacity = '0';
+    const hud = document.querySelector('.preloader-fixed-hud');
+    if (hud) {
+        hud.style.transition = 'opacity 0.35s ease';
+        hud.style.opacity = '0';
     }
 
     preRenderer.setRenderTarget(snapshotTarget);
@@ -1016,7 +1065,6 @@ function triggerLiquidTransition(event) {
     rippleScene = new THREE.Scene();
     rippleCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-    const quadGeo = new THREE.PlaneGeometry(2, 2);
     rippleMaterial = new THREE.ShaderMaterial({
         uniforms: {
             tDiffuse: { value: snapshotTarget.texture },
@@ -1059,8 +1107,7 @@ function triggerLiquidTransition(event) {
         transparent: true
     });
 
-    const quad = new THREE.Mesh(quadGeo, rippleMaterial);
-    rippleScene.add(quad);
+    rippleScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), rippleMaterial));
 }
 
 function animatePreloader() {
@@ -1090,8 +1137,8 @@ function animatePreloader() {
 
     hoverTargets.forEach((item, idx) => {
         if (!item.isHovered) {
-            item.group.position.y = item.basePos.y + Math.sin(t * 1.2 + idx * 1.5) * 8.5;
-            item.group.position.x = item.basePos.x + Math.cos(t * 0.8 + idx * 1.2) * 6.0;
+            item.group.position.y = item.basePos.y + Math.sin(t * 1.2 + idx * 1.5) * 8.0;
+            item.group.position.x = item.basePos.x + Math.cos(t * 0.8 + idx * 1.2) * 5.5;
             item.group.rotation.x += item.rotSpeed.x;
             item.group.rotation.y += item.rotSpeed.y;
             item.group.rotation.z += item.rotSpeed.z;
@@ -1124,7 +1171,7 @@ function animatePreloader() {
 animatePreloader();
 
 /* =========================================================================
-   THREE.JS ФОН ДАШБОРДА
+   THREE.JS ФОН ДАШБОРДА (ПОВОРОТ ТОЛЬКО ПО КЛИКУ НА ТАБЫ)
    ========================================================================= */
 const dashCanvas = document.getElementById('webgl-bg-canvas');
 const dashScene = new THREE.Scene();
@@ -1214,10 +1261,8 @@ document.querySelectorAll('.tilt-card').forEach(card => {
 
 window.addEventListener('resize', () => {
     preCamera.aspect = window.innerWidth / window.innerHeight;
-    baseCamZ = computeCameraFitZ();
-    if (!currentHovered) {
-        targetCamPos.z = baseCamZ;
-    }
+    baseCamZ = computeExactFitZ();
+    if (!currentHovered) targetCamPos.z = baseCamZ;
     preCamera.updateProjectionMatrix();
     preRenderer.setSize(window.innerWidth, window.innerHeight);
 
@@ -1353,7 +1398,6 @@ function runCalculation() {
     const initialPurchase = parseCleanNum(document.getElementById('paramInitialPurchase').value);
     const batchCycle = parseInt(document.getElementById('paramBatchCycle').value) || 5;
 
-    // СТОИМОСТЬ КРЕДИТА
     const cbRate = parseFloat(document.getElementById('paramCbRate').value) || 14.0;
     const commMargin = parseFloat(document.getElementById('paramCommMargin').value) || 2.0;
     const totalRateAnnual = cbRate + commMargin;
@@ -1361,7 +1405,6 @@ function runCalculation() {
     document.getElementById('telemetryRate').textContent = `[КАПИТАЛ: ${totalRateAnnual.toFixed(1)}% ГОДОВЫХ]`;
     document.getElementById('kpiRateSub').textContent = `Ставка ${totalRateAnnual.toFixed(1)}%`;
 
-    // УСЛОВИЯ ПОСТАВЩИКА
     const supplierPrepayPct = parseFloat(document.getElementById('paramSupplierPrepay').value);
     document.getElementById('lblSupplierPrepVal').textContent = `${supplierPrepayPct}%`;
     const supplierDelay = parseInt(document.getElementById('paramSupplierDelay').value);
@@ -1376,7 +1419,6 @@ function runCalculation() {
     const wh = parseCleanNum(document.getElementById('paramWh').value);
     const office = parseCleanNum(document.getElementById('paramOffice').value);
 
-    // ФАКТОРИНГ
     const factShare = parseFloat(document.getElementById('paramFactoringShare').value);
     document.getElementById('lblFactShareVal').textContent = `${factShare}%`;
     const factAdvance = 0.8;
@@ -1399,7 +1441,6 @@ function runCalculation() {
     const cogsPayments = new Array(period).fill(0);
     const inventoryDeliveries = new Array(period).fill(0);
 
-    // ПЕРВАЯ ПАРТИЯ
     cogsPayments[0] += initialPurchase * (supplierPrepayPct / 100);
     const firstDelayMonth = supplierDelay;
     if (firstDelayMonth < period) {
@@ -1407,7 +1448,6 @@ function runCalculation() {
     }
     inventoryDeliveries[0] = initialPurchase;
 
-    // ЦИКЛИЧЕСКИЕ ПАРТИИ
     for (let b = batchCycle; b < period; b += batchCycle) {
         const bEnd = Math.min(b + batchCycle, period);
         let batchTotal = 0;
@@ -1619,4 +1659,5 @@ window.onload = () => runCalculation();
 </body>
 </html>"""
 
-components.html(html_code, height=1380, scrolling=True)
+# components.html монтируется в реальные 100vh контейнера
+components.html(html_code, height=980, scrolling=False)
