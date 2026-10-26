@@ -103,42 +103,59 @@ body { background-color: var(--bg-space); color: var(--text-main); font-family: 
 #preloader-stage {
     position: fixed; inset: 0; width: 100vw; height: 100vh;
     background: #050508; z-index: 900; overflow: hidden;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
 }
 #preloader-webgl { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 10; cursor: grab; }
 #preloader-webgl:active { cursor: grabbing; }
 
+/* ФИКСИРОВАННЫЙ ЭКРАННЫЙ СЛОЙ UI (НЕ ЗАВИСИТ ОТ 3D-КАМЕРЫ) */
+.preloader-ui-layer {
+    position: fixed; inset: 0; width: 100vw; height: 100vh;
+    z-index: 30; pointer-events: none;
+    display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+    padding: clamp(24px, 4.5vh, 48px) 20px clamp(20px, 4.5vh, 40px) 20px;
+    box-sizing: border-box;
+}
+
 #preloaderTitle {
-    position: absolute; top: 7%; left: 50%; transform: translateX(-50%);
     font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic;
-    font-size: clamp(24px, 3.8vw, 48px); font-weight: 700; letter-spacing: 0.22em;
-    color: var(--accent-gold); opacity: 0; z-index: 30; pointer-events: none;
+    font-size: clamp(24px, 3.6vw, 46px); font-weight: 700; letter-spacing: 0.22em;
+    color: var(--accent-gold); opacity: 0; pointer-events: none;
     text-shadow: 0 0 35px rgba(212, 175, 55, 0.75);
-    transition: opacity 2s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 1.8s cubic-bezier(0.16, 1, 0.3, 1);
     text-align: center; width: 100%; user-select: none;
+}
+#preloaderTitle.locked-visible {
+    opacity: 1 !important;
+}
+
+.bottom-action-container {
+    position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    width: 100%; min-height: 52px; pointer-events: none;
 }
 
 #preloaderHUD {
-    position: absolute; bottom: calc(4vh + 15px); display: flex; flex-direction: column;
-    align-items: center; gap: 8px; z-index: 30; transition: opacity 0.5s ease;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    transition: opacity 0.4s ease; pointer-events: none;
 }
 .progress-bar-bg { width: min(280px, 75vw); height: 2px; background: rgba(255,255,255,0.1); position: relative; overflow: hidden; }
 #loaderProgressBar { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: var(--accent-gold); transition: width 0.1s linear; }
 
 #exploreBtnWrapper {
-    position: absolute; bottom: 4.5vh; z-index: 40; opacity: 0; pointer-events: none;
-    transition: opacity 1.2s cubic-bezier(0.19, 1, 0.22, 1), transform 1.2s cubic-bezier(0.19, 1, 0.22, 1);
-    transform: translateY(12px);
+    opacity: 0; pointer-events: none; position: absolute;
+    transition: opacity 0.8s cubic-bezier(0.19, 1, 0.22, 1), transform 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+    transform: translateY(10px);
 }
-#exploreBtnWrapper.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+#exploreBtnWrapper.active {
+    opacity: 1; pointer-events: auto; transform: translateY(0);
+}
 
 .explore-btn {
     position: relative; padding: 13px 44px;
-    background: rgba(13, 13, 18, 0.75); border: 1px solid rgba(212, 175, 55, 0.85);
+    background: rgba(13, 13, 18, 0.85); border: 1px solid rgba(212, 175, 55, 0.9);
     color: #f4f1ea; font-family: 'JetBrains Mono', monospace; font-size: 11px;
     letter-spacing: 0.35em; text-transform: uppercase; cursor: pointer;
-    backdrop-filter: blur(14px); overflow: hidden; transition: all 0.4s ease;
-    box-shadow: 0 0 30px rgba(212, 175, 55, 0.2), inset 0 0 15px rgba(212, 175, 55, 0.1);
+    backdrop-filter: blur(14px); overflow: hidden; transition: all 0.35s ease;
+    box-shadow: 0 0 30px rgba(212, 175, 55, 0.25), inset 0 0 15px rgba(212, 175, 55, 0.12);
 }
 .explore-btn::before {
     content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
@@ -147,7 +164,7 @@ body { background-color: var(--bg-space); color: var(--text-main); font-family: 
 }
 .explore-btn:hover {
     border-color: #ffd700; color: #ffd700;
-    box-shadow: 0 0 45px rgba(212, 175, 55, 0.5), inset 0 0 20px rgba(212, 175, 55, 0.25);
+    box-shadow: 0 0 45px rgba(212, 175, 55, 0.55), inset 0 0 20px rgba(212, 175, 55, 0.25);
     transform: scale(1.04);
 }
 .explore-btn:hover::before { left: 100%; }
@@ -205,23 +222,29 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
 <!-- ПРЕЛОАДЕР -->
 <div id="preloader-stage">
     <canvas id="preloader-webgl"></canvas>
-    <div id="preloaderTitle">Архитектура финансов</div>
 
-    <div id="preloaderHUD">
-        <div class="flex items-center gap-3 text-[#d4af37] text-[10px] tracking-[0.25em] uppercase font-mono">
-            <span class="pulse-dot"></span>
-            <span id="loaderStatusText">Сборка пространственных конструкций Да Винчи...</span>
-            <span id="loaderPercent" class="font-bold">0%</span>
-        </div>
-        <div class="progress-bar-bg mt-1">
-            <div id="loaderProgressBar"></div>
-        </div>
-    </div>
+    <!-- СТАБИЛЬНЫЙ HUD ЭКРАНА: НЕ СМЕЩАЕТСЯ КАМЕРОЙ -->
+    <div class="preloader-ui-layer">
+        <div id="preloaderTitle">Архитектура финансов</div>
 
-    <div id="exploreBtnWrapper">
-        <button id="exploreBtn" onclick="triggerLiquidTransition(event)" class="explore-btn">
-            Исследовать
-        </button>
+        <div class="bottom-action-container">
+            <div id="preloaderHUD">
+                <div class="flex items-center gap-3 text-[#d4af37] text-[10px] tracking-[0.25em] uppercase font-mono">
+                    <span class="pulse-dot"></span>
+                    <span id="loaderStatusText">Сборка пространственных конструкций Да Винчи...</span>
+                    <span id="loaderPercent" class="font-bold">0%</span>
+                </div>
+                <div class="progress-bar-bg mt-1">
+                    <div id="loaderProgressBar"></div>
+                </div>
+            </div>
+
+            <div id="exploreBtnWrapper">
+                <button id="exploreBtn" onclick="triggerLiquidTransition(event)" class="explore-btn">
+                    Исследовать
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -526,9 +549,12 @@ function dismissPreloader() {
 const PRELOADER_TOTAL_TIME = 9000;
 const preloaderStartTime = performance.now();
 
+// Проявление и жесткая фиксация заголовка без возможности исчезновения от движений камеры
 setTimeout(() => {
     const pt = document.getElementById('preloaderTitle');
-    if (pt) { pt.style.opacity = '1'; }
+    if (pt) { 
+        pt.classList.add('locked-visible');
+    }
 }, 1200);
 
 let drawingCompleted = false;
@@ -547,7 +573,10 @@ function updatePreloaderProgress(now) {
         drawingCompleted = true;
         const hud = document.getElementById('preloaderHUD');
         const btn = document.getElementById('exploreBtnWrapper');
-        if (hud) hud.style.opacity = '0';
+        if (hud) {
+            hud.style.opacity = '0';
+            setTimeout(() => { hud.style.display = 'none'; }, 400);
+        }
         if (btn) btn.classList.add('active');
     }
 
@@ -566,10 +595,9 @@ preRenderer.setSize(window.innerWidth, window.innerHeight);
 const preScene = new THREE.Scene();
 const preCamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 4000);
 
-// Базовая дистанция камеры, автоматически масштабируемая так, чтобы сцена всегда целиком помещалась на экране
 function computeCameraFitZ() {
     const aspect = window.innerWidth / window.innerHeight;
-    const maxBound = 180; // Радиус с запасом под самые широкие кольца и траектории
+    const maxBound = 180;
     const vFovRad = (preCamera.fov * Math.PI) / 180;
     let dist = (maxBound / Math.tan(vFovRad / 2));
     if (aspect < 1.0) {
@@ -580,7 +608,6 @@ function computeCameraFitZ() {
 
 let baseCamZ = computeCameraFitZ();
 let targetCamPos = new THREE.Vector3(0, 0, baseCamZ);
-let defaultLookTarget = new THREE.Vector3(0, 0, 0);
 let currentLookTarget = new THREE.Vector3(0, 0, 0);
 let targetLookTarget = new THREE.Vector3(0, 0, 0);
 
@@ -589,21 +616,16 @@ preCamera.position.copy(targetCamPos);
 const preGroup = new THREE.Group();
 preScene.add(preGroup);
 
-// Материал колец астролябии
 const astrolabeWireMat = new THREE.MeshBasicMaterial({
     color: 0x00b4ff, wireframe: true, transparent: true, opacity: 0.38
 });
 
-// Генератор толстых монументальных колец-ферм из сотен линий
 function createMassiveTrussRing(mainRadius, tubeRadius, segmentsRadial, segmentsTubular) {
     const group = new THREE.Group();
-    
-    // Основной объемный многогранный каркас
     const mainGeo = new THREE.TorusGeometry(mainRadius, tubeRadius, segmentsRadial, segmentsTubular);
     const mainMesh = new THREE.Mesh(mainGeo, astrolabeWireMat);
     group.add(mainMesh);
 
-    // Внутренний и внешний пояс фермы из тонких нитей
     const linePts = [];
     const rIn = mainRadius - tubeRadius * 1.05;
     const rOut = mainRadius + tubeRadius * 1.05;
@@ -618,17 +640,14 @@ function createMassiveTrussRing(mainRadius, tubeRadius, segmentsRadial, segments
         const pOut1 = new THREE.Vector3(Math.cos(a1) * rOut, Math.sin(a1) * rOut, 0);
         const pOut2 = new THREE.Vector3(Math.cos(a2) * rOut, Math.sin(a2) * rOut, 0);
 
-        // Пояса
         linePts.push(pIn1, pIn2);
         linePts.push(pOut1, pOut2);
 
-        // Геодезические диагональные раскосы между поясами (ферменная структура)
         if (i % 2 === 0) {
             linePts.push(pIn1, pOut2);
             linePts.push(pOut1, pIn2);
         }
 
-        // Объемные шпангоуты по оси Z
         const zOff = tubeRadius * 0.9;
         const pZTop = new THREE.Vector3(Math.cos(a1) * mainRadius, Math.sin(a1) * mainRadius, zOff);
         const pZBot = new THREE.Vector3(Math.cos(a1) * mainRadius, Math.sin(a1) * mainRadius, -zOff);
@@ -662,7 +681,6 @@ astrolabeRings.push(
     { group: aRing3, sx: 0.0025, sy: -0.0021, sz: 0.0014, px: 1.5, py: 3.2 }
 );
 
-// Тонкий золотой шейдер каркасов да Винчи
 function createBlueprintLineMaterial() {
     return new THREE.ShaderMaterial({
         uniforms: {
@@ -694,9 +712,7 @@ function createBlueprintLineMaterial() {
     });
 }
 
-/* =========================================================================
-   СЛОЖНЫЕ КАРКАСЫ ДА ВИНЧИ
-   ========================================================================= */
+/* КАРКАСЫ ДА ВИНЧИ */
 function buildComplexAerialScrewDraft() {
     const pts = [];
     const h = 54, radiusMax = 28;
@@ -723,9 +739,7 @@ function buildComplexAerialScrewDraft() {
         pts.push(edgeP1, edgeP2);
         if (i % 2 === 0) {
             pts.push(new THREE.Vector3(Math.cos(a1) * 3.5, y1, Math.sin(a1) * 3.5), edgeP1);
-            if (i > 0) {
-                pts.push(edgeP1, new THREE.Vector3(Math.cos(a1 - 0.2) * (r1 - 2), y1 - 2, Math.sin(a1 - 0.2) * (r1 - 2)));
-            }
+            if (i > 0) pts.push(edgeP1, new THREE.Vector3(Math.cos(a1 - 0.2) * (r1 - 2), y1 - 2, Math.sin(a1 - 0.2) * (r1 - 2)));
         }
     }
     const gearR = 28;
@@ -876,7 +890,6 @@ function createWireframeFromImage(imageUrl, fallbackMesh) {
     return group;
 }
 
-// 4 парящих чертежа Да Винчи на орбитах между кольцами
 const floatingInventions = [
     {
         group: createWireframeFromImage("1000400438.jpg", buildComplexAerialScrewDraft()),
@@ -953,7 +966,6 @@ function checkRaycastHover() {
             found.targetScale = 1.45;
             found.targetZ = 125; 
 
-            // Смещение камеры: подлёт к чертежу с фронтальным кинематографическим ракурсом
             const objPos = found.group.position;
             targetCamPos.set(objPos.x * 0.45, objPos.y * 0.45, baseCamZ * 0.72);
             targetLookTarget.set(objPos.x, objPos.y, objPos.z);
@@ -971,7 +983,6 @@ function checkRaycastHover() {
         }
     } else {
         currentHovered = null;
-        // Возврат камеры в общий центр
         targetCamPos.set(0, 0, baseCamZ);
         targetLookTarget.set(0, 0, 0);
     }
@@ -991,10 +1002,11 @@ function triggerLiquidTransition(event) {
     const clickX = (rect.left + rect.width / 2) / window.innerWidth;
     const clickY = 1.0 - ((rect.top + rect.height / 2) / window.innerHeight);
 
-    document.getElementById('exploreBtnWrapper').style.transition = 'opacity 0.3s ease';
-    document.getElementById('exploreBtnWrapper').style.opacity = '0';
-    document.getElementById('preloaderTitle').style.transition = 'opacity 0.4s ease';
-    document.getElementById('preloaderTitle').style.opacity = '0';
+    const uiLayer = document.querySelector('.preloader-ui-layer');
+    if (uiLayer) {
+        uiLayer.style.transition = 'opacity 0.4s ease';
+        uiLayer.style.opacity = '0';
+    }
 
     preRenderer.setRenderTarget(snapshotTarget);
     preRenderer.clear();
@@ -1068,7 +1080,6 @@ function animatePreloader() {
         return;
     }
 
-    // Вращение колец астролябии
     astrolabeRings.forEach(item => {
         item.group.rotation.x += item.sx + Math.sin(t * 0.4 + item.px) * 0.0008;
         item.group.rotation.y += item.sy + Math.cos(t * 0.35 + item.py) * 0.0009;
@@ -1077,7 +1088,6 @@ function animatePreloader() {
 
     checkRaycastHover();
 
-    // Свободный полет и парение чертежей
     hoverTargets.forEach((item, idx) => {
         if (!item.isHovered) {
             item.group.position.y = item.basePos.y + Math.sin(t * 1.2 + idx * 1.5) * 8.5;
@@ -1104,7 +1114,6 @@ function animatePreloader() {
         });
     });
 
-    // Плавное перемещение камеры и фокуса взгляда к выбранной фигуре
     preCamera.position.lerp(targetCamPos, 0.06);
     currentLookTarget.lerp(targetLookTarget, 0.06);
     preCamera.lookAt(currentLookTarget);
@@ -1115,7 +1124,7 @@ function animatePreloader() {
 animatePreloader();
 
 /* =========================================================================
-   THREE.JS ФОН ДАШБОРДА (ОПТИМИЗИРОВАН: ПОВОРОТ ТОЛЬКО ПРИ КЛИКЕ НА ВКЛАДКИ)
+   THREE.JS ФОН ДАШБОРДА
    ========================================================================= */
 const dashCanvas = document.getElementById('webgl-bg-canvas');
 const dashScene = new THREE.Scene();
@@ -1124,7 +1133,7 @@ dashCamera.position.z = 160;
 
 const dashRenderer = new THREE.WebGLRenderer({ canvas: dashCanvas, alpha: true, antialias: false, powerPreference: "low-power" });
 dashRenderer.setSize(window.innerWidth, window.innerHeight);
-dashRenderer.setPixelRatio(1); // 1x пиксель для абсолютной легкости на слабом CPU
+dashRenderer.setPixelRatio(1);
 
 const dashArmillary = new THREE.Group();
 dashScene.add(dashArmillary);
@@ -1143,10 +1152,8 @@ const dashRings = [];
     dashRings.push(ring);
 });
 
-// Рендерим один статичный кадр при старте
 dashRenderer.render(dashScene, dashCamera);
 
-// Логика дискретного поворота колец только при смене вкладок
 let dashTurnProgress = 1.0;
 let dashStartRot = [0, 0, 0];
 let dashTargetRot = [0, 0, 0];
@@ -1154,7 +1161,6 @@ let dashAnimFrameId = null;
 
 function triggerDashRingTurn() {
     dashStartRot = [dashRings[0].rotation.y, dashRings[1].rotation.x, dashRings[2].rotation.z];
-    // Поворачиваем каждое кольцо на благородный угол золотого сечения
     dashTargetRot = [
         dashStartRot[0] + (Math.PI / 2.618),
         dashStartRot[1] - (Math.PI / 3.141),
@@ -1166,9 +1172,8 @@ function triggerDashRingTurn() {
 }
 
 function animateDashTurn() {
-    dashTurnProgress += 0.025; // Плавная дуга поворота ~0.65 сек
+    dashTurnProgress += 0.025;
     const p = Math.min(dashTurnProgress, 1.0);
-    // Smooth cubic easing (смягчение в начале и конце)
     const ease = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
 
     dashRings[0].rotation.y = dashStartRot[0] + (dashTargetRot[0] - dashStartRot[0]) * ease;
@@ -1180,11 +1185,10 @@ function animateDashTurn() {
     if (p < 1.0) {
         dashAnimFrameId = requestAnimationFrame(animateDashTurn);
     } else {
-        dashAnimFrameId = null; // Полная остановка, 0% CPU нагрузки в покое
+        dashAnimFrameId = null;
     }
 }
 
-let mouseX = 0, mouseY = 0;
 document.addEventListener('mousemove', (e) => {
     const coord = document.getElementById('cursorCoordDisplay');
     if (coord) coord.textContent = `X: ${e.clientX.toString().padStart(4, '0')} / Y: ${e.clientY.toString().padStart(4, '0')}`;
@@ -1286,11 +1290,11 @@ function scrambleTitle(card) {
     scrambleElementText(titleEl, orig, 380, true);
 }
 
-/* ВКЛАДКИ (С ТРИГГЕРОМ ВРАЩЕНИЯ АСТРОЛЯБИИ ДАШБОРДА) */
+/* ВКЛАДКИ */
 const TAB_TITLES = ['[01] ОБСЛУЖИВАНИЕ КАПИТАЛА', '[02] СКЛАДСКОЙ ЦИКЛ', '[03] ДЕНЕЖНЫЙ ПОТОК', '[04] ЭКОНОМИКА И ЗАКАЗЫ'];
 function selectTab(index) {
     playClickSound(1400, 0.025);
-    triggerDashRingTurn(); // Проворот астролябии только по клику!
+    triggerDashRingTurn();
 
     const buttons = document.querySelectorAll('#navTabsContainer .tab-btn');
     buttons.forEach((btn, idx) => {
@@ -1395,7 +1399,7 @@ function runCalculation() {
     const cogsPayments = new Array(period).fill(0);
     const inventoryDeliveries = new Array(period).fill(0);
 
-    // ПЕРВАЯ ПАРТИЯ: Предоплата и Отсрочка поставщика
+    // ПЕРВАЯ ПАРТИЯ
     cogsPayments[0] += initialPurchase * (supplierPrepayPct / 100);
     const firstDelayMonth = supplierDelay;
     if (firstDelayMonth < period) {
@@ -1403,7 +1407,7 @@ function runCalculation() {
     }
     inventoryDeliveries[0] = initialPurchase;
 
-    // ЦИКЛИЧЕСКИЕ ПАРТИИ: Предоплата и Отсрочка поставщика
+    // ЦИКЛИЧЕСКИЕ ПАРТИИ
     for (let b = batchCycle; b < period; b += batchCycle) {
         const bEnd = Math.min(b + batchCycle, period);
         let batchTotal = 0;
