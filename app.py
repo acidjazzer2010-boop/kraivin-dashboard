@@ -105,12 +105,13 @@ body { background-color: var(--bg-space); color: var(--text-main); font-family: 
     background: #050508; z-index: 900; overflow: hidden;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
 }
-#preloader-webgl { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 10; cursor: pointer; }
+#preloader-webgl { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 10; cursor: grab; }
+#preloader-webgl:active { cursor: grabbing; }
 
 #preloaderTitle {
-    position: absolute; top: 8%; left: 50%; transform: translateX(-50%);
+    position: absolute; top: 7%; left: 50%; transform: translateX(-50%);
     font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic;
-    font-size: clamp(28px, 4vw, 52px); font-weight: 700; letter-spacing: 0.22em;
+    font-size: clamp(24px, 3.8vw, 48px); font-weight: 700; letter-spacing: 0.22em;
     color: var(--accent-gold); opacity: 0; z-index: 30; pointer-events: none;
     text-shadow: 0 0 35px rgba(212, 175, 55, 0.75);
     transition: opacity 2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -152,8 +153,8 @@ body { background-color: var(--bg-space); color: var(--text-main); font-family: 
 .explore-btn:hover::before { left: 100%; }
 
 /* ДАШБОРД */
-#webgl-bg-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; opacity: 0.45; transition: opacity 0.5s ease; }
-html:not(.dark) #webgl-bg-canvas { opacity: 0.2; }
+#webgl-bg-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; opacity: 0.35; transition: opacity 0.5s ease; }
+html:not(.dark) #webgl-bg-canvas { opacity: 0.18; }
 
 .alche-block {
     position: relative; background: var(--bg-panel); backdrop-filter: blur(20px);
@@ -201,7 +202,7 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
 <body class="selection:bg-[#d4af37] selection:text-black">
 <div class="film-grain"></div>
 
-<!-- ПРЕЛОАДЕР: АСТРОЛЯБИЯ + ПАРЯЩИЕ КОМПЛЕКСНЫЕ КАРКАСНЫЕ ЧЕРТЕЖИ ДА ВИНЧИ -->
+<!-- ПРЕЛОАДЕР -->
 <div id="preloader-stage">
     <canvas id="preloader-webgl"></canvas>
     <div id="preloaderTitle">Архитектура финансов</div>
@@ -209,7 +210,7 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
     <div id="preloaderHUD">
         <div class="flex items-center gap-3 text-[#d4af37] text-[10px] tracking-[0.25em] uppercase font-mono">
             <span class="pulse-dot"></span>
-            <span id="loaderStatusText">Построение пространственных каркасов Да Винчи...</span>
+            <span id="loaderStatusText">Сборка пространственных конструкций Да Винчи...</span>
             <span id="loaderPercent" class="font-bold">0%</span>
         </div>
         <div class="progress-bar-bg mt-1">
@@ -384,7 +385,7 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
             </form>
         </aside>
 
-        <!-- ПРАВАЯ ЧАСТЬ: KPI, ТАБЫ И ГРАФИКИ -->
+        <!-- ПРАВАЯ ЧАСТЬ -->
         <section class="lg:col-span-9 flex flex-col">
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 border-b">
                 <div class="alche-block tilt-card p-5" onmouseenter="scrambleTitle(this)">
@@ -555,7 +556,7 @@ function updatePreloaderProgress(now) {
 requestAnimationFrame(updatePreloaderProgress);
 
 /* =========================================================================
-   THREE.JS ПРЕЛОАДЕР: АСТРОЛЯБИЯ + ПЛОТНЫЕ КАРКАСНЫЕ ЧЕРТЕЖИ ДА ВИНЧИ
+   THREE.JS ПРЕЛОАДЕР: АДАПТИВНАЯ КАМЕРА, МАССИВНЫЕ КОЛЬЦА И КАРКАСЫ
    ========================================================================= */
 const preCanvas = document.getElementById('preloader-webgl');
 const preRenderer = new THREE.WebGLRenderer({ canvas: preCanvas, alpha: true, antialias: true, preserveDrawingBuffer: true });
@@ -563,21 +564,90 @@ preRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 preRenderer.setSize(window.innerWidth, window.innerHeight);
 
 const preScene = new THREE.Scene();
-const preCamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 3500);
-preCamera.position.set(0, 0, 310);
+const preCamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 4000);
+
+// Базовая дистанция камеры, автоматически масштабируемая так, чтобы сцена всегда целиком помещалась на экране
+function computeCameraFitZ() {
+    const aspect = window.innerWidth / window.innerHeight;
+    const maxBound = 180; // Радиус с запасом под самые широкие кольца и траектории
+    const vFovRad = (preCamera.fov * Math.PI) / 180;
+    let dist = (maxBound / Math.tan(vFovRad / 2));
+    if (aspect < 1.0) {
+        dist = dist / aspect;
+    }
+    return Math.max(dist * 1.08, 280);
+}
+
+let baseCamZ = computeCameraFitZ();
+let targetCamPos = new THREE.Vector3(0, 0, baseCamZ);
+let defaultLookTarget = new THREE.Vector3(0, 0, 0);
+let currentLookTarget = new THREE.Vector3(0, 0, 0);
+let targetLookTarget = new THREE.Vector3(0, 0, 0);
+
+preCamera.position.copy(targetCamPos);
 
 const preGroup = new THREE.Group();
 preScene.add(preGroup);
 
-// Астролябия: небесно-голубой проволочный каркас
+// Материал колец астролябии
 const astrolabeWireMat = new THREE.MeshBasicMaterial({
-    color: 0x00b4ff, wireframe: true, transparent: true, opacity: 0.35
+    color: 0x00b4ff, wireframe: true, transparent: true, opacity: 0.38
 });
 
+// Генератор толстых монументальных колец-ферм из сотен линий
+function createMassiveTrussRing(mainRadius, tubeRadius, segmentsRadial, segmentsTubular) {
+    const group = new THREE.Group();
+    
+    // Основной объемный многогранный каркас
+    const mainGeo = new THREE.TorusGeometry(mainRadius, tubeRadius, segmentsRadial, segmentsTubular);
+    const mainMesh = new THREE.Mesh(mainGeo, astrolabeWireMat);
+    group.add(mainMesh);
+
+    // Внутренний и внешний пояс фермы из тонких нитей
+    const linePts = [];
+    const rIn = mainRadius - tubeRadius * 1.05;
+    const rOut = mainRadius + tubeRadius * 1.05;
+    const ringSteps = segmentsTubular;
+
+    for (let i = 0; i < ringSteps; i++) {
+        const a1 = (i / ringSteps) * Math.PI * 2;
+        const a2 = ((i + 1) / ringSteps) * Math.PI * 2;
+        
+        const pIn1 = new THREE.Vector3(Math.cos(a1) * rIn, Math.sin(a1) * rIn, 0);
+        const pIn2 = new THREE.Vector3(Math.cos(a2) * rIn, Math.sin(a2) * rIn, 0);
+        const pOut1 = new THREE.Vector3(Math.cos(a1) * rOut, Math.sin(a1) * rOut, 0);
+        const pOut2 = new THREE.Vector3(Math.cos(a2) * rOut, Math.sin(a2) * rOut, 0);
+
+        // Пояса
+        linePts.push(pIn1, pIn2);
+        linePts.push(pOut1, pOut2);
+
+        // Геодезические диагональные раскосы между поясами (ферменная структура)
+        if (i % 2 === 0) {
+            linePts.push(pIn1, pOut2);
+            linePts.push(pOut1, pIn2);
+        }
+
+        // Объемные шпангоуты по оси Z
+        const zOff = tubeRadius * 0.9;
+        const pZTop = new THREE.Vector3(Math.cos(a1) * mainRadius, Math.sin(a1) * mainRadius, zOff);
+        const pZBot = new THREE.Vector3(Math.cos(a1) * mainRadius, Math.sin(a1) * mainRadius, -zOff);
+        linePts.push(pZTop, pZBot);
+        linePts.push(pIn1, pZTop);
+        linePts.push(pOut1, pZTop);
+    }
+
+    const trussGeo = new THREE.BufferGeometry().setFromPoints(linePts);
+    const trussMesh = new THREE.LineSegments(trussGeo, astrolabeWireMat);
+    group.add(trussMesh);
+
+    return group;
+}
+
 const astrolabeRings = [];
-const aRing1 = new THREE.Mesh(new THREE.TorusGeometry(140, 4.2, 26, 240), astrolabeWireMat);
-const aRing2 = new THREE.Mesh(new THREE.TorusGeometry(108, 3.6, 24, 200), astrolabeWireMat);
-const aRing3 = new THREE.Mesh(new THREE.TorusGeometry(82, 3.0, 22, 180), astrolabeWireMat);
+const aRing1 = createMassiveTrussRing(145, 7.5, 14, 160);
+const aRing2 = createMassiveTrussRing(112, 6.2, 12, 140);
+const aRing3 = createMassiveTrussRing(84, 5.0, 10, 120);
 
 aRing2.rotation.x = Math.PI / 3;
 aRing3.rotation.y = Math.PI / 4;
@@ -587,12 +657,12 @@ preGroup.add(aRing2);
 preGroup.add(aRing3);
 
 astrolabeRings.push(
-    { mesh: aRing1, sx: 0.0022, sy: 0.0034, sz: 0.0011, px: 0.2, py: 1.1 },
-    { mesh: aRing2, sx: -0.0028, sy: 0.0019, sz: -0.0023, px: 2.3, py: 0.7 },
-    { mesh: aRing3, sx: 0.0031, sy: -0.0026, sz: 0.0018, px: 1.5, py: 3.2 }
+    { group: aRing1, sx: 0.0018, sy: 0.0028, sz: 0.0009, px: 0.2, py: 1.1 },
+    { group: aRing2, sx: -0.0022, sy: 0.0015, sz: -0.0018, px: 2.3, py: 0.7 },
+    { group: aRing3, sx: 0.0025, sy: -0.0021, sz: 0.0014, px: 1.5, py: 3.2 }
 );
 
-// Тонкий светящийся золотой шейдер для каркасов чертежей
+// Тонкий золотой шейдер каркасов да Винчи
 function createBlueprintLineMaterial() {
     return new THREE.ShaderMaterial({
         uniforms: {
@@ -615,7 +685,7 @@ function createBlueprintLineMaterial() {
                 vec3 baseGold = vec3(0.85, 0.71, 0.25);
                 vec3 brightGlow = vec3(1.0, 0.96, 0.82);
                 vec3 col = mix(baseGold, brightGlow, wave * 0.4 + uHover * 0.6);
-                float alpha = clamp(0.65 + wave * 0.35 + uHover * 0.35, 0.0, 1.0);
+                float alpha = clamp(0.68 + wave * 0.32 + uHover * 0.32, 0.0, 1.0);
                 gl_FragColor = vec4(col, alpha);
             }
         `,
@@ -625,59 +695,39 @@ function createBlueprintLineMaterial() {
 }
 
 /* =========================================================================
-   ГЕНЕРАТОРЫ ВЫСОКОДЕТАЛИЗИРОВАННЫХ КАРКАСОВ ДА ВИНЧИ (СОТНИ И ТЫСЯЧИ ЛИНИЙ)
+   СЛОЖНЫЕ КАРКАСЫ ДА ВИНЧИ
    ========================================================================= */
-
-// Чертёж 1: Воздушный Архимедов Винт (винтовая спираль, лонжероны, радиальная паутина, шнек)
 function buildComplexAerialScrewDraft() {
     const pts = [];
-    const h = 50, radiusMax = 26;
-    
-    // Центральный решетчатый мачтовый вал
-    for (let i = 0; i < 4; i++) {
-        const a = (i / 4) * Math.PI * 2;
-        const x = Math.cos(a) * 3, z = Math.sin(a) * 3;
+    const h = 54, radiusMax = 28;
+    for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        const x = Math.cos(a) * 3.5, z = Math.sin(a) * 3.5;
         pts.push(new THREE.Vector3(x, -h/2, z), new THREE.Vector3(x, h/2, z));
     }
     for (let y = -h/2; y <= h/2; y += 3) {
-        for (let i = 0; i < 4; i++) {
-            const a1 = (i / 4) * Math.PI * 2, a2 = ((i + 1) / 4) * Math.PI * 2;
-            pts.push(new THREE.Vector3(Math.cos(a1)*3, y, Math.sin(a1)*3), new THREE.Vector3(Math.cos(a2)*3, y, Math.sin(a2)*3));
-            if (y < h/2) {
-                pts.push(new THREE.Vector3(Math.cos(a1)*3, y, Math.sin(a1)*3), new THREE.Vector3(Math.cos(a2)*3, y + 3, Math.sin(a2)*3));
-            }
+        for (let i = 0; i < 6; i++) {
+            const a1 = (i / 6) * Math.PI * 2, a2 = ((i + 1) / 6) * Math.PI * 2;
+            pts.push(new THREE.Vector3(Math.cos(a1)*3.5, y, Math.sin(a1)*3.5), new THREE.Vector3(Math.cos(a2)*3.5, y, Math.sin(a2)*3.5));
+            if (y < h/2) pts.push(new THREE.Vector3(Math.cos(a1)*3.5, y, Math.sin(a1)*3.5), new THREE.Vector3(Math.cos(a2)*3.5, y + 3, Math.sin(a2)*3.5));
         }
     }
-
-    // Двойная винтовая поверхность спирали с густой сеткой растяжек
-    const coils = 3.6;
-    const steps = 180;
+    const coils = 3.6, steps = 180;
     for (let i = 0; i < steps; i++) {
-        const t1 = (i / steps);
-        const t2 = ((i + 1) / steps);
-        const a1 = t1 * Math.PI * 2 * coils;
-        const a2 = t2 * Math.PI * 2 * coils;
-        const y1 = -h/2 + t1 * h;
-        const y2 = -h/2 + t2 * h;
-        const r1 = 6 + t1 * (radiusMax - 6);
-        const r2 = 6 + t2 * (radiusMax - 6);
-
+        const t1 = i / steps, t2 = (i + 1) / steps;
+        const a1 = t1 * Math.PI * 2 * coils, a2 = t2 * Math.PI * 2 * coils;
+        const y1 = -h/2 + t1 * h, y2 = -h/2 + t2 * h;
+        const r1 = 6 + t1 * (radiusMax - 6), r2 = 6 + t2 * (radiusMax - 6);
         const edgeP1 = new THREE.Vector3(Math.cos(a1) * r1, y1, Math.sin(a1) * r1);
         const edgeP2 = new THREE.Vector3(Math.cos(a2) * r2, y2, Math.sin(a2) * r2);
         pts.push(edgeP1, edgeP2);
-
-        // Радиальные спицы и перекрестные вант-растяжки
         if (i % 2 === 0) {
-            const centerP = new THREE.Vector3(Math.cos(a1) * 3, y1, Math.sin(a1) * 3);
-            pts.push(centerP, edgeP1);
+            pts.push(new THREE.Vector3(Math.cos(a1) * 3.5, y1, Math.sin(a1) * 3.5), edgeP1);
             if (i > 0) {
-                const prevEdge = new THREE.Vector3(Math.cos(a1 - 0.2) * (r1 - 2), y1 - 2, Math.sin(a1 - 0.2) * (r1 - 2));
-                pts.push(edgeP1, prevEdge);
+                pts.push(edgeP1, new THREE.Vector3(Math.cos(a1 - 0.2) * (r1 - 2), y1 - 2, Math.sin(a1 - 0.2) * (r1 - 2)));
             }
         }
     }
-
-    // Нижнее зубчатое основание (шестерня привода)
     const gearR = 28;
     for (let i = 0; i < 48; i++) {
         const a1 = (i / 48) * Math.PI * 2, a2 = ((i + 1) / 48) * Math.PI * 2;
@@ -686,25 +736,19 @@ function buildComplexAerialScrewDraft() {
         pts.push(new THREE.Vector3(Math.cos(a1)*modR, -h/2, Math.sin(a1)*modR), new THREE.Vector3(Math.cos(a2)*nextModR, -h/2, Math.sin(a2)*nextModR));
         pts.push(new THREE.Vector3(Math.cos(a1)*modR, -h/2, Math.sin(a1)*modR), new THREE.Vector3(0, -h/2, 0));
     }
-
-    const geo = new THREE.BufferGeometry().setFromPoints(pts);
-    return new THREE.LineSegments(geo, createBlueprintLineMaterial());
+    return new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), createBlueprintLineMaterial());
 }
 
-// Чертёж 2: Механический редуктор с шестернями и храповиками (сотни пересекающихся зубьев и валов)
 function buildComplexClockworkGearsDraft() {
     const pts = [];
-
     function buildGear(centerX, centerY, radius, teeth, zOffset) {
         for (let i = 0; i < teeth * 2; i++) {
-            const a1 = (i / (teeth * 2)) * Math.PI * 2;
-            const a2 = ((i + 1) / (teeth * 2)) * Math.PI * 2;
+            const a1 = (i / (teeth * 2)) * Math.PI * 2, a2 = ((i + 1) / (teeth * 2)) * Math.PI * 2;
             const r1 = (i % 2 === 0) ? radius + 2.5 : radius - 1.5;
             const r2 = ((i + 1) % 2 === 0) ? radius + 2.5 : radius - 1.5;
             pts.push(new THREE.Vector3(centerX + Math.cos(a1)*r1, centerY + Math.sin(a1)*r1, zOffset),
                      new THREE.Vector3(centerX + Math.cos(a2)*r2, centerY + Math.sin(a2)*r2, zOffset));
         }
-        // Внутренние кольца и спицы облегчения
         for (let r = 4; r < radius - 3; r += 6) {
             for (let i = 0; i < 24; i++) {
                 const a1 = (i / 24) * Math.PI * 2, a2 = ((i + 1) / 24) * Math.PI * 2;
@@ -714,194 +758,116 @@ function buildComplexClockworkGearsDraft() {
         }
         for (let i = 0; i < 8; i++) {
             const a = (i / 8) * Math.PI * 2;
-            pts.push(new THREE.Vector3(centerX, centerY, zOffset),
-                     new THREE.Vector3(centerX + Math.cos(a)*radius, centerY + Math.sin(a)*radius, zOffset));
-            // Диагональные подкосы
-            pts.push(new THREE.Vector3(centerX + Math.cos(a)* (radius*0.5), centerY + Math.sin(a)* (radius*0.5), zOffset),
-                     new THREE.Vector3(centerX + Math.cos(a + 0.4)* (radius*0.9), centerY + Math.sin(a + 0.4)* (radius*0.9), zOffset));
+            pts.push(new THREE.Vector3(centerX, centerY, zOffset), new THREE.Vector3(centerX + Math.cos(a)*radius, centerY + Math.sin(a)*radius, zOffset));
+            pts.push(new THREE.Vector3(centerX + Math.cos(a)*(radius*0.5), centerY + Math.sin(a)*(radius*0.5), zOffset),
+                     new THREE.Vector3(centerX + Math.cos(a + 0.4)*(radius*0.9), centerY + Math.sin(a + 0.4)*(radius*0.9), zOffset));
         }
     }
-
-    // Сопряженные шестерни разного калибра
     buildGear(-12, 6, 22, 28, 0);
     buildGear(18, -10, 14, 18, 2);
     buildGear(14, 20, 9, 12, -2);
-
-    // Связующие пространственные валы и передаточные цепи
     for (let i = 0; i < 16; i++) {
         const a = (i / 16) * Math.PI * 2;
         pts.push(new THREE.Vector3(-12 + Math.cos(a)*3, 6 + Math.sin(a)*3, -12), new THREE.Vector3(-12 + Math.cos(a)*3, 6 + Math.sin(a)*3, 12));
         pts.push(new THREE.Vector3(18 + Math.cos(a)*2, -10 + Math.sin(a)*2, -10), new THREE.Vector3(18 + Math.cos(a)*2, -10 + Math.sin(a)*2, 10));
     }
-
-    // Прямоугольная каркасная калиброванная рамка чертежа
     const b = 34;
     pts.push(new THREE.Vector3(-b, -b, 0), new THREE.Vector3(b, -b, 0));
     pts.push(new THREE.Vector3(b, -b, 0), new THREE.Vector3(b, b, 0));
     pts.push(new THREE.Vector3(b, b, 0), new THREE.Vector3(-b, b, 0));
     pts.push(new THREE.Vector3(-b, b, 0), new THREE.Vector3(-b, -b, 0));
-    for (let c = -b; c <= b; c += 8) {
-        pts.push(new THREE.Vector3(c, -b, 0), new THREE.Vector3(c, -b + 2.5, 0));
-        pts.push(new THREE.Vector3(-b, c, 0), new THREE.Vector3(-b + 2.5, c, 0));
-    }
-
-    const geo = new THREE.BufferGeometry().setFromPoints(pts);
-    return new THREE.LineSegments(geo, createBlueprintLineMaterial());
+    return new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), createBlueprintLineMaterial());
 }
 
-// Чертёж 3: Орнитоптер (составной каркас ребер крыла, шарниры, тяги, тросы)
 function buildComplexOrnithopterDraft() {
     const pts = [];
-    const ribCount = 14;
-    
-    // Главный силовой изогнутый лонжерон
     const sparPts = [];
     for (let i = 0; i <= 36; i++) {
         const t = i / 36;
-        const x = -35 + t * 70;
-        const y = Math.sin(t * Math.PI) * 16 - 8;
-        const z = -Math.cos(t * Math.PI) * 8;
-        sparPts.push(new THREE.Vector3(x, y, z));
+        sparPts.push(new THREE.Vector3(-35 + t * 70, Math.sin(t * Math.PI) * 16 - 8, -Math.cos(t * Math.PI) * 8));
     }
-    for (let i = 0; i < sparPts.length - 1; i++) {
-        pts.push(sparPts[i], sparPts[i+1]);
-    }
-
-    // Ребра крыла (нервюры) и пересекающаяся решетка перепонок
-    for (let r = 0; r < ribCount; r++) {
-        const t = r / (ribCount - 1);
-        const rootIdx = Math.floor(t * (sparPts.length - 1));
-        const root = sparPts[rootIdx];
+    for (let i = 0; i < sparPts.length - 1; i++) pts.push(sparPts[i], sparPts[i+1]);
+    for (let r = 0; r < 14; r++) {
+        const t = r / 13;
+        const root = sparPts[Math.floor(t * 35)];
         const chordLen = 28 - Math.abs(t - 0.5) * 16;
-        
         let prevRibPt = null;
         for (let s = 0; s <= 6; s++) {
             const st = s / 6;
-            const ribPt = new THREE.Vector3(
-                root.x + (t - 0.5) * st * 8,
-                root.y - st * chordLen,
-                root.z + Math.sin(st * Math.PI * 0.8) * 9
-            );
+            const ribPt = new THREE.Vector3(root.x + (t - 0.5) * st * 8, root.y - st * chordLen, root.z + Math.sin(st * Math.PI * 0.8) * 9);
             if (prevRibPt) pts.push(prevRibPt, ribPt);
             prevRibPt = ribPt;
-
-            // Вантовые тросы управления натяжением
-            if (s === 6) {
-                pts.push(root, ribPt);
-                pts.push(new THREE.Vector3(0, -22, 12), ribPt);
-            }
+            if (s === 6) { pts.push(root, ribPt); pts.push(new THREE.Vector3(0, -22, 12), ribPt); }
         }
     }
-
-    // Рычажно-педальный привод пилота (каркасный механизм шарниров)
     pts.push(new THREE.Vector3(0, -6, 0), new THREE.Vector3(0, -26, 0));
     pts.push(new THREE.Vector3(-12, -22, 6), new THREE.Vector3(12, -22, 6));
-    pts.push(new THREE.Vector3(-12, -22, 6), new THREE.Vector3(0, -10, 0));
-    pts.push(new THREE.Vector3(12, -22, 6), new THREE.Vector3(0, -10, 0));
-
-    const geo = new THREE.BufferGeometry().setFromPoints(pts);
-    return new THREE.LineSegments(geo, createBlueprintLineMaterial());
+    return new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), createBlueprintLineMaterial());
 }
 
-// Чертёж 4: Витрувианский канон (окружность, квадрат, спираль золотого сечения, каркасная анатомия)
 function buildComplexVitruvianDraft() {
     const pts = [];
     const r = 32;
-
-    // Внешняя геодезическая сетка окружности
     for (let i = 0; i < 96; i++) {
         const a1 = (i / 96) * Math.PI * 2, a2 = ((i + 1) / 96) * Math.PI * 2;
         pts.push(new THREE.Vector3(Math.cos(a1)*r, Math.sin(a1)*r, 0), new THREE.Vector3(Math.cos(a2)*r, Math.sin(a2)*r, 0));
-        if (i % 8 === 0) {
-            pts.push(new THREE.Vector3(Math.cos(a1)*r, Math.sin(a1)*r, 0), new THREE.Vector3(0, 0, 0));
-        }
+        if (i % 8 === 0) pts.push(new THREE.Vector3(Math.cos(a1)*r, Math.sin(a1)*r, 0), new THREE.Vector3(0, 0, 0));
     }
-
-    // Квадрат пропорций с диагоналями и золотым делением
     const s = 26;
-    const corners = [
-        new THREE.Vector3(-s, -s + 2, 0), new THREE.Vector3(s, -s + 2, 0),
-        new THREE.Vector3(s, s + 2, 0), new THREE.Vector3(-s, s + 2, 0)
-    ];
+    const corners = [new THREE.Vector3(-s, -s + 2, 0), new THREE.Vector3(s, -s + 2, 0), new THREE.Vector3(s, s + 2, 0), new THREE.Vector3(-s, s + 2, 0)];
     for (let i = 0; i < 4; i++) {
         pts.push(corners[i], corners[(i + 1) % 4]);
         pts.push(corners[i], new THREE.Vector3(0, 2, 0));
     }
-
-    // Спираль пропорций Фибоначчи
     let prevFib = new THREE.Vector3(0, 0, 0);
     for (let i = 1; i <= 60; i++) {
-        const theta = i * 0.22;
-        const rad = 0.8 * Math.exp(0.065 * theta);
+        const theta = i * 0.22, rad = 0.8 * Math.exp(0.065 * theta);
         const fibPt = new THREE.Vector3(Math.cos(theta)*rad, Math.sin(theta)*rad, (i%3)*0.8 - 0.4);
         pts.push(prevFib, fibPt);
         prevFib = fibPt;
     }
-
-    // Пространственный каркас торса и осей
     pts.push(new THREE.Vector3(0, 22, 0), new THREE.Vector3(0, -18, 0));
     pts.push(new THREE.Vector3(-26, 12, 0), new THREE.Vector3(26, 12, 0));
     pts.push(new THREE.Vector3(-24, 24, 3), new THREE.Vector3(24, 24, 3));
     pts.push(new THREE.Vector3(0, -18, 0), new THREE.Vector3(-18, -32, 0));
     pts.push(new THREE.Vector3(0, -18, 0), new THREE.Vector3(18, -32, 0));
-    pts.push(new THREE.Vector3(0, -18, 0), new THREE.Vector3(-25, -24, 2));
-    pts.push(new THREE.Vector3(0, -18, 0), new THREE.Vector3(25, -24, 2));
-
-    const geo = new THREE.BufferGeometry().setFromPoints(pts);
-    return new THREE.LineSegments(geo, createBlueprintLineMaterial());
+    return new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), createBlueprintLineMaterial());
 }
 
-// Загрузка реальных растровых чертежей с разложением на пространственную решётку из линий
-function createWireframeFromImage(imageUrl, proceduralFallbackMesh) {
+function createWireframeFromImage(imageUrl, fallbackMesh) {
     const group = new THREE.Group();
-    group.add(proceduralFallbackMesh);
-
+    group.add(fallbackMesh);
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
         try {
             const canvas = document.createElement('canvas');
-            const targetW = 64, targetH = 64;
-            canvas.width = targetW;
-            canvas.height = targetH;
+            canvas.width = 64; canvas.height = 64;
             const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, targetW, targetH);
-            const imgData = ctx.getImageData(0, 0, targetW, targetH).data;
-
-            const detectedPoints = [];
-            for (let y = 0; y < targetH; y += 2) {
-                for (let x = 0; x < targetW; x += 2) {
-                    const idx = (y * targetW + x) * 4;
-                    const brightness = 0.299 * imgData[idx] + 0.587 * imgData[idx+1] + 0.114 * imgData[idx+2];
-                    
-                    // Поиск линий и штриховки тушью
-                    if (brightness < 160 || (brightness > 60 && brightness < 195)) {
-                        const px = ((x / targetW) - 0.5) * 62;
-                        const py = -((y / targetH) - 0.5) * 62;
-                        const pz = ((brightness / 255) - 0.5) * 8.0;
-                        detectedPoints.push(new THREE.Vector3(px, py, pz));
+            ctx.drawImage(img, 0, 0, 64, 64);
+            const data = ctx.getImageData(0, 0, 64, 64).data;
+            const detected = [];
+            for (let y = 0; y < 64; y += 2) {
+                for (let x = 0; x < 64; x += 2) {
+                    const idx = (y * 64 + x) * 4;
+                    const bright = 0.299 * data[idx] + 0.587 * data[idx+1] + 0.114 * data[idx+2];
+                    if (bright < 165 || (bright > 60 && bright < 195)) {
+                        detected.push(new THREE.Vector3(((x/64) - 0.5) * 62, -((y/64) - 0.5) * 62, ((bright/255) - 0.5) * 8.0));
                     }
                 }
             }
-
-            if (detectedPoints.length > 50) {
+            if (detected.length > 50) {
                 const linePts = [];
-                for (let i = 0; i < detectedPoints.length; i += 2) {
-                    const p1 = detectedPoints[i];
-                    for (let j = i + 1; j < Math.min(i + 8, detectedPoints.length); j++) {
-                        const p2 = detectedPoints[j];
-                        const dist = p1.distanceTo(p2);
-                        if (dist > 1.2 && dist < 11.0) {
-                            linePts.push(p1, p2);
-                        }
+                for (let i = 0; i < detected.length; i += 2) {
+                    const p1 = detected[i];
+                    for (let j = i + 1; j < Math.min(i + 8, detected.length); j++) {
+                        const p2 = detected[j];
+                        if (p1.distanceTo(p2) > 1.2 && p1.distanceTo(p2) < 11.0) linePts.push(p1, p2);
                     }
                 }
-
                 if (linePts.length > 80) {
-                    group.remove(proceduralFallbackMesh);
-                    const geo = new THREE.BufferGeometry().setFromPoints(linePts);
-                    const lineMesh = new THREE.LineSegments(geo, createBlueprintLineMaterial());
-                    group.add(lineMesh);
+                    group.remove(fallbackMesh);
+                    group.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(linePts), createBlueprintLineMaterial()));
                 }
             }
         } catch (e) {}
@@ -910,31 +876,30 @@ function createWireframeFromImage(imageUrl, proceduralFallbackMesh) {
     return group;
 }
 
-// 4 чертежа Да Винчи: 3 из файлов пользователя + 1 анатомический канон
+// 4 парящих чертежа Да Винчи на орбитах между кольцами
 const floatingInventions = [
     {
         group: createWireframeFromImage("1000400438.jpg", buildComplexAerialScrewDraft()),
-        basePos: new THREE.Vector3(-92, 28, 70),
+        basePos: new THREE.Vector3(-88, 26, 65),
         rotSpeed: new THREE.Vector3(0.0022, 0.0019, -0.0012)
     },
     {
         group: createWireframeFromImage("genio2.webp", buildComplexClockworkGearsDraft()),
-        basePos: new THREE.Vector3(95, -22, -65),
+        basePos: new THREE.Vector3(92, -20, -55),
         rotSpeed: new THREE.Vector3(0.0016, 0.0025, 0.0015)
     },
     {
         group: createWireframeFromImage("genio3.png", buildComplexOrnithopterDraft()),
-        basePos: new THREE.Vector3(78, 34, 105),
+        basePos: new THREE.Vector3(75, 30, 95),
         rotSpeed: new THREE.Vector3(-0.0018, 0.0022, 0.0014)
     },
     {
         group: createWireframeFromImage("", buildComplexVitruvianDraft()),
-        basePos: new THREE.Vector3(-28, -36, -50),
+        basePos: new THREE.Vector3(-26, -34, -45),
         rotSpeed: new THREE.Vector3(0.0012, 0.0018, 0.0008)
     }
 ];
 
-// Размещение объектов на сцене и привязка невидимых хитбоксов для Raycaster
 const hoverTargets = [];
 floatingInventions.forEach((item) => {
     item.group.position.copy(item.basePos);
@@ -953,7 +918,7 @@ floatingInventions.forEach((item) => {
     hoverTargets.push(item);
 });
 
-/* RAYCASTER ДЛЯ ИНТЕРАКТИВНОГО ВЫДЕЛЕНИЯ ЧЕРТЕЖЕЙ ПРИ НАВЕДЕНИИ КУРСОРА */
+/* RAYCASTER + СМЕЩЕНИЕ КАМЕРЫ К ЧЕРТЕЖУ */
 const raycaster = new THREE.Raycaster();
 const mouseVec = new THREE.Vector2(-999, -999);
 let currentHovered = null;
@@ -985,9 +950,13 @@ function checkRaycastHover() {
         const found = hoverTargets.find(h => h.hitMesh === hit);
         if (found) {
             found.isHovered = true;
-            // Выделение на первый план: выдвижение вперед к камере и масштабирование
-            found.targetScale = 1.38;
-            found.targetZ = 115; 
+            found.targetScale = 1.45;
+            found.targetZ = 125; 
+
+            // Смещение камеры: подлёт к чертежу с фронтальным кинематографическим ракурсом
+            const objPos = found.group.position;
+            targetCamPos.set(objPos.x * 0.45, objPos.y * 0.45, baseCamZ * 0.72);
+            targetLookTarget.set(objPos.x, objPos.y, objPos.z);
 
             found.group.traverse(child => {
                 if (child.isLineSegments && child.material && child.material.uniforms && child.material.uniforms.uHover) {
@@ -1002,10 +971,13 @@ function checkRaycastHover() {
         }
     } else {
         currentHovered = null;
+        // Возврат камеры в общий центр
+        targetCamPos.set(0, 0, baseCamZ);
+        targetLookTarget.set(0, 0, 0);
     }
 }
 
-/* ЖИДКИЙ ВОЛНОВОЙ МОРФ ПРИ КЛИКЕ НА «ИССЛЕДОВАТЬ» */
+/* ПЕРЕХОД ЖИДКОЙ ВОЛНЫ */
 let isRippling = false;
 let rippleScene, rippleCamera, rippleMaterial, rippleTime = 0;
 const snapshotTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight);
@@ -1098,15 +1070,14 @@ function animatePreloader() {
 
     // Вращение колец астролябии
     astrolabeRings.forEach(item => {
-        item.mesh.rotation.x += item.sx + Math.sin(t * 0.4 + item.px) * 0.0008;
-        item.mesh.rotation.y += item.sy + Math.cos(t * 0.35 + item.py) * 0.0009;
-        item.mesh.rotation.z += item.sz + Math.sin(t * 0.25) * 0.0006;
+        item.group.rotation.x += item.sx + Math.sin(t * 0.4 + item.px) * 0.0008;
+        item.group.rotation.y += item.sy + Math.cos(t * 0.35 + item.py) * 0.0009;
+        item.group.rotation.z += item.sz + Math.sin(t * 0.25) * 0.0006;
     });
 
-    // Интерактивная проверка наведения курсора на каркасы
     checkRaycastHover();
 
-    // Свободный полет и парение каркасов между кольцами
+    // Свободный полет и парение чертежей
     hoverTargets.forEach((item, idx) => {
         if (!item.isHovered) {
             item.group.position.y = item.basePos.y + Math.sin(t * 1.2 + idx * 1.5) * 8.5;
@@ -1115,13 +1086,11 @@ function animatePreloader() {
             item.group.rotation.y += item.rotSpeed.y;
             item.group.rotation.z += item.rotSpeed.z;
         } else {
-            // При наведении чертеж разворачивается лицевой стороной к зрителю
             item.group.rotation.x = THREE.MathUtils.lerp(item.group.rotation.x, 0, 0.1);
             item.group.rotation.y = THREE.MathUtils.lerp(item.group.rotation.y, 0, 0.1);
             item.group.rotation.z = THREE.MathUtils.lerp(item.group.rotation.z, 0, 0.1);
         }
 
-        // Плавная интерполяция координаты Z (выдвижение вперед) и масштаба
         item.group.position.z = THREE.MathUtils.lerp(item.group.position.z, item.targetZ, 0.08);
         item.hitMesh.position.copy(item.group.position);
 
@@ -1135,46 +1104,88 @@ function animatePreloader() {
         });
     });
 
-    // Медленное покачивание камеры
-    preCamera.position.x = Math.sin(t * 0.35) * 12.0;
-    preCamera.position.y = Math.cos(t * 0.30) * 8.0;
-    preCamera.lookAt(0, 0, 0);
+    // Плавное перемещение камеры и фокуса взгляда к выбранной фигуре
+    preCamera.position.lerp(targetCamPos, 0.06);
+    currentLookTarget.lerp(targetLookTarget, 0.06);
+    preCamera.lookAt(currentLookTarget);
 
     preRenderer.clear();
     preRenderer.render(preScene, preCamera);
 }
 animatePreloader();
 
-/* THREE.JS ФОН ДАШБОРДА */
+/* =========================================================================
+   THREE.JS ФОН ДАШБОРДА (ОПТИМИЗИРОВАН: ПОВОРОТ ТОЛЬКО ПРИ КЛИКЕ НА ВКЛАДКИ)
+   ========================================================================= */
 const dashCanvas = document.getElementById('webgl-bg-canvas');
 const dashScene = new THREE.Scene();
 const dashCamera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 2000);
-dashCamera.position.z = 150;
+dashCamera.position.z = 160;
 
-const dashRenderer = new THREE.WebGLRenderer({ canvas: dashCanvas, alpha: true, antialias: true });
+const dashRenderer = new THREE.WebGLRenderer({ canvas: dashCanvas, alpha: true, antialias: false, powerPreference: "low-power" });
 dashRenderer.setSize(window.innerWidth, window.innerHeight);
-dashRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+dashRenderer.setPixelRatio(1); // 1x пиксель для абсолютной легкости на слабом CPU
 
 const dashArmillary = new THREE.Group();
 dashScene.add(dashArmillary);
 
 let ringColor = 0x00aaff;
-const dashRingMat = new THREE.MeshBasicMaterial({ color: ringColor, wireframe: true, transparent: true, opacity: 0.14 });
-const mainRings = [];
-[55, 75, 95].forEach((radius, i) => {
-    const geo = new THREE.TorusGeometry(radius, 6 + i*1.8, 30, 200);
+const dashRingMat = new THREE.MeshBasicMaterial({ color: ringColor, wireframe: true, transparent: true, opacity: 0.15 });
+const dashRings = [];
+
+[65, 88, 110].forEach((radius, i) => {
+    const geo = new THREE.TorusGeometry(radius, 8 + i * 2, 14, 100);
     const ring = new THREE.Mesh(geo, dashRingMat);
     if (i === 0) ring.rotation.x = Math.PI / 2;
     if (i === 1) ring.rotation.y = Math.PI / 3;
     if (i === 2) ring.rotation.z = Math.PI / 4;
     dashArmillary.add(ring);
-    mainRings.push(ring);
+    dashRings.push(ring);
 });
+
+// Рендерим один статичный кадр при старте
+dashRenderer.render(dashScene, dashCamera);
+
+// Логика дискретного поворота колец только при смене вкладок
+let dashTurnProgress = 1.0;
+let dashStartRot = [0, 0, 0];
+let dashTargetRot = [0, 0, 0];
+let dashAnimFrameId = null;
+
+function triggerDashRingTurn() {
+    dashStartRot = [dashRings[0].rotation.y, dashRings[1].rotation.x, dashRings[2].rotation.z];
+    // Поворачиваем каждое кольцо на благородный угол золотого сечения
+    dashTargetRot = [
+        dashStartRot[0] + (Math.PI / 2.618),
+        dashStartRot[1] - (Math.PI / 3.141),
+        dashStartRot[2] + (Math.PI / 4.0)
+    ];
+    dashTurnProgress = 0.0;
+    if (dashAnimFrameId) cancelAnimationFrame(dashAnimFrameId);
+    animateDashTurn();
+}
+
+function animateDashTurn() {
+    dashTurnProgress += 0.025; // Плавная дуга поворота ~0.65 сек
+    const p = Math.min(dashTurnProgress, 1.0);
+    // Smooth cubic easing (смягчение в начале и конце)
+    const ease = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+
+    dashRings[0].rotation.y = dashStartRot[0] + (dashTargetRot[0] - dashStartRot[0]) * ease;
+    dashRings[1].rotation.x = dashStartRot[1] + (dashTargetRot[1] - dashStartRot[1]) * ease;
+    dashRings[2].rotation.z = dashStartRot[2] + (dashTargetRot[2] - dashStartRot[2]) * ease;
+
+    dashRenderer.render(dashScene, dashCamera);
+
+    if (p < 1.0) {
+        dashAnimFrameId = requestAnimationFrame(animateDashTurn);
+    } else {
+        dashAnimFrameId = null; // Полная остановка, 0% CPU нагрузки в покое
+    }
+}
 
 let mouseX = 0, mouseY = 0;
 document.addEventListener('mousemove', (e) => {
-    mouseX = (e.clientX - window.innerWidth / 2) * 0.0006;
-    mouseY = (e.clientY - window.innerHeight / 2) * 0.0006;
     const coord = document.getElementById('cursorCoordDisplay');
     if (coord) coord.textContent = `X: ${e.clientX.toString().padStart(4, '0')} / Y: ${e.clientY.toString().padStart(4, '0')}`;
 });
@@ -1197,33 +1208,19 @@ document.querySelectorAll('.tilt-card').forEach(card => {
     });
 });
 
-function animateDash() {
-    requestAnimationFrame(animateDash);
-    mainRings[0].rotation.y += 0.001;
-    mainRings[1].rotation.x -= 0.0015;
-    mainRings[2].rotation.z += 0.0008;
-
-    const t = performance.now() * 0.0002;
-    const baseX = Math.sin(t) * 110;
-    const baseY = Math.sin(t * 0.8) * 70;
-    const baseZ = Math.cos(t * 1.2) * 130;
-
-    dashCamera.position.x += (baseX + mouseX * 30 - dashCamera.position.x) * 0.05;
-    dashCamera.position.y += (baseY - mouseY * 30 - dashCamera.position.y) * 0.05;
-    dashCamera.position.z += (baseZ - dashCamera.position.z) * 0.05;
-    dashCamera.lookAt(dashScene.position);
-    dashRenderer.render(dashScene, dashCamera);
-}
-animateDash();
-
 window.addEventListener('resize', () => {
     preCamera.aspect = window.innerWidth / window.innerHeight;
+    baseCamZ = computeCameraFitZ();
+    if (!currentHovered) {
+        targetCamPos.z = baseCamZ;
+    }
     preCamera.updateProjectionMatrix();
     preRenderer.setSize(window.innerWidth, window.innerHeight);
 
     dashCamera.aspect = window.innerWidth / window.innerHeight;
     dashCamera.updateProjectionMatrix();
     dashRenderer.setSize(window.innerWidth, window.innerHeight);
+    dashRenderer.render(dashScene, dashCamera);
 });
 
 /* ТЕМА: НОЧЬ / ДЕНЬ */
@@ -1249,6 +1246,7 @@ function toggleTheme() {
         astrolabeWireMat.color.setHex(0x0066cc);
     }
     playClickSound(900, 0.03);
+    dashRenderer.render(dashScene, dashCamera);
     runCalculation();
 }
 
@@ -1288,10 +1286,12 @@ function scrambleTitle(card) {
     scrambleElementText(titleEl, orig, 380, true);
 }
 
-/* ВКЛАДКИ */
+/* ВКЛАДКИ (С ТРИГГЕРОМ ВРАЩЕНИЯ АСТРОЛЯБИИ ДАШБОРДА) */
 const TAB_TITLES = ['[01] ОБСЛУЖИВАНИЕ КАПИТАЛА', '[02] СКЛАДСКОЙ ЦИКЛ', '[03] ДЕНЕЖНЫЙ ПОТОК', '[04] ЭКОНОМИКА И ЗАКАЗЫ'];
 function selectTab(index) {
     playClickSound(1400, 0.025);
+    triggerDashRingTurn(); // Проворот астролябии только по клику!
+
     const buttons = document.querySelectorAll('#navTabsContainer .tab-btn');
     buttons.forEach((btn, idx) => {
         if (idx === index) {
