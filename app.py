@@ -151,43 +151,44 @@ body { background-color: var(--bg-space); color: var(--text-main); font-family: 
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
-/* ПРЕЛОАДЕР */
+/* ПРЕЛОАДЕР: АБСОЛЮТНО ФИКСИРОВАН НА ЭКРАНЕ (БЕЗ СКРОЛЛА) */
 #preloader-stage {
-    position: fixed; inset: 0; background: #050508; z-index: 900;
+    position: fixed; inset: 0; width: 100vw; height: 100vh;
+    background: #050508; z-index: 900; overflow: hidden;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
 }
-#preloader-webgl { position: absolute; inset: 0; width: 100vw; height: 100vh; z-index: 10; }
+#preloader-webgl { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 10; }
 
 #preloaderTitle {
     position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
     font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic;
-    font-size: clamp(34px, 5.5vw, 62px); font-weight: 700; letter-spacing: 0.25em;
+    font-size: clamp(30px, 4.2vw, 56px); font-weight: 700; letter-spacing: 0.22em;
     color: var(--accent-gold); opacity: 0; z-index: 30; pointer-events: none;
-    text-shadow: 0 0 35px rgba(212, 175, 55, 0.7);
+    text-shadow: 0 0 35px rgba(212, 175, 55, 0.75);
     transition: opacity 2s cubic-bezier(0.16, 1, 0.3, 1);
     text-align: center; width: 100%; user-select: none;
 }
 
 #preloaderHUD {
-    position: absolute; bottom: 45px; display: flex; flex-direction: column;
-    align-items: center; gap: 6px; z-index: 30; transition: opacity 0.5s ease;
+    position: absolute; bottom: calc(4vh + 15px); display: flex; flex-direction: column;
+    align-items: center; gap: 8px; z-index: 30; transition: opacity 0.5s ease;
 }
-.progress-bar-bg { width: 280px; height: 2px; background: rgba(255,255,255,0.1); position: relative; overflow: hidden; }
+.progress-bar-bg { width: min(280px, 75vw); height: 2px; background: rgba(255,255,255,0.1); position: relative; overflow: hidden; }
 #loaderProgressBar { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: var(--accent-gold); transition: width 0.1s linear; }
 
 #exploreBtnWrapper {
-    position: absolute; bottom: 45px; z-index: 40; opacity: 0; pointer-events: none;
+    position: absolute; bottom: 4.5vh; z-index: 40; opacity: 0; pointer-events: none;
     transition: opacity 1.2s cubic-bezier(0.19, 1, 0.22, 1), transform 1.2s cubic-bezier(0.19, 1, 0.22, 1);
     transform: translateY(12px);
 }
 #exploreBtnWrapper.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
 
 .explore-btn {
-    position: relative; padding: 14px 48px;
-    background: rgba(13, 13, 18, 0.7); border: 1px solid rgba(212, 175, 55, 0.8);
+    position: relative; padding: 13px 44px;
+    background: rgba(13, 13, 18, 0.75); border: 1px solid rgba(212, 175, 55, 0.85);
     color: #f4f1ea; font-family: 'JetBrains Mono', monospace; font-size: 11px;
     letter-spacing: 0.35em; text-transform: uppercase; cursor: pointer;
-    backdrop-filter: blur(12px); overflow: hidden; transition: all 0.4s ease;
+    backdrop-filter: blur(14px); overflow: hidden; transition: all 0.4s ease;
     box-shadow: 0 0 30px rgba(212, 175, 55, 0.2), inset 0 0 15px rgba(212, 175, 55, 0.1);
 }
 .explore-btn::before {
@@ -296,7 +297,7 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
             </div>
             <div class="hidden xl:flex items-center gap-5 pl-5 border-l font-mono text-[10px] opacity-75">
                 <span>[НАЛОГОВЫЙ КОДЕКС: 22% НДС]</span>
-                <span id="telemetryRate">[КАПИТАЛ: 19.0% ГОДОВЫХ]</span>
+                <span id="telemetryRate">[КАПИТАЛ: 16.0% ГОДОВЫХ]</span>
                 <span id="cursorCoordDisplay" class="text-[#d4af37]">X: 0000 / Y: 0000</span>
                 <span id="telemetryClock">[15:00:00]</span>
             </div>
@@ -367,15 +368,15 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
 
                 <!-- БЛОК II: ПАРТИОННЫЙ СКЛАД, СТАВКИ И УСЛОВИЯ ПОСТАВЩИКА -->
                 <div class="alche-block p-5 space-y-4">
-                    <div class="flex justify-between items-baseline"><span class="font-serif italic text-base font-semibold">II. Партионный склад и поставщики</span><span class="font-mono text-[9px] opacity-40">02 // 04</span></div>
+                    <div class="flex justify-between items-baseline"><span class="font-serif italic text-base font-semibold">II. Партионный склад и кредитование</span><span class="font-mono text-[9px] opacity-40">02 // 04</span></div>
                     <div>
                         <label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Стартовая закупка партии, ₽</label>
                         <input type="text" id="paramInitialPurchase" value="25 000 000" class="mono-input font-bold" oninput="formatInput(this); runCalculation();">
                     </div>
                     <div class="grid grid-cols-3 gap-2">
                         <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Цикл, мес.</label><input type="number" id="paramBatchCycle" value="5" min="1" max="12" class="mono-input text-center" oninput="runCalculation()"></div>
-                        <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">ЦБ РФ, %</label><input type="number" id="paramCbRate" value="17.0" step="0.5" class="mono-input text-center" oninput="runCalculation()"></div>
-                        <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Маржа, %</label><input type="number" id="paramCommMargin" value="2.0" step="0.5" class="mono-input text-center" oninput="runCalculation()"></div>
+                        <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">ЦБ РФ, %</label><input type="number" id="paramCbRate" value="14.0" step="0.5" class="mono-input text-center font-bold text-[#d4af37]" oninput="runCalculation()"></div>
+                        <div><label class="block font-mono text-[8px] uppercase opacity-70 mb-1" title="Коммерческая наценка кредитора за пользование средствами">Комиссия, %</label><input type="number" id="paramCommMargin" value="2.0" step="0.5" class="mono-input text-center" oninput="runCalculation()"></div>
                     </div>
                     <!-- УСЛОВИЯ РАСЧЕТОВ С ПОСТАВЩИКОМ -->
                     <div class="p-3 border space-y-3" style="border-color: rgba(212, 175, 55, 0.25); background: rgba(212, 175, 55, 0.02);">
@@ -439,7 +440,6 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
 
         <!-- ПРАВАЯ ЧАСТЬ: KPI, ТАБЫ И ГРАФИКИ -->
         <section class="lg:col-span-9 flex flex-col">
-            <!-- КАРТОЧКИ METRIC С ДЕКОДЕРОМ ПО ХОВЕРУ -->
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 border-b">
                 <div class="alche-block tilt-card p-5" onmouseenter="scrambleTitle(this)">
                     <div class="flex justify-between items-center opacity-60 mb-1"><span class="metric-title font-mono text-[9px] uppercase tracking-widest" data-original="[01] Выручка">[01] Выручка</span></div>
@@ -454,7 +454,7 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
                 <div class="alche-block tilt-card p-5" onmouseenter="scrambleTitle(this)">
                     <div class="flex justify-between items-center opacity-60 mb-1"><span class="metric-title font-mono text-[9px] uppercase tracking-widest" data-original="[03] Проценты">[03] Проценты</span></div>
                     <div id="kpiInterest" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#d4af37]">0 ₽</div>
-                    <div id="kpiRateSub" class="font-mono text-[9px] text-[#d4af37] mt-1.5 opacity-90">Ставка 19.0%</div>
+                    <div id="kpiRateSub" class="font-mono text-[9px] text-[#d4af37] mt-1.5 opacity-90">Ставка 16.0%</div>
                 </div>
                 <div class="alche-block tilt-card p-5" onmouseenter="scrambleTitle(this)">
                     <div class="flex justify-between items-center opacity-60 mb-1"><span class="metric-title font-mono text-[9px] uppercase tracking-widest" data-original="[04] Пиковый долг">[04] Пиковый долг</span></div>
@@ -485,7 +485,7 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
                         <div class="flex justify-between items-center mb-4">
                             <div>
                                 <h3 class="font-serif text-xl font-bold tracking-wide italic">График обслуживания долга и начисления процентов</h3>
-                                <p class="font-mono text-[10px] opacity-60">Ежемесячные проценты по ставке кредитора (столбцы) и динамика тела долга (кривая)</p>
+                                <p class="font-mono text-[10px] opacity-60">Ежемесячные проценты по совокупной ставке кредитора (столбцы) и динамика тела долга (кривая)</p>
                             </div>
                         </div>
                         <div class="h-[360px] relative"><canvas id="chartDebt"></canvas></div>
@@ -506,7 +506,7 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
                         <div class="flex justify-between items-center mb-4">
                             <div>
                                 <h3 class="font-serif text-xl font-bold tracking-wide italic">Партионные закупки и истощение склада</h3>
-                                <p class="font-mono text-[10px] opacity-60">Закупка дискретными циклами каждые N месяцев без ежемесячного задвоения</p>
+                                <p class="font-mono text-[10px] opacity-60">Закупка дискретными циклами с учетом предоплаты и отсрочки поставщика</p>
                             </div>
                         </div>
                         <div class="h-[400px] relative"><canvas id="chartStock"></canvas></div>
@@ -608,28 +608,32 @@ function updatePreloaderProgress(now) {
 }
 requestAnimationFrame(updatePreloaderProgress);
 
-/* THREE.JS ПРЕЛОАДЕР: АСТРОЛЯБИЯ + СИЛУЭТ */
+/* THREE.JS ПРЕЛОАДЕР: ОПТИМИЗИРОВАННЫЙ МАСШТАБ ДЛЯ 1080p */
 const preCanvas = document.getElementById('preloader-webgl');
 const preRenderer = new THREE.WebGLRenderer({ canvas: preCanvas, alpha: true, antialias: true, preserveDrawingBuffer: true });
 preRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 preRenderer.setSize(window.innerWidth, window.innerHeight);
 
 const preScene = new THREE.Scene();
+
+// Камера отодвинута на Z=190 для комфортного обзора всей астролябии и человека без скролла
 const preCamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 3000);
-preCamera.position.set(0, 0, 160);
+preCamera.position.set(0, 0, 190);
 preCamera.lookAt(0, 0, 0);
 
 const preGroup = new THREE.Group();
 preScene.add(preGroup);
 
+// Небесно-голубой каркас колец астролябии
 const astrolabeWireMat = new THREE.MeshBasicMaterial({
     color: 0x00b4ff, wireframe: true, transparent: true, opacity: 0.36
 });
 
 const astrolabeRings = [];
-const aRing1 = new THREE.Mesh(new THREE.TorusGeometry(120, 4.2, 26, 240), astrolabeWireMat);
-const aRing2 = new THREE.Mesh(new THREE.TorusGeometry(96, 3.8, 24, 200), astrolabeWireMat);
-const aRing3 = new THREE.Mesh(new THREE.TorusGeometry(74, 3.2, 22, 180), astrolabeWireMat);
+// Кольца сбалансированного диаметра под окно 1080p
+const aRing1 = new THREE.Mesh(new THREE.TorusGeometry(105, 3.6, 26, 240), astrolabeWireMat);
+const aRing2 = new THREE.Mesh(new THREE.TorusGeometry(84, 3.2, 24, 200), astrolabeWireMat);
+const aRing3 = new THREE.Mesh(new THREE.TorusGeometry(65, 2.8, 22, 180), astrolabeWireMat);
 
 aRing2.rotation.x = Math.PI / 3;
 aRing3.rotation.y = Math.PI / 4;
@@ -644,6 +648,7 @@ astrolabeRings.push(
     { mesh: aRing3, sx: 0.0031, sy: -0.0026, sz: 0.0018, px: 1.5, py: 3.2 }
 );
 
+// Шейдер силуэта Витрувианца (трассировка снизу вверх)
 const vitruvianData = "VITRUVIAN_DATA_PLACEHOLDER";
 let vitShaderMat = null;
 
@@ -692,14 +697,15 @@ vImg.onload = () => {
         side: THREE.DoubleSide
     });
 
-    const h = 95;
+    // Высота подобрана так, чтобы фигура идеально центрировалась внутри колец
+    const h = 82;
     const w = h * aspect;
     const vitMesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), vitShaderMat);
     vitMesh.position.set(0, 0, 0);
     preGroup.add(vitMesh);
 };
 
-/* ЖИДКИЙ ВОЛНОВОЙ МОРФ */
+/* ЖИДКИЙ ВОЛНОВОЙ МОРФ ПРИ КЛИКЕ НА «ИССЛЕДОВАТЬ» */
 let isRippling = false;
 let rippleScene, rippleCamera, rippleMaterial, rippleTime = 0;
 const snapshotTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight);
@@ -1010,8 +1016,10 @@ function runCalculation() {
     document.getElementById('lblMarginVal').textContent = `${marginPct}%`;
     const initialPurchase = parseCleanNum(document.getElementById('paramInitialPurchase').value);
     const batchCycle = parseInt(document.getElementById('paramBatchCycle').value) || 5;
-    const cbRate = parseFloat(document.getElementById('paramCbRate').value) || 17;
-    const commMargin = parseFloat(document.getElementById('paramCommMargin').value) || 2;
+
+    // ПАРАМЕТРЫ СТОИМОСТИ КРЕДИТА
+    const cbRate = parseFloat(document.getElementById('paramCbRate').value) || 14.0;
+    const commMargin = parseFloat(document.getElementById('paramCommMargin').value) || 2.0;
     const totalRateAnnual = cbRate + commMargin;
     const monthlyRate = (totalRateAnnual / 100) / 12;
     document.getElementById('telemetryRate').textContent = `[КАПИТАЛ: ${totalRateAnnual.toFixed(1)}% ГОДОВЫХ]`;
