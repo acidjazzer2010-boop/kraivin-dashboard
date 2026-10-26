@@ -22,7 +22,6 @@ iframe { border: none !important; width: 100% !important; }
 """, unsafe_allow_html=True)
 
 def generate_fallback_vitruvian():
-    """Процедурный силуэт Да Винчи на случай отсутствия локального файла."""
     size = 1000
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
@@ -34,7 +33,6 @@ def generate_fallback_vitruvian():
     sq_top = int(size * 0.16)
     draw.rectangle([center - sq_size//2, sq_top, center + sq_size//2, sq_top + sq_size], outline=gold, width=2)
     
-    # Силуэт человека
     draw.ellipse([center - 22, int(size * 0.18), center + 22, int(size * 0.25)], outline=gold, width=2)
     draw.line([center, int(size * 0.25), center, int(size * 0.52)], fill=gold, width=2)
     draw.line([center - int(size * 0.38), int(size * 0.30), center + int(size * 0.38), int(size * 0.30)], fill=gold, width=2)
@@ -79,7 +77,6 @@ html_code = r"""<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Архитектура Капитала // Финансовое Моделирование</title>
 
-<!-- Типографика -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -368,8 +365,9 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
                     </div>
                 </div>
 
+                <!-- БЛОК II: ПАРТИОННЫЙ СКЛАД, СТАВКИ И УСЛОВИЯ ПОСТАВЩИКА -->
                 <div class="alche-block p-5 space-y-4">
-                    <div class="flex justify-between items-baseline"><span class="font-serif italic text-base font-semibold">II. Партионный склад и капитал</span><span class="font-mono text-[9px] opacity-40">02 // 04</span></div>
+                    <div class="flex justify-between items-baseline"><span class="font-serif italic text-base font-semibold">II. Партионный склад и поставщики</span><span class="font-mono text-[9px] opacity-40">02 // 04</span></div>
                     <div>
                         <label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Стартовая закупка партии, ₽</label>
                         <input type="text" id="paramInitialPurchase" value="25 000 000" class="mono-input font-bold" oninput="formatInput(this); runCalculation();">
@@ -378,6 +376,24 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
                         <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Цикл, мес.</label><input type="number" id="paramBatchCycle" value="5" min="1" max="12" class="mono-input text-center" oninput="runCalculation()"></div>
                         <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">ЦБ РФ, %</label><input type="number" id="paramCbRate" value="17.0" step="0.5" class="mono-input text-center" oninput="runCalculation()"></div>
                         <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Маржа, %</label><input type="number" id="paramCommMargin" value="2.0" step="0.5" class="mono-input text-center" oninput="runCalculation()"></div>
+                    </div>
+                    <!-- УСЛОВИЯ РАСЧЕТОВ С ПОСТАВЩИКОМ -->
+                    <div class="p-3 border space-y-3" style="border-color: rgba(212, 175, 55, 0.25); background: rgba(212, 175, 55, 0.02);">
+                        <div class="font-mono text-[8px] uppercase tracking-widest text-[#d4af37] font-bold">[УСЛОВИЯ ПОСТАВЩИКА]</div>
+                        <div>
+                            <div class="flex justify-between font-mono text-[9px] mb-1">
+                                <span class="opacity-70">ПРЕДОПЛАТА ПОСТАВЩИКУ</span>
+                                <span id="lblSupplierPrepVal" class="text-[#d4af37] font-bold">50%</span>
+                            </div>
+                            <input type="range" id="paramSupplierPrepay" min="0" max="100" step="10" value="50" oninput="runCalculation()">
+                        </div>
+                        <div>
+                            <div class="flex justify-between font-mono text-[9px] mb-1">
+                                <span class="opacity-70">ОТСРОЧКА ОСТАТКА</span>
+                                <span id="lblSupplierDelayVal" class="text-[#d4af37] font-bold">1 мес.</span>
+                            </div>
+                            <input type="range" id="paramSupplierDelay" min="0" max="6" step="1" value="1" oninput="runCalculation()">
+                        </div>
                     </div>
                 </div>
 
@@ -408,13 +424,12 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
                         <div><label class="block font-mono text-[8px] uppercase opacity-70 mb-1">Склад, ₽</label><input type="text" id="paramWh" value="200 000" class="mono-input" oninput="formatInput(this); runCalculation();"></div>
                         <div><label class="block font-mono text-[8px] uppercase opacity-70 mb-1">Офис, ₽</label><input type="text" id="paramOffice" value="150 000" class="mono-input" oninput="formatInput(this); runCalculation();"></div>
                     </div>
-                    <div class="grid grid-cols-2 gap-3 pt-1">
+                    <div class="pt-1">
                         <div>
-                            <div class="flex justify-between font-mono text-[9px] mb-1"><span class="opacity-70">ПРЕДОПЛАТА</span><span id="lblPrepVal">50%</span></div>
-                            <input type="range" id="paramPrepaymentPct" min="0" max="100" step="10" value="50" oninput="runCalculation()">
-                        </div>
-                        <div>
-                            <div class="flex justify-between font-mono text-[9px] mb-1"><span class="opacity-70">ФАКТОРИНГ</span><span id="lblFactShareVal">50%</span></div>
+                            <div class="flex justify-between font-mono text-[9px] mb-1">
+                                <span class="opacity-70">ДОЛЯ ФАКТОРИНГА В ВЫРУЧКЕ</span>
+                                <span id="lblFactShareVal" class="text-[#d4af37] font-bold">50%</span>
+                            </div>
                             <input type="range" id="paramFactoringShare" min="0" max="100" step="10" value="50" oninput="runCalculation()">
                         </div>
                     </div>
@@ -607,7 +622,6 @@ preCamera.lookAt(0, 0, 0);
 const preGroup = new THREE.Group();
 preScene.add(preGroup);
 
-// Чистый небесно-голубой каркас колец астролябии
 const astrolabeWireMat = new THREE.MeshBasicMaterial({
     color: 0x00b4ff, wireframe: true, transparent: true, opacity: 0.36
 });
@@ -630,7 +644,6 @@ astrolabeRings.push(
     { mesh: aRing3, sx: 0.0031, sy: -0.0026, sz: 0.0018, px: 1.5, py: 3.2 }
 );
 
-// Шейдер силуэта Витрувианца (трассировка снизу вверх)
 const vitruvianData = "VITRUVIAN_DATA_PLACEHOLDER";
 let vitShaderMat = null;
 
@@ -682,11 +695,11 @@ vImg.onload = () => {
     const h = 95;
     const w = h * aspect;
     const vitMesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), vitShaderMat);
-    vitMesh.position.set(0, 0, 0); // Статичен по Z
+    vitMesh.position.set(0, 0, 0);
     preGroup.add(vitMesh);
 };
 
-/* ЖИДКИЙ ВОЛНОВОЙ МОРФ ПРИ КЛИКЕ НА «ИССЛЕДОВАТЬ» */
+/* ЖИДКИЙ ВОЛНОВОЙ МОРФ */
 let isRippling = false;
 let rippleScene, rippleCamera, rippleMaterial, rippleTime = 0;
 const snapshotTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight);
@@ -705,7 +718,6 @@ function triggerLiquidTransition(event) {
     document.getElementById('preloaderTitle').style.transition = 'opacity 0.4s ease';
     document.getElementById('preloaderTitle').style.opacity = '0';
 
-    // Рендерим снимок текущего состояния 3D сцены
     preRenderer.setRenderTarget(snapshotTarget);
     preRenderer.clear();
     preRenderer.render(preScene, preCamera);
@@ -742,7 +754,6 @@ function triggerLiquidTransition(event) {
                 float wave = sin((dist - waveRadius) * 36.0) * waveFactor * (1.0 - uProgress);
                 vec2 dir = normalize(aspectAdjustedUV - aspectAdjustedCenter + 0.0001);
                 
-                // Хроматическая аберрация в волне
                 vec2 offsetR = dir * wave * 0.09;
                 vec2 offsetG = dir * wave * 0.07;
                 vec2 offsetB = dir * wave * 0.05;
@@ -780,7 +791,6 @@ function animatePreloader() {
         return;
     }
     
-    // Медленное вращение колец во всех плоскостях
     astrolabeRings.forEach(item => {
         item.mesh.rotation.x += item.sx + Math.sin(t * 0.4 + item.px) * 0.0008;
         item.mesh.rotation.y += item.sy + Math.cos(t * 0.35 + item.py) * 0.0009;
@@ -797,9 +807,7 @@ function animatePreloader() {
 }
 animatePreloader();
 
-/* ========================================================
-   ОСНОВНОЙ ФОН ДАШБОРДА (THREE.JS)
-   ======================================================== */
+/* THREE.JS ФОН ДАШБОРДА */
 const dashCanvas = document.getElementById('webgl-bg-canvas');
 const dashScene = new THREE.Scene();
 const dashCamera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 2000);
@@ -906,7 +914,7 @@ function toggleTheme() {
     runCalculation();
 }
 
-/* ЭФФЕКТ ДЕКОДЕРА (SCRAMBLE EFFECT) */
+/* ДЕКОДЕР ГЛИФОВ */
 const CYRILLIC_GLYPHS = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ0123456789§$%*#@!/[]:;';
 const NUMERIC_GLYPHS = '0123456789 ';
 function scrambleElementText(el, finalText, duration = 460, useAlphabet = true) {
@@ -933,7 +941,6 @@ function scrambleElementText(el, finalText, duration = 460, useAlphabet = true) 
 }
 function scrambleNumber(el, finalStr, duration = 400) { scrambleElementText(el, finalStr, duration, false); }
 
-// Перебор символов при наведении на заголовок карточки
 function scrambleTitle(card) {
     playClickSound(1600, 0.015);
     const titleEl = card.querySelector('.metric-title');
@@ -1009,6 +1016,13 @@ function runCalculation() {
     const monthlyRate = (totalRateAnnual / 100) / 12;
     document.getElementById('telemetryRate').textContent = `[КАПИТАЛ: ${totalRateAnnual.toFixed(1)}% ГОДОВЫХ]`;
     document.getElementById('kpiRateSub').textContent = `Ставка ${totalRateAnnual.toFixed(1)}%`;
+
+    // УСЛОВИЯ ПОСТАВЩИКА
+    const supplierPrepayPct = parseFloat(document.getElementById('paramSupplierPrepay').value);
+    document.getElementById('lblSupplierPrepVal').textContent = `${supplierPrepayPct}%`;
+    const supplierDelay = parseInt(document.getElementById('paramSupplierDelay').value);
+    document.getElementById('lblSupplierDelayVal').textContent = `${supplierDelay} мес.`;
+
     const aov = parseCleanNum(document.getElementById('paramAov').value);
     const startOrders = parseInt(document.getElementById('paramStartOrders').value) || 40;
     const growthVal = parseFloat(document.getElementById('paramGrowthSlider').value);
@@ -1017,11 +1031,12 @@ function runCalculation() {
     const fot = parseCleanNum(document.getElementById('paramFot').value);
     const wh = parseCleanNum(document.getElementById('paramWh').value);
     const office = parseCleanNum(document.getElementById('paramOffice').value);
-    const prepPct = parseFloat(document.getElementById('paramPrepaymentPct').value);
-    document.getElementById('lblPrepVal').textContent = `${prepPct}%`;
+
+    // ФАКТОРИНГ
     const factShare = parseFloat(document.getElementById('paramFactoringShare').value);
     document.getElementById('lblFactShareVal').textContent = `${factShare}%`;
     const factAdvance = 0.8;
+
     const shortMonths = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
     const xLabels = [], orders = [], rev = [];
     
@@ -1039,17 +1054,27 @@ function runCalculation() {
     const cogsVat = rev.map(r => r * cogsPct * vatMultiplier);
     const cogsPayments = new Array(period).fill(0);
     const inventoryDeliveries = new Array(period).fill(0);
-    cogsPayments[0] += initialPurchase * (prepPct / 100);
-    if (1 < period) cogsPayments[1] += initialPurchase * ((100 - prepPct) / 100);
+
+    // ПЕРВАЯ ПАРТИЯ: Предоплата и Отсрочка поставщика
+    cogsPayments[0] += initialPurchase * (supplierPrepayPct / 100);
+    const firstDelayMonth = supplierDelay;
+    if (firstDelayMonth < period) {
+        cogsPayments[firstDelayMonth] += initialPurchase * ((100 - supplierPrepayPct) / 100);
+    }
     inventoryDeliveries[0] = initialPurchase;
     
+    // ЦИКЛИЧЕСКИЕ ПАРТИИ: Предоплата и Отсрочка поставщика
     for (let b = batchCycle; b < period; b += batchCycle) {
         const bEnd = Math.min(b + batchCycle, period);
         let batchTotal = 0;
         for (let k = b; k < bEnd; k++) batchTotal += cogsVat[k];
         inventoryDeliveries[b] = batchTotal;
-        cogsPayments[b] += batchTotal * (prepPct / 100);
-        if (b + 1 < period) cogsPayments[b + 1] += batchTotal * ((100 - prepPct) / 100);
+        cogsPayments[b] += batchTotal * (supplierPrepayPct / 100);
+        
+        const secondTrancheMonth = b + supplierDelay;
+        if (secondTrancheMonth < period) {
+            cogsPayments[secondTrancheMonth] += batchTotal * ((100 - supplierPrepayPct) / 100);
+        }
     }
     
     const inventoryBalance = [];
@@ -1183,7 +1208,8 @@ function runCalculation() {
             responsive: true, maintainAspectRatio: false,
             scales: {
                 x: { grid: { display: false }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } },
-                y: { grid: { color: chartGrid }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } }
+                y: { grid: { color: chartGrid }, ticks: { color: chartText, font: { family: 'JetBrains Mono', size: 10 } } },
+                y1: { position: 'right', grid: { display: false }, ticks: { color: '#e63946', font: { family: 'JetBrains Mono', size: 10 } } }
             },
             plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } }
         }
@@ -1249,7 +1275,6 @@ window.onload = () => runCalculation();
 </body>
 </html>"""
 
-# Безопасная подстановка без риска конфликта синтаксиса скобок в Python
 html_code = html_code.replace("VITRUVIAN_DATA_PLACEHOLDER", vitruvian_data_uri)
 
 components.html(html_code, height=1380, scrolling=True)
