@@ -902,7 +902,7 @@ function createCyclopeanTrussRing(mainRadius, tubeWidth, tubeDepth, segments, no
             linePts.push(p1_topOut, p2_topIn);
         } else {
             linePts.push(p1_botOut, p2_topOut);
-            linePts.push(p1_botIn, p2_topIn);
+            linePts.push(p1_botIn, p2_botIn);
             linePts.push(p1_botOut, p2_botIn);
         }
 
@@ -1712,10 +1712,8 @@ function exportDataToCsv() {
     playClickSound(1600, 0.05);
     if (!latestCalculatedData) return;
     const { xLabels, monthlyInvestments, interestPayments, debtRepayments, debtBalance, cashBalance } = latestCalculatedData;
-    let csv = '﻿' + "Период;Дотация (дефицит);Проценты по долгу;Погашение долга;Остаток тела долга;Свободный остаток счета
-";
-    for (let i = 0; i < xLabels.length; i++) csv += `${xLabels[i]};${Math.round(monthlyInvestments[i])};${Math.round(interestPayments[i])};${Math.round(debtRepayments[i])};${Math.round(debtBalance[i])};${Math.round(cashBalance[i])}
-`;
+    let csv = '\uFEFF' + "Период;Дотация (дефицит);Проценты по долгу;Погашение долга;Остаток тела долга;Свободный остаток счета\n";
+    for (let i = 0; i < xLabels.length; i++) csv += `${xLabels[i]};${Math.round(monthlyInvestments[i])};${Math.round(interestPayments[i])};${Math.round(debtRepayments[i])};${Math.round(debtBalance[i])};${Math.round(cashBalance[i])}\n`;
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
