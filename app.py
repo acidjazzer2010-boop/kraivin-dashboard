@@ -91,53 +91,53 @@ button:focus:not(:focus-visible){outline:none}
 #preloader-webgl{position:absolute;inset:0;width:100%;height:100%;z-index:10;cursor:grab}
 #preloader-webgl:active{cursor:grabbing}
 
-.preloader-fixed-hud{position:absolute;inset:0;width:100%;height:100%;z-index:30;pointer-events:none;user-select:none;transition:opacity 0.5s ease}
-#preloaderTitle{position:absolute;top:28px;left:50%;transform:translateX(-50%);font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:clamp(20px,3.2vw,44px);font-weight:700;letter-spacing:.26em;color:var(--accent-gold);opacity:0;text-shadow:0 0 45px rgba(212,175,55,.85);transition:opacity 1.8s cubic-bezier(.16,1,.3,1);text-align:center;white-space:nowrap}
+.preloader-fixed-hud{position:absolute;inset:0;width:100%;height:100%;z-index:30;pointer-events:none;user-select:none;transition:opacity 0.6s ease}
+#preloaderTitle{position:absolute;top:26px;left:50%;transform:translateX(-50%);font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:clamp(20px,3.2vw,44px);font-weight:700;letter-spacing:.26em;color:var(--accent-gold);opacity:0;text-shadow:0 0 45px rgba(212,175,55,.85);transition:opacity 1.8s cubic-bezier(.16,1,.3,1);text-align:center;white-space:nowrap}
 #preloaderTitle.locked-on{opacity:1!important}
 
-#blueprintSubtitle{position:absolute;top:76px;left:50%;transform:translateX(-50%);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.32em;text-transform:uppercase;color:rgba(212,175,55,0.7);opacity:0;transition:opacity 0.6s ease;text-align:center;white-space:nowrap}
+#blueprintSubtitle{position:absolute;top:74px;left:50%;transform:translateX(-50%);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.24em;text-transform:uppercase;color:rgba(212,175,55,0.85);opacity:0;transition:opacity 0.5s ease;text-align:center;white-space:nowrap;max-width:90vw}
 
-.slider-ui-container{position:absolute;top:50%;left:0;width:100%;transform:translateY(-50%);display:flex;justify-content:space-between;align-items:center;padding:0 14px;pointer-events:none;z-index:40}
-.slide-nav-btn{width:46px;height:46px;border-radius:50%;background:rgba(13,13,18,0.75);border:1px solid rgba(212,175,55,0.4);color:var(--accent-gold);display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;pointer-events:auto;backdrop-filter:blur(10px);transition:all .25s ease}
-.slide-nav-btn:hover{background:rgba(212,175,55,0.25);border-color:var(--accent-gold);transform:scale(1.1)}
-.slide-nav-btn:active{transform:scale(0.95)}
+.slider-ui-container{position:absolute;top:50%;left:0;width:100%;transform:translateY(-50%);display:flex;justify-content:space-between;align-items:center;padding:0 18px;pointer-events:none;z-index:40}
+.slide-nav-btn{width:48px;height:48px;border-radius:50%;background:rgba(13,13,18,0.8);border:1px solid rgba(212,175,55,0.5);color:var(--accent-gold);display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;pointer-events:auto;backdrop-filter:blur(10px);transition:all .25s ease}
+.slide-nav-btn:hover{background:rgba(212,175,55,0.3);border-color:var(--accent-gold);transform:scale(1.08)}
+.slide-nav-btn:active{transform:scale(0.96)}
 
-.slide-dots{position:absolute;bottom:102px;left:50%;transform:translateX(-50%);display:flex;gap:10px;pointer-events:auto;z-index:40}
-.slide-dot{width:8px;height:8px;border-radius:50%;border:1px solid var(--accent-gold);background:transparent;cursor:pointer;transition:all .3s ease}
-.slide-dot.active{background:var(--accent-gold);box-shadow:0 0 10px var(--accent-gold);transform:scale(1.35)}
+.slide-dots{position:absolute;bottom:102px;left:50%;transform:translateX(-50%);display:flex;gap:12px;pointer-events:auto;z-index:40}
+.slide-dot{width:9px;height:9px;border-radius:50%;border:1px solid var(--accent-gold);background:transparent;cursor:pointer;transition:all .3s ease}
+.slide-dot.active{background:var(--accent-gold);box-shadow:0 0 12px var(--accent-gold);transform:scale(1.35)}
 
-.bottom-dock{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;width:380px;height:62px}
+.bottom-dock{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;width:400px;height:64px}
 #preloaderHUD{display:flex;flex-direction:column;align-items:center;gap:8px;transition:opacity .4s}
-.progress-bar-bg{width:280px;height:2px;background:rgba(255,255,255,.12);position:relative;overflow:hidden}
+.progress-bar-bg{width:290px;height:2px;background:rgba(255,255,255,.12);position:relative;overflow:hidden}
 #loaderProgressBar{position:absolute;left:0;top:0;height:100%;width:0;background:var(--accent-gold);box-shadow:0 0 10px var(--accent-gold);transition:width .1s linear}
 
-#exploreBtnWrapper{position:absolute;opacity:0;pointer-events:none;transition:opacity .6s cubic-bezier(.19,1,.22,1),transform .6s cubic-bezier(.19,1,.22,1);transform:translateY(8px);display:flex;gap:10px}
+#exploreBtnWrapper{position:absolute;opacity:0;pointer-events:none;transition:opacity .6s cubic-bezier(.19,1,.22,1),transform .6s cubic-bezier(.19,1,.22,1);transform:translateY(8px);display:flex;gap:12px}
 #exploreBtnWrapper.active{opacity:1;pointer-events:auto;transform:translateY(0)}
 .explore-btn{padding:12px 34px;background:rgba(13,13,18,.9);border:1px solid rgba(212,175,55,.95);color:#f4f1ea;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.32em;text-transform:uppercase;cursor:pointer;backdrop-filter:blur(14px);overflow:hidden;transition:all .3s;box-shadow:0 0 40px rgba(212,175,55,.35),inset 0 0 16px rgba(212,175,55,.18)}
 .explore-btn:hover{border-color:#ffd700;color:#ffd700;box-shadow:0 0 60px rgba(212,175,55,.7),inset 0 0 24px rgba(212,175,55,.35);transform:scale(1.04)}
 
-.preset-btn{padding:12px 18px;background:rgba(212,175,55,0.12);border:1px solid var(--accent-gold);color:var(--accent-gold);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;backdrop-filter:blur(10px);transition:all .3s}
+.preset-btn{padding:12px 20px;background:rgba(212,175,55,0.12);border:1px solid var(--accent-gold);color:var(--accent-gold);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;backdrop-filter:blur(10px);transition:all .3s}
 .preset-btn:hover{background:var(--accent-gold);color:#070709}
 
 #mainDashboardApp{display:none;position:relative;z-index:10;min-height:100vh}
 #mainDashboardApp.ready{display:flex}
 
 .camera-obscura-reveal {
-    animation: developNegative 2.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: developNegative 2.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes developNegative {
     0% {
         opacity: 0.95;
-        filter: invert(1) grayscale(1) contrast(1.6) brightness(1.2);
+        filter: invert(1) grayscale(1) contrast(1.7) brightness(1.2);
         transform: scale(1.015);
     }
-    30% {
+    35% {
         opacity: 1;
-        filter: invert(0.85) sepia(0.5) contrast(1.4) brightness(1.1);
+        filter: invert(0.85) sepia(0.6) contrast(1.4) brightness(1.1);
     }
-    60% {
-        filter: invert(0.3) sepia(0.3) contrast(1.15) brightness(1.02);
+    70% {
+        filter: invert(0.2) sepia(0.25) contrast(1.1) brightness(1.02);
     }
     100% {
         opacity: 1;
@@ -183,11 +183,11 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
     
     <div class="preloader-fixed-hud">
         <div id="preloaderTitle">Архитектура финансов</div>
-        <div id="blueprintSubtitle">Тяга и масштабирование выручки</div>
+        <div id="blueprintSubtitle">Воздушный винт // Тяга и масштабирование</div>
         
         <div class="slider-ui-container">
-            <button class="slide-nav-btn" onclick="prevSlide()" aria-label="Предыдущий чертеж">‹</button>
-            <button class="slide-nav-btn" onclick="nextSlide()" aria-label="Следующий чертеж">›</button>
+            <button class="slide-nav-btn" onclick="prevSlide()" aria-label="Предыдущее изобретение">‹</button>
+            <button class="slide-nav-btn" onclick="nextSlide()" aria-label="Следующее изобретение">›</button>
         </div>
 
         <div class="slide-dots">
@@ -202,13 +202,13 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
             <div id="preloaderHUD">
                 <div class="flex items-center gap-3 text-[#d4af37] text-[10px] tracking-[0.25em] uppercase font-mono">
                     <span class="pulse-dot" aria-hidden="true"></span>
-                    <span id="loaderStatusText">Листайте 3D-чертежи Да Винчи...</span>
+                    <span id="loaderStatusText">Изучите 5 механизмов Да Винчи...</span>
                     <span id="loaderPercent" class="font-bold">0%</span>
                 </div>
                 <div class="progress-bar-bg mt-1"><div id="loaderProgressBar"></div></div>
             </div>
             <div id="exploreBtnWrapper">
-                <button id="applyPresetBtn" onclick="applySelectedPresetAndEnter(event)" class="preset-btn">Применить пресет</button>
+                <button id="applyPresetBtn" onclick="applySelectedPresetAndEnter(event)" class="preset-btn">Применить модель</button>
                 <button id="exploreBtn" onclick="triggerCameraObscuraTransition(event)" class="explore-btn">Исследовать</button>
             </div>
         </div>
@@ -420,16 +420,75 @@ const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matc
 const USER_IMAGES = __JSON_IMAGES_PAYLOAD__;
 
 /* =========================================================================
-   АВТОНОМНЫЙ ЗВУКОВОЙ МОДУЛЬ: RENAISSANCE CATHEDRAL SOUNDSCAPE (WEB AUDIO)
+   ИЗОБРЕТЕНИЯ ДА ВИНЧИ И ФИНАНСОВЫЕ СТРАТЕГИИ
+   ========================================================================= */
+const DA_VINCI_BLUEPRINTS = [
+    {
+        id: 0,
+        invention: "Воздушный винт (Helix Pteron)",
+        name: "Тяга и масштабирование",
+        subtitle: "Сверхбыстрый прирост заказов (+15 шт./мес)",
+        apply: () => {
+            setGrowthMode('abs');
+            document.getElementById('paramGrowthSlider').value = 15;
+            document.getElementById('paramMargin').value = 25;
+            document.getElementById('paramStartOrders').value = 50;
+        }
+    },
+    {
+        id: 1,
+        invention: "Арочный мост (Ponte Autoportante)",
+        name: "Механика оборачиваемости",
+        subtitle: "Самонесущая система: короткий 3-мес. складской цикл",
+        apply: () => {
+            document.getElementById('paramBatchCycle').value = 3;
+            document.getElementById('paramSupplierPrepay').value = 30;
+            document.getElementById('paramSupplierDelay').value = 2;
+        }
+    },
+    {
+        id: 2,
+        invention: "Гидравлический шлюз (Chiusa Idraulica)",
+        name: "Купирование кассовых разрывов",
+        subtitle: "Факторинг 80% для сброса пикового дефицита",
+        apply: () => {
+            document.getElementById('paramFactoringShare').value = 80;
+            document.getElementById('paramMargin').value = 22;
+        }
+    },
+    {
+        id: 3,
+        invention: "Витрувианский человек (Canone delle Proporzioni)",
+        name: "Золотая пропорция (Канон)",
+        subtitle: "Сбалансированная модель 1 : 1.618 и маржа 20%",
+        apply: () => {
+            document.getElementById('paramMargin').value = 20;
+            document.getElementById('paramFactoringShare').value = 50;
+            document.getElementById('paramBatchCycle').value = 5;
+        }
+    },
+    {
+        id: 4,
+        invention: "Бронированная колесница (Carro Armato)",
+        name: "Защита резервов и баланс",
+        subtitle: "Минимизация заёмного плеча и лимит отгрузок",
+        apply: () => {
+            document.getElementById('paramSupplierPrepay').value = 20;
+            document.getElementById('paramSupplierDelay').value = 3;
+            document.getElementById('paramMaxOrdersCap').value = 180;
+        }
+    }
+];
+
+/* =========================================================================
+   АВТОНОМНЫЙ ЗВУКОВОЙ ДВИЖОК: RENAISSANCE CATHEDRAL SOUNDSCAPE
    ========================================================================= */
 class RenaissanceSoundscapeEngine {
     constructor() {
         this.ctx = null;
         this.isPlaying = false;
         this.timer = null;
-        this.droneNodes = [];
         this.masterGain = null;
-        // D-Dorian (Ре-дорийский лад): D3, E3, F3, G3, A3, B3, C4, D4, E4, A4
         this.scale = [146.83, 164.81, 174.61, 196.00, 220.00, 246.94, 261.63, 293.66, 329.63, 440.00];
     }
 
@@ -442,20 +501,17 @@ class RenaissanceSoundscapeEngine {
         this.masterGain.gain.setValueAtTime(0.26, this.ctx.currentTime);
         this.masterGain.connect(this.ctx.destination);
 
-        // Мягкий обрезной фильтр акустики дерева и камня
         this.warmthFilter = this.ctx.createBiquadFilter();
         this.warmthFilter.type = 'lowpass';
         this.warmthFilter.frequency.setValueAtTime(1100, this.ctx.currentTime);
         this.warmthFilter.Q.setValueAtTime(1.15, this.ctx.currentTime);
 
-        // Импульсный ревербератор собора (Cathedral Reverb) с хвостом 5.5 сек
         this.convolver = this.ctx.createConvolver();
         this.convolver.buffer = this.buildCathedralImpulse(5.5, 2.0);
 
         this.warmthFilter.connect(this.convolver);
         this.convolver.connect(this.masterGain);
 
-        // Сухой тракт для точности атак
         const dryGain = this.ctx.createGain();
         dryGain.gain.setValueAtTime(0.35, this.ctx.currentTime);
         this.warmthFilter.connect(dryGain);
@@ -478,7 +534,6 @@ class RenaissanceSoundscapeEngine {
     }
 
     startCathedralDrone() {
-        // Органный низкий бурдон: совершенная квинта Ре + Ля (D2 = 73.42Hz, A2 = 110Hz)
         const roots = [73.42, 110.00];
         roots.forEach(freq => {
             const osc = this.ctx.createOscillator();
@@ -486,10 +541,9 @@ class RenaissanceSoundscapeEngine {
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
 
-            // Дыхание мехов органа через LFO
             const lfo = this.ctx.createOscillator();
             const lfoGain = this.ctx.createGain();
-            lfo.frequency.setValueAtTime(0.18, this.ctx.currentTime); // медленное дыхание 0.18 Гц
+            lfo.frequency.setValueAtTime(0.18, this.ctx.currentTime);
             lfoGain.gain.setValueAtTime(0.015, this.ctx.currentTime);
             lfo.connect(lfoGain);
             lfoGain.connect(gain.gain);
@@ -500,7 +554,6 @@ class RenaissanceSoundscapeEngine {
             gain.connect(this.warmthFilter);
             osc.start();
             lfo.start();
-            this.droneNodes.push({ osc, lfo, gain });
         });
     }
 
@@ -512,7 +565,6 @@ class RenaissanceSoundscapeEngine {
         const osc2 = this.ctx.createOscillator();
         const voiceGain = this.ctx.createGain();
 
-        // Сложение синусоиды (фундаментал трубы) и мягкого треугольника с расстройкой
         osc1.type = 'sine';
         osc1.frequency.setValueAtTime(freq, now);
 
@@ -531,6 +583,15 @@ class RenaissanceSoundscapeEngine {
         osc2.start(now);
         osc1.stop(now + duration + 0.1);
         osc2.stop(now + duration + 0.1);
+
+        // Устранение утечки памяти Web Audio
+        osc1.onended = () => {
+            try {
+                osc1.disconnect();
+                osc2.disconnect();
+                voiceGain.disconnect();
+            } catch (_) {}
+        };
     }
 
     start() {
@@ -549,7 +610,6 @@ class RenaissanceSoundscapeEngine {
             const duration = 5.0 + Math.random() * 4.0;
             this.playPolyphonicVoice(note, duration);
 
-            // Параллельная квинта (+7 полутонов)
             if (Math.random() > 0.55) {
                 setTimeout(() => {
                     if (this.isPlaying) this.playPolyphonicVoice(note * 1.5, duration * 0.9);
@@ -587,12 +647,10 @@ class RenaissanceSoundscapeEngine {
 
 const renaissanceAudio = new RenaissanceSoundscapeEngine();
 
-// Бесшовный запуск эмбиента с момента загрузки
 function attemptAutoStartAudio() {
     renaissanceAudio.start();
 }
 
-// Обход политики Autoplay браузеров: активация при первой интерактивности
 ['click', 'touchstart', 'keydown', 'mousemove'].forEach(evt => {
     window.addEventListener(evt, () => {
         if (renaissanceAudio.ctx && renaissanceAudio.ctx.state === 'suspended') {
@@ -618,54 +676,6 @@ function toggleRenaissanceAmbient() {
     }
 }
 
-const BLUEPRINT_PRESETS = [
-    {
-        name: "Тяга и масштабирование",
-        subtitle: "Сверхбыстрый прирост заказов (+15 шт./мес)",
-        apply: () => {
-            setGrowthMode('abs');
-            document.getElementById('paramGrowthSlider').value = 15;
-            document.getElementById('paramMargin').value = 25;
-            document.getElementById('paramStartOrders').value = 50;
-        }
-    },
-    {
-        name: "Механика оборачиваемости",
-        subtitle: "Короткий 3-месячный цикл закупки партий",
-        apply: () => {
-            document.getElementById('paramBatchCycle').value = 3;
-            document.getElementById('paramSupplierPrepay').value = 30;
-            document.getElementById('paramSupplierDelay').value = 2;
-        }
-    },
-    {
-        name: "Аэродинамика кассовых разрывов",
-        subtitle: "Факторинг 80% для ликвидации дефицита",
-        apply: () => {
-            document.getElementById('paramFactoringShare').value = 80;
-            document.getElementById('paramMargin').value = 22;
-        }
-    },
-    {
-        name: "Золотая пропорция (Канон)",
-        subtitle: "Сбалансированная модель 1 : 1.618",
-        apply: () => {
-            document.getElementById('paramMargin').value = 20;
-            document.getElementById('paramFactoringShare').value = 50;
-            document.getElementById('paramBatchCycle').value = 5;
-        }
-    },
-    {
-        name: "Защита резервов и баланс",
-        subtitle: "Минимизация долга и удержание ликвидности",
-        apply: () => {
-            document.getElementById('paramSupplierPrepay').value = 20;
-            document.getElementById('paramSupplierDelay').value = 3;
-            document.getElementById('paramMaxOrdersCap').value = 180;
-        }
-    }
-];
-
 function playClickSound(freq = 1200, duration = 0.02) {
     try {
         if (!renaissanceAudio.ctx) renaissanceAudio.init();
@@ -679,23 +689,25 @@ function playClickSound(freq = 1200, duration = 0.02) {
         gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
         osc.connect(gain); gain.connect(ctx.destination);
         osc.start(); osc.stop(ctx.currentTime + duration);
+        osc.onended = () => { osc.disconnect(); gain.disconnect(); };
     } catch (e) {}
 }
 
-function playGearSpinUpSound(duration = 1.4) {
+function playGearSpinUpSound(duration = 3.2) {
     try {
         if (!renaissanceAudio.ctx) renaissanceAudio.init();
         const ctx = renaissanceAudio.ctx;
         if (ctx.state === 'suspended') ctx.resume();
         const osc = ctx.createOscillator(), gain = ctx.createGain();
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(60, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(380, ctx.currentTime + duration);
-        gain.gain.setValueAtTime(0.02, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + duration * 0.85);
+        osc.frequency.setValueAtTime(50, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(260, ctx.currentTime + duration);
+        gain.gain.setValueAtTime(0.015, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.07, ctx.currentTime + duration * 0.85);
         gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
         osc.connect(gain); gain.connect(ctx.destination);
         osc.start(); osc.stop(ctx.currentTime + duration);
+        osc.onended = () => { osc.disconnect(); gain.disconnect(); };
     } catch (e) {}
 }
 
@@ -707,25 +719,27 @@ function playApertureSnapSound() {
         
         const osc = ctx.createOscillator(), gain = ctx.createGain();
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(800, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(30, ctx.currentTime + 0.12);
-        gain.gain.setValueAtTime(0.35, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+        osc.frequency.setValueAtTime(750, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(30, ctx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.4, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
         osc.connect(gain); gain.connect(ctx.destination);
-        osc.start(); osc.stop(ctx.currentTime + 0.12);
+        osc.start(); osc.stop(ctx.currentTime + 0.15);
+        osc.onended = () => { osc.disconnect(); gain.disconnect(); };
 
-        const bufferSize = ctx.sampleRate * 0.08;
+        const bufferSize = ctx.sampleRate * 0.09;
         const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
         const noise = ctx.createBufferSource();
         noise.buffer = buffer;
         const noiseGain = ctx.createGain();
-        noiseGain.gain.setValueAtTime(0.2, ctx.currentTime);
-        noiseGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+        noiseGain.gain.setValueAtTime(0.25, ctx.currentTime);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.09);
         noise.connect(noiseGain);
         noiseGain.connect(ctx.destination);
         noise.start();
+        noise.onended = () => { noise.disconnect(); noiseGain.disconnect(); };
     } catch (e) {}
 }
 
@@ -764,7 +778,7 @@ function dismissPreloader() {
 const PRELOADER_TOTAL_TIME = REDUCE_MOTION ? 1200 : 9000;
 const preloaderStartTime = performance.now();
 
-setTimeout(() => { const pt = document.getElementById('preloaderTitle'); if (pt) pt.classList.add('locked-on'); }, 900);
+setTimeout(() => { const pt = document.getElementById('preloaderTitle'); if (pt) pt.classList.add('locked-on'); }, 800);
 
 let drawingCompleted = false;
 function updatePreloaderProgress(now) {
@@ -793,7 +807,7 @@ preRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 preRenderer.setSize(window.innerWidth, window.innerHeight);
 
 const preScene = new THREE.Scene();
-const preCamera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 1, 6000);
+const preCamera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 1, 6000);
 const baseCamZ = 390;
 let targetCamPos = new THREE.Vector3(0, 0, baseCamZ);
 let currentLookTarget = new THREE.Vector3(0, 0, 0);
@@ -810,7 +824,7 @@ const particlePos = new Float32Array(particleCount * 3);
 for (let i = 0; i < particleCount * 3; i += 3) {
     particlePos[i] = (Math.random() - 0.5) * 600;
     particlePos[i + 1] = (Math.random() - 0.5) * 450;
-    particlePos[i + 2] = (Math.random() - 0.5) * 500;
+    particlePos[i + 2] = (Math.random() - 0.5) * 400;
 }
 particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePos, 3));
 const particleMat = new THREE.PointsMaterial({
@@ -863,7 +877,7 @@ function createCyclopeanTrussRing(mainRadius, tubeWidth, tubeDepth, segments) {
             linePts.push(p1_topOut, p2_topIn);
         } else {
             linePts.push(p1_botOut, p2_topOut);
-            linePts.push(p1_botIn, p2_topIn);
+            linePts.push(p1_botIn, p2_botIn);
             linePts.push(p1_botOut, p2_botIn);
         }
 
@@ -888,7 +902,7 @@ preGroup.add(aRing1); preGroup.add(aRing2); preGroup.add(aRing3);
 astrolabeRings.push(
     { group: aRing1, sx: 0.00045, sy: 0.00065, sz: 0.00025, px: 0.2, py: 1.1, dir: 1.0 },
     { group: aRing2, sx: -0.00055, sy: 0.00040, sz: -0.00045, px: 2.3, py: 0.7, dir: -1.0 },
-    { group: aRing3, sx: 0.00060, sy: -0.00050, sz: 0.00035, px: 1.5, py: 3.2, dir: 1.2 }
+    { group: aRing3, sx: 0.00060, sy: -0.00050, sz: 0.00035, px: 1.5, py: 3.2, dir: 1.15 }
 );
 
 function createDaVinciHoloMaterial(texture) {
@@ -940,6 +954,53 @@ function createBlueprintWireMaterial() {
     });
 }
 
+function createFallbackDaVinciCanvas(typeIdx) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512; canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#0d0e17'; ctx.fillRect(0, 0, 512, 512);
+    ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 2.5;
+
+    // Векторные чертежи механизмов Да Винчи
+    if (typeIdx === 0) { // Воздушный винт
+        ctx.beginPath(); ctx.arc(256, 256, 180, 0, Math.PI * 2); ctx.stroke();
+        for (let r = 20; r < 180; r += 24) {
+            ctx.beginPath(); ctx.arc(256, 256, r, 0, Math.PI * 1.5); ctx.stroke();
+        }
+        ctx.beginPath(); ctx.moveTo(256, 40); ctx.lineTo(256, 472); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(40, 256); ctx.lineTo(472, 256); ctx.stroke();
+    } else if (typeIdx === 1) { // Арочный мост
+        ctx.beginPath(); ctx.arc(256, 380, 200, Math.PI, 0); ctx.stroke();
+        ctx.beginPath(); ctx.arc(256, 380, 230, Math.PI, 0); ctx.stroke();
+        for (let a = Math.PI; a <= 2 * Math.PI; a += 0.2) {
+            ctx.moveTo(256 + Math.cos(a) * 200, 380 + Math.sin(a) * 200);
+            ctx.lineTo(256 + Math.cos(a) * 230, 380 + Math.sin(a) * 230);
+        }
+        ctx.stroke();
+    } else if (typeIdx === 2) { // Гидравлический шлюз
+        ctx.strokeRect(90, 80, 332, 352);
+        ctx.beginPath(); ctx.moveTo(256, 80); ctx.lineTo(170, 256); ctx.lineTo(256, 432); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(256, 80); ctx.lineTo(342, 256); ctx.lineTo(256, 432); ctx.stroke();
+        for (let y = 120; y <= 390; y += 30) {
+            ctx.moveTo(90, y); ctx.lineTo(422, y);
+        }
+        ctx.stroke();
+    } else if (typeIdx === 3) { // Витрувианский канон
+        ctx.beginPath(); ctx.arc(256, 256, 190, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeRect(66, 66, 380, 380);
+        ctx.beginPath(); ctx.moveTo(256, 66); ctx.lineTo(256, 446); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(66, 256); ctx.lineTo(446, 256); ctx.stroke();
+    } else { // Бронированная колесница
+        ctx.beginPath(); ctx.ellipse(256, 280, 200, 100, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(256, 220, 70, Math.PI, 0); ctx.stroke();
+        for (let x = 80; x <= 432; x += 32) {
+            ctx.moveTo(x, 280); ctx.lineTo(x, 340);
+        }
+        ctx.stroke();
+    }
+    return new THREE.CanvasTexture(canvas);
+}
+
 function createSafeVolumetricBlueprintCard(b64Image, typeIdx) {
     const cardGroup = new THREE.Group();
     const w = 58, h = 58, d = 26;
@@ -983,31 +1044,45 @@ function createSafeVolumetricBlueprintCard(b64Image, typeIdx) {
     );
     cardGroup.add(wireframeMesh);
 
+    // Добавление плоскости чертежа
+    const planeGeo = new THREE.PlaneGeometry(50, 50);
+    let planeMat;
+
     if (typeof b64Image === 'string' && b64Image.length > 50 && b64Image.startsWith('data:image')) {
         try {
             const imgEl = new Image();
             imgEl.onload = function() {
                 const texture = new THREE.Texture(imgEl);
                 texture.needsUpdate = true;
-                const planeGeo = new THREE.PlaneGeometry(50, 50);
-                const planeMat = createDaVinciHoloMaterial(texture);
+                planeMat = createDaVinciHoloMaterial(texture);
                 const planeMesh = new THREE.Mesh(planeGeo, planeMat);
                 planeMesh.position.z = 0;
                 cardGroup.add(planeMesh);
             };
             imgEl.src = b64Image;
-        } catch (e) {}
+        } catch (e) {
+            const fbTex = createFallbackDaVinciCanvas(typeIdx);
+            planeMat = createDaVinciHoloMaterial(fbTex);
+            const planeMesh = new THREE.Mesh(planeGeo, planeMat);
+            cardGroup.add(planeMesh);
+        }
+    } else {
+        const fbTex = createFallbackDaVinciCanvas(typeIdx);
+        planeMat = createDaVinciHoloMaterial(fbTex);
+        const planeMesh = new THREE.Mesh(planeGeo, planeMat);
+        cardGroup.add(planeMesh);
     }
 
     return cardGroup;
 }
 
+/* 5 ИЗОБРЕТЕНИЙ РАЗВЁРНУТЫ ПО ВЕРТИКАЛЬНО-ГОРИЗОНТАЛЬНОЙ ДУГЕ ПЕРЕД КАМЕРОЙ (БЕЗ ПУСТЫХ ЭКРАНОВ) */
 const floatingInventions = [
-    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[0], 0), basePos: new THREE.Vector3(-110, 34, 45), rotSpeed: new THREE.Vector3(0.0016, 0.0014, -0.0008), name: "Чертёж I" },
-    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[1], 1), basePos: new THREE.Vector3(115, -28, -40), rotSpeed: new THREE.Vector3(0.0012, 0.0018, 0.0010), name: "Чертёж II" },
-    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[2], 2), basePos: new THREE.Vector3(90, 36, 75), rotSpeed: new THREE.Vector3(-0.0014, 0.0016, 0.0009), name: "Чертёж III" },
-    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[3], 3), basePos: new THREE.Vector3(-36, -42, -35), rotSpeed: new THREE.Vector3(0.0008, 0.0012, 0.0006), name: "Чертёж IV" },
-    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[4], 4), basePos: new THREE.Vector3(-85, -25, 80), rotSpeed: new THREE.Vector3(-0.0012, 0.0015, -0.0007), name: "Чертёж V" }
+    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[0], 0), basePos: new THREE.Vector3(-125,  35,  25), rotSpeed: new THREE.Vector3(0.0016, 0.0014, -0.0008) },
+    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[1], 1), basePos: new THREE.Vector3( -60, -32,  45), rotSpeed: new THREE.Vector3(0.0012, 0.0018,  0.0010) },
+    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[2], 2), basePos: new THREE.Vector3(   0,  38,  65), rotSpeed: new THREE.Vector3(-0.0014, 0.0016, 0.0009) },
+    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[3], 3), basePos: new THREE.Vector3(  60, -32,  45), rotSpeed: new THREE.Vector3(0.0008, 0.0012,  0.0006) },
+    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[4], 4), basePos: new THREE.Vector3( 125,  35,  25), rotSpeed: new THREE.Vector3(-0.0012, 0.0015, -0.0007) }
 ];
 
 const hoverTargets = [];
@@ -1015,7 +1090,7 @@ floatingInventions.forEach((item) => {
     item.group.position.copy(item.basePos);
     preGroup.add(item.group);
 
-    const hitGeo = new THREE.SphereGeometry(48, 16, 16);
+    const hitGeo = new THREE.SphereGeometry(46, 16, 16);
     const hitMat = new THREE.MeshBasicMaterial({ visible: false });
     const hitMesh = new THREE.Mesh(hitGeo, hitMat);
     hitMesh.position.copy(item.basePos);
@@ -1055,7 +1130,7 @@ function focusSlide(idx) {
         const isCurrent = (i === idx);
         item.isHovered = isCurrent;
         item.targetScale = isCurrent ? 1.35 : 1.0;
-        item.targetZ = isCurrent ? 120 : item.basePos.z;
+        item.targetZ = isCurrent ? (item.basePos.z + 55) : item.basePos.z;
 
         item.group.traverse(child => {
             if (child.material && child.material.uniforms && child.material.uniforms.uHover) {
@@ -1065,20 +1140,22 @@ function focusSlide(idx) {
     });
 
     const target = hoverTargets[idx];
-    const objPos = target.group.position;
+    const objPos = target.basePos;
     const isMobile = window.innerWidth < 768;
-    const zOffset = isMobile ? 125 : 105;
-    targetCamPos.set(objPos.x * 0.72, objPos.y * 0.72, objPos.z + zOffset);
+    const zOffset = isMobile ? 120 : 95;
+    
+    // Плавное наведение камеры с идеальным фронтальным ракурсом на выбранный чертеж
+    targetCamPos.set(objPos.x * 0.75, objPos.y * 0.75, objPos.z + zOffset);
     targetLookTarget.set(objPos.x, objPos.y, objPos.z);
 
-    const preset = BLUEPRINT_PRESETS[idx];
+    const preset = DA_VINCI_BLUEPRINTS[idx];
     const status = document.getElementById('loaderStatusText');
     const sub = document.getElementById('blueprintSubtitle');
     if (status && preset) {
         status.textContent = `[${idx + 1}/5] ${preset.name}`;
     }
     if (sub && preset) {
-        sub.textContent = preset.subtitle;
+        sub.textContent = `${preset.invention} — ${preset.subtitle}`;
         sub.style.opacity = '1';
     }
 }
@@ -1100,8 +1177,8 @@ window.goToSlide = function(idx) {
 };
 
 window.applySelectedPresetAndEnter = function(e) {
-    if (currentSlideIndex >= 0 && BLUEPRINT_PRESETS[currentSlideIndex]) {
-        BLUEPRINT_PRESETS[currentSlideIndex].apply();
+    if (currentSlideIndex >= 0 && DA_VINCI_BLUEPRINTS[currentSlideIndex]) {
+        DA_VINCI_BLUEPRINTS[currentSlideIndex].apply();
         runCalculation();
     }
     triggerCameraObscuraTransition(e);
@@ -1150,9 +1227,12 @@ function checkRaycastHover() {
     }
 }
 
+/* =========================================================================
+   МЕДЛЕННЫЙ ТРАНЗИШН: ВЫРАВНИВАНИЕ В ПЛОСКОСТЬ И СУЖЕНИЕ ДИАФРАГМЫ ОБСКУРЫ
+   ========================================================================= */
 let isObscuraTransition = false;
 let obscuraStartTime = 0;
-const OBSCURA_DURATION = 1.45;
+const OBSCURA_DURATION = 3.4; // Увеличенное время для грациозного кинематографичного перехода
 
 function triggerCameraObscuraTransition(event) {
     if (isObscuraTransition) return;
@@ -1167,6 +1247,7 @@ function triggerCameraObscuraTransition(event) {
     targetCamPos.set(0, 0, baseCamZ);
     targetLookTarget.set(0, 0, 0);
 
+    // Запоминаем текущие углы колец для плавного выравнивания в плоскость
     astrolabeRings.forEach(ring => {
         ring.startRotX = ring.group.rotation.x;
         ring.startRotY = ring.group.rotation.y;
@@ -1188,7 +1269,7 @@ function triggerShutterBlink() {
             flash.style.opacity = '0.9';
             dismissPreloader();
             setTimeout(() => {
-                flash.style.transition = 'opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
+                flash.style.transition = 'opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1)';
                 flash.style.opacity = '0';
             }, 60);
         }, 35);
@@ -1207,535 +1288,4 @@ function animatePreloader() {
         const obsElapsed = (now - obscuraStartTime) * 0.001;
         const progress = Math.min(obsElapsed / OBSCURA_DURATION, 1.0);
 
-        const alignP = Math.min(progress / 0.45, 1.0);
-        const easeAlign = alignP * alignP * (3.0 - 2.0 * alignP);
-
-        const shrinkP = Math.max(0, (progress - 0.2) / 0.8);
-        const easeShrink = Math.pow(shrinkP, 3.2);
-
-        hoverTargets.forEach(item => {
-            item.group.scale.multiplyScalar(0.92);
-            item.group.position.z -= 8.0;
-        });
-
-        const positions = particleGeo.attributes.position.array;
-        for (let i = 0; i < particleCount * 3; i++) {
-            positions[i] *= 0.94;
-        }
-        particleGeo.attributes.position.needsUpdate = true;
-
-        megaRingWireMat.opacity = THREE.MathUtils.lerp(megaRingWireMat.opacity, 0.85, 0.08);
-        megaRingWireMat.color.setHex(0xd4af37);
-
-        astrolabeRings.forEach((ring, idx) => {
-            ring.group.rotation.x = THREE.MathUtils.lerp(ring.startRotX, 0, easeAlign);
-            ring.group.rotation.y = THREE.MathUtils.lerp(ring.startRotY, 0, easeAlign);
-            
-            const spinVelocity = (idx % 2 === 0 ? 1 : -1) * (0.05 + progress * 0.42);
-            ring.group.rotation.z += spinVelocity;
-
-            const scaleFactor = Math.max(1.0 - easeShrink * 0.98, 0.01);
-            ring.group.scale.set(scaleFactor, scaleFactor, scaleFactor * (1.0 - easeShrink * 0.7));
-        });
-
-        preCamera.position.lerp(targetCamPos, 0.12);
-        currentLookTarget.lerp(targetLookTarget, 0.12);
-        preCamera.lookAt(currentLookTarget);
-
-        preRenderer.clear();
-        preRenderer.render(preScene, preCamera);
-
-        if (progress >= 1.0) {
-            triggerShutterBlink();
-        }
-        return;
-    }
-
-    dustParticles.rotation.y = t * 0.02;
-    dustParticles.rotation.x = Math.sin(t * 0.015) * 0.1;
-
-    const isFocused = currentSlideIndex !== -1;
-    const ringTargetOpacity = isFocused ? 0.12 : 0.38;
-    megaRingWireMat.opacity = THREE.MathUtils.lerp(megaRingWireMat.opacity, ringTargetOpacity, 0.05);
-
-    astrolabeRings.forEach(item => {
-        item.group.rotation.x += item.sx + Math.sin(t * 0.25 + item.px) * 0.0004;
-        item.group.rotation.y += item.sy + Math.cos(t * 0.20 + item.py) * 0.0005;
-        item.group.rotation.z += item.sz + Math.sin(t * 0.15) * 0.0003;
-    });
-
-    hoverTargets.forEach((item, idx) => {
-        if (!item.isHovered) {
-            item.group.position.y = item.basePos.y + Math.sin(t * 1.1 + idx * 1.5) * 7.5;
-            item.group.position.x = item.basePos.x + Math.cos(t * 0.75 + idx * 1.2) * 5.0;
-            item.group.rotation.x += item.rotSpeed.x;
-            item.group.rotation.y += item.rotSpeed.y;
-            item.group.rotation.z += item.rotSpeed.z;
-        } else {
-            item.group.rotation.y += 0.006;
-            item.group.rotation.x = THREE.MathUtils.lerp(item.group.rotation.x, 0.1, 0.05);
-        }
-
-        item.group.position.z = THREE.MathUtils.lerp(item.group.position.z, item.targetZ, 0.08);
-        item.hitMesh.position.copy(item.group.position);
-
-        const sc = THREE.MathUtils.lerp(item.group.scale.x, item.targetScale, 0.1);
-        item.group.scale.set(sc, sc, sc);
-
-        item.group.traverse(child => {
-            if (child.material && child.material.uniforms && child.material.uniforms.uTime) {
-                child.material.uniforms.uTime.value = t;
-            }
-        });
-    });
-
-    preCamera.position.lerp(targetCamPos, 0.05);
-    currentLookTarget.lerp(targetLookTarget, 0.05);
-    preCamera.lookAt(currentLookTarget);
-
-    preRenderer.clear();
-    preRenderer.render(preScene, preCamera);
-}
-
-animatePreloader();
-
-setTimeout(() => {
-    if (!preloaderDismissed && currentSlideIndex === -1) {
-        focusSlide(0);
-    }
-}, 1200);
-
-/* ДЕКОДЕР ГЛИФОВ */
-const CYRILLIC_GLYPHS = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ0123456789§$%*#@!/[]:;';
-const NUMERIC_GLYPHS = '0123456789 ';
-function scrambleElementText(el, finalText, duration = 460, useAlphabet = true) {
-    if (!el) return;
-    const glyphs = useAlphabet ? CYRILLIC_GLYPHS : NUMERIC_GLYPHS;
-    const start = performance.now(), len = finalText.length;
-    if (el._scrambleTimer) cancelAnimationFrame(el._scrambleTimer);
-    function update(now) {
-        const elapsed = now - start, progress = Math.min(elapsed / duration, 1);
-        const revealIdx = Math.floor(progress * len);
-        let out = '';
-        for (let i = 0; i < len; i++) {
-            const char = finalText[i];
-            if (i < revealIdx || ' ₽%.,()/[]:'.includes(char)) out += char;
-            else out += glyphs[Math.floor(Math.random() * glyphs.length)];
-        }
-        el.textContent = out;
-        if (progress < 1) el._scrambleTimer = requestAnimationFrame(update);
-        else el._scrambleTimer = null;
-    }
-    el._scrambleTimer = requestAnimationFrame(update);
-}
-function scrambleNumber(el, finalStr, duration = 400) { scrambleElementText(el, finalStr, duration, false); }
-function scrambleTitle(card) {
-    playClickSound(1600, 0.015);
-    const titleEl = card.querySelector('.metric-title');
-    if (!titleEl) return;
-    const orig = titleEl.getAttribute('data-original') || titleEl.textContent;
-    titleEl.setAttribute('data-original', orig);
-    scrambleElementText(titleEl, orig, 380, true);
-}
-
-function selectTab(index) {
-    playClickSound(1400, 0.025);
-    triggerDashRingTurn();
-    const buttons = document.querySelectorAll('#navTabsContainer .tab-btn');
-    buttons.forEach((btn, idx) => {
-        if (idx === index) { btn.className = 'tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest bg-[#d4af37] text-black font-bold transition shadow-md'; scrambleElementText(btn, TAB_TITLES[idx], 400, true); }
-        else { btn.className = 'tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest opacity-70 hover:opacity-100 transition'; btn.textContent = TAB_TITLES[idx]; }
-    });
-    for (let i = 0; i < 4; i++) {
-        const view = document.getElementById(`viewTab${i}`);
-        if (i === index) { view.classList.remove('hidden'); view.classList.remove('tab-view-enter'); void view.offsetWidth; view.classList.add('tab-view-enter'); }
-        else view.classList.add('hidden');
-    }
-}
-
-const TAB_TITLES = ['[01] ОБСЛУЖИВАНИЕ КАПИТАЛА', '[02] СКЛАДСКОЙ ЦИКЛ', '[03] ДЕНЕЖНЫЙ ПОТОК', '[04] ЭКОНОМИКА И ЗАКАЗЫ'];
-let growthMode = 'abs';
-function setGrowthMode(mode) {
-    playClickSound(950, 0.02); growthMode = mode;
-    const btnAbs = document.getElementById('btnModeAbs'), btnPct = document.getElementById('btnModePct');
-    const title = document.getElementById('lblGrowthModeTitle'), slider = document.getElementById('paramGrowthSlider');
-    if (mode === 'abs') { btnAbs.className = 'py-1 font-mono text-[9px] uppercase tracking-wider bg-[#d4af37] text-black font-bold transition'; btnPct.className = 'py-1 font-mono text-[9px] uppercase tracking-wider opacity-60 hover:opacity-100 transition'; title.textContent = 'ПРИРОСТ В МЕСЯЦ'; slider.max = 100; slider.value = 5; }
-    else { btnPct.className = 'py-1 font-mono text-[9px] uppercase tracking-wider bg-[#d4af37] text-black font-bold transition'; btnAbs.className = 'py-1 font-mono text-[9px] uppercase tracking-wider opacity-60 hover:opacity-100 transition'; title.textContent = 'ПРИРОСТ В %'; slider.max = 50; slider.value = 10; }
-    runCalculation();
-}
-
-function parseCleanNum(val) { return typeof val === 'number' ? val : parseFloat(String(val).replace(/[^\d.-]/g, '')) || 0; }
-function formatSpaced(num) { return Math.round(num).toLocaleString('ru-RU').replace(/,/g, ' '); }
-function formatInput(input) {
-    const el = input, cursorPos = el.selectionStart ?? el.value.length;
-    const digitsBefore = el.value.slice(0, cursorPos).replace(/\D/g, '').length;
-    el.value = formatSpaced(parseCleanNum(el.value));
-    let newPos = 0, seen = 0;
-    while (newPos < el.value.length && seen < digitsBefore) {
-        if (/\d/.test(el.value[newPos])) seen++;
-        newPos++;
-    }
-    try { el.setSelectionRange(newPos, newPos); } catch (_) {}
-}
-
-let chartDebtInstance = null, chartStockInstance = null, chartCFInstance = null, chartOrdersInstance = null, chartPieInstance = null, latestCalculatedData = null;
-
-function runCalculation() {
-    const startMonth = parseInt(document.getElementById('paramStartMonth').value);
-    const startYear = parseInt(document.getElementById('paramStartYear').value);
-    const period = parseInt(document.getElementById('paramPeriod').value);
-    const vatRate = parseFloat(document.getElementById('paramVatRate').value);
-    const vatMultiplier = 1 + (vatRate / 100);
-    const marginPct = parseFloat(document.getElementById('paramMargin').value);
-    document.getElementById('lblMarginVal').textContent = `${marginPct}%`;
-    document.getElementById('kpiRevSub').textContent = `Маржа: ${marginPct}%`;
-    const initialPurchase = parseCleanNum(document.getElementById('paramInitialPurchase').value);
-    const batchCycle = parseInt(document.getElementById('paramBatchCycle').value) || 5;
-    const cbRate = parseFloat(document.getElementById('paramCbRate').value) || 14.0;
-    const commMargin = parseFloat(document.getElementById('paramCommMargin').value) || 2.0;
-    const totalRateAnnual = cbRate + commMargin;
-    const monthlyRate = (totalRateAnnual / 100) / 12;
-    document.getElementById('telemetryRate').textContent = `[КАПИТАЛ: ${totalRateAnnual.toFixed(1)}% ГОДОВЫХ]`;
-    document.getElementById('kpiRateSub').textContent = `Ставка ${totalRateAnnual.toFixed(1)}%`;
-    const supplierPrepayPct = parseFloat(document.getElementById('paramSupplierPrepay').value);
-    document.getElementById('lblSupplierPrepVal').textContent = `${supplierPrepayPct}%`;
-    const supplierDelay = parseInt(document.getElementById('paramSupplierDelay').value);
-    document.getElementById('lblSupplierDelayVal').textContent = `${supplierDelay} мес.`;
-    const aov = parseCleanNum(document.getElementById('paramAov').value);
-    const startOrders = parseInt(document.getElementById('paramStartOrders').value) || 40;
-    const growthVal = parseFloat(document.getElementById('paramGrowthSlider').value);
-    document.getElementById('lblGrowthVal').textContent = growthMode === 'abs' ? `+${growthVal} шт.` : `+${growthVal}%`;
-    const maxOrdersCap = parseInt(document.getElementById('paramMaxOrdersCap').value) || 300;
-    const fot = parseCleanNum(document.getElementById('paramFot').value);
-    const wh = parseCleanNum(document.getElementById('paramWh').value);
-    const office = parseCleanNum(document.getElementById('paramOffice').value);
-    const factShare = parseFloat(document.getElementById('paramFactoringShare').value);
-    document.getElementById('lblFactShareVal').textContent = `${factShare}%`;
-    const factAdvance = 0.8;
-
-    const shortMonths = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
-    const xLabels = [], orders = [], rev = [];
-    for (let i = 0; i < period; i++) {
-        const mIdx = (startMonth + i) % 12, yOff = Math.floor((startMonth + i) / 12);
-        xLabels.push(`${shortMonths[mIdx]} ${startYear + yOff}`);
-        let curOrders = i === 0 ? startOrders : (growthMode === 'abs' ? orders[i - 1] + growthVal : orders[i - 1] * (1 + growthVal / 100));
-        curOrders = Math.min(curOrders, maxOrdersCap);
-        orders.push(curOrders);
-        rev.push(curOrders * aov);
-    }
-    const cogsPct = 1 - (marginPct / 100);
-    const cogsVat = rev.map(r => r * cogsPct * vatMultiplier);
-    const cogsPayments = new Array(period).fill(0);
-    const inventoryDeliveries = new Array(period).fill(0);
-    cogsPayments[0] += initialPurchase * (supplierPrepayPct / 100);
-    if (supplierDelay < period) cogsPayments[supplierDelay] += initialPurchase * ((100 - supplierPrepayPct) / 100);
-    inventoryDeliveries[0] = initialPurchase;
-    for (let b = batchCycle; b < period; b += batchCycle) {
-        const bEnd = Math.min(b + batchCycle, period);
-        let batchTotal = 0;
-        for (let k = b; k < bEnd; k++) batchTotal += cogsVat[k];
-        inventoryDeliveries[b] = batchTotal;
-        cogsPayments[b] += batchTotal * (supplierPrepayPct / 100);
-        const secondTrancheMonth = b + supplierDelay;
-        if (secondTrancheMonth < period) cogsPayments[secondTrancheMonth] += batchTotal * ((100 - supplierPrepayPct) / 100);
-    }
-    const inventoryBalance = [];
-    let curStock = 0;
-    for (let i = 0; i < period; i++) { curStock += inventoryDeliveries[i] - cogsVat[i]; inventoryBalance.push(Math.max(curStock, 0)); }
-    const inflows = new Array(period).fill(0);
-    for (let i = 0; i < period; i++) {
-        const invVat = rev[i] * vatMultiplier;
-        inflows[i] += invVat * (factShare / 100) * factAdvance;
-        const targetM = i + 2;
-        if (targetM < period) {
-            inflows[targetM] += invVat * ((100 - factShare) / 100);
-            inflows[targetM] += invVat * (factShare / 100) * (1 - factAdvance);
-        }
-    }
-    const opex = [], taxes = rev.map(r => r * 0.05), baseOutflows = [];
-    for (let i = 0; i < period; i++) {
-        const base = 150000 + wh + office + fot;
-        opex.push(i >= 6 ? base * 1.2 : base);
-        baseOutflows.push(cogsPayments[i] + opex[i] + taxes[i]);
-    }
-    const monthlyInvestments = new Array(period).fill(0), interestPayments = new Array(period).fill(0), debtRepayments = new Array(period).fill(0), debtBalance = new Array(period).fill(0), cashBalance = new Array(period).fill(0);
-    let currentDebt = 0, currentCash = 0;
-    for (let i = 0; i < period; i++) {
-        const interestDue = currentDebt * monthlyRate;
-        interestPayments[i] = interestDue;
-        const netBeforeFin = inflows[i] - (baseOutflows[i] + interestDue);
-        const potCash = currentCash + netBeforeFin;
-        if (potCash < 0) {
-            const needed = Math.abs(potCash);
-            monthlyInvestments[i] = needed; currentDebt += needed; currentCash = 0; debtRepayments[i] = 0;
-        } else {
-            monthlyInvestments[i] = 0;
-            const repay = Math.min(potCash, currentDebt);
-            debtRepayments[i] = repay; currentDebt -= repay; currentCash = potCash - repay;
-        }
-        debtBalance[i] = currentDebt; cashBalance[i] = currentCash;
-    }
-    const sumRev = rev.reduce((a, b) => a + b, 0), sumInvestments = monthlyInvestments.reduce((a, b) => a + b, 0), sumInterest = interestPayments.reduce((a, b) => a + b, 0), maxDebt = Math.max(...debtBalance), sumOpex = opex.reduce((a, b) => a + b, 0), sumTaxes = taxes.reduce((a, b) => a + b, 0);
-    const netProfit = sumRev * (marginPct / 100) - sumOpex - sumTaxes - sumInterest;
-    const roi = sumRev > 0 ? (netProfit / sumRev) * 100 : 0;
-    latestCalculatedData = { xLabels, monthlyInvestments, interestPayments, debtRepayments, debtBalance, cashBalance, sumRev, netProfit, roi };
-
-    scrambleNumber(document.getElementById('kpiRev'), `${formatSpaced(sumRev)} ₽`);
-    scrambleNumber(document.getElementById('kpiInjections'), `${formatSpaced(sumInvestments)} ₽`);
-    scrambleNumber(document.getElementById('kpiInterest'), `${formatSpaced(sumInterest)} ₽`);
-    scrambleNumber(document.getElementById('kpiMaxDebt'), `${formatSpaced(maxDebt)} ₽`);
-    scrambleNumber(document.getElementById('kpiProfit'), `${formatSpaced(netProfit)} ₽`);
-    document.getElementById('kpiRoiSub').textContent = `Рентабельность: ${roi.toFixed(1)}%`;
-
-    const tbody = document.getElementById('tableDebtBody');
-    let rows = '';
-    for (let i = 0; i < period; i++) {
-        rows += `<tr class="hover:bg-[var(--bg-cell-hover)] transition"><td class="p-3 font-bold">${xLabels[i]}</td><td class="p-3 text-[#e63946]">${formatSpaced(monthlyInvestments[i])} ₽</td><td class="p-3 text-[#d4af37]">${formatSpaced(interestPayments[i])} ₽</td><td class="p-3 text-[#2a9d8f]">${formatSpaced(debtRepayments[i])} ₽</td><td class="p-3 font-bold">${formatSpaced(debtBalance[i])} ₽</td><td class="p-3">${formatSpaced(cashBalance[i])} ₽</td></tr>`;
-    }
-    tbody.innerHTML = rows;
-
-    const chartText = isDark ? '#8e8a80' : '#6b665c';
-    const chartGrid = isDark ? 'rgba(212,175,55,.08)' : 'rgba(184,134,11,.12)';
-    const fontMono = { family: 'JetBrains Mono', size: 10 };
-
-    if (chartDebtInstance) chartDebtInstance.destroy();
-    chartDebtInstance = new Chart(document.getElementById('chartDebt').getContext('2d'), {
-        type: 'bar',
-        data: { labels: xLabels, datasets: [
-            { label: 'Проценты за месяц', data: interestPayments, backgroundColor: '#d4af37', order: 2 },
-            { label: 'Остаток тела долга', data: debtBalance, type: 'line', borderColor: '#e63946', backgroundColor: '#e63946', borderWidth: 2.5, yAxisID: 'y1', tension: 0.3, order: 1 }
-        ]},
-        options: { responsive: true, maintainAspectRatio: false, scales: {
-            x: { grid: { display: false }, ticks: { color: chartText, font: fontMono } },
-            y: { grid: { color: chartGrid }, ticks: { color: chartText, font: fontMono } },
-            y1: { position: 'right', grid: { display: false }, ticks: { color: '#e63946', font: fontMono } }
-        }, plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } } }
-    });
-
-    if (chartStockInstance) chartStockInstance.destroy();
-    chartStockInstance = new Chart(document.getElementById('chartStock').getContext('2d'), {
-        type: 'bar',
-        data: { labels: xLabels, datasets: [
-            { label: 'Оплата партии поставщику', data: cogsPayments, backgroundColor: isDark ? '#52525b' : '#cbd5e1', order: 2 },
-            { label: 'Остаток склада', data: inventoryBalance, type: 'line', borderColor: '#d4af37', borderWidth: 2.5, yAxisID: 'y1', tension: 0.3, order: 1 }
-        ]},
-        options: { responsive: true, maintainAspectRatio: false, scales: {
-            x: { grid: { display: false }, ticks: { color: chartText, font: fontMono } },
-            y: { grid: { color: chartGrid }, ticks: { color: chartText, font: fontMono } },
-            y1: { position: 'right', grid: { display: false }, ticks: { color: '#d4af37', font: fontMono } }
-        }, plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } } }
-    });
-
-    const totalOutflows = baseOutflows.map((b, idx) => b + interestPayments[idx]);
-    if (chartCFInstance) chartCFInstance.destroy();
-    chartCFInstance = new Chart(document.getElementById('chartCF').getContext('2d'), {
-        type: 'bar',
-        data: { labels: xLabels, datasets: [
-            { label: 'Притоки от продаж', data: inflows, backgroundColor: '#2a9d8f' },
-            { label: 'Выплаты (закупки + OPEX + %)', data: totalOutflows.map(v => -v), backgroundColor: '#e63946' }
-        ]},
-        options: { responsive: true, maintainAspectRatio: false, scales: {
-            x: { grid: { display: false }, ticks: { color: chartText, font: fontMono } },
-            y: { grid: { color: chartGrid }, ticks: { color: chartText, font: fontMono } }
-        }, plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } } }
-    });
-
-    if (chartOrdersInstance) chartOrdersInstance.destroy();
-    chartOrdersInstance = new Chart(document.getElementById('chartOrders').getContext('2d'), {
-        type: 'bar',
-        data: { labels: xLabels, datasets: [
-            { label: 'Заказы, шт.', data: orders, backgroundColor: '#d4af37' },
-            { label: 'Выручка, ₽', data: rev, type: 'line', borderColor: '#2a9d8f', yAxisID: 'y1', borderWidth: 2.5 }
-        ]},
-        options: { responsive: true, maintainAspectRatio: false, scales: {
-            x: { grid: { display: false }, ticks: { color: chartText, font: fontMono } },
-            y: { grid: { color: chartGrid }, ticks: { color: chartText, font: fontMono } },
-            y1: { position: 'right', grid: { display: false }, ticks: { color: '#2a9d8f', font: fontMono } }
-        }, plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } } }
-    });
-
-    const sumPurchases = cogsPayments.reduce((a, b) => a + b, 0);
-    if (chartPieInstance) chartPieInstance.destroy();
-    chartPieInstance = new Chart(document.getElementById('chartPie').getContext('2d'), {
-        type: 'doughnut',
-        data: { labels: ['Склад', 'Офис', 'ФОТ', 'Налоги 5%', 'Закупки', 'Проценты по долгу'], datasets: [{
-            data: [wh * period, office * period, fot * period, sumTaxes, sumPurchases, sumInterest],
-            backgroundColor: ['#52525b', '#71717a', '#d4af37', '#e63946', '#2a9d8f', '#457b9d']
-        }]},
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: chartText, font: fontMono } } } }
-    });
-}
-
-function exportDataToCsv() {
-    playClickSound(1600, 0.05);
-    if (!latestCalculatedData) return;
-    const { xLabels, monthlyInvestments, interestPayments, debtRepayments, debtBalance, cashBalance } = latestCalculatedData;
-    let csv = '\uFEFF' + "Период;Дотация (дефицит);Проценты по долгу;Погашение долга;Остаток тела долга;Свободный остаток счета\n";
-    for (let i = 0; i < xLabels.length; i++) csv += `${xLabels[i]};${Math.round(monthlyInvestments[i])};${Math.round(interestPayments[i])};${Math.round(debtRepayments[i])};${Math.round(debtBalance[i])};${Math.round(cashBalance[i])}\n`;
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url; link.download = 'Finansovaya_Model_Kapital.csv';
-    document.body.appendChild(link); link.click(); link.remove();
-    URL.revokeObjectURL(url);
-}
-
-function generateExecutiveMemo() {
-    playClickSound(1800, 0.04);
-    if (!latestCalculatedData) return;
-    const { sumRev, netProfit, roi } = latestCalculatedData;
-    const memoHtml = `
-    <!DOCTYPE html>
-    <html lang="ru">
-    <head>
-        <meta charset="UTF-8">
-        <title>Меморандум Капитала // Executive Summary</title>
-        <style>
-            body { background: #070709; color: #f4f1ea; font-family: 'Georgia', serif; padding: 40px; margin: 0; }
-            .memo-card { max-width: 800px; margin: 0 auto; border: 1px solid rgba(212,175,55,0.4); padding: 40px; background: rgba(13,13,18,0.95); box-shadow: 0 0 50px rgba(0,0,0,0.8); }
-            h1 { font-family: 'Cormorant Garamond', serif; color: #d4af37; font-style: italic; font-size: 32px; border-bottom: 1px solid rgba(212,175,55,0.3); padding-bottom: 15px; margin-top: 0; }
-            .meta { font-family: 'Courier New', monospace; font-size: 11px; color: #8e8a80; margin-bottom: 30px; }
-            .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 30px 0; }
-            .metric { border: 1px solid rgba(212,175,55,0.2); padding: 15px; background: rgba(255,255,255,0.02); }
-            .val { font-size: 24px; color: #d4af37; font-weight: bold; margin-top: 5px; }
-            p { font-size: 14px; line-height: 1.8; color: #ccc; }
-            @media print { body { background: white; color: black; } .memo-card { border: none; box-shadow: none; } }
-        </style>
-    </head>
-    <body>
-        <div class="memo-card">
-            <div class="meta">AUREA PROPORTIO // ФИНАНСОВЫЙ МЕМОРАНДУМ // 1 : 1.618</div>
-            <h1>Архитектура Капитала и Ликвидности</h1>
-            <p>Настоящий меморандум фиксирует расчётные показатели финансовой модели оборотных средств, партионных поставок и факторингового плеча.</p>
-            <div class="grid">
-                <div class="metric"><div>СОВОКУПНАЯ ВЫРУЧКА</div><div class="val">${formatSpaced(sumRev)} ₽</div></div>
-                <div class="metric"><div>ЧИСТАЯ ПРИБЫЛЬ</div><div class="val">${formatSpaced(netProfit)} ₽</div></div>
-                <div class="metric"><div>РЕНТАБЕЛЬНОСТЬ (ROI)</div><div class="val">${roi.toFixed(1)}%</div></div>
-            </div>
-            <p>Модель учитывает дискретные закупки, отсрочки поставщиков, налог на добавленную стоимость и стоимость заёмного капитала. Сгенерировано автоматически в защищённом контуре моделирования.</p>
-            <div style="margin-top: 40px; text-align: right;"><button onclick="window.print()" style="padding: 10px 24px; background: #d4af37; color: black; font-weight: bold; border: none; cursor: pointer;">Печать / Сохранить в PDF</button></div>
-        </div>
-    </body>
-    </html>`;
-    const win = window.open('', '_blank');
-    win.document.write(memoHtml);
-    win.document.close();
-}
-
-let isDark = true;
-function toggleTheme() {
-    isDark = !isDark;
-    document.documentElement.classList.toggle('dark', isDark);
-    const thumb = document.getElementById('sliderThumb'), lblNight = document.getElementById('lblNight'), lblDay = document.getElementById('lblDay');
-    const themeSlider = document.getElementById('themeSlider');
-    if (isDark) {
-        thumb.style.transform = 'translateX(0px)';
-        lblNight.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold text-black';
-        lblDay.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold opacity-70';
-        dashRingMat.color.setHex(0x00aaff); megaRingWireMat.color.setHex(0x00c3ff); secondaryWireMat.color.setHex(0x0077aa);
-        themeSlider.setAttribute('aria-checked', 'true');
-    } else {
-        thumb.style.transform = 'translateX(58px)';
-        lblDay.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold text-white';
-        lblNight.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold opacity-70';
-        dashRingMat.color.setHex(0x0055aa); megaRingWireMat.color.setHex(0x0066cc); secondaryWireMat.color.setHex(0x004488);
-        themeSlider.setAttribute('aria-checked', 'false');
-    }
-    playClickSound(900, 0.03);
-    dashRenderer.render(dashScene, dashCamera);
-    runCalculation();
-}
-
-const dashCanvas = document.getElementById('webgl-bg-canvas');
-const dashScene = new THREE.Scene();
-const dashCamera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 2000);
-dashCamera.position.z = 160;
-const dashRenderer = new THREE.WebGLRenderer({ canvas: dashCanvas, alpha: true, antialias: false, powerPreference: "low-power" });
-dashRenderer.setSize(window.innerWidth, window.innerHeight);
-dashRenderer.setPixelRatio(1);
-const dashArmillary = new THREE.Group();
-dashScene.add(dashArmillary);
-const dashRingMat = new THREE.MeshBasicMaterial({ color: 0x00aaff, wireframe: true, transparent: true, opacity: 0.15 });
-const dashRings = [];
-[65, 88, 110].forEach((radius, i) => {
-    const geo = new THREE.TorusGeometry(radius, 8 + i * 2, 14, 100);
-    const ring = new THREE.Mesh(geo, dashRingMat);
-    if (i === 0) ring.rotation.x = Math.PI / 2;
-    if (i === 1) ring.rotation.y = Math.PI / 3;
-    if (i === 2) ring.rotation.z = Math.PI / 4;
-    dashArmillary.add(ring); dashRings.push(ring);
-});
-dashRenderer.render(dashScene, dashCamera);
-let dashTurnProgress = 1.0, dashStartRot = [0, 0, 0], dashTargetRot = [0, 0, 0], dashAnimFrameId = null;
-function triggerDashRingTurn() {
-    dashStartRot = [dashRings[0].rotation.y, dashRings[1].rotation.x, dashRings[2].rotation.z];
-    dashTargetRot = [
-        dashStartRot[0] + (Math.PI / 2.618),
-        dashStartRot[1] - (Math.PI / 3.141),
-        dashStartRot[2] + (Math.PI / 4.0)
-    ];
-    dashTurnProgress = 0.0;
-    if (dashAnimFrameId) cancelAnimationFrame(dashAnimFrameId);
-    animateDashTurn();
-}
-function animateDashTurn() {
-    dashTurnProgress += 0.025;
-    const p = Math.min(dashTurnProgress, 1.0);
-    const ease = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
-    dashRings[0].rotation.y = dashStartRot[0] + (dashTargetRot[0] - dashStartRot[0]) * ease;
-    dashRings[1].rotation.x = dashStartRot[1] + (dashTargetRot[1] - dashStartRot[1]) * ease;
-    dashRings[2].rotation.z = dashStartRot[2] + (dashTargetRot[2] - dashStartRot[2]) * ease;
-    dashRenderer.render(dashScene, dashCamera);
-    if (p < 1.0) dashAnimFrameId = requestAnimationFrame(animateDashTurn);
-    else dashAnimFrameId = null;
-}
-
-document.addEventListener('mousemove', (e) => {
-    const coord = document.getElementById('cursorCoordDisplay');
-    if (coord) coord.textContent = `X: ${e.clientX.toString().padStart(4, '0')} / Y: ${e.clientY.toString().padStart(4, '0')}`;
-});
-
-document.querySelectorAll('.tilt-card').forEach(card => {
-    card.addEventListener('mousemove', e => {
-        const rect = card.getBoundingClientRect();
-        const x = e.clientX - rect.left, y = e.clientY - rect.top;
-        card.style.setProperty('--mouse-x', `${x}px`);
-        card.style.setProperty('--mouse-y', `${y}px`);
-        const cx = rect.width / 2, cy = rect.height / 2;
-        const rx = ((y - cy) / cy) * -6, ry = ((x - cx) / cx) * 6;
-        card.style.transform = `perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-3px)`;
-    });
-    card.addEventListener('mouseleave', () => {
-        card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)';
-    });
-});
-
-window.addEventListener('resize', () => {
-    preCamera.aspect = window.innerWidth / window.innerHeight;
-    preCamera.updateProjectionMatrix();
-    preRenderer.setSize(window.innerWidth, window.innerHeight);
-    dashCamera.aspect = window.innerWidth / window.innerHeight;
-    dashCamera.updateProjectionMatrix();
-    dashRenderer.setSize(window.innerWidth, window.innerHeight);
-    dashRenderer.render(dashScene, dashCamera);
-});
-
-setInterval(() => {
-    const clock = document.getElementById('telemetryClock');
-    if (clock) clock.textContent = `[${new Date().toTimeString().split(' ')[0]}]`;
-}, 1000);
-
-function resetDefaults() { playClickSound(600, 0.05); document.getElementById('financialInputsForm').reset(); runCalculation(); }
-
-document.getElementById('themeSlider').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleTheme(); }
-});
-
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => runCalculation());
-else runCalculation();
-</script>
-</body>
-</html>"""
-
-HTML = HTML_TEMPLATE.replace("__JSON_IMAGES_PAYLOAD__", json_images_payload)
-components.html(HTML, height=940, scrolling=False)
+        
