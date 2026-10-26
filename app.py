@@ -108,9 +108,9 @@ body { background-color: var(--bg-space); color: var(--text-main); font-family: 
 #preloader-webgl { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 10; }
 
 #preloaderTitle {
-    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    position: absolute; top: 12%; left: 50%; transform: translateX(-50%);
     font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic;
-    font-size: clamp(30px, 4.2vw, 56px); font-weight: 700; letter-spacing: 0.22em;
+    font-size: clamp(28px, 4vw, 52px); font-weight: 700; letter-spacing: 0.22em;
     color: var(--accent-gold); opacity: 0; z-index: 30; pointer-events: none;
     text-shadow: 0 0 35px rgba(212, 175, 55, 0.75);
     transition: opacity 2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -151,7 +151,7 @@ body { background-color: var(--bg-space); color: var(--text-main); font-family: 
 }
 .explore-btn:hover::before { left: 100%; }
 
-/* ФОН ДАШБОРДА */
+/* ДАШБОРД */
 #webgl-bg-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; opacity: 0.45; transition: opacity 0.5s ease; }
 html:not(.dark) #webgl-bg-canvas { opacity: 0.2; }
 
@@ -201,7 +201,7 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
 <body class="selection:bg-[#d4af37] selection:text-black">
 <div class="film-grain"></div>
 
-<!-- ПРЕЛОАДЕР: 3D КАРКАСНЫЕ ИЗОБРЕТЕНИЯ ДА ВИНЧИ МЕЖДУ КОЛЬЦАМИ -->
+<!-- ПРЕЛОАДЕР: АСТРОЛЯБИЯ + ПАРЯЩИЕ ИЗОБРАЖЕНИЯ ИЗ РЕПОЗИТОРИЯ -->
 <div id="preloader-stage">
     <canvas id="preloader-webgl"></canvas>
     
@@ -210,7 +210,7 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
     <div id="preloaderHUD">
         <div class="flex items-center gap-3 text-[#d4af37] text-[10px] tracking-[0.25em] uppercase font-mono">
             <span class="pulse-dot"></span>
-            <span id="loaderStatusText">Трассировка 3D-каркасов Да Винчи...</span>
+            <span id="loaderStatusText">Загрузка чертежей Да Винчи...</span>
             <span id="loaderPercent" class="font-bold">0%</span>
         </div>
         <div class="progress-bar-bg mt-1">
@@ -324,7 +324,7 @@ select.mono-input option { background-color: #0d0d12; color: #f4f1ea; }
                     <div class="grid grid-cols-3 gap-2">
                         <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Цикл, мес.</label><input type="number" id="paramBatchCycle" value="5" min="1" max="12" class="mono-input text-center" oninput="runCalculation()"></div>
                         <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">ЦБ РФ, %</label><input type="number" id="paramCbRate" value="14.0" step="0.5" class="mono-input text-center font-bold text-[#d4af37]" oninput="runCalculation()"></div>
-                        <div><label class="block font-mono text-[8px] uppercase opacity-70 mb-1" title="Коммерческая наценка кредитора за пользование средствами">Комиссия, %</label><input type="number" id="paramCommMargin" value="2.0" step="0.5" class="mono-input text-center" oninput="runCalculation()"></div>
+                        <div><label class="block font-mono text-[8px] uppercase opacity-70 mb-1" title="Коммерческая наценка кредитора">Комиссия, %</label><input type="number" id="paramCommMargin" value="2.0" step="0.5" class="mono-input text-center" oninput="runCalculation()"></div>
                     </div>
                     <div class="p-3 border space-y-3" style="border-color: rgba(212, 175, 55, 0.25); background: rgba(212, 175, 55, 0.02);">
                         <div class="font-mono text-[8px] uppercase tracking-widest text-[#d4af37] font-bold">[УСЛОВИЯ ПОСТАВЩИКА]</div>
@@ -556,7 +556,7 @@ function updatePreloaderProgress(now) {
 requestAnimationFrame(updatePreloaderProgress);
 
 /* =========================================================================
-   THREE.JS ПРЕЛОАДЕР: 3D КАРКАСНЫЕ МОДЕЛИ ИЗОБРЕТЕНИЙ МЕЖДУ КОЛЬЦАМИ
+   THREE.JS ПРЕЛОАДЕР: АСТРОЛЯБИЯ + ПАРЯЩИЕ ИЗОБРАЖЕНИЯ ИЗ GITHUB
    ========================================================================= */
 const preCanvas = document.getElementById('preloader-webgl');
 const preRenderer = new THREE.WebGLRenderer({ canvas: preCanvas, alpha: true, antialias: true, preserveDrawingBuffer: true });
@@ -565,7 +565,7 @@ preRenderer.setSize(window.innerWidth, window.innerHeight);
 
 const preScene = new THREE.Scene();
 const preCamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 3500);
-preCamera.position.set(0, 0, 360);
+preCamera.position.set(0, 0, 290);
 
 const preGroup = new THREE.Group();
 preScene.add(preGroup);
@@ -576,9 +576,9 @@ const astrolabeWireMat = new THREE.MeshBasicMaterial({
 });
 
 const astrolabeRings = [];
-const aRing1 = new THREE.Mesh(new THREE.TorusGeometry(145, 4.2, 26, 240), astrolabeWireMat);
-const aRing2 = new THREE.Mesh(new THREE.TorusGeometry(110, 3.6, 24, 200), astrolabeWireMat);
-const aRing3 = new THREE.Mesh(new THREE.TorusGeometry(84, 3.0, 22, 180), astrolabeWireMat);
+const aRing1 = new THREE.Mesh(new THREE.TorusGeometry(140, 4.2, 26, 240), astrolabeWireMat);
+const aRing2 = new THREE.Mesh(new THREE.TorusGeometry(108, 3.6, 24, 200), astrolabeWireMat);
+const aRing3 = new THREE.Mesh(new THREE.TorusGeometry(82, 3.0, 22, 180), astrolabeWireMat);
 
 aRing2.rotation.x = Math.PI / 3;
 aRing3.rotation.y = Math.PI / 4;
@@ -593,159 +593,173 @@ astrolabeRings.push(
     { mesh: aRing3, sx: 0.0031, sy: -0.0026, sz: 0.0018, px: 1.5, py: 3.2 }
 );
 
-// Базовый золотой материал для тонких 3D каркасов Да Винчи
-const goldWireMat = new THREE.LineBasicMaterial({
-    color: 0xd4af37,
-    transparent: true,
-    opacity: 0.85
-});
-
-// 1. 3D Каркас: Витрувианский человек (Канон пропорций)
-function create3DVitruvian() {
-    const points = [];
-    const segments = 64;
-    const r = 38;
-    // Описанный золотой круг
-    for (let i = 0; i <= segments; i++) {
-        const theta = (i / segments) * Math.PI * 2;
-        const nextTheta = ((i + 1) / segments) * Math.PI * 2;
-        points.push(new THREE.Vector3(Math.cos(theta) * r, Math.sin(theta) * r, 0));
-        points.push(new THREE.Vector3(Math.cos(nextTheta) * r, Math.sin(nextTheta) * r, 0));
+// ПРЯМЫЕ ССЫЛКИ НА ИЗОБРАЖЕНИЯ ИЗ РЕПОЗИТОРИЯ GITHUB
+const imagesData = [
+    {
+        url: "https://raw.githubusercontent.com/acidjazzer2010-boop/kraivin-dashboard/main/1000400438.jpg",
+        name: "Витрувианский человек",
+        scale: 75,
+        orbitX: 0, orbitY: 0, orbitZ: 0,
+        speedRot: 0.0015
+    },
+    {
+        url: "https://raw.githubusercontent.com/acidjazzer2010-boop/kraivin-dashboard/main/genio2.webp",
+        name: "Изобретение Да Винчи II",
+        scale: 64,
+        orbitX: -85, orbitY: 20, orbitZ: 100,
+        speedRot: -0.002
+    },
+    {
+        url: "https://raw.githubusercontent.com/acidjazzer2010-boop/kraivin-dashboard/main/genio3.png",
+        name: "Изобретение Да Винчи III",
+        scale: 64,
+        orbitX: 85, orbitY: -15, orbitZ: -80,
+        speedRot: 0.0025
     }
-    // Квадрат пропорций
-    const s = 34;
-    const sq = [
-        new THREE.Vector3(-s, -s + 4, 0), new THREE.Vector3(s, -s + 4, 0),
-        new THREE.Vector3(s, -s + 4, 0), new THREE.Vector3(s, s + 4, 0),
-        new THREE.Vector3(s, s + 4, 0), new THREE.Vector3(-s, s + 4, 0),
-        new THREE.Vector3(-s, s + 4, 0), new THREE.Vector3(-s, -s + 4, 0)
-    ];
-    points.push(...sq);
-
-    // Анатомический каркас
-    // Голова
-    for (let i = 0; i < 16; i++) {
-        const a1 = (i / 16) * Math.PI * 2, a2 = ((i + 1) / 16) * Math.PI * 2;
-        points.push(new THREE.Vector3(Math.cos(a1) * 4.5, 22 + Math.sin(a1) * 5.5, 0));
-        points.push(new THREE.Vector3(Math.cos(a2) * 4.5, 22 + Math.sin(a2) * 5.5, 0));
-    }
-    // Позвоночник и таз
-    points.push(new THREE.Vector3(0, 16, 0), new THREE.Vector3(0, -6, 0));
-    // Руки прямые и поднятые
-    points.push(new THREE.Vector3(-33, 10, 0), new THREE.Vector3(33, 10, 0));
-    points.push(new THREE.Vector3(0, 14, 0), new THREE.Vector3(-30, 24, 0));
-    points.push(new THREE.Vector3(0, 14, 0), new THREE.Vector3(30, 24, 0));
-    // Ноги прямые и расставленные
-    points.push(new THREE.Vector3(0, -6, 0), new THREE.Vector3(-10, -33, 0));
-    points.push(new THREE.Vector3(0, -6, 0), new THREE.Vector3(10, -33, 0));
-    points.push(new THREE.Vector3(0, -6, 0), new THREE.Vector3(-24, -30, 0));
-    points.push(new THREE.Vector3(0, -6, 0), new THREE.Vector3(24, -30, 0));
-
-    const geo = new THREE.BufferGeometry().setFromPoints(points);
-    return new THREE.LineSegments(geo, goldWireMat);
-}
-
-// 2. 3D Каркас: Механическое крыло орнитоптера (Macchina Volante)
-function create3DOrnithopterWing() {
-    const points = [];
-    const mainSpar = [];
-    // Изогнутый 3D лонжерон крыла
-    for (let i = -24; i <= 24; i++) {
-        const x = i * 2.2;
-        const y = Math.sin((i / 24) * Math.PI) * 12 - 4;
-        const z = -Math.cos((i / 24) * Math.PI) * 8;
-        mainSpar.push(new THREE.Vector3(x, y, z));
-    }
-    for (let i = 0; i < mainSpar.length - 1; i++) {
-        points.push(mainSpar[i], mainSpar[i + 1]);
-    }
-    // Нервюры крыла и тяги сочленений
-    for (let i = 0; i < mainSpar.length; i += 4) {
-        const p = mainSpar[i];
-        const tip = new THREE.Vector3(p.x * 1.15, p.y - 28 + Math.abs(p.x) * 0.2, p.z + 12);
-        points.push(p, tip);
-        if (i > 0) {
-            const prevTip = new THREE.Vector3(mainSpar[i - 4].x * 1.15, mainSpar[i - 4].y - 28 + Math.abs(mainSpar[i - 4].x) * 0.2, mainSpar[i - 4].z + 12);
-            points.push(tip, prevTip);
-        }
-    }
-    const geo = new THREE.BufferGeometry().setFromPoints(points);
-    return new THREE.LineSegments(geo, goldWireMat);
-}
-
-// 3. 3D Каркас: Воздушный винт (Vite Aerea / Aerial Screw)
-function create3DAerialScrew() {
-    const points = [];
-    // Центральный вал
-    points.push(new THREE.Vector3(0, -28, 0), new THREE.Vector3(0, 32, 0));
-    // Опорная крестовина
-    points.push(new THREE.Vector3(-18, -28, 0), new THREE.Vector3(18, -28, 0));
-    points.push(new THREE.Vector3(0, -28, -18), new THREE.Vector3(0, -28, 18));
-    
-    // 3D Архимедова спираль винта с каркасными спицами
-    const steps = 96;
-    for (let i = 0; i < steps; i++) {
-        const t = (i / steps) * Math.PI * 5.0;
-        const nextT = ((i + 1) / steps) * Math.PI * 5.0;
-        const y1 = -20 + (i / steps) * 48;
-        const y2 = -20 + ((i + 1) / steps) * 48;
-        const r1 = 12 + (i / steps) * 14;
-        const r2 = 12 + ((i + 1) / steps) * 14;
-        
-        const p1 = new THREE.Vector3(Math.cos(t) * r1, y1, Math.sin(t) * r1);
-        const p2 = new THREE.Vector3(Math.cos(nextT) * r2, y2, Math.sin(nextT) * r2);
-        points.push(p1, p2);
-        // Спицы от вала к внешнему каркасу
-        if (i % 6 === 0) {
-            points.push(new THREE.Vector3(0, y1, 0), p1);
-        }
-    }
-    const geo = new THREE.BufferGeometry().setFromPoints(points);
-    return new THREE.LineSegments(geo, goldWireMat);
-}
-
-// 4. 3D Каркас: Самонесущий арочный мост (Ponte Autoportante)
-function create3DBridge() {
-    const points = [];
-    const r = 42;
-    const numBeams = 10;
-    // Две параллельные арки фермы
-    for (let side = -10; side <= 10; side += 20) {
-        for (let i = 0; i < numBeams; i++) {
-            const a1 = Math.PI * 0.25 + (i / numBeams) * Math.PI * 0.5;
-            const a2 = Math.PI * 0.25 + ((i + 1) / numBeams) * Math.PI * 0.5;
-            points.push(new THREE.Vector3(Math.cos(a1) * r, Math.sin(a1) * r - 20, side));
-            points.push(new THREE.Vector3(Math.cos(a2) * r, Math.sin(a2) * r - 20, side));
-        }
-    }
-    // Поперечные расклинивающие бревна и диагональные упоры
-    for (let i = 0; i <= numBeams; i++) {
-        const a = Math.PI * 0.25 + (i / numBeams) * Math.PI * 0.5;
-        const x = Math.cos(a) * r, y = Math.sin(a) * r - 20;
-        points.push(new THREE.Vector3(x, y, -10), new THREE.Vector3(x, y, 10));
-        if (i < numBeams) {
-            const nextA = Math.PI * 0.25 + ((i + 1) / numBeams) * Math.PI * 0.5;
-            const nextX = Math.cos(nextA) * r, nextY = Math.sin(nextA) * r - 20;
-            points.push(new THREE.Vector3(x, y, -10), new THREE.Vector3(nextX, nextY, 10));
-            points.push(new THREE.Vector3(x, y, 10), new THREE.Vector3(nextX, nextY, -10));
-        }
-    }
-    const geo = new THREE.BufferGeometry().setFromPoints(points);
-    return new THREE.LineSegments(geo, goldWireMat);
-}
-
-// Размещение 3D моделей в галерее между кольцами на разных Z-эшелонах
-const inventions = [
-    { mesh: create3DVitruvian(), pos: new THREE.Vector3(0, 0, 0), rotSpeed: new THREE.Vector3(0.001, 0.002, 0.0005) },
-    { mesh: create3DOrnithopterWing(), pos: new THREE.Vector3(-75, 18, 120), rotSpeed: new THREE.Vector3(0.002, 0.0015, -0.002) },
-    { mesh: create3DAerialScrew(), pos: new THREE.Vector3(75, -12, -90), rotSpeed: new THREE.Vector3(0.001, 0.008, 0.001) },
-    { mesh: create3DBridge(), pos: new THREE.Vector3(65, 24, 210), rotSpeed: new THREE.Vector3(-0.0015, 0.0025, 0.0012) }
 ];
 
-inventions.forEach(inv => {
-    inv.mesh.position.copy(inv.pos);
-    preGroup.add(inv.mesh);
+// Шейдер для фильтрации и подсветки чертежей тонким золотым каркасом
+function createDaVinciImageMaterial(texture) {
+    return new THREE.ShaderMaterial({
+        uniforms: {
+            tDiffuse: { value: texture },
+            uHover: { value: 0.0 },
+            uTime: { value: 0.0 }
+        },
+        vertexShader: `
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `,
+        fragmentShader: `
+            uniform sampler2D tDiffuse;
+            uniform float uHover;
+            uniform float uTime;
+            varying vec2 vUv;
+
+            void main() {
+                vec4 tex = texture2D(tDiffuse, vUv);
+                
+                // Выделение контуров и придание благородного золотистого оттенка чертежа
+                float luminance = dot(tex.rgb, vec3(0.299, 0.587, 0.114));
+                vec3 baseGold = vec3(0.92, 0.78, 0.38) * (1.0 - luminance * 0.45);
+                
+                // Тонкая каркасная золотая рамка вокруг полотна
+                float borderX = step(0.015, vUv.x) * step(vUv.x, 0.985);
+                float borderY = step(0.015, vUv.y) * step(vUv.y, 0.985);
+                float borderMask = 1.0 - (borderX * borderY);
+                
+                // Световой импульс при наведении курсора
+                float pulse = sin(uTime * 4.0) * 0.5 + 0.5;
+                vec3 frameGlow = vec3(1.0, 0.9, 0.45) * borderMask * (0.8 + uHover * 1.5 * pulse);
+                
+                vec3 finalColor = mix(baseGold, tex.rgb * 1.2 + vec3(0.2, 0.16, 0.05), uHover * 0.4) + frameGlow;
+                float finalAlpha = clamp(tex.a * 0.92 + borderMask * 0.8 + uHover * 0.15, 0.0, 1.0);
+                
+                gl_FragColor = vec4(finalColor, finalAlpha);
+            }
+        `,
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide
+    });
+}
+
+const textureLoader = new THREE.TextureLoader();
+textureLoader.setCrossOrigin("anonymous");
+
+const interactivePlanes = [];
+
+imagesData.forEach(item => {
+    textureLoader.load(
+        item.url,
+        (texture) => {
+            texture.needsUpdate = true;
+            const aspect = (texture.image && texture.image.height) ? (texture.image.width / texture.image.height) : 1.0;
+            const mat = createDaVinciImageMaterial(texture);
+            
+            const w = item.scale * aspect;
+            const h = item.scale;
+            const geo = new THREE.PlaneGeometry(w, h);
+            const mesh = new THREE.Mesh(geo, mat);
+            
+            mesh.position.set(item.orbitX, item.orbitY, item.orbitZ);
+            preGroup.add(mesh);
+            
+            // Также добавляем тонкий габаритный каркас (wireframe box) вокруг каждого чертежа
+            const wireBox = new THREE.LineSegments(
+                new THREE.EdgesGeometry(new THREE.PlaneGeometry(w * 1.02, h * 1.02)),
+                new THREE.LineBasicMaterial({ color: 0xd4af37, transparent: true, opacity: 0.55 })
+            );
+            mesh.add(wireBox);
+            
+            interactivePlanes.push({
+                mesh: mesh,
+                mat: mat,
+                wireBox: wireBox,
+                basePos: new THREE.Vector3(item.orbitX, item.orbitY, item.orbitZ),
+                targetPos: new THREE.Vector3(item.orbitX, item.orbitY, item.orbitZ),
+                baseScale: 1.0,
+                targetScale: 1.0,
+                speedRot: item.speedRot,
+                isHovered: false
+            });
+        },
+        undefined,
+        (err) => {
+            console.warn("Не удалось загрузить изображение из GitHub:", item.url);
+        }
+    );
 });
+
+/* RAYCASTER ДЛЯ ВЫДЕЛЕНИЯ ЧЕРТЕЖЕЙ ПРИ НАВЕДЕНИИ КУРСОРА */
+const raycaster = new THREE.Raycaster();
+const mouseVec = new THREE.Vector2(-999, -999);
+let hoveredItem = null;
+
+window.addEventListener('mousemove', (e) => {
+    mouseVec.x = (e.clientX / window.innerWidth) * 2 - 1;
+    mouseVec.y = -(e.clientY / window.innerHeight) * 2 + 1;
+});
+
+function checkHoverInteraction() {
+    if (preloaderDismissed || interactivePlanes.length === 0) return;
+    
+    raycaster.setFromCamera(mouseVec, preCamera);
+    const meshes = interactivePlanes.map(p => p.mesh);
+    const intersects = raycaster.intersectObjects(meshes, false);
+    
+    interactivePlanes.forEach(plane => {
+        plane.isHovered = false;
+        plane.targetScale = 1.0;
+        // Возвращение на свою орбиту между кольцами
+        plane.targetPos.z = plane.basePos.z;
+        plane.mat.uniforms.uHover.value = THREE.MathUtils.lerp(plane.mat.uniforms.uHover.value, 0.0, 0.1);
+        plane.wireBox.material.opacity = THREE.MathUtils.lerp(plane.wireBox.material.opacity, 0.5, 0.1);
+    });
+    
+    if (intersects.length > 0) {
+        const hitMesh = intersects[0].object;
+        const found = interactivePlanes.find(p => p.mesh === hitMesh);
+        if (found) {
+            found.isHovered = true;
+            // Выделение на первый план: выдвижение вперед к камере и увеличение
+            found.targetScale = 1.35;
+            found.targetPos.z = 70; // На первый план
+            found.mat.uniforms.uHover.value = THREE.MathUtils.lerp(found.mat.uniforms.uHover.value, 1.0, 0.2);
+            found.wireBox.material.opacity = 1.0;
+            
+            if (hoveredItem !== found) {
+                playClickSound(1800, 0.015);
+                hoveredItem = found;
+            }
+        }
+    } else {
+        hoveredItem = null;
+    }
+}
 
 /* ЖИДКИЙ ВОЛНОВОЙ МОРФ ПРИ КЛИКЕ НА «ИССЛЕДОВАТЬ» */
 let isRippling = false;
@@ -846,19 +860,33 @@ function animatePreloader() {
         item.mesh.rotation.z += item.sz + Math.sin(t * 0.25) * 0.0006;
     });
 
-    // Кинематографический 3D-пролёт камеры сквозь строй моделей к центру пропорций
-    const flyProgress = Math.pow(progress, 1.25);
-    preCamera.position.z = 360 - (flyProgress * 175); // 360 -> 185
-    preCamera.position.x = Math.sin(t * 0.6) * 14;
-    preCamera.position.y = Math.cos(t * 0.5) * 8;
-    preCamera.lookAt(0, 0, 0);
+    // Интерактивный фокус Raycaster при наведении
+    checkHoverInteraction();
 
-    // Независимое пространственное вращение и дыхание каждой модели
-    inventions.forEach((inv, i) => {
-        inv.mesh.rotation.x += inv.rotSpeed.x;
-        inv.mesh.rotation.y += inv.rotSpeed.y;
-        inv.mesh.rotation.z += inv.rotSpeed.z;
-        inv.mesh.position.y = inv.pos.y + Math.sin(t * 1.5 + i * 1.6) * 3.5;
+    // Свободный 3D полет и плавное движение чертежей между кольцами
+    interactivePlanes.forEach((plane, idx) => {
+        if (!plane.isHovered) {
+            // Естественный космический дрейф
+            plane.mesh.position.y = plane.basePos.y + Math.sin(t * 1.2 + idx * 2.0) * 8.0;
+            plane.mesh.position.x = plane.basePos.x + Math.cos(t * 0.9 + idx * 1.5) * 6.0;
+            plane.mesh.rotation.y += plane.speedRot;
+            plane.mesh.rotation.x = Math.sin(t * 0.8 + idx) * 0.08;
+        } else {
+            // Плавное выравнивание лицом к камере при наведении
+            plane.mesh.rotation.y = THREE.MathUtils.lerp(plane.mesh.rotation.y, 0, 0.1);
+            plane.mesh.rotation.x = THREE.MathUtils.lerp(plane.mesh.rotation.x, 0, 0.1);
+        }
+        
+        // Плавная интерполяция позиции Z (на первый план и обратно)
+        plane.mesh.position.z = THREE.MathUtils.lerp(plane.mesh.position.z, plane.targetPos.z, 0.08);
+        
+        // Плавное масштабирование
+        const s = THREE.MathUtils.lerp(plane.mesh.scale.x, plane.targetScale, 0.1);
+        plane.mesh.scale.set(s, s, s);
+        
+        if (plane.mat && plane.mat.uniforms) {
+            plane.mat.uniforms.uTime.value = t;
+        }
     });
     
     preRenderer.clear();
