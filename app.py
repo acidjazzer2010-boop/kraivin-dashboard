@@ -13,10 +13,13 @@ st.set_page_config(
 
 def get_image_b64(path):
     if os.path.exists(path):
-        with open(path, "rb") as f:
-            ext = path.split('.')[-1].lower()
-            mime = "image/jpeg" if ext in ["jpg", "jpeg"] else f"image/{ext}"
-            return f"data:{mime};base64,{base64.b64encode(f.read()).decode()}"
+        try:
+            with open(path, "rb") as f:
+                ext = path.split('.')[-1].lower()
+                mime = "image/jpeg" if ext in ["jpg", "jpeg"] else f"image/{ext}"
+                return f"data:{mime};base64,{base64.b64encode(f.read()).decode()}"
+        except Exception:
+            return ""
     return ""
 
 img_1 = get_image_b64("1000400438.jpg")
@@ -58,7 +61,7 @@ html,body{width:100%;height:100%;margin:0;padding:0;overflow:hidden;background:v
 :focus-visible{outline:2px solid var(--accent-gold);outline-offset:2px}
 button:focus:not(:focus-visible){outline:none}
 .film-grain{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:999;opacity:var(--grain-opacity);background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
-#preloader-stage{position:fixed;top:0;left:0;width:100vw;height:100vh;background:radial-gradient(circle at center,#0a0b12 0%,#030306 100%);z-index:900;overflow:hidden}
+#preloader-stage{position:fixed;top:0;left:0;width:100vw;height:100vh;background:radial-gradient(circle at center,#0d0e17 0%,#030306 100%);z-index:900;overflow:hidden}
 #preloader-webgl{position:absolute;inset:0;width:100%;height:100%;z-index:10;cursor:grab}
 #preloader-webgl:active{cursor:grabbing}
 .preloader-fixed-hud{position:absolute;inset:0;width:100%;height:100%;z-index:30;pointer-events:none;user-select:none}
@@ -416,27 +419,57 @@ preScene.add(preGroup);
 const megaRingWireMat = new THREE.MeshBasicMaterial({ color: 0x00c3ff, wireframe: true, transparent: true, opacity: 0.38 });
 const secondaryWireMat = new THREE.MeshBasicMaterial({ color: 0x0077aa, wireframe: true, transparent: true, opacity: 0.22 });
 
+/* ИСПРАВЛЕННЫЙ ГЕНЕРАТОР КОЛЕЦ: устранены артефакты шва и перехлесты */
 function createCyclopeanTrussRing(mainRadius, tubeWidth, tubeDepth, segments) {
     const group = new THREE.Group();
     group.add(new THREE.Mesh(new THREE.TorusGeometry(mainRadius, tubeWidth * 0.45, 12, segments), megaRingWireMat));
     const linePts = [];
     const rOuter = mainRadius + tubeWidth, rInner = mainRadius - tubeWidth, zOffset = tubeDepth;
+    
     for (let i = 0; i < segments; i++) {
-        const a1 = (i / segments) * Math.PI * 2, a2 = ((i + 1) / segments) * Math.PI * 2;
+        const nextIdx = (i + 1) % segments;
+        const a1 = (i / segments) * Math.PI * 2;
+        const a2 = (nextIdx / segments) * Math.PI * 2;
+
         const p1_topOut = new THREE.Vector3(Math.cos(a1) * rOuter, Math.sin(a1) * rOuter, zOffset);
         const p2_topOut = new THREE.Vector3(Math.cos(a2) * rOuter, Math.sin(a2) * rOuter, zOffset);
         const p1_botOut = new THREE.Vector3(Math.cos(a1) * rOuter, Math.sin(a1) * rOuter, -zOffset);
         const p2_botOut = new THREE.Vector3(Math.cos(a2) * rOuter, Math.sin(a2) * rOuter, -zOffset);
+
         const p1_topIn = new THREE.Vector3(Math.cos(a1) * rInner, Math.sin(a1) * rInner, zOffset);
         const p2_topIn = new THREE.Vector3(Math.cos(a2) * rInner, Math.sin(a2) * rInner, zOffset);
         const p1_botIn = new THREE.Vector3(Math.cos(a1) * rInner, Math.sin(a1) * rInner, -zOffset);
         const p2_botIn = new THREE.Vector3(Math.cos(a2) * rInner, Math.sin(a2) * rInner, -zOffset);
-        linePts.push(p1_topOut, p2_topOut, p1_botOut, p2_botOut, p1_topIn, p2_topIn, p1_botIn, p2_botIn, p1_topOut, p1_botOut, p1_topIn, p1_botIn, p1_topOut, p1_topIn, p1_botOut, p2_botIn);
-        if (i % 2 === 0) linePts.push(p1_topOut, p2_botOut, p1_topIn, p2_botIn, p1_topOut, p2_topIn);
+
+        // Пояса
+        linePts.push(p1_topOut, p2_topOut);
+        linePts.push(p1_botOut, p2_botOut);
+        linePts.push(p1_topIn, p2_topIn);
+        linePts.push(p1_botIn, p2_botIn);
+
+        // Шпангоуты
+        linePts.push(p1_topOut, p1_botOut);
+        linePts.push(p1_topIn, p1_botIn);
+        linePts.push(p1_topOut, p1_topIn);
+        linePts.push(p1_botOut, p1_botIn);
+
+        // Симметричные диагонали
+        if (i % 2 === 0) {
+            linePts.push(p1_topOut, p2_botOut);
+            linePts.push(p1_topIn, p2_botIn);
+            linePts.push(p1_topOut, p2_topIn);
+        } else {
+            linePts.push(p1_botOut, p2_topOut);
+            linePts.push(p1_botIn, p2_topIn);
+            linePts.push(p1_botOut, p2_botIn);
+        }
+
+        // Зубчатый обод
         if (i % 3 === 0) {
             const toothR = rOuter + tubeWidth * 0.42;
             const pTooth = new THREE.Vector3(Math.cos(a1) * toothR, Math.sin(a1) * toothR, 0);
-            linePts.push(p1_topOut, pTooth, pTooth, p1_botOut);
+            linePts.push(p1_topOut, pTooth);
+            linePts.push(pTooth, p1_botOut);
         }
     }
     group.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(linePts), megaRingWireMat));
@@ -465,18 +498,19 @@ function createBlueprintLineMaterial() {
     });
 }
 
-/* 3D-чертежи */
+/* 3D-ЧЕРТЕЖИ ДА ВИНЧИ С ЗАМКНУТОЙ СТРУКТУРОЙ */
 function buildUltra3DAerialScrew() {
     const pts = [];
-    const h = 70, radiusMax = 36;
+    const h = 76, radiusMax = 38;
     for (let i = 0; i < 6; i++) {
-        const a1 = (i / 6) * Math.PI * 2, a2 = ((i + 1) / 6) * Math.PI * 2;
-        const x1 = Math.cos(a1) * 4, z1 = Math.sin(a1) * 4;
-        const x2 = Math.cos(a2) * 4, z2 = Math.sin(a2) * 4;
+        const nextI = (i + 1) % 6;
+        const a1 = (i / 6) * Math.PI * 2, a2 = (nextI / 6) * Math.PI * 2;
+        const x1 = Math.cos(a1) * 4.5, z1 = Math.sin(a1) * 4.5;
+        const x2 = Math.cos(a2) * 4.5, z2 = Math.sin(a2) * 4.5;
         pts.push(new THREE.Vector3(x1, -h/2, z1), new THREE.Vector3(x1, h/2, z1));
-        for (let y = -h/2; y < h/2; y += 4) {
+        for (let y = -h/2; y < h/2; y += 5) {
             pts.push(new THREE.Vector3(x1, y, z1), new THREE.Vector3(x2, y, z2));
-            pts.push(new THREE.Vector3(x1, y, z1), new THREE.Vector3(x2, y + 4, z2));
+            pts.push(new THREE.Vector3(x1, y, z1), new THREE.Vector3(x2, y + 5, z2));
         }
     }
     const coils = 3.2, steps = 160;
@@ -493,16 +527,17 @@ function buildUltra3DAerialScrew() {
             const pEdge2 = new THREE.Vector3(Math.cos(a2) * r2, y2, Math.sin(a2) * r2);
             pts.push(pEdge1, pEdge2);
             if (i % 2 === 0) {
-                const pCenter = new THREE.Vector3(Math.cos(a1) * 4, y1, Math.sin(a1) * 4);
+                const pCenter = new THREE.Vector3(Math.cos(a1) * 4.5, y1, Math.sin(a1) * 4.5);
                 pts.push(pCenter, pEdge1);
                 const pMid = new THREE.Vector3(Math.cos(a1 + 0.15) * (r1 * 0.6), y1 + 1.2, Math.sin(a1 + 0.15) * (r1 * 0.6));
                 pts.push(pCenter, pMid, pMid, pEdge1);
             }
         }
     }
-    for (let r = 16; r <= 38; r += 10) {
+    for (let r = 16; r <= 38; r += 11) {
         for (let i = 0; i < 48; i++) {
-            const a1 = (i / 48) * Math.PI * 2, a2 = ((i + 1) / 48) * Math.PI * 2;
+            const nextI = (i + 1) % 48;
+            const a1 = (i / 48) * Math.PI * 2, a2 = (nextI / 48) * Math.PI * 2;
             pts.push(new THREE.Vector3(Math.cos(a1) * r, -h/2, Math.sin(a1) * r), new THREE.Vector3(Math.cos(a2) * r, -h/2, Math.sin(a2) * r));
             if (r === 38 && i % 2 === 0) {
                 pts.push(new THREE.Vector3(Math.cos(a1) * r, -h/2, Math.sin(a1) * r), new THREE.Vector3(Math.cos(a1) * (r + 4), -h/2, Math.sin(a1) * (r + 4)));
@@ -517,10 +552,12 @@ function buildUltra3DClockworkGears() {
     function buildVolumetricGear(cx, cy, cz, radius, thickness, teeth, spokes) {
         const z1 = cz - thickness / 2, z2 = cz + thickness / 2;
         for (let i = 0; i < teeth * 2; i++) {
+            const nextI = (i + 1) % (teeth * 2);
             const a1 = (i / (teeth * 2)) * Math.PI * 2;
-            const a2 = ((i + 1) / (teeth * 2)) * Math.PI * 2;
+            const a2 = (nextI / (teeth * 2)) * Math.PI * 2;
             const r1 = (i % 2 === 0) ? radius + 3.0 : radius - 1.5;
-            const r2 = ((i + 1) % 2 === 0) ? radius + 3.0 : radius - 1.5;
+            const r2 = (nextI % 2 === 0) ? radius + 3.0 : radius - 1.5;
+
             const pF1 = new THREE.Vector3(cx + Math.cos(a1) * r1, cy + Math.sin(a1) * r1, z1);
             const pF2 = new THREE.Vector3(cx + Math.cos(a2) * r2, cy + Math.sin(a2) * r2, z1);
             const pB1 = new THREE.Vector3(cx + Math.cos(a1) * r1, cy + Math.sin(a1) * r1, z2);
@@ -594,7 +631,8 @@ function buildUltra3DVitruvian() {
     const r = 36;
     for (let axis = 0; axis < 3; axis++) {
         for (let i = 0; i < 72; i++) {
-            const a1 = (i / 72) * Math.PI * 2, a2 = ((i + 1) / 72) * Math.PI * 2;
+            const nextI = (i + 1) % 72;
+            const a1 = (i / 72) * Math.PI * 2, a2 = (nextI / 72) * Math.PI * 2;
             if (axis === 0) pts.push(new THREE.Vector3(Math.cos(a1) * r, Math.sin(a1) * r, 0), new THREE.Vector3(Math.cos(a2) * r, Math.sin(a2) * r, 0));
             else if (axis === 1) pts.push(new THREE.Vector3(Math.cos(a1) * r, 0, Math.sin(a1) * r), new THREE.Vector3(Math.cos(a2) * r, 0, Math.sin(a2) * r));
             else pts.push(new THREE.Vector3(0, Math.cos(a1) * r, Math.sin(a1) * r), new THREE.Vector3(0, Math.cos(a2) * r, Math.sin(a2) * r));
@@ -623,7 +661,7 @@ function buildUltra3DVitruvian() {
 function createWireframeFromImage(dataUriOrUrl, fallbackMesh) {
     const group = new THREE.Group();
     group.add(fallbackMesh);
-    if (!dataUriOrUrl) return group;
+    if (!dataUriOrUrl || !dataUriOrUrl.startsWith('data:image')) return group;
 
     const img = new Image();
     img.crossOrigin = "anonymous";
@@ -665,10 +703,10 @@ function createWireframeFromImage(dataUriOrUrl, fallbackMesh) {
 }
 
 const floatingInventions = [
-    { group: createWireframeFromImage(USER_IMAGES.img1, buildUltra3DAerialScrew()), basePos: new THREE.Vector3(-105, 28, 50), rotSpeed: new THREE.Vector3(0.0016, 0.0014, -0.0008) },
-    { group: createWireframeFromImage(USER_IMAGES.img2, buildUltra3DClockworkGears()), basePos: new THREE.Vector3(110, -24, -45), rotSpeed: new THREE.Vector3(0.0012, 0.0018, 0.0010) },
-    { group: createWireframeFromImage(USER_IMAGES.img3, buildUltra3DOrnithopter()), basePos: new THREE.Vector3(88, 34, 75), rotSpeed: new THREE.Vector3(-0.0014, 0.0016, 0.0009) },
-    { group: createWireframeFromImage("", buildUltra3DVitruvian()), basePos: new THREE.Vector3(-30, -36, -35), rotSpeed: new THREE.Vector3(0.0008, 0.0012, 0.0006) }
+    { group: createWireframeFromImage(USER_IMAGES.img1, buildUltra3DAerialScrew()), basePos: new THREE.Vector3(-115, 32, 50), rotSpeed: new THREE.Vector3(0.0016, 0.0014, -0.0008) },
+    { group: createWireframeFromImage(USER_IMAGES.img2, buildUltra3DClockworkGears()), basePos: new THREE.Vector3(120, -26, -45), rotSpeed: new THREE.Vector3(0.0012, 0.0018, 0.0010) },
+    { group: createWireframeFromImage(USER_IMAGES.img3, buildUltra3DOrnithopter()), basePos: new THREE.Vector3(95, 38, 75), rotSpeed: new THREE.Vector3(-0.0014, 0.0016, 0.0009) },
+    { group: createWireframeFromImage("", buildUltra3DVitruvian()), basePos: new THREE.Vector3(-35, -42, -35), rotSpeed: new THREE.Vector3(0.0008, 0.0012, 0.0006) }
 ];
 
 const hoverTargets = [];
@@ -676,7 +714,8 @@ floatingInventions.forEach((item) => {
     item.group.position.copy(item.basePos);
     preGroup.add(item.group);
 
-    const hitGeo = new THREE.SphereGeometry(44, 16, 16);
+    // Хитбокс достаточного радиуса для надежного наведения
+    const hitGeo = new THREE.SphereGeometry(48, 16, 16);
     const hitMat = new THREE.MeshBasicMaterial({ visible: false });
     const hitMesh = new THREE.Mesh(hitGeo, hitMat);
     hitMesh.position.copy(item.basePos);
@@ -689,6 +728,7 @@ floatingInventions.forEach((item) => {
     hoverTargets.push(item);
 });
 
+/* ИСПРАВЛЕННЫЙ RAYCASTER: свободное переключение между фигурами */
 const raycaster = new THREE.Raycaster();
 const mouseVec = new THREE.Vector2(-999, -999);
 let currentHovered = null;
@@ -700,46 +740,51 @@ window.addEventListener('mousemove', (e) => {
 
 function checkRaycastHover() {
     if (preloaderDismissed) return;
+    
+    // Проверка попадания луча
     raycaster.setFromCamera(mouseVec, preCamera);
     const hitMeshes = hoverTargets.map(h => h.hitMesh);
     const intersects = raycaster.intersectObjects(hitMeshes, false);
 
+    let foundTarget = null;
+    if (intersects.length > 0) {
+        const hit = intersects[0].object;
+        foundTarget = hoverTargets.find(h => h.hitMesh === hit) || null;
+    }
+
+    // Если ховер сменился или снят
     hoverTargets.forEach(item => {
-        item.isHovered = false;
-        item.targetScale = 1.0;
-        item.targetZ = item.basePos.z;
+        const isCurrent = (item === foundTarget);
+        item.isHovered = isCurrent;
+        item.targetScale = isCurrent ? 1.35 : 1.0;
+        item.targetZ = isCurrent ? 120 : item.basePos.z;
+
         item.group.traverse(child => {
             if (child.isLineSegments && child.material && child.material.uniforms && child.material.uniforms.uHover) {
-                child.material.uniforms.uHover.value = THREE.MathUtils.lerp(child.material.uniforms.uHover.value, 0.0, 0.08);
+                child.material.uniforms.uHover.value = THREE.MathUtils.lerp(
+                    child.material.uniforms.uHover.value, 
+                    isCurrent ? 1.0 : 0.0, 
+                    isCurrent ? 0.2 : 0.08
+                );
             }
         });
     });
 
-    if (intersects.length > 0) {
-        const hit = intersects[0].object;
-        const found = hoverTargets.find(h => h.hitMesh === hit);
-        if (found) {
-            found.isHovered = true;
-            found.targetScale = 1.35;
-            found.targetZ = 135;
-
-            const objPos = found.group.position;
-            targetCamPos.set(objPos.x * 0.95, objPos.y * 0.95, objPos.z + 55);
-            targetLookTarget.set(objPos.x, objPos.y, objPos.z - 10);
-
-            found.group.traverse(child => {
-                if (child.isLineSegments && child.material && child.material.uniforms && child.material.uniforms.uHover) {
-                    child.material.uniforms.uHover.value = THREE.MathUtils.lerp(child.material.uniforms.uHover.value, 1.0, 0.22);
-                }
-            });
-
-            if (currentHovered !== found) {
-                playClickSound(1800, 0.015);
-                currentHovered = found;
-            }
+    if (foundTarget) {
+        if (currentHovered !== foundTarget) {
+            playClickSound(1800, 0.015);
+            currentHovered = foundTarget;
         }
+        // Дистанция камеры рассчитывается БЕЗ пересечения коллайдера хитбокса (Z + 110)
+        // Камера подлетает перед фигурой, не залипая внутри сферы!
+        const objPos = foundTarget.group.position;
+        targetCamPos.set(objPos.x * 0.72, objPos.y * 0.72, objPos.z + 110);
+        targetLookTarget.set(objPos.x, objPos.y, objPos.z);
     } else {
-        currentHovered = null;
+        if (currentHovered !== null) {
+            currentHovered = null;
+        }
+        // Возврат на общую панораму
         targetCamPos.set(0, 0, baseCamZ);
         targetLookTarget.set(0, 0, 0);
     }
@@ -859,8 +904,9 @@ function animatePreloader() {
         });
     });
 
-    preCamera.position.lerp(targetCamPos, 0.05);
-    currentLookTarget.lerp(targetLookTarget, 0.05);
+    // Плавный кинематографический наезд и откат камеры
+    preCamera.position.lerp(targetCamPos, 0.045);
+    currentLookTarget.lerp(targetLookTarget, 0.045);
     preCamera.lookAt(currentLookTarget);
 
     preRenderer.clear();
@@ -868,6 +914,7 @@ function animatePreloader() {
 }
 animatePreloader();
 
+/* ТЕКСТ И ГЛИФЫ */
 const CYRILLIC_GLYPHS = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ0123456789§$%*#@!/[]:;';
 const NUMERIC_GLYPHS = '0123456789 ';
 function scrambleElementText(el, finalText, duration = 460, useAlphabet = true) {
@@ -1257,7 +1304,6 @@ else runCalculation();
 </body>
 </html>"""
 
-# Безопасная подстановка без конфликтов с JS-синтаксисом
 HTML = (
     HTML_TEMPLATE
     .replace("__IMG_1__", img_1)
