@@ -36,31 +36,95 @@ button:focus:not(:focus-visible){outline:none}
 #preloader-webgl:active{cursor:grabbing}
 
 .preloader-fixed-hud{position:absolute;inset:0;width:100%;height:100%;z-index:30;pointer-events:none;user-select:none;transition:opacity 0.8s ease}
-#preloaderTitle{position:absolute;top:28px;left:50%;transform:translateX(-50%);font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:clamp(20px,3.2vw,44px);font-weight:700;letter-spacing:.26em;color:var(--accent-gold);opacity:0;text-shadow:0 0 45px rgba(212,175,55,.85);transition:opacity 1.8s cubic-bezier(.16,1,.3,1);text-align:center;white-space:nowrap}
+#preloaderTitle{position:absolute;top:26px;left:50%;transform:translateX(-50%);font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:clamp(22px,3.2vw,44px);font-weight:700;letter-spacing:.26em;color:var(--accent-gold);opacity:0;text-shadow:0 0 45px rgba(212,175,55,.85);transition:opacity 1.8s cubic-bezier(.16,1,.3,1);text-align:center;white-space:nowrap}
 #preloaderTitle.locked-on{opacity:1!important}
 
-#blueprintSubtitle{position:absolute;top:76px;left:50%;transform:translateX(-50%);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.32em;text-transform:uppercase;color:rgba(212,175,55,0.7);opacity:0;transition:opacity 0.6s ease;text-align:center;white-space:nowrap}
+#blueprintSubtitle{position:absolute;top:76px;left:50%;transform:translateX(-50%);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.32em;text-transform:uppercase;color:rgba(212,175,55,0.75);opacity:0;transition:opacity 0.6s ease;text-align:center;white-space:nowrap}
 
-.slider-ui-container{position:absolute;top:50%;left:0;width:100%;transform:translateY(-50%);display:flex;justify-content:space-between;align-items:center;padding:0 14px;pointer-events:none;z-index:40}
-.slide-nav-btn{width:46px;height:46px;border-radius:50%;background:rgba(13,13,18,0.75);border:1px solid rgba(212,175,55,0.4);color:var(--accent-gold);display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;pointer-events:auto;backdrop-filter:blur(10px);transition:all .25s ease}
-.slide-nav-btn:hover{background:rgba(212,175,55,0.25);border-color:var(--accent-gold);transform:scale(1.1)}
-.slide-nav-btn:active{transform:scale(0.95)}
+/* РЕНЕССАНСНЫЙ ЛАТУННЫЙ СЕЛЕКТОР КОДЕКСА */
+.codex-selector-hud{
+    position:absolute;
+    bottom:110px;
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    align-items:center;
+    gap:18px;
+    pointer-events:auto;
+    z-index:40;
+    background:rgba(10,10,14,0.72);
+    padding:6px 14px;
+    border:1px solid rgba(212,175,55,0.35);
+    backdrop-filter:blur(14px);
+    box-shadow:0 10px 30px rgba(0,0,0,0.6), inset 0 0 14px rgba(212,175,55,0.08);
+}
+.codex-selector-hud::before{
+    content:'CODEX DA VINCI';
+    position:absolute;
+    top:-18px;
+    left:50%;
+    transform:translateX(-50%);
+    font-family:'JetBrains Mono',monospace;
+    font-size:8px;
+    letter-spacing:0.35em;
+    color:rgba(212,175,55,0.6);
+}
+.codex-nav-btn{
+    width:32px;
+    height:32px;
+    border:1px solid rgba(212,175,55,0.3);
+    background:rgba(212,175,55,0.05);
+    color:var(--accent-gold);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:16px;
+    cursor:pointer;
+    transition:all .2s ease;
+}
+.codex-nav-btn:hover{
+    background:rgba(212,175,55,0.25);
+    border-color:var(--accent-gold);
+    transform:scale(1.08);
+}
+.codex-items-list{
+    display:flex;
+    gap:6px;
+}
+.codex-item-chip{
+    padding:5px 12px;
+    font-family:'Cormorant Garamond',serif;
+    font-size:15px;
+    font-weight:700;
+    letter-spacing:0.18em;
+    color:rgba(244,241,234,0.6);
+    background:transparent;
+    border:1px solid transparent;
+    cursor:pointer;
+    transition:all .25s ease;
+}
+.codex-item-chip:hover{
+    color:var(--accent-gold);
+    border-color:rgba(212,175,55,0.3);
+}
+.codex-item-chip.active{
+    color:#070709;
+    background:var(--accent-gold);
+    border-color:var(--accent-gold);
+    box-shadow:0 0 16px rgba(212,175,55,0.6);
+}
 
-.slide-dots{position:absolute;bottom:102px;left:50%;transform:translateX(-50%);display:flex;gap:10px;pointer-events:auto;z-index:40}
-.slide-dot{width:8px;height:8px;border-radius:50%;border:1px solid var(--accent-gold);background:transparent;cursor:pointer;transition:all .3s ease}
-.slide-dot.active{background:var(--accent-gold);box-shadow:0 0 10px var(--accent-gold);transform:scale(1.35)}
-
-.bottom-dock{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;width:380px;height:62px}
+.bottom-dock{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;width:400px;height:62px}
 #preloaderHUD{display:flex;flex-direction:column;align-items:center;gap:8px;transition:opacity .4s}
 .progress-bar-bg{width:280px;height:2px;background:rgba(255,255,255,.12);position:relative;overflow:hidden}
 #loaderProgressBar{position:absolute;left:0;top:0;height:100%;width:0;background:var(--accent-gold);box-shadow:0 0 10px var(--accent-gold);transition:width .1s linear}
 
-#exploreBtnWrapper{position:absolute;opacity:0;pointer-events:none;transition:opacity .6s cubic-bezier(.19,1,.22,1),transform .6s cubic-bezier(.19,1,.22,1);transform:translateY(8px);display:flex;gap:10px}
+#exploreBtnWrapper{position:absolute;opacity:0;pointer-events:none;transition:opacity .6s cubic-bezier(.19,1,.22,1),transform .6s cubic-bezier(.19,1,.22,1);transform:translateY(8px);display:flex;gap:12px}
 #exploreBtnWrapper.active{opacity:1;pointer-events:auto;transform:translateY(0)}
 .explore-btn{padding:12px 34px;background:rgba(13,13,18,.9);border:1px solid rgba(212,175,55,.95);color:#f4f1ea;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.32em;text-transform:uppercase;cursor:pointer;backdrop-filter:blur(14px);overflow:hidden;transition:all .3s;box-shadow:0 0 40px rgba(212,175,55,.35),inset 0 0 16px rgba(212,175,55,.18)}
 .explore-btn:hover{border-color:#ffd700;color:#ffd700;box-shadow:0 0 60px rgba(212,175,55,.7),inset 0 0 24px rgba(212,175,55,.35);transform:scale(1.04)}
 
-.preset-btn{padding:12px 18px;background:rgba(212,175,55,0.12);border:1px solid var(--accent-gold);color:var(--accent-gold);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;backdrop-filter:blur(10px);transition:all .3s}
+.preset-btn{padding:12px 20px;background:rgba(212,175,55,0.12);border:1px solid var(--accent-gold);color:var(--accent-gold);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;backdrop-filter:blur(10px);transition:all .3s}
 .preset-btn:hover{background:var(--accent-gold);color:#070709}
 
 #mainDashboardApp{display:none;position:relative;z-index:10;min-height:100vh}
@@ -129,31 +193,31 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
         <div id="preloaderTitle">Архитектура финансов</div>
         <div id="blueprintSubtitle">Тяга и масштабирование выручки</div>
         
-        <div class="slider-ui-container">
-            <button class="slide-nav-btn" onclick="prevSlide()" aria-label="Предыдущий чертеж">‹</button>
-            <button class="slide-nav-btn" onclick="nextSlide()" aria-label="Следующий чертеж">›</button>
-        </div>
-
-        <div class="slide-dots">
-            <button class="slide-dot active" onclick="goToSlide(0)"></button>
-            <button class="slide-dot" onclick="goToSlide(1)"></button>
-            <button class="slide-dot" onclick="goToSlide(2)"></button>
-            <button class="slide-dot" onclick="goToSlide(3)"></button>
-            <button class="slide-dot" onclick="goToSlide(4)"></button>
+        <!-- НОВЫЙ СТИЛЬНЫЙ ВИНТАЖНЫЙ СЕЛЕКТОР -->
+        <div class="codex-selector-hud">
+            <button class="codex-nav-btn" onclick="prevSlide()" aria-label="Предыдущий чертеж" title="Предыдущее изобретение">‹</button>
+            <div class="codex-items-list" id="codexChipsContainer">
+                <button class="codex-item-chip active" onclick="goToSlide(0)">I</button>
+                <button class="codex-item-chip" onclick="goToSlide(1)">II</button>
+                <button class="codex-item-chip" onclick="goToSlide(2)">III</button>
+                <button class="codex-item-chip" onclick="goToSlide(3)">IV</button>
+                <button class="codex-item-chip" onclick="goToSlide(4)">V</button>
+            </div>
+            <button class="codex-nav-btn" onclick="nextSlide()" aria-label="Следующий чертеж" title="Следующее изобретение">›</button>
         </div>
 
         <div class="bottom-dock">
             <div id="preloaderHUD">
                 <div class="flex items-center gap-3 text-[#d4af37] text-[10px] tracking-[0.25em] uppercase font-mono">
                     <span class="pulse-dot" aria-hidden="true"></span>
-                    <span id="loaderStatusText" class="cursor-pointer hover:underline" onclick="window.triggerSputnikManually && window.triggerSputnikManually()" title="Нажмите для мгновенного вызова спутника (или клавишу S)">Листайте 3D-чертежи Да Винчи... [S — спутник]</span>
+                    <span id="loaderStatusText" class="cursor-pointer hover:underline" onclick="window.triggerSputnikManually && window.triggerSputnikManually()" title="Нажмите для мгновенного вызова спутника (или клавишу S)">Кодекс да Винчи • Ротация карусели [S — спутник]</span>
                     <span id="loaderPercent" class="font-bold">0%</span>
                 </div>
                 <div class="progress-bar-bg mt-1"><div id="loaderProgressBar"></div></div>
             </div>
             <div id="exploreBtnWrapper">
-                <button id="applyPresetBtn" onclick="applySelectedPresetAndEnter(event)" class="preset-btn">Применить пресет</button>
-                <button id="exploreBtn" onclick="triggerCameraObscuraTransition(event)" class="explore-btn">Исследовать</button>
+                <button id="applyPresetBtn" onclick="applySelectedPresetAndEnter(event)" class="preset-btn">Применить модель</button>
+                <button id="exploreBtn" onclick="triggerCameraObscuraTransition(event)" class="explore-btn">Войти в портал</button>
             </div>
         </div>
     </div>
@@ -743,9 +807,11 @@ preRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 preRenderer.setSize(window.innerWidth, window.innerHeight);
 
 const preScene = new THREE.Scene();
-const preCamera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 1, 6000);
-const baseCamZ = 390;
-let targetCamPos = new THREE.Vector3(0, 0, baseCamZ);
+const preCamera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 1, 6000);
+
+// Фиксированная точка наблюдения: сохраняем открытый центр и глубину
+const baseCamPos = new THREE.Vector3(0, 0, 390);
+let targetCamPos = baseCamPos.clone();
 let currentLookTarget = new THREE.Vector3(0, 0, 0);
 let targetLookTarget = new THREE.Vector3(0, 0, 0);
 preCamera.position.copy(targetCamPos);
@@ -864,7 +930,7 @@ function createNostradamusDiskTexture(dataIdx) {
     return tex;
 }
 
-/* ВОССТАНОВЛЕННАЯ ПОЛНАЯ СТРУКТУРА ГИГАНТСКИХ КОЛЕЦ */
+/* СТРУКТУРА ГИГАНТСКИХ КОЛЕЦ АСТРОЛЯБИИ */
 function createCyclopeanTrussRing(mainRadius, tubeWidth, tubeDepth, segments, nostradamusIdx = 0) {
     const group = new THREE.Group();
     group.add(new THREE.Mesh(new THREE.TorusGeometry(mainRadius, tubeWidth * 0.45, 12, segments), megaRingWireMat));
@@ -914,7 +980,7 @@ function createCyclopeanTrussRing(mainRadius, tubeWidth, tubeDepth, segments, no
             linePts.push(p1_topIn, p2_botIn);
             linePts.push(p1_topOut, p2_topIn);
         } else {
-            linePts.push(p1_botOut, p2_topOut);
+            linePts.push(p1_botOut, p2_botOut);
             linePts.push(p1_botIn, p2_topIn);
             linePts.push(p1_botOut, p2_botIn);
         }
@@ -944,11 +1010,16 @@ astrolabeRings.push(
 );
 
 /* =========================================================================
-   ИЗОБРАЖЕНИЯ ОТКРЫТИЙ (ГОЛОГРАФИЧЕСКИЕ ЧЕРТЕЖИ ДА ВИНЧИ)
+   НОВАЯ МЕХАНИКА: ОРБИТАЛЬНАЯ КАРУСЕЛЬ ИЗОБРЕТЕНИЙ И СТУДИЙНЫЙ ПОДИУМ
    ========================================================================= */
 function createDaVinciHoloMaterial(texture) {
     return new THREE.ShaderMaterial({
-        uniforms: { uTex: { value: texture }, uHover: { value: 0.0 }, uTime: { value: 0.0 } },
+        uniforms: { 
+            uTex: { value: texture }, 
+            uHover: { value: 0.0 }, 
+            uFocus: { value: 0.0 }, 
+            uTime: { value: 0.0 } 
+        },
         vertexShader: `
             varying vec2 vUv;
             void main() {
@@ -960,66 +1031,71 @@ function createDaVinciHoloMaterial(texture) {
             precision mediump float;
             uniform sampler2D uTex;
             uniform float uHover;
+            uniform float uFocus;
             uniform float uTime;
             varying vec2 vUv;
             void main() {
                 vec4 tex = texture2D(uTex, vUv);
                 float lum = dot(tex.rgb, vec3(0.299, 0.587, 0.114));
-                float stroke = smoothstep(0.10, 0.60, lum);
+                float stroke = smoothstep(0.12, 0.58, lum);
                 if (lum > 0.88) stroke = 1.0 - stroke;
+                
                 vec3 baseGold = vec3(0.85, 0.71, 0.25);
-                vec3 highlight = vec3(1.0, 0.95, 0.78);
-                float wave = sin((vUv.x + vUv.y) * 12.0 - uTime * 4.0) * 0.5 + 0.5;
-                vec3 finalColor = mix(baseGold, highlight, wave * 0.4 + uHover * 0.6);
-                gl_FragColor = vec4(finalColor, stroke * (0.65 + uHover * 0.35));
+                vec3 warmParchment = vec3(0.96, 0.90, 0.74);
+                float wave = sin((vUv.x + vUv.y) * 14.0 - uTime * 3.0) * 0.5 + 0.5;
+                vec3 finalColor = mix(baseGold, warmParchment, wave * 0.35 + uHover * 0.4 + uFocus * 0.25);
+                
+                float alpha = stroke * (0.35 + uFocus * 0.45 + uHover * 0.2);
+                gl_FragColor = vec4(finalColor, alpha);
             }
         `,
         transparent: true, side: THREE.DoubleSide, depthWrite: false
     });
 }
 
-function createBlueprintWireMaterial() {
-    return new THREE.ShaderMaterial({
-        uniforms: { uHover: { value: 0.0 }, uTime: { value: 0.0 } },
-        vertexShader: `
-            varying vec3 vPos;
-            void main() {
-                vPos = position;
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-            }
-        `,
-        fragmentShader: `
-            precision mediump float;
-            uniform float uHover;
-            uniform float uTime;
-            varying vec3 vPos;
-            void main() {
-                float wave = sin((vPos.x + vPos.y + vPos.z) * 0.2 - uTime * 3.5) * 0.5 + 0.5;
-                vec3 baseGold = vec3(0.85, 0.71, 0.25);
-                vec3 brightGlow = vec3(1.0, 0.96, 0.82);
-                vec3 col = mix(baseGold, brightGlow, wave * 0.4 + uHover * 0.6);
-                gl_FragColor = vec4(col, clamp(0.70 + wave * 0.30 + uHover * 0.30, 0.0, 1.0));
-            }
-        `,
-        transparent: true, depthWrite: false
-    });
-}
+function createCodexTablet(imageSource, romanNumeral = 'I') {
+    const tablet = new THREE.Group();
+    const w = 48, h = 48;
 
-function createSafeVolumetricBlueprintCard(imageSource) {
-    const cardGroup = new THREE.Group();
-    const w = 58, h = 58, d = 26;
-    const pts = [];
-    const corners = [
-        new THREE.Vector3(-w/2, -h/2, -d/2), new THREE.Vector3(w/2, -h/2, -d/2),
-        new THREE.Vector3(w/2, h/2, -d/2), new THREE.Vector3(-w/2, h/2, -d/2),
-        new THREE.Vector3(-w/2, -h/2, d/2), new THREE.Vector3(w/2, -h/2, d/2),
-        new THREE.Vector3(w/2, h/2, d/2), new THREE.Vector3(-w/2, h/2, d/2)
+    // 1. Тонкая филигранная латунная рамка
+    const borderPts = [
+        new THREE.Vector3(-w/2, -h/2, 0), new THREE.Vector3(w/2, -h/2, 0),
+        new THREE.Vector3(w/2, -h/2, 0), new THREE.Vector3(w/2, h/2, 0),
+        new THREE.Vector3(w/2, h/2, 0), new THREE.Vector3(-w/2, h/2, 0),
+        new THREE.Vector3(-w/2, h/2, 0), new THREE.Vector3(-w/2, -h/2, 0)
     ];
-    [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7],[0,6],[1,7],[2,4],[3,5]].forEach(e => pts.push(corners[e[0]], corners[e[1]]));
 
-    const wireframeMesh = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), createBlueprintWireMaterial());
-    cardGroup.add(wireframeMesh);
+    // Угловые метки канона (ренессансные виньетки)
+    const cSize = 4.5;
+    [
+        [-w/2, -h/2, 1, 1], [w/2, -h/2, -1, 1],
+        [w/2, h/2, -1, -1], [-w/2, h/2, 1, -1]
+    ].forEach(([cx, cy, sx, sy]) => {
+        borderPts.push(new THREE.Vector3(cx, cy, 0), new THREE.Vector3(cx + cSize * sx, cy, 0));
+        borderPts.push(new THREE.Vector3(cx, cy, 0), new THREE.Vector3(cx, cy + cSize * sy, 0));
+        borderPts.push(new THREE.Vector3(cx + cSize * 0.5 * sx, cy, 0), new THREE.Vector3(cx, cy + cSize * 0.5 * sy, 0));
+    });
 
+    const frameMat = new THREE.LineBasicMaterial({ color: 0xd4af37, transparent: true, opacity: 0.5 });
+    const frameMesh = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(borderPts), frameMat);
+    tablet.add(frameMesh);
+    tablet.frameMat = frameMat;
+
+    // 2. Полупрозрачная подложка-вуаль
+    const sheetGeo = new THREE.PlaneGeometry(w - 1, h - 1);
+    const sheetMat = new THREE.MeshBasicMaterial({
+        color: 0x0a0a0f,
+        transparent: true,
+        opacity: 0.55,
+        side: THREE.DoubleSide,
+        depthWrite: false
+    });
+    const sheetMesh = new THREE.Mesh(sheetGeo, sheetMat);
+    sheetMesh.position.z = -0.15;
+    tablet.add(sheetMesh);
+    tablet.sheetMat = sheetMat;
+
+    // 3. Текстура чертежа Леонардо
     if (imageSource && typeof imageSource === 'string' && imageSource.length > 2) {
         try {
             const textureLoader = new THREE.TextureLoader();
@@ -1030,89 +1106,88 @@ function createSafeVolumetricBlueprintCard(imageSource) {
                 texture.magFilter = THREE.LinearFilter;
                 texture.generateMipmaps = false;
                 const holoMat = createDaVinciHoloMaterial(texture);
-                cardGroup.add(new THREE.Mesh(new THREE.PlaneGeometry(50, 50), holoMat));
-                cardGroup.holoMat = holoMat;
+                const artMesh = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.88, h * 0.88), holoMat);
+                artMesh.position.z = 0.1;
+                tablet.add(artMesh);
+                tablet.holoMat = holoMat;
             });
         } catch(e) {}
     }
-    return cardGroup;
+
+    return tablet;
 }
 
-const floatingInventions = [
-    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[0]), basePos: new THREE.Vector3(-110, 34, 45), rotSpeed: new THREE.Vector3(0.0016, 0.0014, -0.0008) },
-    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[1]), basePos: new THREE.Vector3(115, -28, -40), rotSpeed: new THREE.Vector3(0.0012, 0.0018, 0.0010) },
-    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[2]), basePos: new THREE.Vector3(90, 36, 75), rotSpeed: new THREE.Vector3(-0.0014, 0.0016, 0.0009) },
-    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[3]), basePos: new THREE.Vector3(-36, -42, -35), rotSpeed: new THREE.Vector3(0.0008, 0.0012, 0.0006) },
-    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[4]), basePos: new THREE.Vector3(-85, -25, 80), rotSpeed: new THREE.Vector3(-0.0012, 0.0015, -0.0007) }
-];
+// Корневая группа карусели
+const carouselGroup = new THREE.Group();
+preGroup.add(carouselGroup);
 
-const hoverTargets = [];
-floatingInventions.forEach((item, idx) => {
-    item.group.position.copy(item.basePos);
-    preGroup.add(item.group);
+// Направляющее латунное рельсовое кольцо
+const CAROUSEL_RADIUS = 190;
+const railGeo = new THREE.RingGeometry(CAROUSEL_RADIUS - 0.7, CAROUSEL_RADIUS + 0.7, 120);
+const railMat = new THREE.MeshBasicMaterial({ color: 0xd4af37, transparent: true, opacity: 0.18, side: THREE.DoubleSide });
+const railMesh = new THREE.Mesh(railGeo, railMat);
+railMesh.rotation.x = Math.PI / 2;
+railMesh.position.y = -18;
+carouselGroup.add(railMesh);
 
-    const hitGeo = new THREE.BoxGeometry(46, 46, 12);
-    const hitMat = new THREE.MeshBasicMaterial({ visible: false });
-    const hitMesh = new THREE.Mesh(hitGeo, hitMat);
-    hitMesh.position.copy(item.basePos);
-    hitMesh.userData = { slideIdx: idx };
-    preGroup.add(hitMesh);
+const ROMAN_NUMERALS = ['I', 'II', 'III', 'IV', 'V'];
+const TOTAL_INVENTIONS = 5;
+const inventionItems = [];
 
-    item.hitMesh = hitMesh;
-    item.targetZ = item.basePos.z;
-    item.targetScale = 1.0;
-    item.isHovered = false;
-    hoverTargets.push(item);
-});
+for (let i = 0; i < TOTAL_INVENTIONS; i++) {
+    const tablet = createCodexTablet(USER_IMAGES[i], ROMAN_NUMERALS[i]);
+    carouselGroup.add(tablet);
 
-let currentSlideIndex = -1;
-let isProgrammaticNav = false;
-let navResumeTimer = null;
+    // Хит-бокс для точного клика
+    const hitMesh = new THREE.Mesh(new THREE.BoxGeometry(48, 48, 10), new THREE.MeshBasicMaterial({ visible: false }));
+    hitMesh.userData = { slideIdx: i };
+    tablet.add(hitMesh);
 
-function updateSlideDots() {
-    document.querySelectorAll('.slide-dot').forEach((d, idx) => {
-        if (idx === currentSlideIndex) d.classList.add('active');
-        else d.classList.remove('active');
+    inventionItems.push({
+        group: tablet,
+        hitMesh: hitMesh,
+        index: i,
+        baseAngle: (i / TOTAL_INVENTIONS) * Math.PI * 2,
+        isHovered: false
     });
 }
 
-function focusSlide(idx) {
-    if (idx < 0 || idx >= hoverTargets.length) return;
+let carouselTargetAngle = 0;
+let carouselCurrentAngle = 0;
+let currentSlideIndex = 0;
+
+function updateSelectorChips() {
+    const chips = document.querySelectorAll('.codex-item-chip');
+    chips.forEach((chip, idx) => {
+        if (idx === currentSlideIndex) chip.classList.add('active');
+        else chip.classList.remove('active');
+    });
+}
+
+function focusSlide(idx, playSound = true) {
+    if (idx < 0 || idx >= TOTAL_INVENTIONS) return;
     currentSlideIndex = idx;
-    playClickSound(1800, 0.015);
-    updateSlideDots();
+    if (playSound) playClickSound(1600, 0.02);
+    updateSelectorChips();
 
-    isProgrammaticNav = true;
-    if (navResumeTimer) clearTimeout(navResumeTimer);
-    navResumeTimer = setTimeout(() => { isProgrammaticNav = false; }, 350);
-
-    hoverTargets.forEach((item, i) => {
-        const isCurrent = (i === idx);
-        item.isHovered = isCurrent;
-        item.targetScale = isCurrent ? 1.35 : 1.0;
-        item.targetZ = isCurrent ? 120 : item.basePos.z;
-        item.group.traverse(child => {
-            if (child.material && child.material.uniforms && child.material.uniforms.uHover) {
-                child.material.uniforms.uHover.value = isCurrent ? 1.0 : 0.0;
-            }
-        });
-    });
-
-    const target = hoverTargets[idx];
-    targetCamPos.set(target.group.position.x * 0.72, target.group.position.y * 0.72, target.group.position.z + 105);
-    targetLookTarget.copy(target.group.position);
+    // Целевой угол поворота карусели: выводим выбранный чертёж точно в фокусную позицию
+    // Фокусная точка: перед камерой с лёгким благородным смещением вправо
+    carouselTargetAngle = -idx * (Math.PI * 2 / TOTAL_INVENTIONS);
 
     const preset = BLUEPRINT_PRESETS[idx];
     if (preset) {
-        document.getElementById('loaderStatusText').textContent = `[${idx + 1}/5] ${preset.name}`;
+        const titleEl = document.getElementById('loaderStatusText');
+        if (titleEl) titleEl.textContent = `[${ROMAN_NUMERALS[idx]}/V] ${preset.name}`;
         const sub = document.getElementById('blueprintSubtitle');
-        sub.textContent = preset.subtitle;
-        sub.style.opacity = '1';
+        if (sub) {
+            sub.textContent = preset.subtitle;
+            sub.style.opacity = '1';
+        }
     }
 }
 
-window.nextSlide = function() { focusSlide((currentSlideIndex + 1) % hoverTargets.length); };
-window.prevSlide = function() { focusSlide((currentSlideIndex - 1 + hoverTargets.length) % hoverTargets.length); };
+window.nextSlide = function() { focusSlide((currentSlideIndex + 1) % TOTAL_INVENTIONS); };
+window.prevSlide = function() { focusSlide((currentSlideIndex - 1 + TOTAL_INVENTIONS) % TOTAL_INVENTIONS); };
 window.goToSlide = function(idx) { focusSlide(idx); };
 
 window.applySelectedPresetAndEnter = function(e) {
@@ -1122,6 +1197,15 @@ window.applySelectedPresetAndEnter = function(e) {
     }
     triggerCameraObscuraTransition(e);
 };
+
+// Интерактивное переключение колесиком мыши на прелоадере
+window.addEventListener('wheel', (e) => {
+    if (preloaderDismissed || isObscuraTransition) return;
+    if (Math.abs(e.deltaY) > 35) {
+        if (e.deltaY > 0) nextSlide();
+        else prevSlide();
+    }
+}, { passive: true });
 
 /* =========================================================================
    ВЫСОКОДЕТАЛИЗИРОВАННАЯ 3D-МОДЕЛЬ СПУТНИКА (BLUEPRINT WIREFRAME)
@@ -1426,18 +1510,15 @@ const mouseVec = new THREE.Vector2(-999, -999);
 
 function performRaycastSelection(isExplicitClick = false) {
     if (preloaderDismissed || isObscuraTransition) return;
-    if (!isExplicitClick && (isProgrammaticNav || window.innerWidth < 768)) return;
 
     raycaster.setFromCamera(mouseVec, preCamera);
-    const candidateMeshes = isExplicitClick 
-        ? hoverTargets.map(h => h.hitMesh) 
-        : hoverTargets.filter((_, i) => i !== currentSlideIndex).map(h => h.hitMesh);
+    const hitCandidates = inventionItems.map(item => item.hitMesh);
+    const intersects = raycaster.intersectObjects(hitCandidates, false);
 
-    const intersects = raycaster.intersectObjects(candidateMeshes, false);
     if (intersects.length > 0) {
         const hit = intersects[0].object;
         const targetIdx = hit.userData.slideIdx;
-        if (typeof targetIdx === 'number' && targetIdx !== currentSlideIndex) {
+        if (typeof targetIdx === 'number' && (isExplicitClick || targetIdx !== currentSlideIndex)) {
             focusSlide(targetIdx);
         }
     }
@@ -1446,7 +1527,6 @@ function performRaycastSelection(isExplicitClick = false) {
 window.addEventListener('mousemove', (e) => {
     mouseVec.x = (e.clientX / window.innerWidth) * 2 - 1;
     mouseVec.y = -(e.clientY / window.innerHeight) * 2 + 1;
-    performRaycastSelection(false);
 });
 
 window.addEventListener('pointerdown', (e) => {
@@ -1485,7 +1565,7 @@ function triggerCameraObscuraTransition(event) {
     const hud = document.querySelector('.preloader-fixed-hud');
     if (hud) hud.style.opacity = '0';
 
-    targetCamPos.set(0, 0, baseCamZ + 15);
+    targetCamPos.set(0, 0, baseCamPos.z + 15);
     targetLookTarget.set(0, 0, 0);
 
     astrolabeRings.forEach(ring => {
@@ -1494,8 +1574,8 @@ function triggerCameraObscuraTransition(event) {
         ring.startRotZ = ring.group.rotation.z;
     });
 
-    hoverTargets.forEach((item) => {
-        item.startPos = item.group.position.clone();
+    inventionItems.forEach(item => {
+        item.startPos = item.group.getWorldPosition(new THREE.Vector3());
         item.startRot = item.group.rotation.clone();
     });
 }
@@ -1527,7 +1607,7 @@ function animatePreloader() {
 
         checkSputnikScheduler(now);
 
-        /* АНИМАЦИЯ МЕДЛЕННОГО ПОЛЕТА СПУТНИКА СКВОЗЬ ВЫБРАННЫЙ ЭКРАН */
+        /* АНИМАЦИЯ МЕДЛЕННОГО ПОЛЕТА СПУТНИКА */
         if (sputnikFlight.active) {
             const flightP = (now - sputnikFlight.startTime) / (sputnikFlight.duration * 1000);
             if (flightP < 1.0) {
@@ -1581,28 +1661,8 @@ function animatePreloader() {
             const shrinkP = Math.max(0, (progress - 0.42) / 0.58);
             const easeShrink = Math.pow(shrinkP, 3.6);
 
-            hoverTargets.forEach((item, idx) => {
-                if (item.startPos) {
-                    const pull = Math.pow(progress, 1.85);
-                    const vortexAngle = progress * Math.PI * 3.4 + idx * (Math.PI * 2 / 5);
-                    const currentRadius = (1.0 - pull) * 125.0;
-                    
-                    item.group.position.x = Math.cos(vortexAngle) * currentRadius;
-                    item.group.position.y = Math.sin(vortexAngle) * currentRadius;
-                    item.group.position.z = THREE.MathUtils.lerp(item.startPos.z, 0, pull);
-
-                    item.group.rotation.z += 0.02 + progress * 0.07;
-                    item.group.rotation.x = THREE.MathUtils.lerp(item.startRot.x, 0, alignP);
-                    item.group.rotation.y = THREE.MathUtils.lerp(item.startRot.y, 0, alignP);
-
-                    const s = Math.max((1.0 - pull * 1.05), 0.001);
-                    item.group.scale.set(s, s, s);
-
-                    item.group.traverse(child => {
-                        if (child.material) child.material.opacity = Math.max(1.0 - progress * 1.25, 0.0);
-                    });
-                }
-            });
+            carouselGroup.position.z = THREE.MathUtils.lerp(0, -60, progress);
+            carouselGroup.scale.setScalar(Math.max(1.0 - progress * 0.96, 0.01));
 
             const positions = particleGeo.attributes.position.array;
             for (let i = 0; i < particleCount * 3; i += 3) {
@@ -1647,24 +1707,51 @@ function animatePreloader() {
         dustParticles.rotation.y = t * 0.02;
         dustParticles.rotation.x = Math.sin(t * 0.015) * 0.1;
 
-        const isFocused = currentSlideIndex !== -1;
-        megaRingWireMat.opacity = THREE.MathUtils.lerp(megaRingWireMat.opacity, isFocused ? 0.12 : 0.38, 0.05);
-
+        // Плавное вращение астролябии
         astrolabeRings.forEach(item => {
             item.group.rotation.x += item.sx;
             item.group.rotation.y += item.sy;
             item.group.rotation.z += item.sz;
         });
 
-        hoverTargets.forEach((item, idx) => {
-            if (!item.isHovered) {
-                item.group.position.y = item.basePos.y + Math.sin(t * 1.1 + idx * 1.5) * 7.5;
-                item.group.position.x = item.basePos.x + Math.cos(t * 0.75 + idx * 1.2) * 5.0;
+        // Плавный поворот карусели кодекса
+        carouselCurrentAngle = THREE.MathUtils.lerp(carouselCurrentAngle, carouselTargetAngle, 0.075);
+        carouselGroup.rotation.y = carouselCurrentAngle + Math.sin(t * 0.5) * 0.02;
+
+        // Расположение чертежей по орбите с легким наклоном к наблюдателю
+        inventionItems.forEach(item => {
+            const angle = item.baseAngle;
+            // Координаты на окружности
+            const x = Math.sin(angle) * CAROUSEL_RADIUS;
+            const z = Math.cos(angle) * CAROUSEL_RADIUS - 120; // смещение назад от камеры
+            const y = Math.sin(t * 1.2 + item.index) * 3.5;
+
+            item.group.position.set(x, y, z);
+            
+            // Планшет всегда ориентирован в сторону камеры, но сохраняет естественный наклон
+            item.group.rotation.y = -carouselGroup.rotation.y;
+            item.group.rotation.x = 0.08 + Math.sin(t + item.index) * 0.02;
+
+            // Вычисляем, насколько этот чертеж близок к передней фокусной точке
+            const worldPos = item.group.getWorldPosition(new THREE.Vector3());
+            const distToCam = worldPos.distanceTo(preCamera.position);
+            const isCurrent = (item.index === currentSlideIndex);
+
+            // Плавное масштабирование и глубина резкости
+            const targetScale = isCurrent ? 1.08 : 0.82;
+            item.group.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1);
+
+            // Плавная настройка прозрачности и яркости шейдера
+            if (item.group.holoMat && item.group.holoMat.uniforms) {
+                item.group.holoMat.uniforms.uTime.value = t;
+                item.group.holoMat.uniforms.uFocus.value = THREE.MathUtils.lerp(item.group.holoMat.uniforms.uFocus.value, isCurrent ? 1.0 : 0.0, 0.1);
             }
-            item.group.position.z = THREE.MathUtils.lerp(item.group.position.z, item.targetZ, 0.08);
-            item.hitMesh.position.copy(item.group.position);
-            const sc = THREE.MathUtils.lerp(item.group.scale.x, item.targetScale, 0.1);
-            item.group.scale.set(sc, sc, sc);
+            if (item.group.frameMat) {
+                item.group.frameMat.opacity = THREE.MathUtils.lerp(item.group.frameMat.opacity, isCurrent ? 0.85 : 0.22, 0.1);
+            }
+            if (item.group.sheetMat) {
+                item.group.sheetMat.opacity = THREE.MathUtils.lerp(item.group.sheetMat.opacity, isCurrent ? 0.65 : 0.25, 0.1);
+            }
         });
 
         preCamera.position.lerp(targetCamPos, 0.05);
@@ -1680,9 +1767,10 @@ function animatePreloader() {
 
 animatePreloader();
 
+// Инициализируем первый чертёж после загрузки сцены
 setTimeout(() => {
-    if (!preloaderDismissed && currentSlideIndex === -1) focusSlide(0);
-}, 1200);
+    if (!preloaderDismissed) focusSlide(0, false);
+}, 600);
 
 const CYRILLIC_GLYPHS = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ0123456789§$%*#@!/[]:;';
 const NUMERIC_GLYPHS = '0123456789 ';
