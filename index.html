@@ -1366,36 +1366,69 @@ function playSputnikBeep(volumeRatio = 1.0) {
 let sputnikFlight = { 
     active: false, 
     startTime: 0, 
-    duration: 15.5, 
+    duration: 24.0, // Медленный, плавный и величественный полет (24 секунды), чтобы разглядеть все детали
     startP: new THREE.Vector3(), 
     endP: new THREE.Vector3(), 
     lastBeep: 0,
-    baseScale: 0.85
+    baseScale: 0.95
 };
 
 function launchSputnik() {
     if (preloaderDismissed || isObscuraTransition || sputnikFlight.active) return;
     
-    // Старт из сверхдальней космической бездны (-2800 по Z)
-    // Рандомный сектор в глубине с небольшим смещением к центру камеры
-    const farX = (Math.random() - 0.5) * 550;
-    const farY = (Math.random() - 0.5) * 380;
-    sputnikFlight.startP.set(farX, farY, -2800);
+    // Получаем текущие векторы направления активной камеры того экрана/чертежа, где находится пользователь
+    const camPos = preCamera.position.clone();
+    const lookTarget = currentLookTarget.clone();
     
-    // Траектория пролета: выходит через камеру (Z = 520, камера на 390)
-    // С легким смещением мимо объектива для кинематографичного ракурса
-    const passAngle = Math.random() * Math.PI * 2;
-    const passOffset = 45 + Math.random() * 65;
-    const endX = Math.cos(passAngle) * passOffset;
-    const endY = Math.sin(passAngle) * passOffset;
-    sputnikFlight.endP.set(endX, endY, 560);
+    // Направление взгляда (Z камеры)
+    const forward = new THREE.Vector3().subVectors(lookTarget, camPos).normalize();
+    // Вектор вправо (X камеры)
+    const right = new THREE.Vector3().crossVectors(forward, preCamera.up).normalize();
+    // Истинный вектор вверх (Y камеры)
+    const up = new THREE.Vector3().crossVectors(right, forward).normalize();
+    
+    // 4 угла экрана:
+    // [0] верхний левый, [1] верхний правый, [2] нижний левый, [3] нижний правый
+    const corners = [
+        { x: -0.85, y: 0.75 },
+        { x: 0.85, y: 0.75 },
+        { x: -0.85, y: -0.75 },
+        { x: 0.85, y: -0.75 }
+    ];
+    
+    const startIdx = Math.floor(Math.random() * 4);
+    // Для разнообразия спутник летит в противоположный или соседний угол
+    let endIdx = (startIdx + 2 + (Math.random() > 0.5 ? 1 : 0)) % 4;
+    
+    const startCorner = corners[startIdx];
+    const endCorner = corners[endIdx];
+    
+    // Точка старта: глубоко в пространстве выбранного экрана (дистанция 2400)
+    const startDistance = 2400;
+    const fovFactor = Math.tan(THREE.MathUtils.degToRad(preCamera.fov * 0.5)) * startDistance;
+    const aspect = preCamera.aspect || (window.innerWidth / window.innerHeight);
+    
+    const startOffsetX = right.clone().multiplyScalar(startCorner.x * fovFactor * aspect * 0.95);
+    const startOffsetY = up.clone().multiplyScalar(startCorner.y * fovFactor * 0.95);
+    const startOffsetZ = forward.clone().multiplyScalar(startDistance);
+    
+    sputnikFlight.startP.copy(camPos).add(startOffsetZ).add(startOffsetX).add(startOffsetY);
+    
+    // Точка финиша: пролетает очень близко перед объективом камеры и уходит за спину (на -180 за камеру)
+    const passDistance = -180;
+    const passSpread = 28 + Math.random() * 22; // Пролетает эффектно близко к камере
+    const endOffsetX = right.clone().multiplyScalar(endCorner.x * passSpread);
+    const endOffsetY = up.clone().multiplyScalar(endCorner.y * passSpread);
+    const endOffsetZ = forward.clone().multiplyScalar(passDistance);
+    
+    sputnikFlight.endP.copy(camPos).add(endOffsetZ).add(endOffsetX).add(endOffsetY);
     
     sputnikFlight.active = true;
     sputnikFlight.startTime = performance.now();
     sputnikFlight.lastBeep = performance.now();
     sputnik.visible = true;
     sputnik.position.copy(sputnikFlight.startP);
-    sputnik.scale.set(0.01, 0.01, 0.01);
+    sputnik.scale.set(0.005, 0.005, 0.005);
 }
 
 let sputnikTimerStarted = false;
@@ -1406,7 +1439,7 @@ function checkSputnikScheduler(now) {
     if (idleSeconds >= 30.0 && !sputnikTimerStarted) {
         sputnikTimerStarted = true;
         launchSputnik();
-        // И далее каждые 60 секунд в рандомной точке
+        // И далее каждые 60 секунд в рандомном углу выбранного экрана
         setInterval(() => {
             if (!preloaderDismissed && !isObscuraTransition) launchSputnik();
         }, 60000);
@@ -1519,37 +1552,31 @@ function animatePreloader() {
 
         checkSputnikScheduler(now);
 
-        /* АНИМАЦИЯ ПОЛЕТА СПУТНИКА ЧЕРЕЗ КАМЕРУ (МЕДЛЕННО РАСТУЩАЯ ТОЧКА ИЗ ГЛУБИНЫ) */
+        /* АНИМАЦИЯ МЕДЛЕННОГО ПОЛЕТА СПУТНИКА СКВОЗЬ ВЫБРАННЫЙ ЭКРАН */
         if (sputnikFlight.active) {
             const flightP = (now - sputnikFlight.startTime) / (sputnikFlight.duration * 1000);
             if (flightP < 1.0) {
-                // Нелинейное ускорение сближения: долго висит далекой точкой, затем плавно разгоняется
-                const depthEase = Math.pow(flightP, 2.35);
+                // Плавное нелинейное ускорение: долго приближается из глубины, раскрывая детали
+                const depthEase = Math.pow(flightP, 2.15);
                 sputnik.position.lerpVectors(sputnikFlight.startP, sputnikFlight.endP, depthEase);
                 
-                // Легкое дуговое покачивание по орбите
-                const arcFactor = Math.sin(flightP * Math.PI);
-                sputnik.position.y += arcFactor * 35;
-                sputnik.position.x += Math.sin(flightP * Math.PI * 1.5) * 20;
+                // Медленное, плавное орбитальное вращение спутника для кругового обзора всех деталей
+                sputnik.rotation.y += 0.006 + depthEase * 0.008;
+                sputnik.rotation.x += 0.004 + depthEase * 0.005;
+                sputnik.rotation.z += 0.003;
 
-                // Вращение корпуса спутника в пространстве
-                sputnik.rotation.y += 0.012 + depthEase * 0.025;
-                sputnik.rotation.x += 0.008 + depthEase * 0.015;
-                sputnik.rotation.z += 0.005;
-
-                // Эффект растущей точки: плавное увеличение масштаба от микроскопического (0.01) к полному (0.85)
-                // На дальних дистанциях растет медленно, вблизи раскрывается в полный размер
-                const growP = Math.min(Math.pow(flightP, 1.8) * 1.15, 1.0);
-                const currentScale = THREE.MathUtils.lerp(0.02, sputnikFlight.baseScale, growP);
+                // Эффект появления точки: от микроскопической вдали до детального масштаба перед камерой
+                const growP = Math.min(Math.pow(flightP, 1.6) * 1.1, 1.0);
+                const currentScale = THREE.MathUtils.lerp(0.015, sputnikFlight.baseScale, growP);
                 sputnik.scale.set(currentScale, currentScale, currentScale);
 
-                // Плавное проявление из космической тьмы (Fade-in в первые 12% пути)
-                const fadeIn = THREE.MathUtils.clamp(flightP / 0.12, 0.0, 1.0);
-                // Затухание после пролета за спину камеры (последние 8% пути)
-                const fadeOut = THREE.MathUtils.clamp((1.0 - flightP) / 0.08, 0.0, 1.0);
+                // Плавное проявление из космической тьмы (Fade-in в первые 10% пути)
+                const fadeIn = THREE.MathUtils.clamp(flightP / 0.10, 0.0, 1.0);
+                // Затухание при уходе за спину камеры (последние 10% пути)
+                const fadeOut = THREE.MathUtils.clamp((1.0 - flightP) / 0.10, 0.0, 1.0);
                 const masterAlpha = fadeIn * fadeOut;
 
-                // Управление прозрачностью всех элементов спутника
+                // Управление прозрачностью сетки и элементов
                 sputnik.traverse(child => {
                     if (child.material) {
                         child.material.transparent = true;
@@ -1560,26 +1587,24 @@ function animatePreloader() {
                     }
                 });
                 
-                // Мигание красного сигнала (вдали мигает как точечный импульс, вблизи освещает корпус)
-                const blinkPeriod = THREE.MathUtils.lerp(420, 260, depthEase);
+                // Мигание красного сигнала
+                const blinkPeriod = THREE.MathUtils.lerp(460, 280, depthEase);
                 const blinkState = (Math.floor(now / blinkPeriod) % 2 === 0);
                 if (sputnik.beaconGroup) {
                     sputnik.beaconGroup.visible = blinkState;
-                    // Вдали маячок чуть гипертрофирован, чтобы четко читаться как мерцающая звезда
-                    const beaconBoost = THREE.MathUtils.lerp(2.8, 1.0, depthEase);
+                    const beaconBoost = THREE.MathUtils.lerp(2.6, 1.0, depthEase);
                     sputnik.beaconGroup.scale.set(beaconBoost, beaconBoost, beaconBoost);
                 }
                 
-                // Нарастающий и стихающий звук "бип-бип-бип"
-                // Вдали — тихий далекий сигнал, в зените пролета — максимальная громкость, за камерой — затихание
-                const beepInterval = THREE.MathUtils.lerp(1200, 750, depthEase);
+                // Аутентичный звук "Бип-бип": нарастает при сближении, а при пролете камеры плавно и реалистично стихает
+                const beepInterval = THREE.MathUtils.lerp(1300, 850, depthEase);
                 if (now - sputnikFlight.lastBeep > beepInterval) {
-                    // Пик громкости приходится на момент пролета мимо камеры (~0.85 от общего пути)
+                    // Звуковой профиль: пик на 0.78 пути (максимальное сближение с экраном), затем постепенное затухание
                     let soundVolume = 0;
-                    if (flightP < 0.85) {
-                        soundVolume = Math.pow(flightP / 0.85, 2.0); // нарастание от 0 до 1
+                    if (flightP < 0.78) {
+                        soundVolume = Math.pow(flightP / 0.78, 2.2); // постепенное нарастание из тишины
                     } else {
-                        soundVolume = Math.max(0, 1.0 - (flightP - 0.85) / 0.15); // быстрый спад
+                        soundVolume = Math.max(0, Math.pow(1.0 - (flightP - 0.78) / 0.22, 2.0)); // плавное угасание звука
                     }
                     playSputnikBeep(soundVolume * masterAlpha);
                     sputnikFlight.lastBeep = now;
