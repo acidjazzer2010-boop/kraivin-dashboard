@@ -36,12 +36,12 @@ button:focus:not(:focus-visible){outline:none}
 #preloader-webgl:active{cursor:grabbing}
 
 .preloader-fixed-hud{position:absolute;inset:0;width:100%;height:100%;z-index:30;pointer-events:none;user-select:none;transition:opacity 0.8s ease}
-#preloaderTitle{position:absolute;top:26px;left:50%;transform:translateX(-50%);font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:clamp(22px,3.2vw,44px);font-weight:700;letter-spacing:.26em;color:var(--accent-gold);opacity:0;text-shadow:0 0 45px rgba(212,175,55,.85);transition:opacity 1.8s cubic-bezier(.16,1,.3,1);text-align:center;white-space:nowrap}
+#preloaderTitle{position:absolute;top:24px;left:50%;transform:translateX(-50%);font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:clamp(22px,3.2vw,44px);font-weight:700;letter-spacing:.26em;color:var(--accent-gold);opacity:0;text-shadow:0 0 45px rgba(212,175,55,.85);transition:opacity 1.8s cubic-bezier(.16,1,.3,1);text-align:center;white-space:nowrap}
 #preloaderTitle.locked-on{opacity:1!important}
 
-#blueprintSubtitle{position:absolute;top:76px;left:50%;transform:translateX(-50%);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.32em;text-transform:uppercase;color:rgba(212,175,55,0.75);opacity:0;transition:opacity 0.6s ease;text-align:center;white-space:nowrap}
+#blueprintSubtitle{position:absolute;top:74px;left:50%;transform:translateX(-50%);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.32em;text-transform:uppercase;color:rgba(212,175,55,0.75);opacity:0;transition:opacity 0.6s ease;text-align:center;white-space:nowrap}
 
-/* РЕНЕССАНСНЫЙ ЛАТУННЫЙ СЕЛЕКТОР КОДЕКСА */
+/* ЛАТУННЫЙ СЕЛЕКТОР КОДЕКСА */
 .codex-selector-hud{
     position:absolute;
     bottom:110px;
@@ -52,9 +52,9 @@ button:focus:not(:focus-visible){outline:none}
     gap:18px;
     pointer-events:auto;
     z-index:40;
-    background:rgba(10,10,14,0.72);
+    background:rgba(10,10,14,0.78);
     padding:6px 14px;
-    border:1px solid rgba(212,175,55,0.35);
+    border:1px solid rgba(212,175,55,0.38);
     backdrop-filter:blur(14px);
     box-shadow:0 10px 30px rgba(0,0,0,0.6), inset 0 0 14px rgba(212,175,55,0.08);
 }
@@ -67,7 +67,7 @@ button:focus:not(:focus-visible){outline:none}
     font-family:'JetBrains Mono',monospace;
     font-size:8px;
     letter-spacing:0.35em;
-    color:rgba(212,175,55,0.6);
+    color:rgba(212,175,55,0.65);
 }
 .codex-nav-btn{
     width:32px;
@@ -114,7 +114,7 @@ button:focus:not(:focus-visible){outline:none}
     box-shadow:0 0 16px rgba(212,175,55,0.6);
 }
 
-.bottom-dock{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;width:400px;height:62px}
+.bottom-dock{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;width:420px;height:62px}
 #preloaderHUD{display:flex;flex-direction:column;align-items:center;gap:8px;transition:opacity .4s}
 .progress-bar-bg{width:280px;height:2px;background:rgba(255,255,255,.12);position:relative;overflow:hidden}
 #loaderProgressBar{position:absolute;left:0;top:0;height:100%;width:0;background:var(--accent-gold);box-shadow:0 0 10px var(--accent-gold);transition:width .1s linear}
@@ -193,7 +193,7 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
         <div id="preloaderTitle">Архитектура финансов</div>
         <div id="blueprintSubtitle">Тяга и масштабирование выручки</div>
         
-        <!-- НОВЫЙ СТИЛЬНЫЙ ВИНТАЖНЫЙ СЕЛЕКТОР -->
+        <!-- СЕЛЕКТОР КОДЕКСА ДА ВИНЧИ -->
         <div class="codex-selector-hud">
             <button class="codex-nav-btn" onclick="prevSlide()" aria-label="Предыдущий чертеж" title="Предыдущее изобретение">‹</button>
             <div class="codex-items-list" id="codexChipsContainer">
@@ -434,7 +434,7 @@ const OBSCURA_DURATION = 6.8;
 let preloaderDismissed = false;
 
 /* =========================================================================
-   СТАБИЛИЗИРОВАННЫЙ RENAISSANCE WEB AUDIO ДВИЖОК
+   RENAISSANCE WEB AUDIO ДВИЖОК
    ========================================================================= */
 class RenaissanceSoundscapeEngine {
     constructor() {
@@ -809,8 +809,8 @@ preRenderer.setSize(window.innerWidth, window.innerHeight);
 const preScene = new THREE.Scene();
 const preCamera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 1, 6000);
 
-// Фиксированная точка наблюдения: сохраняем открытый центр и глубину
-const baseCamPos = new THREE.Vector3(0, 0, 390);
+// Базовая позиция камеры
+const baseCamPos = new THREE.Vector3(0, 4, 385);
 let targetCamPos = baseCamPos.clone();
 let currentLookTarget = new THREE.Vector3(0, 0, 0);
 let targetLookTarget = new THREE.Vector3(0, 0, 0);
@@ -842,9 +842,7 @@ preGroup.add(dustParticles);
 const megaRingWireMat = new THREE.MeshBasicMaterial({ color: 0x00c3ff, wireframe: true, transparent: true, opacity: 0.38 });
 const secondaryWireMat = new THREE.MeshBasicMaterial({ color: 0x0077aa, wireframe: true, transparent: true, opacity: 0.22 });
 
-/* =========================================================================
-   ГЕНЕРАЦИЯ ДИСКОВ СУДЬБЫ НОСТРАДАМУСА И РЕНЕССАНСНЫХ ЛАТИНСКИХ КАТРЕНОВ
-   ========================================================================= */
+/* ДИСКИ НОСТРАДАМУСА */
 const NOSTRADAMUS_PROPHECIES = [
     {
         innerRing: "ROTA FORTUNAE • FATORUM ORBIS • CENTURIA I • OMNIA FLUXUS",
@@ -930,7 +928,7 @@ function createNostradamusDiskTexture(dataIdx) {
     return tex;
 }
 
-/* СТРУКТУРА ГИГАНТСКИХ КОЛЕЦ АСТРОЛЯБИИ */
+/* КОЛЬЦА АСТРОЛЯБИИ */
 function createCyclopeanTrussRing(mainRadius, tubeWidth, tubeDepth, segments, nostradamusIdx = 0) {
     const group = new THREE.Group();
     group.add(new THREE.Mesh(new THREE.TorusGeometry(mainRadius, tubeWidth * 0.45, 12, segments), megaRingWireMat));
@@ -981,7 +979,7 @@ function createCyclopeanTrussRing(mainRadius, tubeWidth, tubeDepth, segments, no
             linePts.push(p1_topOut, p2_topIn);
         } else {
             linePts.push(p1_botOut, p2_botOut);
-            linePts.push(p1_botIn, p2_topIn);
+            linePts.push(p1_botIn, p2_botIn);
             linePts.push(p1_botOut, p2_botIn);
         }
 
@@ -1010,7 +1008,7 @@ astrolabeRings.push(
 );
 
 /* =========================================================================
-   НОВАЯ МЕХАНИКА: ОРБИТАЛЬНАЯ КАРУСЕЛЬ ИЗОБРЕТЕНИЙ И СТУДИЙНЫЙ ПОДИУМ
+   КАРУСЕЛЬ ЧЕРТЕЖЕЙ ДА ВИНЧИ С КИНЕМАТИЧЕСКИМ ФОКУСИРОВАНИЕМ
    ========================================================================= */
 function createDaVinciHoloMaterial(texture) {
     return new THREE.ShaderMaterial({
@@ -1037,15 +1035,18 @@ function createDaVinciHoloMaterial(texture) {
             void main() {
                 vec4 tex = texture2D(uTex, vUv);
                 float lum = dot(tex.rgb, vec3(0.299, 0.587, 0.114));
-                float stroke = smoothstep(0.12, 0.58, lum);
-                if (lum > 0.88) stroke = 1.0 - stroke;
+                
+                // Чёткая прорисовка чернильных линий
+                float stroke = smoothstep(0.08, 0.65, lum);
+                if (lum > 0.90) stroke = 1.0 - stroke;
                 
                 vec3 baseGold = vec3(0.85, 0.71, 0.25);
-                vec3 warmParchment = vec3(0.96, 0.90, 0.74);
-                float wave = sin((vUv.x + vUv.y) * 14.0 - uTime * 3.0) * 0.5 + 0.5;
-                vec3 finalColor = mix(baseGold, warmParchment, wave * 0.35 + uHover * 0.4 + uFocus * 0.25);
+                vec3 warmParchment = vec3(0.99, 0.94, 0.82);
+                float wave = sin((vUv.x + vUv.y) * 12.0 - uTime * 2.8) * 0.5 + 0.5;
+                vec3 finalColor = mix(baseGold, warmParchment, wave * 0.35 + uFocus * 0.45);
                 
-                float alpha = stroke * (0.35 + uFocus * 0.45 + uHover * 0.2);
+                // В фокусе чертёж становится плотным и высокодетализированным
+                float alpha = stroke * (0.35 + uFocus * 0.60 + uHover * 0.15);
                 gl_FragColor = vec4(finalColor, alpha);
             }
         `,
@@ -1055,9 +1056,10 @@ function createDaVinciHoloMaterial(texture) {
 
 function createCodexTablet(imageSource, romanNumeral = 'I') {
     const tablet = new THREE.Group();
-    const w = 48, h = 48;
+    // Оптимальный читаемый масштаб: 78x78 единиц
+    const w = 78, h = 78;
 
-    // 1. Тонкая филигранная латунная рамка
+    // Филигранная латунная рамка чертежа
     const borderPts = [
         new THREE.Vector3(-w/2, -h/2, 0), new THREE.Vector3(w/2, -h/2, 0),
         new THREE.Vector3(w/2, -h/2, 0), new THREE.Vector3(w/2, h/2, 0),
@@ -1065,37 +1067,37 @@ function createCodexTablet(imageSource, romanNumeral = 'I') {
         new THREE.Vector3(-w/2, h/2, 0), new THREE.Vector3(-w/2, -h/2, 0)
     ];
 
-    // Угловые метки канона (ренессансные виньетки)
-    const cSize = 4.5;
+    // Угловые засечки
+    const cSize = 7.0;
     [
         [-w/2, -h/2, 1, 1], [w/2, -h/2, -1, 1],
         [w/2, h/2, -1, -1], [-w/2, h/2, 1, -1]
     ].forEach(([cx, cy, sx, sy]) => {
         borderPts.push(new THREE.Vector3(cx, cy, 0), new THREE.Vector3(cx + cSize * sx, cy, 0));
         borderPts.push(new THREE.Vector3(cx, cy, 0), new THREE.Vector3(cx, cy + cSize * sy, 0));
-        borderPts.push(new THREE.Vector3(cx + cSize * 0.5 * sx, cy, 0), new THREE.Vector3(cx, cy + cSize * 0.5 * sy, 0));
+        borderPts.push(new THREE.Vector3(cx + cSize * 0.6 * sx, cy, 0), new THREE.Vector3(cx, cy + cSize * 0.6 * sy, 0));
     });
 
-    const frameMat = new THREE.LineBasicMaterial({ color: 0xd4af37, transparent: true, opacity: 0.5 });
+    const frameMat = new THREE.LineBasicMaterial({ color: 0xd4af37, transparent: true, opacity: 0.65 });
     const frameMesh = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(borderPts), frameMat);
     tablet.add(frameMesh);
     tablet.frameMat = frameMat;
 
-    // 2. Полупрозрачная подложка-вуаль
-    const sheetGeo = new THREE.PlaneGeometry(w - 1, h - 1);
+    // Полупрозрачный пергаментный щит (задник)
+    const sheetGeo = new THREE.PlaneGeometry(w - 1.2, h - 1.2);
     const sheetMat = new THREE.MeshBasicMaterial({
-        color: 0x0a0a0f,
+        color: 0x09090e,
         transparent: true,
-        opacity: 0.55,
+        opacity: 0.68,
         side: THREE.DoubleSide,
         depthWrite: false
     });
     const sheetMesh = new THREE.Mesh(sheetGeo, sheetMat);
-    sheetMesh.position.z = -0.15;
+    sheetMesh.position.z = -0.2;
     tablet.add(sheetMesh);
     tablet.sheetMat = sheetMat;
 
-    // 3. Текстура чертежа Леонардо
+    // Холст чертежа Леонардо
     if (imageSource && typeof imageSource === 'string' && imageSource.length > 2) {
         try {
             const textureLoader = new THREE.TextureLoader();
@@ -1106,8 +1108,8 @@ function createCodexTablet(imageSource, romanNumeral = 'I') {
                 texture.magFilter = THREE.LinearFilter;
                 texture.generateMipmaps = false;
                 const holoMat = createDaVinciHoloMaterial(texture);
-                const artMesh = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.88, h * 0.88), holoMat);
-                artMesh.position.z = 0.1;
+                const artMesh = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.92, h * 0.92), holoMat);
+                artMesh.position.z = 0.15;
                 tablet.add(artMesh);
                 tablet.holoMat = holoMat;
             });
@@ -1117,17 +1119,15 @@ function createCodexTablet(imageSource, romanNumeral = 'I') {
     return tablet;
 }
 
-// Корневая группа карусели
 const carouselGroup = new THREE.Group();
 preGroup.add(carouselGroup);
 
-// Направляющее латунное рельсовое кольцо
-const CAROUSEL_RADIUS = 190;
-const railGeo = new THREE.RingGeometry(CAROUSEL_RADIUS - 0.7, CAROUSEL_RADIUS + 0.7, 120);
-const railMat = new THREE.MeshBasicMaterial({ color: 0xd4af37, transparent: true, opacity: 0.18, side: THREE.DoubleSide });
+const CAROUSEL_RADIUS = 210;
+const railGeo = new THREE.RingGeometry(CAROUSEL_RADIUS - 1.0, CAROUSEL_RADIUS + 1.0, 140);
+const railMat = new THREE.MeshBasicMaterial({ color: 0xd4af37, transparent: true, opacity: 0.22, side: THREE.DoubleSide });
 const railMesh = new THREE.Mesh(railGeo, railMat);
 railMesh.rotation.x = Math.PI / 2;
-railMesh.position.y = -18;
+railMesh.position.y = -35;
 carouselGroup.add(railMesh);
 
 const ROMAN_NUMERALS = ['I', 'II', 'III', 'IV', 'V'];
@@ -1138,8 +1138,7 @@ for (let i = 0; i < TOTAL_INVENTIONS; i++) {
     const tablet = createCodexTablet(USER_IMAGES[i], ROMAN_NUMERALS[i]);
     carouselGroup.add(tablet);
 
-    // Хит-бокс для точного клика
-    const hitMesh = new THREE.Mesh(new THREE.BoxGeometry(48, 48, 10), new THREE.MeshBasicMaterial({ visible: false }));
+    const hitMesh = new THREE.Mesh(new THREE.BoxGeometry(80, 80, 16), new THREE.MeshBasicMaterial({ visible: false }));
     hitMesh.userData = { slideIdx: i };
     tablet.add(hitMesh);
 
@@ -1170,8 +1169,7 @@ function focusSlide(idx, playSound = true) {
     if (playSound) playClickSound(1600, 0.02);
     updateSelectorChips();
 
-    // Целевой угол поворота карусели: выводим выбранный чертёж точно в фокусную позицию
-    // Фокусная точка: перед камерой с лёгким благородным смещением вправо
+    // Ротация карусели: выводим выбранный чертёж прямо на смотровую позицию
     carouselTargetAngle = -idx * (Math.PI * 2 / TOTAL_INVENTIONS);
 
     const preset = BLUEPRINT_PRESETS[idx];
@@ -1198,7 +1196,6 @@ window.applySelectedPresetAndEnter = function(e) {
     triggerCameraObscuraTransition(e);
 };
 
-// Интерактивное переключение колесиком мыши на прелоадере
 window.addEventListener('wheel', (e) => {
     if (preloaderDismissed || isObscuraTransition) return;
     if (Math.abs(e.deltaY) > 35) {
@@ -1208,29 +1205,32 @@ window.addEventListener('wheel', (e) => {
 }, { passive: true });
 
 /* =========================================================================
-   ВЫСОКОДЕТАЛИЗИРОВАННАЯ 3D-МОДЕЛЬ СПУТНИКА (BLUEPRINT WIREFRAME)
+   СПУТНИК: ГАРАНТИРОВАННО ВИДИМЫЙ 3D BLUEPRINT МАКЕТ
    ========================================================================= */
 function createDetailedSputnikModel() {
     const sputnik = new THREE.Group();
-    
+    sputnik.renderOrder = 90;
+
     const wireCyanMat = new THREE.MeshBasicMaterial({
         color: 0x38bdf8,
         wireframe: true,
         transparent: true,
-        opacity: 0.85
+        opacity: 0.95,
+        depthTest: true
     });
     
     const wireAccentMat = new THREE.MeshBasicMaterial({
-        color: 0x7dd3fc,
+        color: 0xbae6fd,
         wireframe: true,
         transparent: true,
-        opacity: 0.95
+        opacity: 1.0,
+        depthTest: true
     });
 
     const innerHoloMat = new THREE.MeshBasicMaterial({
         color: 0x0284c7,
         transparent: true,
-        opacity: 0.22,
+        opacity: 0.35,
         side: THREE.DoubleSide,
         depthWrite: false
     });
@@ -1238,97 +1238,64 @@ function createDetailedSputnikModel() {
     const lineMat = new THREE.LineBasicMaterial({
         color: 0x7dd3fc,
         transparent: true,
-        opacity: 0.9
+        opacity: 0.95
     });
 
     const thickLineMat = new THREE.LineBasicMaterial({
-        color: 0xbae6fd,
+        color: 0xffffff,
         transparent: true,
         opacity: 1.0
     });
 
-    const R = 18;
+    const R = 22; // Сферический радиус спутника
 
-    // 1. СФЕРИЧЕСКАЯ ОБОЛОЧКА
-    const sphereGeo = new THREE.SphereGeometry(R, 44, 44);
+    // 1. СФЕРА КОРПУСА
+    const sphereGeo = new THREE.SphereGeometry(R, 36, 36);
     const sphereWire = new THREE.Mesh(sphereGeo, wireCyanMat);
     sputnik.add(sphereWire);
 
-    const sphereInner = new THREE.Mesh(new THREE.SphereGeometry(R * 0.99, 32, 32), innerHoloMat);
+    const sphereInner = new THREE.Mesh(new THREE.SphereGeometry(R * 0.98, 24, 24), innerHoloMat);
     sputnik.add(sphereInner);
 
-    // 2. ЭКВАТОРИАЛЬНЫЙ СТЫКОВОЧНЫЙ ПОЯС ПОЛУСФЕР
-    const belt1 = new THREE.Mesh(new THREE.TorusGeometry(R + 0.35, 0.35, 8, 64), wireAccentMat);
-    const belt2 = new THREE.Mesh(new THREE.TorusGeometry(R + 0.35, 0.35, 8, 64), wireAccentMat);
-    belt1.position.z = 1.0;
-    belt2.position.z = -1.0;
+    // 2. СТЫКОВОЧНЫЙ ПОЯС
+    const belt1 = new THREE.Mesh(new THREE.TorusGeometry(R + 0.5, 0.6, 8, 48), wireAccentMat);
+    const belt2 = new THREE.Mesh(new THREE.TorusGeometry(R + 0.5, 0.6, 8, 48), wireAccentMat);
+    belt1.position.z = 1.2;
+    belt2.position.z = -1.2;
     sputnik.add(belt1);
     sputnik.add(belt2);
 
     const beltLines = [];
     for (let i = 0; i < 32; i++) {
         const ang = (i / 32) * Math.PI * 2;
-        const bx = Math.cos(ang) * (R + 0.4);
-        const by = Math.sin(ang) * (R + 0.4);
-        beltLines.push(new THREE.Vector3(bx, by, -1.0), new THREE.Vector3(bx, by, 1.0));
+        const bx = Math.cos(ang) * (R + 0.6);
+        const by = Math.sin(ang) * (R + 0.6);
+        beltLines.push(new THREE.Vector3(bx, by, -1.2), new THREE.Vector3(bx, by, 1.2));
     }
     sputnik.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(beltLines), lineMat));
 
-    // 3. ПЕРЕДНИЙ ТОРЦЕВОЙ ЛЮК С БОЛТАМИ
+    // 3. ФЛАНЕЦ ЛЮКА
     const hatchGroup = new THREE.Group();
-    hatchGroup.position.set(-R * 0.88, 0, 0);
+    hatchGroup.position.set(-R * 0.90, 0, 0);
     hatchGroup.rotation.y = Math.PI / 2;
 
-    const flangeRing1 = new THREE.Mesh(new THREE.TorusGeometry(7.5, 0.35, 8, 36), wireAccentMat);
-    const flangeRing2 = new THREE.Mesh(new THREE.TorusGeometry(6.0, 0.3, 8, 32), wireAccentMat);
-    const flangeCap = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.6, 1.2, 24, 2, true), wireAccentMat);
+    const flangeRing = new THREE.Mesh(new THREE.TorusGeometry(8.5, 0.5, 8, 32), wireAccentMat);
+    const flangeCap = new THREE.Mesh(new THREE.CylinderGeometry(5.2, 5.8, 2.0, 24, 2, true), wireAccentMat);
     flangeCap.rotation.x = Math.PI / 2;
-    hatchGroup.add(flangeRing1);
-    hatchGroup.add(flangeRing2);
+    hatchGroup.add(flangeRing);
     hatchGroup.add(flangeCap);
-
-    for (let b = 0; b < 16; b++) {
-        const bAng = (b / 16) * Math.PI * 2;
-        const bolt = new THREE.Mesh(new THREE.SphereGeometry(0.42, 6, 6), wireAccentMat);
-        bolt.position.set(Math.cos(bAng) * 6.75, Math.sin(bAng) * 6.75, 0.3);
-        hatchGroup.add(bolt);
-    }
     sputnik.add(hatchGroup);
 
-    // 4. ОБТЕКАТЕЛИ ДАТЧИКОВ
-    [-1, 1].forEach(dir => {
-        const podGeo = new THREE.CylinderGeometry(2.4, 3.2, 3.8, 12, 2, true);
-        const pod = new THREE.Mesh(podGeo, wireAccentMat);
-        pod.position.set(0, dir * (R * 0.92), 0);
-        pod.rotation.z = dir * 0.35;
-        sputnik.add(pod);
-    });
-
-    // 5. ВНУТРЕННИЙ ПРИБОРНЫЙ ОТСЕК
+    // 4. ПРИБОРНЫЙ БЛОК ВНУТРИ
     const internalRig = new THREE.Group();
-    const frameGeo = new THREE.BoxGeometry(10, 8, 14);
-    const frameMesh = new THREE.Mesh(frameGeo, new THREE.MeshBasicMaterial({ color: 0x0284c7, wireframe: true, transparent: true, opacity: 0.5 }));
+    const frameGeo = new THREE.BoxGeometry(12, 10, 16);
+    const frameMesh = new THREE.Mesh(frameGeo, new THREE.MeshBasicMaterial({ color: 0x38bdf8, wireframe: true, transparent: true, opacity: 0.6 }));
     internalRig.add(frameMesh);
-
-    const radioGeo = new THREE.BoxGeometry(5.5, 5, 6);
-    const radioMesh = new THREE.Mesh(radioGeo, wireAccentMat);
-    radioMesh.position.set(-1.8, 0.5, 1.5);
-    internalRig.add(radioMesh);
-
-    const battGeo = new THREE.BoxGeometry(6, 4.2, 5.5);
-    const battMesh = new THREE.Mesh(battGeo, wireAccentMat);
-    battMesh.position.set(2.0, -1.0, -2.0);
-    internalRig.add(battMesh);
-
-    const fanDisk = new THREE.Mesh(new THREE.TorusGeometry(3.6, 0.25, 6, 24), wireAccentMat);
-    fanDisk.position.set(-3.2, 0, 0);
-    fanDisk.rotation.y = Math.PI / 2;
-    internalRig.add(fanDisk);
     sputnik.add(internalRig);
 
-    // 6. 4 МАССИВНЫЕ ШАРНИРНЫЕ АНТЕННЫ
+    // 5. 4 ХАРАКТЕРНЫЕ ДЛИННЫЕ АНТЕННЫ
     const antAngles = [Math.PI * 0.25, Math.PI * 0.75, Math.PI * 1.25, Math.PI * 1.75];
-    const antLengths = [92, 108, 92, 108];
+    const antLengths = [115, 135, 115, 135];
 
     antAngles.forEach((ang, idx) => {
         const rootRadius = R * 0.95;
@@ -1339,7 +1306,7 @@ function createDetailedSputnikModel() {
         const mountGroup = new THREE.Group();
         mountGroup.position.set(rootX, rootY, rootZ);
 
-        const socketGeo = new THREE.CylinderGeometry(1.3, 1.6, 7.5, 12, 3, true);
+        const socketGeo = new THREE.CylinderGeometry(1.5, 2.0, 8.5, 12, 2, true);
         const socketMesh = new THREE.Mesh(socketGeo, wireAccentMat);
         
         const coneSpreadX = Math.cos(ang) * 0.55;
@@ -1348,46 +1315,37 @@ function createDetailedSputnikModel() {
         
         socketMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirVec);
         mountGroup.add(socketMesh);
-
-        const ringCoupling = new THREE.Mesh(new THREE.TorusGeometry(1.4, 0.25, 6, 16), wireAccentMat);
-        ringCoupling.position.copy(dirVec.clone().multiplyScalar(4.0));
-        ringCoupling.quaternion.copy(socketMesh.quaternion);
-        mountGroup.add(ringCoupling);
-
         sputnik.add(mountGroup);
 
         const len = antLengths[idx];
         const tipPos = new THREE.Vector3(rootX + dirVec.x * len, rootY + dirVec.y * len, rootZ + dirVec.z * len);
         const midPos = new THREE.Vector3(rootX + dirVec.x * (len * 0.45), rootY + dirVec.y * (len * 0.45), rootZ + dirVec.z * (len * 0.45));
 
-        const antPts1 = [new THREE.Vector3(rootX, rootY, rootZ), midPos];
-        sputnik.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(antPts1), thickLineMat));
+        sputnik.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(rootX, rootY, rootZ), midPos]), thickLineMat));
+        sputnik.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([midPos, tipPos]), lineMat));
 
-        const antPts2 = [midPos, tipPos];
-        sputnik.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(antPts2), lineMat));
-
-        const midRing = new THREE.Mesh(new THREE.SphereGeometry(0.5, 8, 8), wireAccentMat);
-        midRing.position.copy(midPos);
-        sputnik.add(midRing);
+        const tipBulb = new THREE.Mesh(new THREE.SphereGeometry(1.2, 8, 8), wireAccentMat);
+        tipBulb.position.copy(tipPos);
+        sputnik.add(tipBulb);
     });
 
-    // 7. КРАСНЫЙ СИГНАЛЬНЫЙ МАЯК
+    // 6. ПУЛЬСИРУЮЩИЙ КРАСНЫЙ СИГНАЛЬНЫЙ МАЯК
     const beaconGroup = new THREE.Group();
-    beaconGroup.position.set(-R * 0.88 - 1.2, 0, 0);
+    beaconGroup.position.set(-R * 0.92 - 2.5, 0, 0);
 
-    const beaconCore = new THREE.Mesh(new THREE.SphereGeometry(2.4, 16, 16), new THREE.MeshBasicMaterial({ color: 0xff0033 }));
+    const beaconCore = new THREE.Mesh(new THREE.SphereGeometry(3.2, 16, 16), new THREE.MeshBasicMaterial({ color: 0xff0044 }));
     beaconGroup.add(beaconCore);
 
     const beaconHalo = new THREE.Mesh(
-        new THREE.SphereGeometry(5.2, 16, 16),
-        new THREE.MeshBasicMaterial({ color: 0xff3344, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending })
+        new THREE.SphereGeometry(7.5, 16, 16),
+        new THREE.MeshBasicMaterial({ color: 0xff3355, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending })
     );
     beaconGroup.add(beaconHalo);
 
     sputnik.add(beaconGroup);
     sputnik.beaconGroup = beaconGroup;
 
-    sputnik.scale.set(0.95, 0.95, 0.95);
+    sputnik.scale.set(1.0, 1.0, 1.0);
     sputnik.visible = false;
     return sputnik;
 }
@@ -1406,7 +1364,7 @@ function playSputnikBeep(volumeRatio = 1.0) {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(1080, ctx.currentTime);
         
-        const peakGain = THREE.MathUtils.clamp(0.065 * volumeRatio, 0.001, 0.085);
+        const peakGain = THREE.MathUtils.clamp(0.075 * volumeRatio, 0.001, 0.095);
         gain.gain.setValueAtTime(0.0001, ctx.currentTime);
         gain.gain.linearRampToValueAtTime(peakGain, ctx.currentTime + 0.02);
         gain.gain.setValueAtTime(peakGain, ctx.currentTime + 0.16);
@@ -1423,11 +1381,11 @@ function playSputnikBeep(volumeRatio = 1.0) {
 let sputnikFlight = { 
     active: false, 
     startTime: 0, 
-    duration: 18.0,
+    duration: 14.0,
     startP: new THREE.Vector3(), 
     endP: new THREE.Vector3(), 
     lastBeep: 0,
-    baseScale: 0.95
+    baseScale: 1.15
 };
 
 window.triggerSputnikManually = function() {
@@ -1446,50 +1404,24 @@ window.addEventListener('keydown', (e) => {
 function launchSputnik() {
     if (preloaderDismissed || isObscuraTransition) return;
     
-    const camPos = preCamera.position.clone();
-    const lookTarget = currentLookTarget.clone();
-    
-    const forward = new THREE.Vector3().subVectors(lookTarget, camPos).normalize();
-    const right = new THREE.Vector3().crossVectors(forward, preCamera.up).normalize();
-    const up = new THREE.Vector3().crossVectors(right, forward).normalize();
-    
-    const corners = [
-        { x: -0.80, y: 0.70 },
-        { x: 0.80, y: 0.70 },
-        { x: -0.80, y: -0.70 },
-        { x: 0.80, y: -0.70 }
-    ];
-    
-    const startIdx = Math.floor(Math.random() * 4);
-    const endIdx = (startIdx + 2 + (Math.random() > 0.5 ? 1 : 0)) % 4;
-    
-    const startCorner = corners[startIdx];
-    const endCorner = corners[endIdx];
-    
-    const startDistance = 750;
-    const fovFactor = Math.tan(THREE.MathUtils.degToRad(preCamera.fov * 0.5)) * startDistance;
-    const aspect = preCamera.aspect || (window.innerWidth / window.innerHeight);
-    
-    const startOffsetX = right.clone().multiplyScalar(startCorner.x * fovFactor * aspect * 0.85);
-    const startOffsetY = up.clone().multiplyScalar(startCorner.y * fovFactor * 0.85);
-    const startOffsetZ = forward.clone().multiplyScalar(startDistance);
-    
-    sputnikFlight.startP.copy(camPos).add(startOffsetZ).add(startOffsetX).add(startOffsetY);
-    
-    const passDistance = -120;
-    const passSpread = 20 + Math.random() * 20;
-    const endOffsetX = right.clone().multiplyScalar(endCorner.x * passSpread);
-    const endOffsetY = up.clone().multiplyScalar(endCorner.y * passSpread);
-    const endOffsetZ = forward.clone().multiplyScalar(passDistance);
-    
-    sputnikFlight.endP.copy(camPos).add(endOffsetZ).add(endOffsetX).add(endOffsetY);
-    
+    // Траектория строго в видимом конусе перед камерой
+    const startX = (Math.random() > 0.5 ? 1 : -1) * (260 + Math.random() * 40);
+    const startY = 120 + Math.random() * 40;
+    const startZ = -120; // на среднем плане сцены
+
+    const endX = -startX * 0.85;
+    const endY = -110 - Math.random() * 30;
+    const endZ = 190; // пролёт близко перед камерой (z камеры = 385)
+
+    sputnikFlight.startP.set(startX, startY, startZ);
+    sputnikFlight.endP.set(endX, endY, endZ);
+
     sputnikFlight.active = true;
     sputnikFlight.startTime = performance.now();
     sputnikFlight.lastBeep = performance.now();
     sputnik.visible = true;
     sputnik.position.copy(sputnikFlight.startP);
-    sputnik.scale.set(0.12, 0.12, 0.12);
+    sputnik.scale.set(0.65, 0.65, 0.65);
 }
 
 let sputnikTimerStarted = false;
@@ -1607,39 +1539,35 @@ function animatePreloader() {
 
         checkSputnikScheduler(now);
 
-        /* АНИМАЦИЯ МЕДЛЕННОГО ПОЛЕТА СПУТНИКА */
+        /* АНИМАЦИЯ ПОЛЕТА СПУТНИКА */
         if (sputnikFlight.active) {
             const flightP = (now - sputnikFlight.startTime) / (sputnikFlight.duration * 1000);
             if (flightP < 1.0) {
-                const depthEase = Math.pow(flightP, 1.75);
-                sputnik.position.lerpVectors(sputnikFlight.startP, sputnikFlight.endP, depthEase);
+                // Плавное ускорение и пролёт по дуге
+                sputnik.position.lerpVectors(sputnikFlight.startP, sputnikFlight.endP, flightP);
                 
-                sputnik.rotation.y += 0.008 + depthEase * 0.010;
-                sputnik.rotation.x += 0.005 + depthEase * 0.006;
-                sputnik.rotation.z += 0.003;
+                sputnik.rotation.y += 0.012;
+                sputnik.rotation.x += 0.008;
+                sputnik.rotation.z += 0.005;
 
-                const growP = Math.min(Math.pow(flightP, 1.25) * 1.05, 1.0);
-                const currentScale = THREE.MathUtils.lerp(0.12, sputnikFlight.baseScale, growP);
+                // Увеличение масштаба по мере приближения к наблюдателю
+                const currentScale = THREE.MathUtils.lerp(0.65, sputnikFlight.baseScale, Math.sin(flightP * Math.PI));
                 sputnik.scale.set(currentScale, currentScale, currentScale);
 
-                const fadeOut = THREE.MathUtils.clamp((1.0 - flightP) / 0.12, 0.0, 1.0);
-                sputnik.visible = fadeOut > 0.01;
+                // Плавное появление и затухание по краям
+                const edgeFade = Math.sin(flightP * Math.PI);
+                sputnik.visible = edgeFade > 0.01;
 
-                const blinkPeriod = THREE.MathUtils.lerp(460, 260, depthEase);
-                const blinkState = (Math.floor(now / blinkPeriod) % 2 === 0);
+                // Мигание красного маяка
+                const blinkState = (Math.floor(now / 320) % 2 === 0);
                 if (sputnik.beaconGroup) {
                     sputnik.beaconGroup.visible = blinkState;
                 }
                 
-                const beepInterval = THREE.MathUtils.lerp(1200, 750, depthEase);
-                if (now - sputnikFlight.lastBeep > beepInterval) {
-                    let soundVolume = 0;
-                    if (flightP < 0.75) {
-                        soundVolume = Math.pow(flightP / 0.75, 1.8);
-                    } else {
-                        soundVolume = Math.max(0, Math.pow(1.0 - (flightP - 0.75) / 0.25, 2.0));
-                    }
-                    playSputnikBeep(soundVolume * fadeOut);
+                // Звуковой сигнал бипера
+                if (now - sputnikFlight.lastBeep > 1050) {
+                    const soundVolume = Math.sin(flightP * Math.PI);
+                    playSputnikBeep(soundVolume);
                     sputnikFlight.lastBeep = now;
                 }
             } else {
@@ -1707,7 +1635,7 @@ function animatePreloader() {
         dustParticles.rotation.y = t * 0.02;
         dustParticles.rotation.x = Math.sin(t * 0.015) * 0.1;
 
-        // Плавное вращение астролябии
+        // Вращение колец астролябии
         astrolabeRings.forEach(item => {
             item.group.rotation.x += item.sx;
             item.group.rotation.y += item.sy;
@@ -1716,41 +1644,44 @@ function animatePreloader() {
 
         // Плавный поворот карусели кодекса
         carouselCurrentAngle = THREE.MathUtils.lerp(carouselCurrentAngle, carouselTargetAngle, 0.075);
-        carouselGroup.rotation.y = carouselCurrentAngle + Math.sin(t * 0.5) * 0.02;
+        carouselGroup.rotation.y = carouselCurrentAngle;
 
-        // Расположение чертежей по орбите с легким наклоном к наблюдателю
+        // Кинематика расположения и фокусировки чертежей
         inventionItems.forEach(item => {
             const angle = item.baseAngle;
-            // Координаты на окружности
-            const x = Math.sin(angle) * CAROUSEL_RADIUS;
-            const z = Math.cos(angle) * CAROUSEL_RADIUS - 120; // смещение назад от камеры
-            const y = Math.sin(t * 1.2 + item.index) * 3.5;
-
-            item.group.position.set(x, y, z);
-            
-            // Планшет всегда ориентирован в сторону камеры, но сохраняет естественный наклон
-            item.group.rotation.y = -carouselGroup.rotation.y;
-            item.group.rotation.x = 0.08 + Math.sin(t + item.index) * 0.02;
-
-            // Вычисляем, насколько этот чертеж близок к передней фокусной точке
-            const worldPos = item.group.getWorldPosition(new THREE.Vector3());
-            const distToCam = worldPos.distanceTo(preCamera.position);
             const isCurrent = (item.index === currentSlideIndex);
 
-            // Плавное масштабирование и глубина резкости
-            const targetScale = isCurrent ? 1.08 : 0.82;
+            // Базовое положение на орбите
+            const orbitX = Math.sin(angle) * CAROUSEL_RADIUS;
+            const orbitZ = Math.cos(angle) * CAROUSEL_RADIUS - 90;
+
+            // Если чертеж выбран — он мягко выдвигается вперед на фокусное расстояние
+            const targetX = isCurrent ? 25 : orbitX;
+            const targetZ = isCurrent ? 155 : orbitZ;
+            const targetY = (isCurrent ? -6 : -18) + Math.sin(t * 1.5 + item.index) * 3.0;
+
+            item.group.position.x = THREE.MathUtils.lerp(item.group.position.x, targetX, 0.08);
+            item.group.position.y = THREE.MathUtils.lerp(item.group.position.y, targetY, 0.08);
+            item.group.position.z = THREE.MathUtils.lerp(item.group.position.z, targetZ, 0.08);
+
+            // Ориентация к камере с легким благородным наклоном
+            item.group.rotation.y = -carouselGroup.rotation.y;
+            item.group.rotation.x = 0.04 + Math.sin(t + item.index) * 0.015;
+
+            // Масштабирование: активный чертеж крупный и четкий, боковые компактные
+            const targetScale = isCurrent ? 1.25 : 0.75;
             item.group.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1);
 
-            // Плавная настройка прозрачности и яркости шейдера
+            // Регулировка яркости и прозрачности шейдеров
             if (item.group.holoMat && item.group.holoMat.uniforms) {
                 item.group.holoMat.uniforms.uTime.value = t;
                 item.group.holoMat.uniforms.uFocus.value = THREE.MathUtils.lerp(item.group.holoMat.uniforms.uFocus.value, isCurrent ? 1.0 : 0.0, 0.1);
             }
             if (item.group.frameMat) {
-                item.group.frameMat.opacity = THREE.MathUtils.lerp(item.group.frameMat.opacity, isCurrent ? 0.85 : 0.22, 0.1);
+                item.group.frameMat.opacity = THREE.MathUtils.lerp(item.group.frameMat.opacity, isCurrent ? 0.95 : 0.22, 0.1);
             }
             if (item.group.sheetMat) {
-                item.group.sheetMat.opacity = THREE.MathUtils.lerp(item.group.sheetMat.opacity, isCurrent ? 0.65 : 0.25, 0.1);
+                item.group.sheetMat.opacity = THREE.MathUtils.lerp(item.group.sheetMat.opacity, isCurrent ? 0.72 : 0.25, 0.1);
             }
         });
 
@@ -1767,10 +1698,10 @@ function animatePreloader() {
 
 animatePreloader();
 
-// Инициализируем первый чертёж после загрузки сцены
+// Фокусируем первое изобретение при старте
 setTimeout(() => {
     if (!preloaderDismissed) focusSlide(0, false);
-}, 600);
+}, 500);
 
 const CYRILLIC_GLYPHS = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ0123456789§$%*#@!/[]:;';
 const NUMERIC_GLYPHS = '0123456789 ';
