@@ -1366,26 +1366,36 @@ function playSputnikBeep(volumeRatio = 1.0) {
 let sputnikFlight = { 
     active: false, 
     startTime: 0, 
-    duration: 11.0, 
+    duration: 15.5, 
     startP: new THREE.Vector3(), 
     endP: new THREE.Vector3(), 
-    lastBeep: 0 
+    lastBeep: 0,
+    baseScale: 0.85
 };
 
 function launchSputnik() {
     if (preloaderDismissed || isObscuraTransition || sputnikFlight.active) return;
     
-    // Старт из случайной точки глубокого пространства (-850 по Z) сквозь камеру (+750 по Z)
-    const sideX = (Math.random() - 0.5) * 480;
-    const sideY = (Math.random() - 0.5) * 340;
-    sputnikFlight.startP.set(sideX, sideY, -850);
-    sputnikFlight.endP.set(-sideX * 1.25 + (Math.random() - 0.5) * 150, -sideY * 1.25 + (Math.random() - 0.5) * 150, 750);
+    // Старт из сверхдальней космической бездны (-2800 по Z)
+    // Рандомный сектор в глубине с небольшим смещением к центру камеры
+    const farX = (Math.random() - 0.5) * 550;
+    const farY = (Math.random() - 0.5) * 380;
+    sputnikFlight.startP.set(farX, farY, -2800);
+    
+    // Траектория пролета: выходит через камеру (Z = 520, камера на 390)
+    // С легким смещением мимо объектива для кинематографичного ракурса
+    const passAngle = Math.random() * Math.PI * 2;
+    const passOffset = 45 + Math.random() * 65;
+    const endX = Math.cos(passAngle) * passOffset;
+    const endY = Math.sin(passAngle) * passOffset;
+    sputnikFlight.endP.set(endX, endY, 560);
     
     sputnikFlight.active = true;
     sputnikFlight.startTime = performance.now();
     sputnikFlight.lastBeep = performance.now();
     sputnik.visible = true;
     sputnik.position.copy(sputnikFlight.startP);
+    sputnik.scale.set(0.01, 0.01, 0.01);
 }
 
 let sputnikTimerStarted = false;
@@ -1509,22 +1519,69 @@ function animatePreloader() {
 
         checkSputnikScheduler(now);
 
-        /* АНИМАЦИЯ ПОЛЕТА СПУТНИКА ЧЕРЕЗ КАМЕРУ */
+        /* АНИМАЦИЯ ПОЛЕТА СПУТНИКА ЧЕРЕЗ КАМЕРУ (МЕДЛЕННО РАСТУЩАЯ ТОЧКА ИЗ ГЛУБИНЫ) */
         if (sputnikFlight.active) {
             const flightP = (now - sputnikFlight.startTime) / (sputnikFlight.duration * 1000);
             if (flightP < 1.0) {
-                sputnik.position.lerpVectors(sputnikFlight.startP, sputnikFlight.endP, flightP);
-                sputnik.position.y += Math.sin(flightP * Math.PI) * 55;
-                sputnik.rotation.y += 0.015;
-                sputnik.rotation.x += 0.010;
+                // Нелинейное ускорение сближения: долго висит далекой точкой, затем плавно разгоняется
+                const depthEase = Math.pow(flightP, 2.35);
+                sputnik.position.lerpVectors(sputnikFlight.startP, sputnikFlight.endP, depthEase);
                 
-                const blinkState = (Math.floor(now / 300) % 2 === 0);
-                if (sputnik.beaconGroup) sputnik.beaconGroup.visible = blinkState;
+                // Легкое дуговое покачивание по орбите
+                const arcFactor = Math.sin(flightP * Math.PI);
+                sputnik.position.y += arcFactor * 35;
+                sputnik.position.x += Math.sin(flightP * Math.PI * 1.5) * 20;
+
+                // Вращение корпуса спутника в пространстве
+                sputnik.rotation.y += 0.012 + depthEase * 0.025;
+                sputnik.rotation.x += 0.008 + depthEase * 0.015;
+                sputnik.rotation.z += 0.005;
+
+                // Эффект растущей точки: плавное увеличение масштаба от микроскопического (0.01) к полному (0.85)
+                // На дальних дистанциях растет медленно, вблизи раскрывается в полный размер
+                const growP = Math.min(Math.pow(flightP, 1.8) * 1.15, 1.0);
+                const currentScale = THREE.MathUtils.lerp(0.02, sputnikFlight.baseScale, growP);
+                sputnik.scale.set(currentScale, currentScale, currentScale);
+
+                // Плавное проявление из космической тьмы (Fade-in в первые 12% пути)
+                const fadeIn = THREE.MathUtils.clamp(flightP / 0.12, 0.0, 1.0);
+                // Затухание после пролета за спину камеры (последние 8% пути)
+                const fadeOut = THREE.MathUtils.clamp((1.0 - flightP) / 0.08, 0.0, 1.0);
+                const masterAlpha = fadeIn * fadeOut;
+
+                // Управление прозрачностью всех элементов спутника
+                sputnik.traverse(child => {
+                    if (child.material) {
+                        child.material.transparent = true;
+                        if (!child.userData.origOpacity) {
+                            child.userData.origOpacity = child.material.opacity || 1.0;
+                        }
+                        child.material.opacity = child.userData.origOpacity * masterAlpha;
+                    }
+                });
                 
-                // Нарастающий и стихающий сигнал "бип-бип-бип"
-                if (now - sputnikFlight.lastBeep > 950) {
-                    const distToCenter = Math.sin(flightP * Math.PI);
-                    playSputnikBeep(distToCenter);
+                // Мигание красного сигнала (вдали мигает как точечный импульс, вблизи освещает корпус)
+                const blinkPeriod = THREE.MathUtils.lerp(420, 260, depthEase);
+                const blinkState = (Math.floor(now / blinkPeriod) % 2 === 0);
+                if (sputnik.beaconGroup) {
+                    sputnik.beaconGroup.visible = blinkState;
+                    // Вдали маячок чуть гипертрофирован, чтобы четко читаться как мерцающая звезда
+                    const beaconBoost = THREE.MathUtils.lerp(2.8, 1.0, depthEase);
+                    sputnik.beaconGroup.scale.set(beaconBoost, beaconBoost, beaconBoost);
+                }
+                
+                // Нарастающий и стихающий звук "бип-бип-бип"
+                // Вдали — тихий далекий сигнал, в зените пролета — максимальная громкость, за камерой — затихание
+                const beepInterval = THREE.MathUtils.lerp(1200, 750, depthEase);
+                if (now - sputnikFlight.lastBeep > beepInterval) {
+                    // Пик громкости приходится на момент пролета мимо камеры (~0.85 от общего пути)
+                    let soundVolume = 0;
+                    if (flightP < 0.85) {
+                        soundVolume = Math.pow(flightP / 0.85, 2.0); // нарастание от 0 до 1
+                    } else {
+                        soundVolume = Math.max(0, 1.0 - (flightP - 0.85) / 0.15); // быстрый спад
+                    }
+                    playSputnikBeep(soundVolume * masterAlpha);
                     sputnikFlight.lastBeep = now;
                 }
             } else {
