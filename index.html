@@ -178,7 +178,7 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
                 </div>
             </div>
             <div class="hidden xl:flex items-center gap-5 pl-5 border-l font-mono text-[10px] opacity-75">
-                <span>[НАЛОГОВЙ КОДЕКС: 22% НДС]</span>
+                <span>[НАЛОГОВЫЙ КОДЕКС: 22% НДС]</span>
                 <span id="telemetryRate">[КАПИТАЛ: 16.0% ГОДОВЫХ]</span>
                 <span id="cursorCoordDisplay" class="text-[#d4af37]" aria-hidden="true">X: 0000 / Y: 0000</span>
                 <span id="telemetryClock">[15:00:00]</span>
@@ -356,12 +356,11 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
 <script>
 'use strict';
 window.onerror = function(msg, url, line) {
-    console.error("Runtime Info:", msg, "line:", line);
+    console.error("Runtime Notice:", msg, "line:", line);
     return false;
 };
 
 const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-// Массив изображений открытий / чертежей Да Винчи
 const USER_IMAGES = typeof __JSON_IMAGES_PAYLOAD__ !== 'undefined' ? __JSON_IMAGES_PAYLOAD__ : [];
 
 /* Флаги перехода и тайминги */
@@ -1127,27 +1126,9 @@ window.applySelectedPresetAndEnter = function(e) {
 /* =========================================================================
    ВЫСОКОДЕТАЛИЗИРОВАННАЯ 3D-МОДЕЛЬ СПУТНИКА (BLUEPRINT WIREFRAME)
    ========================================================================= */
-function createBeaconGlowTexture() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 128;
-    canvas.height = 128;
-    const ctx = canvas.getContext('2d');
-    const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 60);
-    grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
-    grad.addColorStop(0.25, 'rgba(255, 40, 60, 0.95)');
-    grad.addColorStop(0.6, 'rgba(255, 10, 40, 0.45)');
-    grad.addColorStop(1, 'rgba(255, 0, 20, 0)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, 128, 128);
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.generateMipmaps = false;
-    return tex;
-}
-
 function createDetailedSputnikModel() {
     const sputnik = new THREE.Group();
     
-    // Стиль сетки (яркий лазурный кибернетический чертеж)
     const wireCyanMat = new THREE.MeshBasicMaterial({
         color: 0x38bdf8,
         wireframe: true,
@@ -1182,9 +1163,9 @@ function createDetailedSputnikModel() {
         opacity: 1.0
     });
 
-    const R = 18; // Базовый радиус сферы спутника
+    const R = 18;
 
-    // 1. ОСНОВНАЯ СФЕРИЧЕСКАЯ ОБОЛОЧКА
+    // 1. СФЕРИЧЕСКАЯ ОБОЛОЧКА
     const sphereGeo = new THREE.SphereGeometry(R, 44, 44);
     const sphereWire = new THREE.Mesh(sphereGeo, wireCyanMat);
     sputnik.add(sphereWire);
@@ -1306,49 +1287,36 @@ function createDetailedSputnikModel() {
         sputnik.add(midRing);
     });
 
-    // 7. КРАСНЫЙ СИГНАЛЬНЫЙ МАЯК И СВЕТОВОЙ СПРАЙТ (LENS FLARE)
+    // 7. КРАСНЫЙ СИГНАЛЬНЫЙ МАЯК
     const beaconGroup = new THREE.Group();
     beaconGroup.position.set(-R * 0.88 - 1.2, 0, 0);
 
-    const beaconCore = new THREE.Mesh(new THREE.SphereGeometry(2.0, 16, 16), new THREE.MeshBasicMaterial({ color: 0xff0033 }));
+    const beaconCore = new THREE.Mesh(new THREE.SphereGeometry(2.4, 16, 16), new THREE.MeshBasicMaterial({ color: 0xff0033 }));
     beaconGroup.add(beaconCore);
 
     const beaconHalo = new THREE.Mesh(
-        new THREE.SphereGeometry(4.8, 16, 16),
-        new THREE.MeshBasicMaterial({ color: 0xff3344, transparent: true, opacity: 0.75, blending: THREE.AdditiveBlending })
+        new THREE.SphereGeometry(5.2, 16, 16),
+        new THREE.MeshBasicMaterial({ color: 0xff3344, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending })
     );
     beaconGroup.add(beaconHalo);
-
-    const flareMat = new THREE.SpriteMaterial({
-        map: createBeaconGlowTexture(),
-        color: 0xff2244,
-        transparent: true,
-        opacity: 1.0,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false
-    });
-    const flareSprite = new THREE.Sprite(flareMat);
-    flareSprite.scale.set(38, 38, 1);
-    beaconGroup.add(flareSprite);
-    beaconGroup.flareSprite = flareSprite;
 
     sputnik.add(beaconGroup);
     sputnik.beaconGroup = beaconGroup;
 
-    sputnik.scale.set(0.9, 0.9, 0.9);
+    sputnik.scale.set(0.95, 0.95, 0.95);
     sputnik.visible = false;
     return sputnik;
 }
 
 const sputnik = createDetailedSputnikModel();
-
 preScene.add(sputnik);
 
 function playSputnikBeep(volumeRatio = 1.0) {
     try {
         if (!renaissanceAudio.ctx) renaissanceAudio.init();
         const ctx = renaissanceAudio.ctx;
-        if (!ctx || ctx.state !== 'running') return;
+        if (!ctx) return;
+        if (ctx.state === 'suspended') ctx.resume();
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
@@ -1371,7 +1339,7 @@ function playSputnikBeep(volumeRatio = 1.0) {
 let sputnikFlight = { 
     active: false, 
     startTime: 0, 
-    duration: 18.0, // Медленный, плавный и величественный полет (18 секунд), чтобы разглядеть все детали
+    duration: 18.0,
     startP: new THREE.Vector3(), 
     endP: new THREE.Vector3(), 
     lastBeep: 0,
@@ -1385,7 +1353,6 @@ window.triggerSputnikManually = function() {
     console.log("[SPUTNIK] Спутник запущен! Старт:", sputnikFlight.startP, "Финиш:", sputnikFlight.endP);
 };
 
-// Запуск по горячей клавише 'S' для моментальной проверки
 window.addEventListener('keydown', (e) => {
     if ((e.key === 's' || e.key === 'S' || e.key === 'ы' || e.key === 'Ы') && !preloaderDismissed) {
         window.triggerSputnikManually();
@@ -1395,33 +1362,26 @@ window.addEventListener('keydown', (e) => {
 function launchSputnik() {
     if (preloaderDismissed || isObscuraTransition) return;
     
-    // Получаем текущие векторы направления активной камеры того экрана/чертежа, где находится пользователь
     const camPos = preCamera.position.clone();
     const lookTarget = currentLookTarget.clone();
     
-    // Вектор взгляда
     const forward = new THREE.Vector3().subVectors(lookTarget, camPos).normalize();
-    // Вектор вправо
     const right = new THREE.Vector3().crossVectors(forward, preCamera.up).normalize();
-    // Вектор вверх
     const up = new THREE.Vector3().crossVectors(right, forward).normalize();
     
-    // 4 угла активного экрана
     const corners = [
-        { x: -0.80, y: 0.70 }, // верхний левый
-        { x: 0.80, y: 0.70 },  // верхний правый
-        { x: -0.80, y: -0.70 }, // нижний левый
-        { x: 0.80, y: -0.70 }  // нижний правый
+        { x: -0.80, y: 0.70 },
+        { x: 0.80, y: 0.70 },
+        { x: -0.80, y: -0.70 },
+        { x: 0.80, y: -0.70 }
     ];
     
     const startIdx = Math.floor(Math.random() * 4);
-    // Летит в противоположный угол для красивого диагонального пересечения экрана
     const endIdx = (startIdx + 2 + (Math.random() > 0.5 ? 1 : 0)) % 4;
     
     const startCorner = corners[startIdx];
     const endCorner = corners[endIdx];
     
-    // Точка старта: в глубине поля зрения выбранного экрана (дистанция 750 единиц)
     const startDistance = 750;
     const fovFactor = Math.tan(THREE.MathUtils.degToRad(preCamera.fov * 0.5)) * startDistance;
     const aspect = preCamera.aspect || (window.innerWidth / window.innerHeight);
@@ -1432,7 +1392,6 @@ function launchSputnik() {
     
     sputnikFlight.startP.copy(camPos).add(startOffsetZ).add(startOffsetX).add(startOffsetY);
     
-    // Точка финиша: проходит близко перед камерой и уходит за объектив (на -120 за плоскость камеры)
     const passDistance = -120;
     const passSpread = 20 + Math.random() * 20;
     const endOffsetX = right.clone().multiplyScalar(endCorner.x * passSpread);
@@ -1453,11 +1412,9 @@ let sputnikTimerStarted = false;
 function checkSputnikScheduler(now) {
     if (preloaderDismissed || isObscuraTransition) return;
     const idleSeconds = (now - preloaderStartTime) * 0.001;
-    // Спутник появляется строго через 30 секунд открытого прелоадера
     if (idleSeconds >= 30.0 && !sputnikTimerStarted) {
         sputnikTimerStarted = true;
         launchSputnik();
-        // И далее каждые 60 секунд в случайном углу экрана
         setInterval(() => {
             if (!preloaderDismissed && !isObscuraTransition) launchSputnik();
         }, 60000);
@@ -1574,46 +1531,33 @@ function animatePreloader() {
         if (sputnikFlight.active) {
             const flightP = (now - sputnikFlight.startTime) / (sputnikFlight.duration * 1000);
             if (flightP < 1.0) {
-                // Плавное нелинейное приближение: начинает как далекая светящаяся точка
                 const depthEase = Math.pow(flightP, 1.75);
                 sputnik.position.lerpVectors(sputnikFlight.startP, sputnikFlight.endP, depthEase);
                 
-                // Медленное вращение спутника для кругового осмотра конструкции со всех сторон
                 sputnik.rotation.y += 0.008 + depthEase * 0.010;
                 sputnik.rotation.x += 0.005 + depthEase * 0.006;
                 sputnik.rotation.z += 0.003;
 
-                // Эффект приближения: вдали начинается с компактного размера (0.12), а вблизи раскрывается в масштаб 0.95
                 const growP = Math.min(Math.pow(flightP, 1.25) * 1.05, 1.0);
                 const currentScale = THREE.MathUtils.lerp(0.12, sputnikFlight.baseScale, growP);
                 sputnik.scale.set(currentScale, currentScale, currentScale);
 
-                // Затухание при пролете за спину камеры (последние 12% пути)
                 const fadeOut = THREE.MathUtils.clamp((1.0 - flightP) / 0.12, 0.0, 1.0);
                 sputnik.visible = fadeOut > 0.01;
 
-                // Мигание красного сигнала и светового маяка
                 const blinkPeriod = THREE.MathUtils.lerp(460, 260, depthEase);
                 const blinkState = (Math.floor(now / blinkPeriod) % 2 === 0);
                 if (sputnik.beaconGroup) {
                     sputnik.beaconGroup.visible = blinkState;
-                    if (sputnik.beaconGroup.flareSprite) {
-                        // Вдали маячок дает мощный видимый ореол, вблизи пропорционально сжимается
-                        const flareSize = THREE.MathUtils.lerp(42, 16, depthEase);
-                        sputnik.beaconGroup.flareSprite.scale.set(flareSize, flareSize, 1);
-                        sputnik.beaconGroup.flareSprite.material.opacity = fadeOut * (blinkState ? 1.0 : 0.0);
-                    }
                 }
                 
-                // Звук "Бип-бип": мягко нарастает из тишины, в точке максимального сближения с экраном (~75%) достигает апогея,
-                // а при пролете за камеру плавно и бесшовно затихает до нуля
                 const beepInterval = THREE.MathUtils.lerp(1200, 750, depthEase);
                 if (now - sputnikFlight.lastBeep > beepInterval) {
                     let soundVolume = 0;
                     if (flightP < 0.75) {
-                        soundVolume = Math.pow(flightP / 0.75, 1.8); // нарастание
+                        soundVolume = Math.pow(flightP / 0.75, 1.8);
                     } else {
-                        soundVolume = Math.max(0, Math.pow(1.0 - (flightP - 0.75) / 0.25, 2.0)); // плавное затухание
+                        soundVolume = Math.max(0, Math.pow(1.0 - (flightP - 0.75) / 0.25, 2.0));
                     }
                     playSputnikBeep(soundVolume * fadeOut);
                     sputnikFlight.lastBeep = now;
