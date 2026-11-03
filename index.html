@@ -979,7 +979,7 @@ function createCyclopeanTrussRing(mainRadius, tubeWidth, tubeDepth, segments, no
             linePts.push(p1_topOut, p2_topIn);
         } else {
             linePts.push(p1_botOut, p2_botOut);
-            linePts.push(p1_botIn, p2_botIn);
+            linePts.push(p1_botIn, p2_topIn);
             linePts.push(p1_botOut, p2_botIn);
         }
 
@@ -1036,7 +1036,6 @@ function createDaVinciHoloMaterial(texture) {
                 vec4 tex = texture2D(uTex, vUv);
                 float lum = dot(tex.rgb, vec3(0.299, 0.587, 0.114));
                 
-                // Чёткая прорисовка чернильных линий
                 float stroke = smoothstep(0.08, 0.65, lum);
                 if (lum > 0.90) stroke = 1.0 - stroke;
                 
@@ -1045,7 +1044,6 @@ function createDaVinciHoloMaterial(texture) {
                 float wave = sin((vUv.x + vUv.y) * 12.0 - uTime * 2.8) * 0.5 + 0.5;
                 vec3 finalColor = mix(baseGold, warmParchment, wave * 0.35 + uFocus * 0.45);
                 
-                // В фокусе чертёж становится плотным и высокодетализированным
                 float alpha = stroke * (0.35 + uFocus * 0.60 + uHover * 0.15);
                 gl_FragColor = vec4(finalColor, alpha);
             }
@@ -1056,10 +1054,8 @@ function createDaVinciHoloMaterial(texture) {
 
 function createCodexTablet(imageSource, romanNumeral = 'I') {
     const tablet = new THREE.Group();
-    // Оптимальный читаемый масштаб: 78x78 единиц
     const w = 78, h = 78;
 
-    // Филигранная латунная рамка чертежа
     const borderPts = [
         new THREE.Vector3(-w/2, -h/2, 0), new THREE.Vector3(w/2, -h/2, 0),
         new THREE.Vector3(w/2, -h/2, 0), new THREE.Vector3(w/2, h/2, 0),
@@ -1067,7 +1063,6 @@ function createCodexTablet(imageSource, romanNumeral = 'I') {
         new THREE.Vector3(-w/2, h/2, 0), new THREE.Vector3(-w/2, -h/2, 0)
     ];
 
-    // Угловые засечки
     const cSize = 7.0;
     [
         [-w/2, -h/2, 1, 1], [w/2, -h/2, -1, 1],
@@ -1083,7 +1078,6 @@ function createCodexTablet(imageSource, romanNumeral = 'I') {
     tablet.add(frameMesh);
     tablet.frameMat = frameMat;
 
-    // Полупрозрачный пергаментный щит (задник)
     const sheetGeo = new THREE.PlaneGeometry(w - 1.2, h - 1.2);
     const sheetMat = new THREE.MeshBasicMaterial({
         color: 0x09090e,
@@ -1097,7 +1091,6 @@ function createCodexTablet(imageSource, romanNumeral = 'I') {
     tablet.add(sheetMesh);
     tablet.sheetMat = sheetMat;
 
-    // Холст чертежа Леонардо
     if (imageSource && typeof imageSource === 'string' && imageSource.length > 2) {
         try {
             const textureLoader = new THREE.TextureLoader();
@@ -1169,7 +1162,6 @@ function focusSlide(idx, playSound = true) {
     if (playSound) playClickSound(1600, 0.02);
     updateSelectorChips();
 
-    // Ротация карусели: выводим выбранный чертёж прямо на смотровую позицию
     carouselTargetAngle = -idx * (Math.PI * 2 / TOTAL_INVENTIONS);
 
     const preset = BLUEPRINT_PRESETS[idx];
@@ -1247,9 +1239,8 @@ function createDetailedSputnikModel() {
         opacity: 1.0
     });
 
-    const R = 22; // Сферический радиус спутника
+    const R = 22;
 
-    // 1. СФЕРА КОРПУСА
     const sphereGeo = new THREE.SphereGeometry(R, 36, 36);
     const sphereWire = new THREE.Mesh(sphereGeo, wireCyanMat);
     sputnik.add(sphereWire);
@@ -1257,7 +1248,6 @@ function createDetailedSputnikModel() {
     const sphereInner = new THREE.Mesh(new THREE.SphereGeometry(R * 0.98, 24, 24), innerHoloMat);
     sputnik.add(sphereInner);
 
-    // 2. СТЫКОВОЧНЫЙ ПОЯС
     const belt1 = new THREE.Mesh(new THREE.TorusGeometry(R + 0.5, 0.6, 8, 48), wireAccentMat);
     const belt2 = new THREE.Mesh(new THREE.TorusGeometry(R + 0.5, 0.6, 8, 48), wireAccentMat);
     belt1.position.z = 1.2;
@@ -1274,7 +1264,6 @@ function createDetailedSputnikModel() {
     }
     sputnik.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(beltLines), lineMat));
 
-    // 3. ФЛАНЕЦ ЛЮКА
     const hatchGroup = new THREE.Group();
     hatchGroup.position.set(-R * 0.90, 0, 0);
     hatchGroup.rotation.y = Math.PI / 2;
@@ -1286,14 +1275,12 @@ function createDetailedSputnikModel() {
     hatchGroup.add(flangeCap);
     sputnik.add(hatchGroup);
 
-    // 4. ПРИБОРНЫЙ БЛОК ВНУТРИ
     const internalRig = new THREE.Group();
     const frameGeo = new THREE.BoxGeometry(12, 10, 16);
     const frameMesh = new THREE.Mesh(frameGeo, new THREE.MeshBasicMaterial({ color: 0x38bdf8, wireframe: true, transparent: true, opacity: 0.6 }));
     internalRig.add(frameMesh);
     sputnik.add(internalRig);
 
-    // 5. 4 ХАРАКТЕРНЫЕ ДЛИННЫЕ АНТЕННЫ
     const antAngles = [Math.PI * 0.25, Math.PI * 0.75, Math.PI * 1.25, Math.PI * 1.75];
     const antLengths = [115, 135, 115, 135];
 
@@ -1329,7 +1316,6 @@ function createDetailedSputnikModel() {
         sputnik.add(tipBulb);
     });
 
-    // 6. ПУЛЬСИРУЮЩИЙ КРАСНЫЙ СИГНАЛЬНЫЙ МАЯК
     const beaconGroup = new THREE.Group();
     beaconGroup.position.set(-R * 0.92 - 2.5, 0, 0);
 
@@ -1392,7 +1378,6 @@ window.triggerSputnikManually = function() {
     if (preloaderDismissed || isObscuraTransition) return;
     sputnikFlight.active = false;
     launchSputnik();
-    console.log("[SPUTNIK] Спутник запущен! Старт:", sputnikFlight.startP, "Финиш:", sputnikFlight.endP);
 };
 
 window.addEventListener('keydown', (e) => {
@@ -1404,14 +1389,13 @@ window.addEventListener('keydown', (e) => {
 function launchSputnik() {
     if (preloaderDismissed || isObscuraTransition) return;
     
-    // Траектория строго в видимом конусе перед камерой
     const startX = (Math.random() > 0.5 ? 1 : -1) * (260 + Math.random() * 40);
     const startY = 120 + Math.random() * 40;
-    const startZ = -120; // на среднем плане сцены
+    const startZ = -120;
 
     const endX = -startX * 0.85;
     const endY = -110 - Math.random() * 30;
-    const endZ = 190; // пролёт близко перед камерой (z камеры = 385)
+    const endZ = 190;
 
     sputnikFlight.startP.set(startX, startY, startZ);
     sputnikFlight.endP.set(endX, endY, endZ);
@@ -1543,28 +1527,23 @@ function animatePreloader() {
         if (sputnikFlight.active) {
             const flightP = (now - sputnikFlight.startTime) / (sputnikFlight.duration * 1000);
             if (flightP < 1.0) {
-                // Плавное ускорение и пролёт по дуге
                 sputnik.position.lerpVectors(sputnikFlight.startP, sputnikFlight.endP, flightP);
                 
                 sputnik.rotation.y += 0.012;
                 sputnik.rotation.x += 0.008;
                 sputnik.rotation.z += 0.005;
 
-                // Увеличение масштаба по мере приближения к наблюдателю
                 const currentScale = THREE.MathUtils.lerp(0.65, sputnikFlight.baseScale, Math.sin(flightP * Math.PI));
                 sputnik.scale.set(currentScale, currentScale, currentScale);
 
-                // Плавное появление и затухание по краям
                 const edgeFade = Math.sin(flightP * Math.PI);
                 sputnik.visible = edgeFade > 0.01;
 
-                // Мигание красного маяка
                 const blinkState = (Math.floor(now / 320) % 2 === 0);
                 if (sputnik.beaconGroup) {
                     sputnik.beaconGroup.visible = blinkState;
                 }
                 
-                // Звуковой сигнал бипера
                 if (now - sputnikFlight.lastBeep > 1050) {
                     const soundVolume = Math.sin(flightP * Math.PI);
                     playSputnikBeep(soundVolume);
@@ -1635,27 +1614,22 @@ function animatePreloader() {
         dustParticles.rotation.y = t * 0.02;
         dustParticles.rotation.x = Math.sin(t * 0.015) * 0.1;
 
-        // Вращение колец астролябии
         astrolabeRings.forEach(item => {
             item.group.rotation.x += item.sx;
             item.group.rotation.y += item.sy;
             item.group.rotation.z += item.sz;
         });
 
-        // Плавный поворот карусели кодекса
         carouselCurrentAngle = THREE.MathUtils.lerp(carouselCurrentAngle, carouselTargetAngle, 0.075);
         carouselGroup.rotation.y = carouselCurrentAngle;
 
-        // Кинематика расположения и фокусировки чертежей
         inventionItems.forEach(item => {
             const angle = item.baseAngle;
             const isCurrent = (item.index === currentSlideIndex);
 
-            // Базовое положение на орбите
             const orbitX = Math.sin(angle) * CAROUSEL_RADIUS;
             const orbitZ = Math.cos(angle) * CAROUSEL_RADIUS - 90;
 
-            // Если чертеж выбран — он мягко выдвигается вперед на фокусное расстояние
             const targetX = isCurrent ? 25 : orbitX;
             const targetZ = isCurrent ? 155 : orbitZ;
             const targetY = (isCurrent ? -6 : -18) + Math.sin(t * 1.5 + item.index) * 3.0;
@@ -1664,15 +1638,12 @@ function animatePreloader() {
             item.group.position.y = THREE.MathUtils.lerp(item.group.position.y, targetY, 0.08);
             item.group.position.z = THREE.MathUtils.lerp(item.group.position.z, targetZ, 0.08);
 
-            // Ориентация к камере с легким благородным наклоном
             item.group.rotation.y = -carouselGroup.rotation.y;
             item.group.rotation.x = 0.04 + Math.sin(t + item.index) * 0.015;
 
-            // Масштабирование: активный чертеж крупный и четкий, боковые компактные
             const targetScale = isCurrent ? 1.25 : 0.75;
             item.group.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1);
 
-            // Регулировка яркости и прозрачности шейдеров
             if (item.group.holoMat && item.group.holoMat.uniforms) {
                 item.group.holoMat.uniforms.uTime.value = t;
                 item.group.holoMat.uniforms.uFocus.value = THREE.MathUtils.lerp(item.group.holoMat.uniforms.uFocus.value, isCurrent ? 1.0 : 0.0, 0.1);
@@ -1691,6 +1662,7 @@ function animatePreloader() {
 
         preRenderer.clear();
         preRenderer.render(preScene, preCamera);
+
     } catch(renderErr) {
         console.error("Frame render pass issue:", renderErr);
     }
@@ -1698,7 +1670,6 @@ function animatePreloader() {
 
 animatePreloader();
 
-// Фокусируем первое изобретение при старте
 setTimeout(() => {
     if (!preloaderDismissed) focusSlide(0, false);
 }, 500);
