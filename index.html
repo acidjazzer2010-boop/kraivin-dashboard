@@ -15,20 +15,34 @@
 :root{--bg-space:#070709;--bg-panel:rgba(13,13,18,.85);--bg-cell-hover:rgba(24,24,34,.95);--text-main:#f4f1ea;--text-muted:#8e8a80;--border-line:rgba(212,175,55,.16);--border-accent:rgba(212,175,55,.6);--accent-gold:#d4af37;--accent-vermilion:#e63946;--accent-jade:#2a9d8f;--input-bg:rgba(255,255,255,.025);--cursor-glow:rgba(212,175,55,.2);--table-header-bg:rgba(13,13,18,.98);--grain-opacity:.035}
 html:not(.dark){--bg-space:#f4f1ea;--bg-panel:rgba(255,255,255,.92);--bg-cell-hover:rgba(246,243,235,.98);--text-main:#141416;--text-muted:#6b665c;--border-line:rgba(184,134,11,.22);--border-accent:rgba(184,134,11,.75);--accent-gold:#b8860b;--accent-vermilion:#c5221f;--accent-jade:#1d756b;--input-bg:rgba(0,0,0,.03);--cursor-glow:rgba(184,134,11,.15);--table-header-bg:rgba(244,241,234,.98);--grain-opacity:.02}
 *{box-sizing:border-box;border-color:var(--border-line);margin:0;padding:0;scrollbar-width:thin;scrollbar-color:var(--border-line) transparent}
-html,body{width:100%;height:100%;margin:0;padding:0;overflow:hidden;background:#070709;color:var(--text-main);font-family:'JetBrains Mono',monospace;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;margin:0;padding:0;overflow:hidden;background:var(--bg-space);color:var(--text-main);font-family:'JetBrains Mono',monospace;-webkit-tap-highlight-color:transparent}
 :focus-visible{outline:2px solid var(--accent-gold);outline-offset:2px}
 button:focus:not(:focus-visible){outline:none}
 .film-grain{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:999;opacity:var(--grain-opacity);background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+#shutter-flash{
+    position:fixed;
+    inset:0;
+    width:100vw;
+    height:100vh;
+    background:#f4f1ea;
+    z-index:950;
+    pointer-events:none;
+    opacity:0;
+    display:none;
+}
 
 #preloader-stage{position:fixed;top:0;left:0;width:100vw;height:100vh;background:radial-gradient(circle at center,#0d0e17 0%,#030306 100%);z-index:900;overflow:hidden;touch-action:none}
 #preloader-webgl{position:absolute;inset:0;width:100%;height:100%;z-index:10;cursor:grab}
 #preloader-webgl:active{cursor:grabbing}
 
 .preloader-fixed-hud{position:absolute;inset:0;width:100%;height:100%;z-index:30;pointer-events:none;user-select:none;transition:opacity 0.8s ease}
-#preloaderTitle{position:absolute;top:24px;left:50%;transform:translateX(-50%);font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:clamp(22px,3.2vw,44px);font-weight:700;letter-spacing:.26em;color:var(--accent-gold);text-shadow:0 0 45px rgba(212,175,55,.85);text-align:center;white-space:nowrap}
+#preloaderTitle{position:absolute;top:24px;left:50%;transform:translateX(-50%);font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:clamp(22px,3.2vw,44px);font-weight:700;letter-spacing:.26em;color:var(--accent-gold);opacity:0;text-shadow:0 0 45px rgba(212,175,55,.85);transition:opacity 1.8s cubic-bezier(.16,1,.3,1);text-align:center;white-space:nowrap}
+#preloaderTitle.locked-on{opacity:1!important}
 
-#blueprintSubtitle{position:absolute;top:74px;left:50%;transform:translateX(-50%);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.32em;text-transform:uppercase;color:rgba(212,175,55,0.75);text-align:center;white-space:nowrap}
+#blueprintSubtitle{position:absolute;top:74px;left:50%;transform:translateX(-50%);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.32em;text-transform:uppercase;color:rgba(212,175,55,0.75);opacity:0;transition:opacity 0.6s ease;text-align:center;white-space:nowrap}
 
+/* ЛАТУННЫЙ СЕЛЕКТОР КОДЕКСА */
 .codex-selector-hud{
     position:absolute;
     bottom:110px;
@@ -36,10 +50,10 @@ button:focus:not(:focus-visible){outline:none}
     transform:translateX(-50%);
     display:flex;
     align-items:center;
-    gap:18px;
+    gap:16px;
     pointer-events:auto;
     z-index:40;
-    background:rgba(10,10,14,0.78);
+    background:rgba(10,10,14,0.8);
     padding:6px 14px;
     border:1px solid rgba(212,175,55,0.38);
     backdrop-filter:blur(14px);
@@ -100,20 +114,52 @@ button:focus:not(:focus-visible){outline:none}
 #exploreBtnWrapper.active{opacity:1;pointer-events:auto;transform:translateY(0)}
 .explore-btn{padding:12px 34px;background:rgba(13,13,18,.9);border:1px solid rgba(212,175,55,.95);color:#f4f1ea;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.32em;text-transform:uppercase;cursor:pointer;backdrop-filter:blur(14px);overflow:hidden;transition:all .3s;box-shadow:0 0 40px rgba(212,175,55,.35),inset 0 0 16px rgba(212,175,55,.18)}
 .explore-btn:hover{border-color:#ffd700;color:#ffd700;box-shadow:0 0 60px rgba(212,175,55,.7),inset 0 0 24px rgba(212,175,55,.35);transform:scale(1.04)}
+
 .preset-btn{padding:12px 20px;background:rgba(212,175,55,0.12);border:1px solid var(--accent-gold);color:var(--accent-gold);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;backdrop-filter:blur(10px);transition:all .3s}
 .preset-btn:hover{background:var(--accent-gold);color:#070709}
 
 #mainDashboardApp{display:none;position:relative;z-index:10;min-height:100vh}
 #mainDashboardApp.ready{display:flex}
 
+.camera-obscura-reveal {
+    animation: developNegative 3.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes developNegative {
+    0% {
+        opacity: 0.95;
+        filter: invert(1) grayscale(1) contrast(1.6) brightness(1.2);
+        transform: scale(1.02);
+    }
+    30% {
+        opacity: 1;
+        filter: invert(0.85) sepia(0.55) contrast(1.4) brightness(1.1);
+    }
+    65% {
+        filter: invert(0.25) sepia(0.3) contrast(1.15) brightness(1.02);
+    }
+    100% {
+        opacity: 1;
+        filter: invert(0) sepia(0) contrast(1) brightness(1);
+        transform: scale(1);
+    }
+}
+
 #webgl-bg-canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;pointer-events:none;opacity:.35}
+html:not(.dark) #webgl-bg-canvas{opacity:.18}
 .alche-block{position:relative;background:var(--bg-panel);backdrop-filter:blur(20px);border-right:1px solid var(--border-line);border-bottom:1px solid var(--border-line)}
 .cross-tl::before{content:'+';position:absolute;top:-6px;left:-4px;font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1;color:var(--accent-gold);pointer-events:none;z-index:10}
 .tilt-card{position:relative;overflow:hidden;transform-style:preserve-3d;perspective:1000px;transition:transform .25s cubic-bezier(.2,0,.2,1),border-color .3s}
+.tilt-card::before{content:'';position:absolute;inset:-1px;border:1px solid transparent;background:radial-gradient(350px circle at var(--mouse-x,0) var(--mouse-y,0),var(--cursor-glow),transparent 75%);opacity:0;transition:opacity .4s;pointer-events:none;z-index:2}
+.tilt-card:hover::before{opacity:1}
+.tab-view-enter{animation:tabEntrance .6s cubic-bezier(.19,1,.22,1) forwards}
+@keyframes tabEntrance{0%{opacity:0;filter:blur(8px);transform:translateY(8px)}100%{opacity:1;filter:blur(0);transform:translateY(0)}}
 input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:2px;background:var(--border-line);outline:none}
 input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:12px;height:12px;background:var(--accent-gold);cursor:pointer;border:1px solid var(--bg-space);transform:rotate(45deg);transition:transform .2s}
+input[type="range"]::-webkit-slider-thumb:hover{transform:rotate(45deg) scale(1.4)}
 .mono-input{background:var(--input-bg);border:1px solid var(--border-line);color:var(--text-main);font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 9px;width:100%;border-radius:0;outline:none;transition:border-color .2s}
 .mono-input:focus{border-color:var(--accent-gold);background:rgba(212,175,55,.06)}
+select.mono-input option{background:#0d0d12;color:#f4f1ea}
 .hw-slider-track{position:relative;width:130px;height:28px;border:1px solid var(--border-line);background:var(--input-bg);display:flex;align-items:center;justify-content:space-between;padding:0 10px;cursor:pointer;user-select:none}
 .hw-slider-thumb{position:absolute;top:2px;bottom:2px;width:62px;background:var(--accent-gold);transition:transform .45s cubic-bezier(.19,1,.22,1)}
 .pulse-dot{display:inline-block;width:6px;height:6px;border-radius:9999px;background:var(--accent-gold);animation:pulseAnim 2s infinite ease-in-out}
@@ -122,6 +168,7 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:non
 </head>
 <body class="selection:bg-[#d4af37] selection:text-black">
 <div class="film-grain" aria-hidden="true"></div>
+<div id="shutter-flash"></div>
 
 <!-- ПРЕЛОАДЕР -->
 <div id="preloader-stage">
@@ -147,14 +194,14 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:non
             <div id="preloaderHUD">
                 <div class="flex items-center gap-3 text-[#d4af37] text-[10px] tracking-[0.25em] uppercase font-mono">
                     <span class="pulse-dot" aria-hidden="true"></span>
-                    <span id="loaderStatusText" class="cursor-pointer hover:underline" onclick="window.triggerSputnikManually && window.triggerSputnikManually()">Кодекс да Винчи • Ротация [Клавиша S — спутник]</span>
+                    <span id="loaderStatusText" class="cursor-pointer hover:underline" onclick="window.triggerSputnikManually && window.triggerSputnikManually()" title="Нажмите для вызова спутника (или клавишу S)">Кодекс да Винчи • Ротация карусели [S — спутник]</span>
                     <span id="loaderPercent" class="font-bold">0%</span>
                 </div>
                 <div class="progress-bar-bg mt-1"><div id="loaderProgressBar"></div></div>
             </div>
             <div id="exploreBtnWrapper">
                 <button id="applyPresetBtn" onclick="applySelectedPresetAndEnter(event)" class="preset-btn">Применить модель</button>
-                <button id="exploreBtn" onclick="dismissPreloader()" class="explore-btn">Войти в систему</button>
+                <button id="exploreBtn" onclick="triggerCameraObscuraTransition(event)" class="explore-btn">Войти в портал</button>
             </div>
         </div>
     </div>
@@ -166,9 +213,12 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:non
 <div id="mainDashboardApp" class="flex-col border-t border-l">
     <header class="alche-block px-5 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4 border-b">
         <div class="flex items-center gap-6">
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="playClickSound(1500,0.04)">
                 <svg class="w-7 h-7 text-[#d4af37]" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.2">
                     <circle cx="16" cy="16" r="14"/><rect x="6" y="6" width="20" height="20"/>
+                    <polygon points="16,2 30,26 2,26" stroke-width="0.8" stroke-dasharray="1 1"/>
+                    <line x1="2" y1="16" x2="30" y2="16" stroke-dasharray="2 2"/>
+                    <line x1="16" y1="2" x2="16" y2="30" stroke-dasharray="2 2"/>
                 </svg>
                 <div>
                     <div class="font-mono text-[9px] uppercase tracking-[0.25em] text-[#d4af37] opacity-80">AUREA PROPORTIO // 1 : 1.618</div>
@@ -176,44 +226,176 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:non
                 </div>
             </div>
             <div class="hidden xl:flex items-center gap-5 pl-5 border-l font-mono text-[10px] opacity-75">
-                <span>[НДС: 22%]</span>
-                <span id="telemetryRate">[КАПИТАЛ: 16.0%]</span>
-                <span id="telemetryClock">[00:00:00]</span>
+                <span>[НАЛОГОВЫЙ КОДЕКС: 22% НДС]</span>
+                <span id="telemetryRate">[КАПИТАЛ: 16.0% ГОДОВЫХ]</span>
+                <span id="cursorCoordDisplay" class="text-[#d4af37]">X: 0000 / Y: 0000</span>
+                <span id="telemetryClock">[15:00:00]</span>
             </div>
         </div>
         <div class="flex items-center gap-4">
-            <button id="downloadReportBtn" onclick="exportDataToCsv()" type="button" class="px-3.5 py-1.5 border font-mono text-[10px] uppercase tracking-widest hover:border-[#d4af37] transition">↓ Скачать отчет</button>
+            <button id="toggleAudioBtn" onclick="toggleRenaissanceAmbient()" type="button" class="px-3 py-1.5 border border-[#d4af37]/60 text-[#d4af37] font-mono text-[10px] uppercase tracking-widest hover:bg-[#d4af37]/15 transition flex items-center gap-2">
+                <span id="audioStatusDot" class="pulse-dot"></span>
+                <span id="audioBtnLabel">ЗВУК: ВЫСОКИЙ ХОР</span>
+            </button>
+            <button id="downloadExecutiveMemoBtn" onclick="generateExecutiveMemo()" type="button" class="px-3.5 py-1.5 border border-[#d4af37]/60 text-[#d4af37] font-mono text-[10px] uppercase tracking-widest hover:bg-[#d4af37]/15 transition flex items-center gap-2"><span>★ Меморандум (PDF)</span></button>
+            <button id="downloadReportBtn" onclick="exportDataToCsv()" type="button" class="px-3.5 py-1.5 border font-mono text-[10px] uppercase tracking-widest hover:border-[#d4af37] hover:bg-[#d4af37]/10 transition flex items-center gap-2"><span>↓ Скачать отчет</span></button>
+            <div id="themeSlider" class="hw-slider-track" onclick="toggleTheme()" role="switch" aria-checked="true" tabindex="0">
+                <div id="sliderThumb" class="hw-slider-thumb" style="transform: translateX(0)"></div>
+                <span id="lblNight" class="relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold text-black">Ночь</span>
+                <span id="lblDay" class="relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold opacity-70">День</span>
+            </div>
         </div>
     </header>
 
     <div class="flex-1 grid grid-cols-1 lg:grid-cols-12">
-        <aside class="lg:col-span-3 flex flex-col border-r p-5 space-y-4">
-            <div class="font-mono text-[10px] uppercase tracking-[0.2em] text-[#d4af37] font-bold">[00] Параметры Модели</div>
-            <div>
-                <label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Горизонт расчета</label>
-                <select id="paramPeriod" class="mono-input" onchange="runCalculation()">
-                    <option value="6">6 месяцев</option><option value="12" selected>12 месяцев</option><option value="24">24 месяца</option>
-                </select>
+        <aside class="lg:col-span-3 flex flex-col border-r">
+            <div class="alche-block cross-tl px-5 py-3.5 flex items-center justify-between">
+                <span class="font-mono text-[10px] uppercase tracking-[0.2em] text-[#d4af37] font-bold">[00] Параметры Модели</span>
+                <button id="defaultResetBtn" type="button" onclick="resetDefaults()" class="font-mono text-[9px] uppercase underline opacity-60 hover:opacity-100 transition">Сброс</button>
             </div>
-            <div>
-                <div class="flex justify-between font-mono text-[10px] mb-1"><span class="opacity-70">МАРЖИНАЛЬНОСТЬ</span><span id="lblMarginVal" class="text-[#d4af37]">20%</span></div>
-                <input type="range" id="paramMargin" min="10" max="50" step="1" value="20" oninput="runCalculation()">
-            </div>
-            <div>
-                <label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Стартовая закупка, ₽</label>
-                <input type="text" id="paramInitialPurchase" value="25 000 000" class="mono-input font-bold" oninput="runCalculation()">
-            </div>
+            <form id="financialInputsForm" class="flex-1 flex flex-col" onsubmit="event.preventDefault()">
+                <div class="alche-block p-5 space-y-4">
+                    <div class="flex justify-between items-baseline"><span class="font-serif italic text-base font-semibold">I. Временной горизонт и маржа</span><span class="font-mono text-[9px] opacity-40">01 // 04</span></div>
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Месяц старта</label>
+                            <select id="paramStartMonth" class="mono-input" onchange="playClickSound();runCalculation();">
+                                <option value="0">Январь</option><option value="1">Февраль</option><option value="2">Март</option><option value="3">Апрель</option>
+                                <option value="4">Май</option><option value="5">Июнь</option><option value="6">Июль</option><option value="7">Август</option>
+                                <option value="8">Сентябрь</option><option value="9" selected>Октябрь</option><option value="10">Ноябрь</option><option value="11">Декабрь</option>
+                            </select>
+                        </div>
+                        <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Год старта</label>
+                            <select id="paramStartYear" class="mono-input" onchange="playClickSound();runCalculation();">
+                                <option value="2026" selected>2026</option><option value="2027">2027</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Горизонт</label>
+                            <select id="paramPeriod" class="mono-input" onchange="playClickSound();runCalculation();">
+                                <option value="6">6 месяцев</option><option value="12" selected>12 месяцев</option><option value="18">18 месяцев</option><option value="24">24 месяца</option>
+                            </select>
+                        </div>
+                        <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Ставка НДС</label>
+                            <select id="paramVatRate" class="mono-input" onchange="playClickSound();runCalculation();">
+                                <option value="22" selected>22%</option><option value="20">20%</option><option value="10">10%</option><option value="0">0%</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between font-mono text-[10px] mb-1"><span class="opacity-70">МАРЖИНАЛЬНОСТЬ ПРОДАЖ</span><span id="lblMarginVal" class="text-[#d4af37] font-bold">20%</span></div>
+                        <input type="range" id="paramMargin" min="10" max="50" step="1" value="20" oninput="scheduleCalc()">
+                    </div>
+                </div>
+                <div class="alche-block p-5 space-y-4">
+                    <div class="flex justify-between items-baseline"><span class="font-serif italic text-base font-semibold">II. Партионный склад и кредитование</span><span class="font-mono text-[9px] opacity-40">02 // 04</span></div>
+                    <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Стартовая закупка партии, ₽</label><input type="text" id="paramInitialPurchase" value="25 000 000" class="mono-input font-bold" inputmode="numeric" oninput="formatInput(this);scheduleCalc();"></div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Цикл, мес.</label><input type="number" id="paramBatchCycle" value="5" min="1" max="12" class="mono-input text-center" oninput="scheduleCalc()"></div>
+                        <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">ЦБ РФ, %</label><input type="number" id="paramCbRate" value="14.0" step="0.5" class="mono-input text-center font-bold text-[#d4af37]" oninput="scheduleCalc()"></div>
+                        <div><label class="block font-mono text-[8px] uppercase opacity-70 mb-1">Комиссия, %</label><input type="number" id="paramCommMargin" value="2.0" step="0.5" class="mono-input text-center" oninput="scheduleCalc()"></div>
+                    </div>
+                    <div class="p-3 border space-y-3" style="border-color:rgba(212,175,55,.25);background:rgba(212,175,55,.02)">
+                        <div class="font-mono text-[8px] uppercase tracking-widest text-[#d4af37] font-bold">[УСЛОВИЯ ПОСТАВЩИКА]</div>
+                        <div>
+                            <div class="flex justify-between font-mono text-[9px] mb-1"><span class="opacity-70">ПРЕДОПЛАТА ПОСТАВЩИКУ</span><span id="lblSupplierPrepVal" class="text-[#d4af37] font-bold">50%</span></div>
+                            <input type="range" id="paramSupplierPrepay" min="0" max="100" step="10" value="50" oninput="scheduleCalc()">
+                        </div>
+                        <div>
+                            <div class="flex justify-between font-mono text-[9px] mb-1"><span class="opacity-70">ОТСРОЧКА ОСТАТКА</span><span id="lblSupplierDelayVal" class="text-[#d4af37] font-bold">1 мес.</span></div>
+                            <input type="range" id="paramSupplierDelay" min="0" max="6" step="1" value="1" oninput="scheduleCalc()">
+                        </div>
+                    </div>
+                </div>
+                <div class="alche-block p-5 space-y-4">
+                    <div class="flex justify-between items-baseline"><span class="font-serif italic text-base font-semibold">III. Масштабирование заказов</span><span class="font-mono text-[9px] opacity-40">03 // 04</span></div>
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Средний чек, ₽</label><input type="text" id="paramAov" value="150 000" class="mono-input font-bold" inputmode="numeric" oninput="formatInput(this);scheduleCalc();"></div>
+                        <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Заказов в 1-й мес.</label><input type="number" id="paramStartOrders" value="40" min="1" max="2000" class="mono-input text-center font-bold" oninput="scheduleCalc()"></div>
+                    </div>
+                    <div>
+                        <label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Логика прироста</label>
+                        <div class="grid grid-cols-2 border">
+                            <button type="button" id="btnModeAbs" onclick="setGrowthMode('abs')" class="py-1 font-mono text-[9px] uppercase tracking-wider bg-[#d4af37] text-black font-bold transition">В штуках</button>
+                            <button type="button" id="btnModePct" onclick="setGrowthMode('pct')" class="py-1 font-mono text-[9px] uppercase tracking-wider opacity-60 hover:opacity-100 transition">В процентах</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between font-mono text-[10px] mb-1"><span id="lblGrowthModeTitle" class="opacity-70">ПРИРОСТ В МЕСЯЦ</span><span id="lblGrowthVal" class="text-[#d4af37] font-bold">+5 шт.</span></div>
+                        <input type="range" id="paramGrowthSlider" min="0" max="100" step="1" value="5" oninput="scheduleCalc()">
+                    </div>
+                    <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Потолок продаж в месяц, шт.</label><input type="number" id="paramMaxOrdersCap" value="300" min="10" step="10" class="mono-input text-center" oninput="scheduleCalc()"></div>
+                </div>
+                <div class="alche-block p-5 space-y-4 flex-1">
+                    <div class="flex justify-between items-baseline"><span class="font-serif italic text-base font-semibold">IV. Постоянные затраты и факторинг</span><span class="font-mono text-[9px] opacity-40">04 // 04</span></div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div><label class="block font-mono text-[8px] uppercase opacity-70 mb-1">ФОТ, ₽</label><input type="text" id="paramFot" value="500 000" class="mono-input" inputmode="numeric" oninput="formatInput(this);scheduleCalc();"></div>
+                        <div><label class="block font-mono text-[8px] uppercase opacity-70 mb-1">Склад, ₽</label><input type="text" id="paramWh" value="200 000" class="mono-input" inputmode="numeric" oninput="formatInput(this);scheduleCalc();"></div>
+                        <div><label class="block font-mono text-[8px] uppercase opacity-70 mb-1">Офис, ₽</label><input type="text" id="paramOffice" value="150 000" class="mono-input" inputmode="numeric" oninput="formatInput(this);scheduleCalc();"></div>
+                    </div>
+                    <div class="pt-1">
+                        <div>
+                            <div class="flex justify-between font-mono text-[9px] mb-1"><span class="opacity-70">ДОЛЯ ФАКТОРИНГА В ВЫРУЧКЕ</span><span id="lblFactShareVal" class="text-[#d4af37] font-bold">50%</span></div>
+                            <input type="range" id="paramFactoringShare" min="0" max="100" step="10" value="50" oninput="scheduleCalc()">
+                        </div>
+                    </div>
+                </div>
+            </form>
         </aside>
 
-        <section class="lg:col-span-9 flex flex-col p-5 space-y-6">
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 border-b pb-5">
-                <div class="alche-block p-4"><div class="font-mono text-[9px] opacity-60 uppercase">[01] Выручка</div><div id="kpiRev" class="font-serif text-2xl font-bold text-[#f4f1ea] mt-1">0 ₽</div></div>
-                <div class="alche-block p-4"><div class="font-mono text-[9px] opacity-60 uppercase">[02] Дефицит</div><div id="kpiInjections" class="font-serif text-2xl font-bold text-[#e63946] mt-1">0 ₽</div></div>
-                <div class="alche-block p-4"><div class="font-mono text-[9px] opacity-60 uppercase">[03] Проценты</div><div id="kpiInterest" class="font-serif text-2xl font-bold text-[#d4af37] mt-1">0 ₽</div></div>
-                <div class="alche-block p-4"><div class="font-mono text-[9px] opacity-60 uppercase">[04] Прибыль</div><div id="kpiProfit" class="font-serif text-2xl font-bold text-[#2a9d8f] mt-1">0 ₽</div></div>
+        <section class="lg:col-span-9 flex flex-col">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 border-b">
+                <div class="alche-block tilt-card p-5" onmouseenter="scrambleTitle(this)"><div class="flex justify-between items-center opacity-60 mb-1"><span class="metric-title font-mono text-[9px] uppercase tracking-widest" data-original="[01] Выручка">[01] Выручка</span></div><div id="kpiRev" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#f4f1ea]">0 ₽</div><div class="font-mono text-[9px] text-[#d4af37] mt-1.5 opacity-90" id="kpiRevSub">Маржа: 20%</div></div>
+                <div class="alche-block tilt-card p-5" onmouseenter="scrambleTitle(this)"><div class="flex justify-between items-center opacity-60 mb-1"><span class="metric-title font-mono text-[9px] uppercase tracking-widest" data-original="[02] Дефицит">[02] Дефицит</span></div><div id="kpiInjections" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#e63946]">0 ₽</div><div class="font-mono text-[9px] text-[#e63946] mt-1.5 opacity-90">Внешние дотации</div></div>
+                <div class="alche-block tilt-card p-5" onmouseenter="scrambleTitle(this)"><div class="flex justify-between items-center opacity-60 mb-1"><span class="metric-title font-mono text-[9px] uppercase tracking-widest" data-original="[03] Проценты">[03] Проценты</span></div><div id="kpiInterest" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#d4af37]">0 ₽</div><div id="kpiRateSub" class="font-mono text-[9px] text-[#d4af37] mt-1.5 opacity-90">Ставка 16.0%</div></div>
+                <div class="alche-block tilt-card p-5" onmouseenter="scrambleTitle(this)"><div class="flex justify-between items-center opacity-60 mb-1"><span class="metric-title font-mono text-[9px] uppercase tracking-widest" data-original="[04] Пиковый долг">[04] Пиковый долг</span></div><div id="kpiMaxDebt" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#f4f1ea]">0 ₽</div><div class="font-mono text-[9px] opacity-60 mt-1.5">Максимум тела</div></div>
+                <div class="alche-block tilt-card p-5 col-span-2 sm:col-span-1" onmouseenter="scrambleTitle(this)"><div class="flex justify-between items-center opacity-60 mb-1"><span class="metric-title font-mono text-[9px] uppercase tracking-widest" data-original="[05] Прибыль">[05] Прибыль</span></div><div id="kpiProfit" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#2a9d8f]">0 ₽</div><div id="kpiRoiSub" class="font-mono text-[9px] text-[#2a9d8f] mt-1.5 opacity-90">Рентабельность: 0%</div></div>
             </div>
-            <div class="alche-block p-5 border">
-                <div class="h-[360px] relative"><canvas id="chartDebt"></canvas></div>
+            <div class="alche-block px-5 py-2.5 flex items-center justify-between border-b">
+                <div class="flex flex-wrap items-center gap-1.5" id="navTabsContainer">
+                    <button type="button" onclick="selectTab(0)" class="tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest bg-[#d4af37] text-black font-bold transition shadow-md">[01] ОБСЛУЖИВАНИЕ КАПИТАЛА</button>
+                    <button type="button" onclick="selectTab(1)" class="tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest opacity-70 hover:opacity-100 transition">[02] СКЛАДСКОЙ ЦИКЛ</button>
+                    <button type="button" onclick="selectTab(2)" class="tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest opacity-70 hover:opacity-100 transition">[03] ДЕНЕЖНЫЙ ПОТОК</button>
+                    <button type="button" onclick="selectTab(3)" class="tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest opacity-70 hover:opacity-100 transition">[04] ЭКОНОМИКА И ЗАКАЗЫ</button>
+                </div>
+            </div>
+            <div class="flex-1 p-5 lg:p-7 space-y-6">
+                <div id="viewTab0" class="tab-view-enter space-y-6">
+                    <div class="alche-block p-5 border">
+                        <div class="flex justify-between items-center mb-4"><div><h3 class="font-serif text-xl font-bold tracking-wide italic">График обслуживания долга и начисления процентов</h3><p class="font-mono text-[10px] opacity-60">Ежемесячные проценты по совокупной ставке кредитора (столбцы) и динамика тела долга (кривая)</p></div></div>
+                        <div class="h-[360px] relative"><canvas id="chartDebt"></canvas></div>
+                    </div>
+                    <div class="alche-block border overflow-x-auto">
+                        <table class="w-full text-left font-mono text-[11px]">
+                            <thead class="border-b" style="background:var(--table-header-bg)"><tr class="text-[9px] uppercase tracking-widest text-[#d4af37]"><th class="p-3">Период</th><th class="p-3">Дотация (вход)</th><th class="p-3">Проценты</th><th class="p-3">Погашение долга</th><th class="p-3">Остаток долга</th><th class="p-3">Свободный остаток</th></tr></thead>
+                            <tbody id="tableDebtBody" class="divide-y"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="viewTab1" class="hidden space-y-6">
+                    <div class="alche-block p-5 border">
+                        <div class="flex justify-between items-center mb-4"><div><h3 class="font-serif text-xl font-bold tracking-wide italic">Партионные закупки и истощение склада</h3><p class="font-mono text-[10px] opacity-60">Закупка дискретными циклами с учетом предоплаты и отсрочки поставщика</p></div></div>
+                        <div class="h-[400px] relative"><canvas id="chartStock"></canvas></div>
+                    </div>
+                </div>
+                <div id="viewTab2" class="hidden space-y-6">
+                    <div class="alche-block p-5 border">
+                        <div class="flex justify-between items-center mb-4"><div><h3 class="font-serif text-xl font-bold tracking-wide italic">Структура помесячного денежного потока</h3><p class="font-mono text-[10px] opacity-60">Сопоставление входящей выручки и совокупных выплат (закупки, аренда, ФОТ и налоги)</p></div></div>
+                        <div class="h-[400px] relative"><canvas id="chartCF"></canvas></div>
+                    </div>
+                </div>
+                <div id="viewTab3" class="hidden space-y-6">
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        <div class="alche-block p-5 border">
+                            <h3 class="font-serif text-xl font-bold tracking-wide italic mb-1">Динамика заказов и выручки</h3><p class="font-mono text-[10px] opacity-60 mb-4">Рост клиентской базы и масштабирование объемов отгрузок</p>
+                            <div class="h-[320px] relative"><canvas id="chartOrders"></canvas></div>
+                        </div>
+                        <div class="alche-block p-5 border">
+                            <h3 class="font-serif text-xl font-bold tracking-wide italic mb-1">Структура совокупных затрат</h3><p class="font-mono text-[10px] opacity-60 mb-4">Доли расходов с учетом себестоимости, инфраструктуры и процентов по долгу</p>
+                            <div class="h-[320px] relative"><canvas id="chartPie"></canvas></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
     </div>
@@ -221,9 +403,335 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:non
 
 <script>
 'use strict';
+window.onerror = function(msg, url, line) {
+    console.error("Runtime Notice:", msg, "line:", line);
+    return false;
+};
 
+const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const USER_IMAGES = typeof __JSON_IMAGES_PAYLOAD__ !== 'undefined' ? __JSON_IMAGES_PAYLOAD__ : [];
+
+let isObscuraTransition = false;
+let obscuraStartTime = 0;
+const OBSCURA_DURATION = 6.8;
 let preloaderDismissed = false;
+
+/* =========================================================================
+   СТАБИЛИЗИРОВАННЫЙ RENAISSANCE WEB AUDIO ДВИЖОК
+   ========================================================================= */
+class RenaissanceSoundscapeEngine {
+    constructor() {
+        this.ctx = null;
+        this.isPlaying = false;
+        this.timer = null;
+        this.masterGain = null;
+        this.limiter = null;
+        this.activeVoices = 0;
+        this.maxVoices = 2;
+        this.scale = [146.83, 164.81, 174.61, 196.00, 220.00, 246.94, 261.63, 293.66, 329.63];
+        this.setupVisibilityListener();
+    }
+
+    setupVisibilityListener() {
+        document.addEventListener('visibilitychange', () => {
+            if (!this.ctx) return;
+            if (document.hidden) {
+                if (this.ctx.state === 'running') this.ctx.suspend();
+            } else {
+                if (this.isPlaying && this.ctx.state === 'suspended') this.ctx.resume();
+            }
+        });
+    }
+
+    init() {
+        if (this.ctx) return;
+        try {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            this.ctx = new AudioContextClass({ latencyHint: 'playback' });
+
+            this.limiter = this.ctx.createDynamicsCompressor();
+            this.limiter.threshold.setValueAtTime(-12, this.ctx.currentTime);
+            this.limiter.knee.setValueAtTime(30, this.ctx.currentTime);
+            this.limiter.ratio.setValueAtTime(12, this.ctx.currentTime);
+            this.limiter.attack.setValueAtTime(0.005, this.ctx.currentTime);
+            this.limiter.release.setValueAtTime(0.25, this.ctx.currentTime);
+            this.limiter.connect(this.ctx.destination);
+
+            this.masterGain = this.ctx.createGain();
+            this.masterGain.gain.setValueAtTime(0.22, this.ctx.currentTime);
+            this.masterGain.connect(this.limiter);
+
+            this.warmthFilter = this.ctx.createBiquadFilter();
+            this.warmthFilter.type = 'lowpass';
+            this.warmthFilter.frequency.setValueAtTime(950, this.ctx.currentTime);
+            this.warmthFilter.Q.setValueAtTime(1.0, this.ctx.currentTime);
+
+            this.convolver = this.ctx.createConvolver();
+            this.convolver.buffer = this.buildCathedralImpulse(3.2, 1.8);
+
+            this.warmthFilter.connect(this.convolver);
+            this.convolver.connect(this.masterGain);
+
+            const dryGain = this.ctx.createGain();
+            dryGain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+            this.warmthFilter.connect(dryGain);
+            dryGain.connect(this.masterGain);
+        } catch(e) {}
+    }
+
+    buildCathedralImpulse(duration, decay) {
+        if (!this.ctx) return null;
+        const rate = this.ctx.sampleRate;
+        const length = Math.floor(rate * duration);
+        const impulse = this.ctx.createBuffer(2, length, rate);
+        const left = impulse.getChannelData(0);
+        const right = impulse.getChannelData(1);
+
+        for (let i = 0; i < length; i++) {
+            const factor = Math.exp(-i / (rate * (decay * 0.4)));
+            left[i] = (Math.random() * 2 - 1) * factor;
+            right[i] = (Math.random() * 2 - 1) * factor;
+        }
+        return impulse;
+    }
+
+    startCathedralDrone() {
+        if (!this.ctx || this.droneStarted) return;
+        this.droneStarted = true;
+
+        const roots = [73.42, 110.00];
+        roots.forEach(freq => {
+            try {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.035, this.ctx.currentTime);
+                osc.connect(gain);
+                gain.connect(this.warmthFilter);
+                osc.start();
+            } catch(e) {}
+        });
+    }
+
+    playPolyphonicVoice(freq, duration = 5.5) {
+        if (!this.ctx || this.ctx.state === 'suspended' || this.activeVoices >= this.maxVoices) return;
+        this.activeVoices++;
+
+        try {
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const voiceGain = this.ctx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now);
+
+            voiceGain.gain.setValueAtTime(0.0001, now);
+            voiceGain.gain.linearRampToValueAtTime(0.065, now + 1.8);
+            voiceGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+            osc.connect(voiceGain);
+            voiceGain.connect(this.warmthFilter);
+
+            osc.start(now);
+            osc.stop(now + duration + 0.1);
+
+            osc.onended = () => {
+                this.activeVoices = Math.max(0, this.activeVoices - 1);
+                try {
+                    osc.disconnect();
+                    voiceGain.disconnect();
+                } catch (e) {}
+            };
+        } catch(e) {
+            this.activeVoices = Math.max(0, this.activeVoices - 1);
+        }
+    }
+
+    start() {
+        this.init();
+        if (!this.ctx) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+        if (this.isPlaying) return;
+        this.isPlaying = true;
+
+        this.startCathedralDrone();
+
+        const scheduleVoice = () => {
+            if (!this.isPlaying) return;
+            const note = this.scale[Math.floor(Math.random() * this.scale.length)];
+            const duration = 4.5 + Math.random() * 2.5;
+            this.playPolyphonicVoice(note, duration);
+            this.timer = setTimeout(scheduleVoice, 4000 + Math.random() * 4000);
+        };
+        scheduleVoice();
+    }
+
+    toggle() {
+        if (!this.isPlaying) {
+            this.start();
+            return true;
+        } else {
+            this.stop();
+            return false;
+        }
+    }
+
+    stop() {
+        this.isPlaying = false;
+        if (this.timer) clearTimeout(this.timer);
+        if (this.ctx && this.masterGain) {
+            try {
+                this.masterGain.gain.linearRampToValueAtTime(0.0001, this.ctx.currentTime + 0.8);
+                setTimeout(() => {
+                    if (!this.isPlaying && this.ctx && this.ctx.state === 'running') this.ctx.suspend();
+                }, 850);
+            } catch(e) {}
+        }
+    }
+}
+
+const renaissanceAudio = new RenaissanceSoundscapeEngine();
+
+['click', 'touchstart', 'keydown'].forEach(evt => {
+    window.addEventListener(evt, () => {
+        if (renaissanceAudio.ctx && renaissanceAudio.ctx.state === 'suspended') {
+            renaissanceAudio.ctx.resume();
+        } else if (!renaissanceAudio.isPlaying) {
+            renaissanceAudio.start();
+        }
+    }, { once: true });
+});
+
+function toggleRenaissanceAmbient() {
+    const active = renaissanceAudio.toggle();
+    const dot = document.getElementById('audioStatusDot');
+    const label = document.getElementById('audioBtnLabel');
+    if (active) {
+        dot.style.display = 'inline-block';
+        label.textContent = 'ЗВУК: ВЫСОКИЙ ХОР';
+    } else {
+        dot.style.display = 'none';
+        label.textContent = 'ЗВУК: ТИШИНА';
+    }
+}
+
+const BLUEPRINT_PRESETS = [
+    {
+        name: "Тяга и масштабирование",
+        subtitle: "Сверхбыстрый прирост заказов (+15 шт./мес)",
+        apply: () => {
+            setGrowthMode('abs');
+            document.getElementById('paramGrowthSlider').value = 15;
+            document.getElementById('paramMargin').value = 25;
+            document.getElementById('paramStartOrders').value = 50;
+        }
+    },
+    {
+        name: "Механика оборачиваемости",
+        subtitle: "Короткий 3-месячный цикл закупки партий",
+        apply: () => {
+            document.getElementById('paramBatchCycle').value = 3;
+            document.getElementById('paramSupplierPrepay').value = 30;
+            document.getElementById('paramSupplierDelay').value = 2;
+        }
+    },
+    {
+        name: "Аэродинамика кассовых разрывов",
+        subtitle: "Факторинг 80% для ликвидации дефицита",
+        apply: () => {
+            document.getElementById('paramFactoringShare').value = 80;
+            document.getElementById('paramMargin').value = 22;
+        }
+    },
+    {
+        name: "Золотая пропорция (Канон)",
+        subtitle: "Сбалансированная модель 1 : 1.618",
+        apply: () => {
+            document.getElementById('paramMargin').value = 20;
+            document.getElementById('paramFactoringShare').value = 50;
+            document.getElementById('paramBatchCycle').value = 5;
+        }
+    },
+    {
+        name: "Защита резервов и баланс",
+        subtitle: "Минимизация долга и удержание ликвидности",
+        apply: () => {
+            document.getElementById('paramSupplierPrepay').value = 20;
+            document.getElementById('paramSupplierDelay').value = 3;
+            document.getElementById('paramMaxOrdersCap').value = 180;
+        }
+    }
+];
+
+function playClickSound(freq = 1200, duration = 0.02) {
+    try {
+        if (!renaissanceAudio.ctx) renaissanceAudio.init();
+        const ctx = renaissanceAudio.ctx;
+        if (!ctx) return;
+        if (ctx.state === 'suspended') ctx.resume();
+        const osc = ctx.createOscillator(), gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(320, ctx.currentTime + duration);
+        gain.gain.setValueAtTime(0.035, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(); osc.stop(ctx.currentTime + duration);
+    } catch (e) {}
+}
+
+function playCathedralFocusTone() {
+    try {
+        if (!renaissanceAudio.ctx) renaissanceAudio.init();
+        const ctx = renaissanceAudio.ctx;
+        if (!ctx) return;
+        if (ctx.state === 'suspended') ctx.resume();
+        
+        const freqs = [146.83, 174.61, 220.00, 293.66];
+        freqs.forEach((f, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = idx === 0 ? 'sine' : 'triangle';
+            osc.frequency.setValueAtTime(f, ctx.currentTime);
+            gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.08 / (idx + 1), ctx.currentTime + 0.2);
+            gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 3.4);
+            osc.connect(gain);
+            gain.connect(renaissanceAudio.warmthFilter || ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 3.5);
+            osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+        });
+    } catch (e) {}
+}
+
+function playGearSpinUpSound(duration = 6.8) {
+    try {
+        if (!renaissanceAudio.ctx) renaissanceAudio.init();
+        const ctx = renaissanceAudio.ctx;
+        if (!ctx) return;
+        if (ctx.state === 'suspended') ctx.resume();
+        const osc = ctx.createOscillator(), gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(38, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(180, ctx.currentTime + duration * 0.92);
+        gain.gain.setValueAtTime(0.008, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.038, ctx.currentTime + duration * 0.85);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+        osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+    } catch (e) {}
+}
+
+let _calcTimer = null;
+function scheduleCalc(delay = 70) {
+    if (_calcTimer) clearTimeout(_calcTimer);
+    _calcTimer = setTimeout(() => { _calcTimer = null; runCalculation(); }, delay);
+}
 
 function dismissPreloader() {
     if (preloaderDismissed) return;
@@ -232,29 +740,276 @@ function dismissPreloader() {
     const app = document.getElementById('mainDashboardApp');
     document.documentElement.style.overflow = 'auto';
     document.body.style.overflow = 'auto';
-    if (stage) stage.style.display = 'none';
-    if (app) app.classList.add('ready');
+    
+    if (app) {
+        app.classList.add('ready');
+        app.classList.add('camera-obscura-reveal');
+    }
+    
+    setTimeout(() => {
+        if (stage) stage.style.display = 'none';
+        try {
+            preScene.traverse(o => {
+                if (o.geometry) o.geometry.dispose();
+                if (o.material) { Array.isArray(o.material) ? o.material.forEach(m => m.dispose()) : o.material.dispose(); }
+            });
+            preRenderer.dispose(); preRenderer.forceContextLoss();
+        } catch (e) {}
+    }, 1500);
 }
 
+const PRELOADER_TOTAL_TIME = REDUCE_MOTION ? 1200 : 9000;
+const preloaderStartTime = performance.now();
+
+setTimeout(() => { const pt = document.getElementById('preloaderTitle'); if (pt) pt.classList.add('locked-on'); }, 900);
+
+let drawingCompleted = false;
+function updatePreloaderProgress(now) {
+    if (preloaderDismissed) return;
+    const elapsed = now - preloaderStartTime;
+    const progress = Math.min(elapsed / PRELOADER_TOTAL_TIME, 1);
+    const bar = document.getElementById('loaderProgressBar');
+    const pct = document.getElementById('loaderPercent');
+    if (bar) bar.style.width = `${(progress * 100).toFixed(0)}%`;
+    if (pct) pct.textContent = `${Math.floor(progress * 100)}%`;
+    if (progress >= 0.96 && !drawingCompleted) {
+        drawingCompleted = true;
+        const hud = document.getElementById('preloaderHUD');
+        const btn = document.getElementById('exploreBtnWrapper');
+        if (hud) hud.style.opacity = '0';
+        if (btn) btn.classList.add('active');
+    }
+    if (progress < 1) requestAnimationFrame(updatePreloaderProgress);
+}
+requestAnimationFrame(updatePreloaderProgress);
+
+/* THREE.JS ПРЕЛОАДЕР */
+const preCanvas = document.getElementById('preloader-webgl');
+const preRenderer = new THREE.WebGLRenderer({ canvas: preCanvas, alpha: true, antialias: true, powerPreference: "high-performance" });
+preRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+preRenderer.setSize(window.innerWidth, window.innerHeight);
+
+const preScene = new THREE.Scene();
+const preCamera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 1, 6000);
+
+const baseCamPos = new THREE.Vector3(0, 4, 385);
+let targetCamPos = baseCamPos.clone();
+let currentLookTarget = new THREE.Vector3(0, 0, 0);
+let targetLookTarget = new THREE.Vector3(0, 0, 0);
+preCamera.position.copy(targetCamPos);
+
+const preGroup = new THREE.Group();
+preScene.add(preGroup);
+
+/* ЗОЛОТАЯ ВЗВЕСЬ ЧАСТИЦ */
+const particleCount = 450;
+const particleGeo = new THREE.BufferGeometry();
+const particlePos = new Float32Array(particleCount * 3);
+for (let i = 0; i < particleCount * 3; i += 3) {
+    particlePos[i] = (Math.random() - 0.5) * 600;
+    particlePos[i + 1] = (Math.random() - 0.5) * 450;
+    particlePos[i + 2] = (Math.random() - 0.5) * 500;
+}
+particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePos, 3));
+const particleMat = new THREE.PointsMaterial({
+    color: 0xd4af37,
+    size: 2.2,
+    transparent: true,
+    opacity: 0.38,
+    blending: THREE.AdditiveBlending
+});
+const dustParticles = new THREE.Points(particleGeo, particleMat);
+preGroup.add(dustParticles);
+
+const megaRingWireMat = new THREE.MeshBasicMaterial({ color: 0x00c3ff, wireframe: true, transparent: true, opacity: 0.38 });
+const secondaryWireMat = new THREE.MeshBasicMaterial({ color: 0x0077aa, wireframe: true, transparent: true, opacity: 0.22 });
+
 /* =========================================================================
-   БЕЗОПАСНАЯ ГЕНЕРАЦИЯ ТЕКСТУР-ЗАГЛУШЕК
+   ГЕНЕРАЦИЯ ДИСКОВ СУДЬБЫ НОСТРАДАМУСА
+   ========================================================================= */
+const NOSTRADAMUS_PROPHECIES = [
+    {
+        innerRing: "ROTA FORTUNAE • FATORUM ORBIS • CENTURIA I • OMNIA FLUXUS",
+        outerRing: "CLARUM COLLUM IMPERII POST TENEBRAS LUX • SOLIS ET LUNAE MOTUS • NOSTRADAMUS VATICINIUM",
+        zodiac: "♈ ♉ ♊ ♋ ♌ ♍ ♎ ♏ ♐ ♑ ♒ ♓ • I • II • III • IV • V • VI • VII • VIII • IX • X • XI • XII"
+    },
+    {
+        innerRing: "VERITAS TEMPORIS FILIA • OCCULTA PHILOSOPHIA • AUREA RATIO",
+        outerRing: "GRANDES ORBES MUTABUNTUR IN DIEBUS ILLIS • SAPIENTIA ARCHITECTI PER ASPERA AD ASTRA",
+        zodiac: "⚡ ☉ ☽ ☿ ♀ ♂ ♃ ♄ • METALLUM • LIQUIDITAS • NUMERUS • PONDUS • MENSURA • PROPORTIO"
+    },
+    {
+        innerRing: "HARMONIA MUNDI • COSMICA PROPORTIO • CENTURIA DECIMA",
+        outerRing: "TEMPORA TEMPORE TEMPERA • ARS LONGA VITA BREVIS • MAGNUM OPUS CAPITALIS",
+        zodiac: "✦ ✧ ⚜ ✠ ✡ ❂ ☸ ✺ • FATUM INELUKTABILE • LUX IN TENEBRIS • AUREA PROPORTIO"
+    }
+];
+
+function createNostradamusDiskTexture(dataIdx) {
+    const data = NOSTRADAMUS_PROPHECIES[dataIdx % 3];
+    const size = 2048;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, size, size);
+
+    const cx = size / 2, cy = size / 2;
+
+    ctx.strokeStyle = 'rgba(212, 175, 55, 0.45)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(cx, cy, size * 0.46, 0, Math.PI * 2);
+    ctx.arc(cx, cy, size * 0.41, 0, Math.PI * 2);
+    ctx.arc(cx, cy, size * 0.35, 0, Math.PI * 2);
+    ctx.arc(cx, cy, size * 0.29, 0, Math.PI * 2);
+    ctx.stroke();
+
+    for (let i = 0; i < 144; i++) {
+        const ang = (i / 144) * Math.PI * 2;
+        const isMajor = (i % 12 === 0);
+        const isMid = (i % 6 === 0);
+        const len = isMajor ? 32 : (isMid ? 20 : 10);
+        const r1 = size * 0.46;
+        const r2 = r1 - len;
+        ctx.strokeStyle = isMajor ? 'rgba(255, 215, 0, 0.85)' : 'rgba(212, 175, 55, 0.3)';
+        ctx.lineWidth = isMajor ? 3 : 1.2;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(ang) * r1, cy + Math.sin(ang) * r1);
+        ctx.lineTo(cx + Math.cos(ang) * r2, cy + Math.sin(ang) * r2);
+        ctx.stroke();
+    }
+
+    function drawCurvedText(text, radius, font, color) {
+        ctx.font = font;
+        ctx.fillStyle = color;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const chars = text.split('');
+        const step = (Math.PI * 2) / chars.length;
+        for (let i = 0; i < chars.length; i++) {
+            const angle = i * step;
+            ctx.save();
+            ctx.translate(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
+            ctx.rotate(angle + Math.PI / 2);
+            ctx.shadowColor = 'rgba(212, 175, 55, 0.7)';
+            ctx.shadowBlur = 6;
+            ctx.fillText(chars[i], 0, 0);
+            ctx.restore();
+        }
+    }
+
+    drawCurvedText(data.outerRing, size * 0.435, 'italic 600 25px "Cormorant Garamond", Georgia, serif', '#ffd700');
+    drawCurvedText(data.zodiac, size * 0.38, '400 24px "JetBrains Mono", monospace', 'rgba(244, 241, 234, 0.8)');
+    drawCurvedText(data.innerRing, size * 0.32, 'italic 700 26px "Cormorant Garamond", Georgia, serif', '#d4af37');
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = THREE.ClampToEdgeWrapping;
+    tex.wrapT = THREE.ClampToEdgeWrapping;
+    tex.minFilter = THREE.LinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+    tex.generateMipmaps = false;
+    return tex;
+}
+
+/* СТРУКТУРА ГИГАНТСКИХ КОЛЕЦ АСТРОЛЯБИИ */
+function createCyclopeanTrussRing(mainRadius, tubeWidth, tubeDepth, segments, nostradamusIdx = 0) {
+    const group = new THREE.Group();
+    group.add(new THREE.Mesh(new THREE.TorusGeometry(mainRadius, tubeWidth * 0.45, 12, segments), megaRingWireMat));
+    
+    const diskGeo = new THREE.RingGeometry(mainRadius - tubeWidth * 2.5, mainRadius + tubeWidth * 2.2, 96);
+    const diskMat = new THREE.MeshBasicMaterial({
+        map: createNostradamusDiskTexture(nostradamusIdx),
+        transparent: true,
+        opacity: 0.12,
+        side: THREE.DoubleSide,
+        depthWrite: false
+    });
+    const diskMesh = new THREE.Mesh(diskGeo, diskMat);
+    group.add(diskMesh);
+    group.diskMesh = diskMesh;
+
+    const linePts = [];
+    const rOuter = mainRadius + tubeWidth, rInner = mainRadius - tubeWidth, zOffset = tubeDepth;
+    
+    for (let i = 0; i < segments; i++) {
+        const nextIdx = (i + 1) % segments;
+        const a1 = (i / segments) * Math.PI * 2;
+        const a2 = (nextIdx / segments) * Math.PI * 2;
+
+        const p1_topOut = new THREE.Vector3(Math.cos(a1) * rOuter, Math.sin(a1) * rOuter, zOffset);
+        const p2_topOut = new THREE.Vector3(Math.cos(a2) * rOuter, Math.sin(a2) * rOuter, zOffset);
+        const p1_botOut = new THREE.Vector3(Math.cos(a1) * rOuter, Math.sin(a1) * rOuter, -zOffset);
+        const p2_botOut = new THREE.Vector3(Math.cos(a2) * rOuter, Math.sin(a2) * rOuter, -zOffset);
+
+        const p1_topIn = new THREE.Vector3(Math.cos(a1) * rInner, Math.sin(a1) * rInner, zOffset);
+        const p2_topIn = new THREE.Vector3(Math.cos(a2) * rInner, Math.sin(a2) * rInner, zOffset);
+        const p1_botIn = new THREE.Vector3(Math.cos(a1) * rInner, Math.sin(a1) * rInner, -zOffset);
+        const p2_botIn = new THREE.Vector3(Math.cos(a2) * rInner, Math.sin(a2) * rInner, -zOffset);
+
+        linePts.push(p1_topOut, p2_topOut);
+        linePts.push(p1_botOut, p2_botOut);
+        linePts.push(p1_topIn, p2_topIn);
+        linePts.push(p1_botIn, p2_botIn);
+
+        linePts.push(p1_topOut, p1_botOut);
+        linePts.push(p1_topIn, p1_botIn);
+        linePts.push(p1_topOut, p1_topIn);
+        linePts.push(p1_botOut, p1_botIn);
+
+        if (i % 2 === 0) {
+            linePts.push(p1_topOut, p2_botOut);
+            linePts.push(p1_topIn, p2_botIn);
+            linePts.push(p1_topOut, p2_topIn);
+        } else {
+            linePts.push(p1_botOut, p2_topOut);
+            linePts.push(p1_botIn, p2_topIn);
+            linePts.push(p1_botOut, p2_botIn);
+        }
+
+        if (i % 3 === 0) {
+            const toothR = rOuter + tubeWidth * 0.42;
+            const pTooth = new THREE.Vector3(Math.cos(a1) * toothR, Math.sin(a1) * toothR, 0);
+            linePts.push(p1_topOut, pTooth);
+            linePts.push(pTooth, p1_botOut);
+        }
+    }
+    group.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(linePts), megaRingWireMat));
+    group.add(new THREE.Mesh(new THREE.TorusGeometry(mainRadius - tubeWidth * 1.6, tubeWidth * 0.18, 8, Math.floor(segments * 0.75)), secondaryWireMat));
+    return group;
+}
+
+const astrolabeRings = [];
+const aRing1 = createCyclopeanTrussRing(340, 18.0, 12.0, 180, 0);
+const aRing2 = createCyclopeanTrussRing(255, 14.0, 10.0, 150, 1);
+const aRing3 = createCyclopeanTrussRing(175, 11.0, 8.0, 130, 2);
+aRing2.rotation.x = Math.PI / 3.4; aRing2.rotation.z = Math.PI / 6.0; aRing3.rotation.y = Math.PI / 3.0;
+preGroup.add(aRing1); preGroup.add(aRing2); preGroup.add(aRing3);
+astrolabeRings.push(
+    { group: aRing1, sx: 0.00045, sy: 0.00065, sz: 0.00025, px: 0.2, py: 1.1, dir: 1.0 },
+    { group: aRing2, sx: -0.00055, sy: 0.00040, sz: -0.00045, px: 2.3, py: 0.7, dir: -1.0 },
+    { group: aRing3, sx: 0.00060, sy: -0.00050, sz: 0.00035, px: 1.5, py: 3.2, dir: 1.0 }
+);
+
+/* =========================================================================
+   БЕЗОПАСНАЯ ГЕНЕРАЦИЯ ЧЕРТЕЖЕЙ ДА ВИНЧИ
    ========================================================================= */
 function createSafeFallbackTexture() {
     const canvas = document.createElement('canvas');
-    canvas.width = 128;
-    canvas.height = 128;
+    canvas.width = 256;
+    canvas.height = 256;
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = '#0a0a0f';
-    ctx.fillRect(0, 0, 128, 128);
+    ctx.fillRect(0, 0, 256, 256);
     ctx.strokeStyle = '#d4af37';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(8, 8, 112, 112);
+    ctx.lineWidth = 2.5;
+    ctx.strokeRect(12, 12, 232, 232);
     
-    // Внутренняя геометрия да Винчи по умолчанию
     ctx.beginPath();
-    ctx.arc(64, 64, 40, 0, Math.PI * 2);
-    ctx.moveTo(16, 16); ctx.lineTo(112, 112);
-    ctx.moveTo(112, 16); ctx.lineTo(16, 112);
+    ctx.arc(128, 128, 75, 0, Math.PI * 2);
+    ctx.arc(128, 128, 45, 0, Math.PI * 2);
+    ctx.moveTo(24, 24); ctx.lineTo(232, 232);
+    ctx.moveTo(232, 24); ctx.lineTo(24, 232);
     ctx.stroke();
 
     const tex = new THREE.CanvasTexture(canvas);
@@ -267,7 +1022,6 @@ function createSafeFallbackTexture() {
 
 const DEFAULT_HOLO_TEX = createSafeFallbackTexture();
 
-/* ШЕЙДЕР ЧЕРТЕЖЕЙ ДА ВИНЧИ С ЗАЩИТОЙ ОТ ПАДЕНИЯ */
 function createSafeDaVinciMaterial(initialTexture) {
     return new THREE.ShaderMaterial({
         uniforms: {
@@ -293,7 +1047,6 @@ function createSafeDaVinciMaterial(initialTexture) {
                 vec4 tex = texture2D(uTex, vUv);
                 float lum = dot(tex.rgb, vec3(0.299, 0.587, 0.114));
                 
-                // Прорисовка линий туши
                 float stroke = smoothstep(0.08, 0.65, lum);
                 if (lum > 0.88) stroke = 1.0 - stroke;
                 
@@ -313,80 +1066,56 @@ function createSafeDaVinciMaterial(initialTexture) {
     });
 }
 
-/* THREE.JS СЦЕНА */
-const preCanvas = document.getElementById('preloader-webgl');
-const preRenderer = new THREE.WebGLRenderer({ canvas: preCanvas, alpha: true, antialias: true });
-preRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-preRenderer.setSize(window.innerWidth, window.innerHeight);
-
-const preScene = new THREE.Scene();
-const preCamera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 1, 6000);
-preCamera.position.set(0, 4, 385);
-
-const preGroup = new THREE.Group();
-preScene.add(preGroup);
-
-/* КОЛЬЦА АСТРОЛЯБИИ */
-const ringMat = new THREE.MeshBasicMaterial({ color: 0x00c3ff, wireframe: true, transparent: true, opacity: 0.35 });
-const aRing1 = new THREE.Mesh(new THREE.TorusGeometry(320, 14, 8, 120), ringMat);
-const aRing2 = new THREE.Mesh(new THREE.TorusGeometry(230, 10, 8, 100), ringMat);
-aRing2.rotation.x = Math.PI / 3;
-preGroup.add(aRing1);
-preGroup.add(aRing2);
-
-/* КАРУСЕЛЬ ДА ВИНЧИ */
-const carouselGroup = new THREE.Group();
-preGroup.add(carouselGroup);
-
-const CAROUSEL_RADIUS = 210;
-const TOTAL_INVENTIONS = 5;
-const inventionItems = [];
-const ROMAN_NUMERALS = ['I', 'II', 'III', 'IV', 'V'];
-
-const textureLoader = new THREE.TextureLoader();
-textureLoader.setCrossOrigin('anonymous');
-
-for (let i = 0; i < TOTAL_INVENTIONS; i++) {
+function createCodexTablet(imageSource, romanNumeral = 'I') {
     const tablet = new THREE.Group();
-    
-    // Внешняя латунная рамка
-    const frameGeo = new THREE.RingGeometry(35, 38, 4);
-    frameGeo.rotateZ(Math.PI / 4);
-    const frameMesh = new THREE.Mesh(frameGeo, new THREE.MeshBasicMaterial({ 
-        color: 0xd4af37, 
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.6 
-    }));
+    const w = 78, h = 78;
+
+    const borderPts = [
+        new THREE.Vector3(-w/2, -h/2, 0), new THREE.Vector3(w/2, -h/2, 0),
+        new THREE.Vector3(w/2, -h/2, 0), new THREE.Vector3(w/2, h/2, 0),
+        new THREE.Vector3(w/2, h/2, 0), new THREE.Vector3(-w/2, h/2, 0),
+        new THREE.Vector3(-w/2, h/2, 0), new THREE.Vector3(-w/2, -h/2, 0)
+    ];
+
+    const cSize = 7.0;
+    [
+        [-w/2, -h/2, 1, 1], [w/2, -h/2, -1, 1],
+        [w/2, h/2, -1, -1], [-w/2, h/2, 1, -1]
+    ].forEach(([cx, cy, sx, sy]) => {
+        borderPts.push(new THREE.Vector3(cx, cy, 0), new THREE.Vector3(cx + cSize * sx, cy, 0));
+        borderPts.push(new THREE.Vector3(cx, cy, 0), new THREE.Vector3(cx, cy + cSize * sy, 0));
+        borderPts.push(new THREE.Vector3(cx + cSize * 0.6 * sx, cy, 0), new THREE.Vector3(cx, cy + cSize * 0.6 * sy, 0));
+    });
+
+    const frameMat = new THREE.LineBasicMaterial({ color: 0xd4af37, transparent: true, opacity: 0.65 });
+    const frameMesh = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(borderPts), frameMat);
     tablet.add(frameMesh);
     tablet.frameMesh = frameMesh;
 
-    // Пергаментная подложка
-    const sheetMesh = new THREE.Mesh(
-        new THREE.PlaneGeometry(50, 50), 
-        new THREE.MeshBasicMaterial({ 
-            color: 0x09090e, 
-            side: THREE.DoubleSide,
-            transparent: true,
-            opacity: 0.75 
-        })
-    );
+    const sheetGeo = new THREE.PlaneGeometry(w - 1.2, h - 1.2);
+    const sheetMat = new THREE.MeshBasicMaterial({
+        color: 0x09090e,
+        transparent: true,
+        opacity: 0.72,
+        side: THREE.DoubleSide,
+        depthWrite: false
+    });
+    const sheetMesh = new THREE.Mesh(sheetGeo, sheetMat);
     sheetMesh.position.z = -0.15;
     tablet.add(sheetMesh);
     tablet.sheetMesh = sheetMesh;
 
-    // Холст с чертежом
     const holoMat = createSafeDaVinciMaterial(DEFAULT_HOLO_TEX);
-    const artMesh = new THREE.Mesh(new THREE.PlaneGeometry(46, 46), holoMat);
+    const artMesh = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.90, h * 0.90), holoMat);
     artMesh.position.z = 0.1;
     tablet.add(artMesh);
     tablet.holoMat = holoMat;
 
-    // Асинхронная безопасная подгрузка картинок
-    const imgSrc = USER_IMAGES[i];
-    if (imgSrc && typeof imgSrc === 'string' && imgSrc.length > 2) {
+    if (imageSource && typeof imageSource === 'string' && imageSource.length > 2) {
+        const textureLoader = new THREE.TextureLoader();
+        textureLoader.setCrossOrigin('anonymous');
         textureLoader.load(
-            imgSrc,
+            imageSource,
             (loadedTex) => {
                 loadedTex.wrapS = THREE.ClampToEdgeWrapping;
                 loadedTex.wrapT = THREE.ClampToEdgeWrapping;
@@ -396,14 +1125,40 @@ for (let i = 0; i < TOTAL_INVENTIONS; i++) {
             },
             undefined,
             (err) => {
-                console.warn(`[Texture] Картинка ${i} недоступна, сохранена процедурная геометрия.`, err);
+                console.warn(`[Texture] Ссылка ${imageSource} недоступна, сохранена процедурная графика.`);
             }
         );
     }
 
+    return tablet;
+}
+
+const carouselGroup = new THREE.Group();
+preGroup.add(carouselGroup);
+
+const CAROUSEL_RADIUS = 210;
+const railGeo = new THREE.RingGeometry(CAROUSEL_RADIUS - 1.0, CAROUSEL_RADIUS + 1.0, 140);
+const railMat = new THREE.MeshBasicMaterial({ color: 0xd4af37, transparent: true, opacity: 0.22, side: THREE.DoubleSide });
+const railMesh = new THREE.Mesh(railGeo, railMat);
+railMesh.rotation.x = Math.PI / 2;
+railMesh.position.y = -35;
+carouselGroup.add(railMesh);
+
+const ROMAN_NUMERALS = ['I', 'II', 'III', 'IV', 'V'];
+const TOTAL_INVENTIONS = 5;
+const inventionItems = [];
+
+for (let i = 0; i < TOTAL_INVENTIONS; i++) {
+    const tablet = createCodexTablet(USER_IMAGES[i], ROMAN_NUMERALS[i]);
     carouselGroup.add(tablet);
+
+    const hitMesh = new THREE.Mesh(new THREE.BoxGeometry(80, 80, 16), new THREE.MeshBasicMaterial({ visible: false }));
+    hitMesh.userData = { slideIdx: i };
+    tablet.add(hitMesh);
+
     inventionItems.push({
         group: tablet,
+        hitMesh: hitMesh,
         index: i,
         baseAngle: (i / TOTAL_INVENTIONS) * Math.PI * 2
     });
@@ -413,15 +1168,32 @@ let carouselTargetAngle = 0;
 let carouselCurrentAngle = 0;
 let currentSlideIndex = 0;
 
-function focusSlide(idx) {
-    if (idx < 0 || idx >= TOTAL_INVENTIONS) return;
-    currentSlideIndex = idx;
-    carouselTargetAngle = -idx * (Math.PI * 2 / TOTAL_INVENTIONS);
-
-    document.querySelectorAll('.codex-item-chip').forEach((chip, i) => {
-        if (i === idx) chip.classList.add('active');
+function updateSelectorChips() {
+    const chips = document.querySelectorAll('.codex-item-chip');
+    chips.forEach((chip, idx) => {
+        if (idx === currentSlideIndex) chip.classList.add('active');
         else chip.classList.remove('active');
     });
+}
+
+function focusSlide(idx, playSound = true) {
+    if (idx < 0 || idx >= TOTAL_INVENTIONS) return;
+    currentSlideIndex = idx;
+    if (playSound) playClickSound(1600, 0.02);
+    updateSelectorChips();
+
+    carouselTargetAngle = -idx * (Math.PI * 2 / TOTAL_INVENTIONS);
+
+    const preset = BLUEPRINT_PRESETS[idx];
+    if (preset) {
+        const titleEl = document.getElementById('loaderStatusText');
+        if (titleEl) titleEl.textContent = `[${ROMAN_NUMERALS[idx]}/V] ${preset.name}`;
+        const sub = document.getElementById('blueprintSubtitle');
+        if (sub) {
+            sub.textContent = preset.subtitle;
+            sub.style.opacity = '1';
+        }
+    }
 }
 
 window.nextSlide = function() { focusSlide((currentSlideIndex + 1) % TOTAL_INVENTIONS); };
@@ -429,178 +1201,921 @@ window.prevSlide = function() { focusSlide((currentSlideIndex - 1 + TOTAL_INVENT
 window.goToSlide = function(idx) { focusSlide(idx); };
 
 window.applySelectedPresetAndEnter = function(e) {
-    dismissPreloader();
+    if (currentSlideIndex >= 0 && BLUEPRINT_PRESETS[currentSlideIndex]) {
+        BLUEPRINT_PRESETS[currentSlideIndex].apply();
+        runCalculation();
+    }
+    triggerCameraObscuraTransition(e);
 };
 
-/* МОДЕЛЬ СПУТНИКА */
-const sputnik = new THREE.Group();
-const sputnikWire = new THREE.Mesh(new THREE.SphereGeometry(24, 20, 20), new THREE.MeshBasicMaterial({ color: 0x38bdf8, wireframe: true }));
-sputnik.add(sputnikWire);
+window.addEventListener('wheel', (e) => {
+    if (preloaderDismissed || isObscuraTransition) return;
+    if (Math.abs(e.deltaY) > 35) {
+        if (e.deltaY > 0) nextSlide();
+        else prevSlide();
+    }
+}, { passive: true });
 
-const sputnikAntMat = new THREE.LineBasicMaterial({ color: 0xffffff });
-for (let a = 0; a < 4; a++) {
-    const ang = (a / 4) * Math.PI * 2;
-    const pts = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(Math.cos(ang) * 90, Math.sin(ang) * 90, 80)];
-    sputnik.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), sputnikAntMat));
+/* =========================================================================
+   СПУТНИК: ГАРАНТИРОВАННО ВИДИМЫЙ 3D BLUEPRINT МАКЕТ
+   ========================================================================= */
+function createDetailedSputnikModel() {
+    const sputnik = new THREE.Group();
+    sputnik.renderOrder = 90;
+
+    const wireCyanMat = new THREE.MeshBasicMaterial({
+        color: 0x38bdf8,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.95,
+        depthTest: true
+    });
+    
+    const wireAccentMat = new THREE.MeshBasicMaterial({
+        color: 0xbae6fd,
+        wireframe: true,
+        transparent: true,
+        opacity: 1.0,
+        depthTest: true
+    });
+
+    const innerHoloMat = new THREE.MeshBasicMaterial({
+        color: 0x0284c7,
+        transparent: true,
+        opacity: 0.35,
+        side: THREE.DoubleSide,
+        depthWrite: false
+    });
+
+    const lineMat = new THREE.LineBasicMaterial({ color: 0x7dd3fc, transparent: true, opacity: 0.95 });
+    const thickLineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1.0 });
+
+    const R = 22;
+
+    const sphereGeo = new THREE.SphereGeometry(R, 36, 36);
+    const sphereWire = new THREE.Mesh(sphereGeo, wireCyanMat);
+    sputnik.add(sphereWire);
+
+    const sphereInner = new THREE.Mesh(new THREE.SphereGeometry(R * 0.98, 24, 24), innerHoloMat);
+    sputnik.add(sphereInner);
+
+    const belt1 = new THREE.Mesh(new THREE.TorusGeometry(R + 0.5, 0.6, 8, 48), wireAccentMat);
+    const belt2 = new THREE.Mesh(new THREE.TorusGeometry(R + 0.5, 0.6, 8, 48), wireAccentMat);
+    belt1.position.z = 1.2;
+    belt2.position.z = -1.2;
+    sputnik.add(belt1);
+    sputnik.add(belt2);
+
+    const beltLines = [];
+    for (let i = 0; i < 32; i++) {
+        const ang = (i / 32) * Math.PI * 2;
+        const bx = Math.cos(ang) * (R + 0.6);
+        const by = Math.sin(ang) * (R + 0.6);
+        beltLines.push(new THREE.Vector3(bx, by, -1.2), new THREE.Vector3(bx, by, 1.2));
+    }
+    sputnik.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(beltLines), lineMat));
+
+    const hatchGroup = new THREE.Group();
+    hatchGroup.position.set(-R * 0.90, 0, 0);
+    hatchGroup.rotation.y = Math.PI / 2;
+
+    const flangeRing = new THREE.Mesh(new THREE.TorusGeometry(8.5, 0.5, 8, 32), wireAccentMat);
+    const flangeCap = new THREE.Mesh(new THREE.CylinderGeometry(5.2, 5.8, 2.0, 24, 2, true), wireAccentMat);
+    flangeCap.rotation.x = Math.PI / 2;
+    hatchGroup.add(flangeRing);
+    hatchGroup.add(flangeCap);
+    sputnik.add(hatchGroup);
+
+    const internalRig = new THREE.Group();
+    const frameGeo = new THREE.BoxGeometry(12, 10, 16);
+    const frameMesh = new THREE.Mesh(frameGeo, new THREE.MeshBasicMaterial({ color: 0x38bdf8, wireframe: true, transparent: true, opacity: 0.6 }));
+    internalRig.add(frameMesh);
+    sputnik.add(internalRig);
+
+    const antAngles = [Math.PI * 0.25, Math.PI * 0.75, Math.PI * 1.25, Math.PI * 1.75];
+    const antLengths = [115, 135, 115, 135];
+
+    antAngles.forEach((ang, idx) => {
+        const rootRadius = R * 0.95;
+        const rootX = Math.cos(ang) * (rootRadius * 0.72);
+        const rootY = Math.sin(ang) * (rootRadius * 0.72);
+        const rootZ = R * 0.45;
+
+        const mountGroup = new THREE.Group();
+        mountGroup.position.set(rootX, rootY, rootZ);
+
+        const socketGeo = new THREE.CylinderGeometry(1.5, 2.0, 8.5, 12, 2, true);
+        const socketMesh = new THREE.Mesh(socketGeo, wireAccentMat);
+        
+        const coneSpreadX = Math.cos(ang) * 0.55;
+        const coneSpreadY = Math.sin(ang) * 0.55;
+        const dirVec = new THREE.Vector3(coneSpreadX, coneSpreadY, 1.0).normalize();
+        
+        socketMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirVec);
+        mountGroup.add(socketMesh);
+        sputnik.add(mountGroup);
+
+        const len = antLengths[idx];
+        const tipPos = new THREE.Vector3(rootX + dirVec.x * len, rootY + dirVec.y * len, rootZ + dirVec.z * len);
+        const midPos = new THREE.Vector3(rootX + dirVec.x * (len * 0.45), rootY + dirVec.y * (len * 0.45), rootZ + dirVec.z * (len * 0.45));
+
+        sputnik.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(rootX, rootY, rootZ), midPos]), thickLineMat));
+        sputnik.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([midPos, tipPos]), lineMat));
+
+        const tipBulb = new THREE.Mesh(new THREE.SphereGeometry(1.2, 8, 8), wireAccentMat);
+        tipBulb.position.copy(tipPos);
+        sputnik.add(tipBulb);
+    });
+
+    const beaconGroup = new THREE.Group();
+    beaconGroup.position.set(-R * 0.92 - 2.5, 0, 0);
+
+    const beaconCore = new THREE.Mesh(new THREE.SphereGeometry(3.2, 16, 16), new THREE.MeshBasicMaterial({ color: 0xff0044 }));
+    beaconGroup.add(beaconCore);
+
+    const beaconHalo = new THREE.Mesh(
+        new THREE.SphereGeometry(7.5, 16, 16),
+        new THREE.MeshBasicMaterial({ color: 0xff3355, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending })
+    );
+    beaconGroup.add(beaconHalo);
+
+    sputnik.add(beaconGroup);
+    sputnik.beaconGroup = beaconGroup;
+
+    sputnik.scale.set(1.0, 1.0, 1.0);
+    sputnik.visible = false;
+    return sputnik;
 }
-preScene.add(sputnik);
-sputnik.visible = false;
 
-let sputnikFlight = { active: false, start: 0, p1: new THREE.Vector3(), p2: new THREE.Vector3() };
+const sputnik = createDetailedSputnikModel();
+preScene.add(sputnik);
+
+function playSputnikBeep(volumeRatio = 1.0) {
+    try {
+        if (!renaissanceAudio.ctx) renaissanceAudio.init();
+        const ctx = renaissanceAudio.ctx;
+        if (!ctx) return;
+        if (ctx.state === 'suspended') ctx.resume();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1080, ctx.currentTime);
+        
+        const peakGain = THREE.MathUtils.clamp(0.075 * volumeRatio, 0.001, 0.095);
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(peakGain, ctx.currentTime + 0.02);
+        gain.gain.setValueAtTime(peakGain, ctx.currentTime + 0.16);
+        gain.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + 0.22);
+        
+        osc.connect(gain);
+        gain.connect(renaissanceAudio.masterGain || ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.24);
+        osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+    } catch (_) {}
+}
+
+let sputnikFlight = { 
+    active: false, 
+    startTime: 0, 
+    duration: 14.0,
+    startP: new THREE.Vector3(), 
+    endP: new THREE.Vector3(), 
+    lastBeep: 0,
+    baseScale: 1.15
+};
 
 window.triggerSputnikManually = function() {
-    if (preloaderDismissed) return;
-    sputnikFlight.p1.set(-250, 100, -50);
-    sputnikFlight.p2.set(250, -80, 180);
-    sputnikFlight.start = performance.now();
-    sputnikFlight.active = true;
-    sputnik.visible = true;
+    if (preloaderDismissed || isObscuraTransition) return;
+    sputnikFlight.active = false;
+    launchSputnik();
+    console.log("[SPUTNIK] Спутник запущен! Старт:", sputnikFlight.startP, "Финиш:", sputnikFlight.endP);
 };
 
 window.addEventListener('keydown', (e) => {
-    if (e.key === 's' || e.key === 'S' || e.key === 'ы' || e.key === 'Ы') {
+    if ((e.key === 's' || e.key === 'S' || e.key === 'ы' || e.key === 'Ы') && !preloaderDismissed) {
         window.triggerSputnikManually();
     }
 });
 
-/* АНИМАЦИОННЫЙ ЦИКЛ */
-function animatePreloader(now) {
+function launchSputnik() {
+    if (preloaderDismissed || isObscuraTransition) return;
+    
+    const startX = (Math.random() > 0.5 ? 1 : -1) * (260 + Math.random() * 40);
+    const startY = 120 + Math.random() * 40;
+    const startZ = -120;
+
+    const endX = -startX * 0.85;
+    const endY = -110 - Math.random() * 30;
+    const endZ = 190;
+
+    sputnikFlight.startP.set(startX, startY, startZ);
+    sputnikFlight.endP.set(endX, endY, endZ);
+
+    sputnikFlight.active = true;
+    sputnikFlight.startTime = performance.now();
+    sputnikFlight.lastBeep = performance.now();
+    sputnik.visible = true;
+    sputnik.position.copy(sputnikFlight.startP);
+    sputnik.scale.set(0.65, 0.65, 0.65);
+}
+
+let sputnikTimerStarted = false;
+function checkSputnikScheduler(now) {
+    if (preloaderDismissed || isObscuraTransition) return;
+    const idleSeconds = (now - preloaderStartTime) * 0.001;
+    if (idleSeconds >= 30.0 && !sputnikTimerStarted) {
+        sputnikTimerStarted = true;
+        launchSputnik();
+        setInterval(() => {
+            if (!preloaderDismissed && !isObscuraTransition) launchSputnik();
+        }, 60000);
+    }
+}
+
+const raycaster = new THREE.Raycaster();
+const mouseVec = new THREE.Vector2(-999, -999);
+
+function performRaycastSelection(isExplicitClick = false) {
+    if (preloaderDismissed || isObscuraTransition) return;
+
+    raycaster.setFromCamera(mouseVec, preCamera);
+    const hitCandidates = inventionItems.map(item => item.hitMesh);
+    const intersects = raycaster.intersectObjects(hitCandidates, false);
+
+    if (intersects.length > 0) {
+        const hit = intersects[0].object;
+        const targetIdx = hit.userData.slideIdx;
+        if (typeof targetIdx === 'number' && (isExplicitClick || targetIdx !== currentSlideIndex)) {
+            focusSlide(targetIdx);
+        }
+    }
+}
+
+window.addEventListener('mousemove', (e) => {
+    mouseVec.x = (e.clientX / window.innerWidth) * 2 - 1;
+    mouseVec.y = -(e.clientY / window.innerHeight) * 2 + 1;
+});
+
+window.addEventListener('pointerdown', (e) => {
+    if (e.target && e.target.id === 'preloader-webgl') {
+        mouseVec.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouseVec.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        performRaycastSelection(true);
+    }
+});
+
+let touchStartX = 0, touchStartY = 0;
+window.addEventListener('touchstart', (e) => {
+    if (e.touches.length > 0) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+    }
+}, { passive: true });
+
+window.addEventListener('touchend', (e) => {
+    if (e.changedTouches.length > 0) {
+        const diffX = e.changedTouches[0].clientX - touchStartX;
+        const diffY = e.changedTouches[0].clientY - touchStartY;
+        if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
+            if (diffX < 0) nextSlide();
+            else prevSlide();
+        }
+    }
+}, { passive: true });
+
+function triggerCameraObscuraTransition(event) {
+    if (isObscuraTransition) return;
+    isObscuraTransition = true;
+    obscuraStartTime = performance.now();
+    playGearSpinUpSound(OBSCURA_DURATION);
+
+    const hud = document.querySelector('.preloader-fixed-hud');
+    if (hud) hud.style.opacity = '0';
+
+    targetCamPos.set(0, 0, baseCamPos.z + 15);
+    targetLookTarget.set(0, 0, 0);
+
+    astrolabeRings.forEach(ring => {
+        ring.startRotX = ring.group.rotation.x;
+        ring.startRotY = ring.group.rotation.y;
+        ring.startRotZ = ring.group.rotation.z;
+    });
+
+    inventionItems.forEach(item => {
+        item.startPos = item.group.getWorldPosition(new THREE.Vector3());
+        item.startRot = item.group.rotation.clone();
+    });
+}
+
+function triggerShutterBlink() {
+    playCathedralFocusTone();
+    const flash = document.getElementById('shutter-flash');
+    if (flash) {
+        flash.style.display = 'block';
+        flash.style.transition = 'none';
+        flash.style.opacity = '0.75';
+        setTimeout(() => {
+            dismissPreloader();
+            flash.style.transition = 'opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1)';
+            flash.style.opacity = '0';
+            setTimeout(() => { flash.style.display = 'none'; }, 1600);
+        }, 60);
+    } else {
+        dismissPreloader();
+    }
+}
+
+function animatePreloader() {
     if (preloaderDismissed) return;
     requestAnimationFrame(animatePreloader);
 
-    const t = now * 0.001;
-
-    aRing1.rotation.z += 0.002;
-    aRing2.rotation.y += 0.003;
-
-    carouselCurrentAngle = THREE.MathUtils.lerp(carouselCurrentAngle, carouselTargetAngle, 0.08);
-    carouselGroup.rotation.y = carouselCurrentAngle;
-
-    inventionItems.forEach(item => {
-        const isCurrent = (item.index === currentSlideIndex);
-        const angle = item.baseAngle;
-
-        const x = isCurrent ? 25 : Math.sin(angle) * CAROUSEL_RADIUS;
-        const z = isCurrent ? 155 : Math.cos(angle) * CAROUSEL_RADIUS - 90;
-        const y = Math.sin(t * 1.5 + item.index) * 4;
-
-        item.group.position.set(x, y, z);
-        item.group.rotation.y = -carouselGroup.rotation.y;
-
-        const scale = isCurrent ? 1.3 : 0.75;
-        item.group.scale.set(scale, scale, scale);
-
-        // Плавное обновление фокуса текстуры
-        if (item.group.holoMat && item.group.holoMat.uniforms) {
-            item.group.holoMat.uniforms.uTime.value = t;
-            const curFocus = item.group.holoMat.uniforms.uFocus.value;
-            item.group.holoMat.uniforms.uFocus.value = THREE.MathUtils.lerp(curFocus, isCurrent ? 1.0 : 0.0, 0.1);
-        }
-        if (item.group.frameMesh) {
-            item.group.frameMesh.material.opacity = isCurrent ? 0.95 : 0.25;
-        }
-    });
-
-    if (sputnikFlight.active) {
-        const p = (now - sputnikFlight.start) / 10000;
-        if (p < 1.0) {
-            sputnik.position.lerpVectors(sputnikFlight.p1, sputnikFlight.p2, p);
-            sputnik.rotation.y += 0.02;
-        } else {
-            sputnikFlight.active = false;
-            sputnik.visible = false;
-        }
-    }
-
-    preRenderer.render(preScene, preCamera);
-}
-requestAnimationFrame(animatePreloader);
-
-/* ПРОГРЕСС ЗАГРУЗЧИКА */
-let progress = 0;
-const loaderInterval = setInterval(() => {
-    if (preloaderDismissed) { clearInterval(loaderInterval); return; }
-    progress += 2;
-    const bar = document.getElementById('loaderProgressBar');
-    const pct = document.getElementById('loaderPercent');
-    if (bar) bar.style.width = `${progress}%`;
-    if (pct) pct.textContent = `${progress}%`;
-
-    if (progress >= 100) {
-        clearInterval(loaderInterval);
-        const hud = document.getElementById('preloaderHUD');
-        const btn = document.getElementById('exploreBtnWrapper');
-        if (hud) hud.style.opacity = '0';
-        if (btn) btn.classList.add('active');
-    }
-}, 50);
-
-/* ФИНАНСОВЫЕ РАСЧЕТЫ И ГРАФИК */
-let chartDebt = null;
-function runCalculation() {
     try {
-        const period = parseInt(document.getElementById('paramPeriod').value) || 12;
-        const margin = parseFloat(document.getElementById('paramMargin').value) || 20;
-        document.getElementById('lblMarginVal').textContent = `${margin}%`;
+        const now = performance.now();
+        const elapsed = now - preloaderStartTime;
+        const t = elapsed * 0.001;
 
-        const labels = Array.from({ length: period }, (_, i) => `М${i + 1}`);
-        const debtData = Array.from({ length: period }, (_, i) => (period - i) * 1500000);
+        checkSputnikScheduler(now);
 
-        document.getElementById('kpiRev').textContent = `${(period * 4500000).toLocaleString('ru-RU')} ₽`;
-        document.getElementById('kpiInjections').textContent = `${(5000000).toLocaleString('ru-RU')} ₽`;
-        document.getElementById('kpiInterest').textContent = `${(period * 180000).toLocaleString('ru-RU')} ₽`;
-        document.getElementById('kpiProfit').textContent = `${(period * 650000).toLocaleString('ru-RU')} ₽`;
+        /* АНИМАЦИЯ ПОЛЕТА СПУТНИКА */
+        if (sputnikFlight.active) {
+            const flightP = (now - sputnikFlight.startTime) / (sputnikFlight.duration * 1000);
+            if (flightP < 1.0) {
+                sputnik.position.lerpVectors(sputnikFlight.startP, sputnikFlight.endP, flightP);
+                
+                sputnik.rotation.y += 0.012;
+                sputnik.rotation.x += 0.008;
+                sputnik.rotation.z += 0.005;
 
-        const ctx = document.getElementById('chartDebt').getContext('2d');
-        if (chartDebt) chartDebt.destroy();
+                const currentScale = THREE.MathUtils.lerp(0.65, sputnikFlight.baseScale, Math.sin(flightP * Math.PI));
+                sputnik.scale.set(currentScale, currentScale, currentScale);
 
-        chartDebt = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Тело долга',
-                    data: debtData,
-                    borderColor: '#d4af37',
-                    backgroundColor: 'rgba(212,175,55,0.1)',
-                    fill: true,
-                    tension: 0.3
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: { ticks: { color: '#8e8a80' }, grid: { display: false } },
-                    y: { ticks: { color: '#8e8a80' }, grid: { color: 'rgba(212,175,55,0.08)' } }
-                },
-                plugins: { legend: { labels: { color: '#f4f1ea' } } }
+                const edgeFade = Math.sin(flightP * Math.PI);
+                sputnik.visible = edgeFade > 0.01;
+
+                const blinkState = (Math.floor(now / 320) % 2 === 0);
+                if (sputnik.beaconGroup) {
+                    sputnik.beaconGroup.visible = blinkState;
+                }
+                
+                if (now - sputnikFlight.lastBeep > 1050) {
+                    const soundVolume = Math.sin(flightP * Math.PI);
+                    playSputnikBeep(soundVolume);
+                    sputnikFlight.lastBeep = now;
+                }
+            } else {
+                sputnikFlight.active = false;
+                sputnik.visible = false;
+            }
+        }
+
+        if (isObscuraTransition) {
+            const obsElapsed = (now - obscuraStartTime) * 0.001;
+            const progress = Math.min(obsElapsed / OBSCURA_DURATION, 1.0);
+
+            const alignP = Math.min(progress / 0.44, 1.0);
+            const easeAlign = 0.5 - 0.5 * Math.cos(alignP * Math.PI);
+
+            const accelCurve = Math.pow(progress, 3.4);
+            const currentSpeed = 0.0003 + accelCurve * 0.17;
+
+            const shrinkP = Math.max(0, (progress - 0.42) / 0.58);
+            const easeShrink = Math.pow(shrinkP, 3.6);
+
+            carouselGroup.position.z = THREE.MathUtils.lerp(0, -60, progress);
+            carouselGroup.scale.setScalar(Math.max(1.0 - progress * 0.96, 0.01));
+
+            const positions = particleGeo.attributes.position.array;
+            for (let i = 0; i < particleCount * 3; i += 3) {
+                positions[i] += (0 - positions[i]) * (0.012 + progress * 0.045);
+                positions[i + 1] += (0 - positions[i + 1]) * (0.012 + progress * 0.045);
+                positions[i + 2] += (0 - positions[i + 2]) * (0.016 + progress * 0.045);
+            }
+            particleGeo.attributes.position.needsUpdate = true;
+            particleMat.opacity = Math.max(0.38 * (1.0 - progress * 0.92), 0.0);
+
+            megaRingWireMat.opacity = THREE.MathUtils.lerp(megaRingWireMat.opacity, 0.92, 0.025);
+            megaRingWireMat.color.lerp(new THREE.Color(0xd4af37), 0.025);
+            secondaryWireMat.color.lerp(new THREE.Color(0xb8860b), 0.025);
+
+            astrolabeRings.forEach((ring, idx) => {
+                ring.group.rotation.x = THREE.MathUtils.lerp(ring.startRotX, 0, easeAlign);
+                ring.group.rotation.y = THREE.MathUtils.lerp(ring.startRotY, 0, easeAlign);
+                
+                const direction = ring.dir || (idx % 2 === 0 ? 1 : -1);
+                ring.group.rotation.z += direction * currentSpeed;
+
+                if (ring.group.diskMesh && ring.group.diskMesh.material) {
+                    ring.group.diskMesh.material.opacity = Math.min(0.12 + easeAlign * 0.78, 0.92) * (1.0 - easeShrink * 0.95);
+                }
+
+                const scaleFactor = Math.max(1.0 - easeShrink * 0.996, 0.004);
+                const zThinness = Math.max(1.0 - easeAlign * 0.90, 0.06);
+                ring.group.scale.set(scaleFactor, scaleFactor, zThinness * scaleFactor);
+            });
+
+            preCamera.position.lerp(targetCamPos, 0.035);
+            currentLookTarget.lerp(targetLookTarget, 0.035);
+            preCamera.lookAt(currentLookTarget);
+
+            preRenderer.clear();
+            preRenderer.render(preScene, preCamera);
+
+            if (progress >= 1.0) triggerShutterBlink();
+            return;
+        }
+
+        dustParticles.rotation.y = t * 0.02;
+        dustParticles.rotation.x = Math.sin(t * 0.015) * 0.1;
+
+        astrolabeRings.forEach(item => {
+            item.group.rotation.x += item.sx;
+            item.group.rotation.y += item.sy;
+            item.group.rotation.z += item.sz;
+        });
+
+        carouselCurrentAngle = THREE.MathUtils.lerp(carouselCurrentAngle, carouselTargetAngle, 0.075);
+        carouselGroup.rotation.y = carouselCurrentAngle;
+
+        inventionItems.forEach(item => {
+            const angle = item.baseAngle;
+            const isCurrent = (item.index === currentSlideIndex);
+
+            const orbitX = Math.sin(angle) * CAROUSEL_RADIUS;
+            const orbitZ = Math.cos(angle) * CAROUSEL_RADIUS - 90;
+
+            const targetX = isCurrent ? 25 : orbitX;
+            const targetZ = isCurrent ? 155 : orbitZ;
+            const targetY = (isCurrent ? -6 : -18) + Math.sin(t * 1.5 + item.index) * 3.0;
+
+            item.group.position.x = THREE.MathUtils.lerp(item.group.position.x, targetX, 0.08);
+            item.group.position.y = THREE.MathUtils.lerp(item.group.position.y, targetY, 0.08);
+            item.group.position.z = THREE.MathUtils.lerp(item.group.position.z, targetZ, 0.08);
+
+            item.group.rotation.y = -carouselGroup.rotation.y;
+            item.group.rotation.x = 0.04 + Math.sin(t + item.index) * 0.015;
+
+            const targetScale = isCurrent ? 1.25 : 0.75;
+            item.group.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1);
+
+            if (item.group.holoMat && item.group.holoMat.uniforms) {
+                item.group.holoMat.uniforms.uTime.value = t;
+                item.group.holoMat.uniforms.uFocus.value = THREE.MathUtils.lerp(item.group.holoMat.uniforms.uFocus.value, isCurrent ? 1.0 : 0.0, 0.1);
+            }
+            if (item.group.frameMesh) {
+                item.group.frameMesh.material.opacity = isCurrent ? 0.95 : 0.22;
+            }
+            if (item.group.sheetMesh) {
+                item.group.sheetMesh.material.opacity = isCurrent ? 0.72 : 0.25;
             }
         });
-    } catch (e) {
-        console.error("Calculation Error:", e);
+
+        preCamera.position.lerp(targetCamPos, 0.05);
+        currentLookTarget.lerp(targetLookTarget, 0.05);
+        preCamera.lookAt(currentLookTarget);
+
+        preRenderer.clear();
+        preRenderer.render(preScene, preCamera);
+
+    } catch(renderErr) {
+        console.error("Frame render pass issue:", renderErr);
     }
+}
+
+animatePreloader();
+
+setTimeout(() => {
+    if (!preloaderDismissed) focusSlide(0, false);
+}, 500);
+
+const CYRILLIC_GLYPHS = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ0123456789§$%*#@!/[]:;';
+const NUMERIC_GLYPHS = '0123456789 ';
+function scrambleElementText(el, finalText, duration = 460, useAlphabet = true) {
+    if (!el) return;
+    const glyphs = useAlphabet ? CYRILLIC_GLYPHS : NUMERIC_GLYPHS;
+    const start = performance.now(), len = finalText.length;
+    if (el._scrambleTimer) cancelAnimationFrame(el._scrambleTimer);
+    function update(now) {
+        const elapsed = now - start, progress = Math.min(elapsed / duration, 1);
+        const revealIdx = Math.floor(progress * len);
+        let out = '';
+        for (let i = 0; i < len; i++) {
+            const char = finalText[i];
+            if (i < revealIdx || ' ₽%.,()/[]:'.includes(char)) out += char;
+            else out += glyphs[Math.floor(Math.random() * glyphs.length)];
+        }
+        el.textContent = out;
+        if (progress < 1) el._scrambleTimer = requestAnimationFrame(update);
+        else el._scrambleTimer = null;
+    }
+    el._scrambleTimer = requestAnimationFrame(update);
+}
+function scrambleNumber(el, finalStr, duration = 400) { scrambleElementText(el, finalStr, duration, false); }
+function scrambleTitle(card) {
+    playClickSound(1600, 0.015);
+    const titleEl = card.querySelector('.metric-title');
+    if (!titleEl) return;
+    const orig = titleEl.getAttribute('data-original') || titleEl.textContent;
+    titleEl.setAttribute('data-original', orig);
+    scrambleElementText(titleEl, orig, 380, true);
+}
+
+function selectTab(index) {
+    playClickSound(1400, 0.025);
+    triggerDashRingTurn();
+    const buttons = document.querySelectorAll('#navTabsContainer .tab-btn');
+    buttons.forEach((btn, idx) => {
+        if (idx === index) { btn.className = 'tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest bg-[#d4af37] text-black font-bold transition shadow-md'; scrambleElementText(btn, TAB_TITLES[idx], 400, true); }
+        else { btn.className = 'tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest opacity-70 hover:opacity-100 transition'; btn.textContent = TAB_TITLES[idx]; }
+    });
+    for (let i = 0; i < 4; i++) {
+        const view = document.getElementById(`viewTab${i}`);
+        if (i === index) { view.classList.remove('hidden'); view.classList.remove('tab-view-enter'); void view.offsetWidth; view.classList.add('tab-view-enter'); }
+        else view.classList.add('hidden');
+    }
+}
+
+const TAB_TITLES = ['[01] ОБСЛУЖИВАНИЕ КАПИТАЛА', '[02] СКЛАДСКОЙ ЦИКЛ', '[03] ДЕНЕЖНЫЙ ПОТОК', '[04] ЭКОНОМИКА И ЗАКАЗЫ'];
+let growthMode = 'abs';
+function setGrowthMode(mode) {
+    playClickSound(950, 0.02); growthMode = mode;
+    const btnAbs = document.getElementById('btnModeAbs'), btnPct = document.getElementById('btnModePct');
+    const title = document.getElementById('lblGrowthModeTitle'), slider = document.getElementById('paramGrowthSlider');
+    if (mode === 'abs') { btnAbs.className = 'py-1 font-mono text-[9px] uppercase tracking-wider bg-[#d4af37] text-black font-bold transition'; btnPct.className = 'py-1 font-mono text-[9px] uppercase tracking-wider opacity-60 hover:opacity-100 transition'; title.textContent = 'ПРИРОСТ В МЕСЯЦ'; slider.max = 100; slider.value = 5; }
+    else { btnPct.className = 'py-1 font-mono text-[9px] uppercase tracking-wider bg-[#d4af37] text-black font-bold transition'; btnAbs.className = 'py-1 font-mono text-[9px] uppercase tracking-wider opacity-60 hover:opacity-100 transition'; title.textContent = 'ПРИРОСТ В %'; slider.max = 50; slider.value = 10; }
+    runCalculation();
+}
+
+function parseCleanNum(val) { return typeof val === 'number' ? val : parseFloat(String(val).replace(/[^\d.-]/g, '')) || 0; }
+function formatSpaced(num) { return Math.round(num).toLocaleString('ru-RU').replace(/,/g, ' '); }
+function formatInput(input) {
+    const el = input, cursorPos = el.selectionStart ?? el.value.length;
+    const digitsBefore = el.value.slice(0, cursorPos).replace(/\D/g, '').length;
+    el.value = formatSpaced(parseCleanNum(el.value));
+    let newPos = 0, seen = 0;
+    while (newPos < el.value.length && seen < digitsBefore) {
+        if (/\d/.test(el.value[newPos])) seen++;
+        newPos++;
+    }
+    try { el.setSelectionRange(newPos, newPos); } catch (_) {}
+}
+
+let chartDebtInstance = null, chartStockInstance = null, chartCFInstance = null, chartOrdersInstance = null, chartPieInstance = null, latestCalculatedData = null;
+
+function runCalculation() {
+    const startMonth = parseInt(document.getElementById('paramStartMonth').value);
+    const startYear = parseInt(document.getElementById('paramStartYear').value);
+    const period = parseInt(document.getElementById('paramPeriod').value);
+    const vatRate = parseFloat(document.getElementById('paramVatRate').value);
+    const vatMultiplier = 1 + (vatRate / 100);
+    const marginPct = parseFloat(document.getElementById('paramMargin').value);
+    document.getElementById('lblMarginVal').textContent = `${marginPct}%`;
+    document.getElementById('kpiRevSub').textContent = `Маржа: ${marginPct}%`;
+    const initialPurchase = parseCleanNum(document.getElementById('paramInitialPurchase').value);
+    const batchCycle = parseInt(document.getElementById('paramBatchCycle').value) || 5;
+    const cbRate = parseFloat(document.getElementById('paramCbRate').value) || 14.0;
+    const commMargin = parseFloat(document.getElementById('paramCommMargin').value) || 2.0;
+    const totalRateAnnual = cbRate + commMargin;
+    const monthlyRate = (totalRateAnnual / 100) / 12;
+    document.getElementById('telemetryRate').textContent = `[КАПИТАЛ: ${totalRateAnnual.toFixed(1)}% ГОДОВЫХ]`;
+    document.getElementById('kpiRateSub').textContent = `Ставка ${totalRateAnnual.toFixed(1)}%`;
+    const supplierPrepayPct = parseFloat(document.getElementById('paramSupplierPrepay').value);
+    document.getElementById('lblSupplierPrepVal').textContent = `${supplierPrepayPct}%`;
+    const supplierDelay = parseInt(document.getElementById('paramSupplierDelay').value);
+    document.getElementById('lblSupplierDelayVal').textContent = `${supplierDelay} мес.`;
+    const aov = parseCleanNum(document.getElementById('paramAov').value);
+    const startOrders = parseInt(document.getElementById('paramStartOrders').value) || 40;
+    const growthVal = parseFloat(document.getElementById('paramGrowthSlider').value);
+    document.getElementById('lblGrowthVal').textContent = growthMode === 'abs' ? `+${growthVal} шт.` : `+${growthVal}%`;
+    const maxOrdersCap = parseInt(document.getElementById('paramMaxOrdersCap').value) || 300;
+    const fot = parseCleanNum(document.getElementById('paramFot').value);
+    const wh = parseCleanNum(document.getElementById('paramWh').value);
+    const office = parseCleanNum(document.getElementById('paramOffice').value);
+    const factShare = parseFloat(document.getElementById('paramFactoringShare').value);
+    document.getElementById('lblFactShareVal').textContent = `${factShare}%`;
+    const factAdvance = 0.8;
+
+    const shortMonths = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+    const xLabels = [], orders = [], rev = [];
+    for (let i = 0; i < period; i++) {
+        const mIdx = (startMonth + i) % 12, yOff = Math.floor((startMonth + i) / 12);
+        xLabels.push(`${shortMonths[mIdx]} ${startYear + yOff}`);
+        let curOrders = i === 0 ? startOrders : (growthMode === 'abs' ? orders[i - 1] + growthVal : orders[i - 1] * (1 + growthVal / 100));
+        curOrders = Math.min(curOrders, maxOrdersCap);
+        orders.push(curOrders);
+        rev.push(curOrders * aov);
+    }
+    const cogsPct = 1 - (marginPct / 100);
+    const cogsVat = rev.map(r => r * cogsPct * vatMultiplier);
+    const cogsPayments = new Array(period).fill(0);
+    const inventoryDeliveries = new Array(period).fill(0);
+    cogsPayments[0] += initialPurchase * (supplierPrepayPct / 100);
+    if (supplierDelay < period) cogsPayments[supplierDelay] += initialPurchase * ((100 - supplierPrepayPct) / 100);
+    inventoryDeliveries[0] = initialPurchase;
+    for (let b = batchCycle; b < period; b += batchCycle) {
+        const bEnd = Math.min(b + batchCycle, period);
+        let batchTotal = 0;
+        for (let k = b; k < bEnd; k++) batchTotal += cogsVat[k];
+        inventoryDeliveries[b] = batchTotal;
+        cogsPayments[b] += batchTotal * (supplierPrepayPct / 100);
+        const secondTrancheMonth = b + supplierDelay;
+        if (secondTrancheMonth < period) cogsPayments[secondTrancheMonth] += batchTotal * ((100 - supplierPrepayPct) / 100);
+    }
+    const inventoryBalance = [];
+    let curStock = 0;
+    for (let i = 0; i < period; i++) { curStock += inventoryDeliveries[i] - cogsVat[i]; inventoryBalance.push(Math.max(curStock, 0)); }
+    const inflows = new Array(period).fill(0);
+    for (let i = 0; i < period; i++) {
+        const invVat = rev[i] * vatMultiplier;
+        inflows[i] += invVat * (factShare / 100) * factAdvance;
+        const targetM = i + 2;
+        if (targetM < period) {
+            inflows[targetM] += invVat * ((100 - factShare) / 100);
+            inflows[targetM] += invVat * (factShare / 100) * (1 - factAdvance);
+        }
+    }
+    const opex = [], taxes = rev.map(r => r * 0.05), baseOutflows = [];
+    for (let i = 0; i < period; i++) {
+        const base = 150000 + wh + office + fot;
+        opex.push(i >= 6 ? base * 1.2 : base);
+        baseOutflows.push(cogsPayments[i] + opex[i] + taxes[i]);
+    }
+    const monthlyInvestments = new Array(period).fill(0), interestPayments = new Array(period).fill(0), debtRepayments = new Array(period).fill(0), debtBalance = new Array(period).fill(0), cashBalance = new Array(period).fill(0);
+    let currentDebt = 0, currentCash = 0;
+    for (let i = 0; i < period; i++) {
+        const interestDue = currentDebt * monthlyRate;
+        interestPayments[i] = interestDue;
+        const netBeforeFin = inflows[i] - (baseOutflows[i] + interestDue);
+        const potCash = currentCash + netBeforeFin;
+        if (potCash < 0) {
+            const needed = Math.abs(potCash);
+            monthlyInvestments[i] = needed; currentDebt += needed; currentCash = 0; debtRepayments[i] = 0;
+        } else {
+            monthlyInvestments[i] = 0;
+            const repay = Math.min(potCash, currentDebt);
+            debtRepayments[i] = repay; currentDebt -= repay; currentCash = potCash - repay;
+        }
+        debtBalance[i] = currentDebt; cashBalance[i] = currentCash;
+    }
+    const sumRev = rev.reduce((a, b) => a + b, 0), sumInvestments = monthlyInvestments.reduce((a, b) => a + b, 0), sumInterest = interestPayments.reduce((a, b) => a + b, 0), maxDebt = Math.max(...debtBalance), sumOpex = opex.reduce((a, b) => a + b, 0), sumTaxes = taxes.reduce((a, b) => a + b, 0);
+    const netProfit = sumRev * (marginPct / 100) - sumOpex - sumTaxes - sumInterest;
+    const roi = sumRev > 0 ? (netProfit / sumRev) * 100 : 0;
+    latestCalculatedData = { xLabels, monthlyInvestments, interestPayments, debtRepayments, debtBalance, cashBalance, sumRev, netProfit, roi };
+
+    scrambleNumber(document.getElementById('kpiRev'), `${formatSpaced(sumRev)} ₽`);
+    scrambleNumber(document.getElementById('kpiInjections'), `${formatSpaced(sumInvestments)} ₽`);
+    scrambleNumber(document.getElementById('kpiInterest'), `${formatSpaced(sumInterest)} ₽`);
+    scrambleNumber(document.getElementById('kpiMaxDebt'), `${formatSpaced(maxDebt)} ₽`);
+    scrambleNumber(document.getElementById('kpiProfit'), `${formatSpaced(netProfit)} ₽`);
+    document.getElementById('kpiRoiSub').textContent = `Рентабельность: ${roi.toFixed(1)}%`;
+
+    const tbody = document.getElementById('tableDebtBody');
+    let rows = '';
+    for (let i = 0; i < period; i++) {
+        rows += `<tr class="hover:bg-[var(--bg-cell-hover)] transition"><td class="p-3 font-bold">${xLabels[i]}</td><td class="p-3 text-[#e63946]">${formatSpaced(monthlyInvestments[i])} ₽</td><td class="p-3 text-[#d4af37]">${formatSpaced(interestPayments[i])} ₽</td><td class="p-3 text-[#2a9d8f]">${formatSpaced(debtRepayments[i])} ₽</td><td class="p-3 font-bold">${formatSpaced(debtBalance[i])} ₽</td><td class="p-3">${formatSpaced(cashBalance[i])} ₽</td></tr>`;
+    }
+    tbody.innerHTML = rows;
+
+    const chartText = isDark ? '#8e8a80' : '#6b665c';
+    const chartGrid = isDark ? 'rgba(212,175,55,.08)' : 'rgba(184,134,11,.12)';
+    const fontMono = { family: 'JetBrains Mono', size: 10 };
+
+    if (chartDebtInstance) chartDebtInstance.destroy();
+    chartDebtInstance = new Chart(document.getElementById('chartDebt').getContext('2d'), {
+        type: 'bar',
+        data: { labels: xLabels, datasets: [
+            { label: 'Проценты за месяц', data: interestPayments, backgroundColor: '#d4af37', order: 2 },
+            { label: 'Остаток тела долга', data: debtBalance, type: 'line', borderColor: '#e63946', backgroundColor: '#e63946', borderWidth: 2.5, yAxisID: 'y1', tension: 0.3, order: 1 }
+        ]},
+        options: { responsive: true, maintainAspectRatio: false, scales: {
+            x: { grid: { display: false }, ticks: { color: chartText, font: fontMono } },
+            y: { grid: { color: chartGrid }, ticks: { color: chartText, font: fontMono } },
+            y1: { position: 'right', grid: { display: false }, ticks: { color: '#e63946', font: fontMono } }
+        }, plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } } }
+    });
+
+    if (chartStockInstance) chartStockInstance.destroy();
+    chartStockInstance = new Chart(document.getElementById('chartStock').getContext('2d'), {
+        type: 'bar',
+        data: { labels: xLabels, datasets: [
+            { label: 'Оплата партии поставщику', data: cogsPayments, backgroundColor: isDark ? '#52525b' : '#cbd5e1', order: 2 },
+            { label: 'Остаток склада', data: inventoryBalance, type: 'line', borderColor: '#d4af37', borderWidth: 2.5, yAxisID: 'y1', tension: 0.3, order: 1 }
+        ]},
+        options: { responsive: true, maintainAspectRatio: false, scales: {
+            x: { grid: { display: false }, ticks: { color: chartText, font: fontMono } },
+            y: { grid: { color: chartGrid }, ticks: { color: chartText, font: fontMono } },
+            y1: { position: 'right', grid: { display: false }, ticks: { color: '#d4af37', font: fontMono } }
+        }, plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } } }
+    });
+
+    const totalOutflows = baseOutflows.map((b, idx) => b + interestPayments[idx]);
+    if (chartCFInstance) chartCFInstance.destroy();
+    chartCFInstance = new Chart(document.getElementById('chartCF').getContext('2d'), {
+        type: 'bar',
+        data: { labels: xLabels, datasets: [
+            { label: 'Притоки от продаж', data: inflows, backgroundColor: '#2a9d8f' },
+            { label: 'Выплаты (закупки + OPEX + %)', data: totalOutflows.map(v => -v), backgroundColor: '#e63946' }
+        ]},
+        options: { responsive: true, maintainAspectRatio: false, scales: {
+            x: { grid: { display: false }, ticks: { color: chartText, font: fontMono } },
+            y: { grid: { color: chartGrid }, ticks: { color: chartText, font: fontMono } }
+        }, plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } } }
+    });
+
+    if (chartOrdersInstance) chartOrdersInstance.destroy();
+    chartOrdersInstance = new Chart(document.getElementById('chartOrders').getContext('2d'), {
+        type: 'bar',
+        data: { labels: xLabels, datasets: [
+            { label: 'Заказы, шт.', data: orders, backgroundColor: '#d4af37' },
+            { label: 'Выручка, ₽', data: rev, type: 'line', borderColor: '#2a9d8f', yAxisID: 'y1', borderWidth: 2.5 }
+        ]},
+        options: { responsive: true, maintainAspectRatio: false, scales: {
+            x: { grid: { display: false }, ticks: { color: chartText, font: fontMono } },
+            y: { grid: { color: chartGrid }, ticks: { color: chartText, font: fontMono } },
+            y1: { position: 'right', grid: { display: false }, ticks: { color: '#2a9d8f', font: fontMono } }
+        }, plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } } }
+    });
+
+    const sumPurchases = cogsPayments.reduce((a, b) => a + b, 0);
+    if (chartPieInstance) chartPieInstance.destroy();
+    chartPieInstance = new Chart(document.getElementById('chartPie').getContext('2d'), {
+        type: 'doughnut',
+        data: { labels: ['Склад', 'Офис', 'ФОТ', 'Налоги 5%', 'Закупки', 'Проценты по долгу'], datasets: [{
+            data: [wh * period, office * period, fot * period, sumTaxes, sumPurchases, sumInterest],
+            backgroundColor: ['#52525b', '#71717a', '#d4af37', '#e63946', '#2a9d8f', '#457b9d']
+        }]},
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: chartText, font: fontMono } } } }
+    });
 }
 
 function exportDataToCsv() {
-    const csv = "Период;Значение\n1;1000\n";
+    playClickSound(1600, 0.05);
+    if (!latestCalculatedData) return;
+    const { xLabels, monthlyInvestments, interestPayments, debtRepayments, debtBalance, cashBalance } = latestCalculatedData;
+    let csv = '\uFEFF' + "Период;Дотация (дефицит);Проценты по долгу;Погашение долга;Остаток тела долга;Свободный остаток счета\n";
+    for (let i = 0; i < xLabels.length; i++) {
+        csv += `${xLabels[i]};${Math.round(monthlyInvestments[i])};${Math.round(interestPayments[i])};${Math.round(debtRepayments[i])};${Math.round(debtBalance[i])};${Math.round(cashBalance[i])}\n`;
+    }
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = url;
-    link.download = 'model.csv';
-    link.click();
+    link.href = url; link.download = 'Finansovaya_Model_Kapital.csv';
+    document.body.appendChild(link); link.click(); link.remove();
+    URL.revokeObjectURL(url);
 }
+
+function generateExecutiveMemo() {
+    playClickSound(1800, 0.04);
+    if (!latestCalculatedData) return;
+    const { sumRev, netProfit, roi } = latestCalculatedData;
+    const memoHtml = `<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Меморандум Капитала // Executive Summary</title>
+<style>
+body { background: #070709; color: #f4f1ea; font-family: 'Georgia', serif; padding: 40px; margin: 0; }
+.memo-card { max-width: 800px; margin: 0 auto; border: 1px solid rgba(212,175,55,0.4); padding: 40px; background: rgba(13,13,18,0.95); box-shadow: 0 0 50px rgba(0,0,0,0.8); }
+h1 { font-family: 'Cormorant Garamond', serif; color: #d4af37; font-style: italic; font-size: 32px; border-bottom: 1px solid rgba(212,175,55,0.3); padding-bottom: 15px; margin-top: 0; }
+.meta { font-family: 'Courier New', monospace; font-size: 11px; color: #8e8a80; margin-bottom: 30px; }
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 30px 0; }
+.metric { border: 1px solid rgba(212,175,55,0.2); padding: 15px; background: rgba(255,255,255,0.02); }
+.val { font-size: 24px; color: #d4af37; font-weight: bold; margin-top: 5px; }
+p { font-size: 14px; line-height: 1.8; color: #ccc; }
+@media print { body { background: white; color: black; } .memo-card { border: none; box-shadow: none; } }
+</style>
+</head>
+<body>
+<div class="memo-card">
+<div class="meta">AUREA PROPORTIO // ФИНАНСОВЫЙ МЕМОРАНДУМ // 1 : 1.618</div>
+<h1>Архитектура Капитала и Ликвидности</h1>
+<p>Настоящий меморандум фиксирует расчётные показатели финансовой модели оборотных средств, партионных поставок и факторингового плеча.</p>
+<div class="grid">
+<div class="metric"><div>СОВОКУПНАЯ ВЫРУЧКА</div><div class="val">${formatSpaced(sumRev)} ₽</div></div>
+<div class="metric"><div>ЧИСТАЯ ПРИБЫЛЬ</div><div class="val">${formatSpaced(netProfit)} ₽</div></div>
+<div class="metric"><div>РЕНТАБЕЛЬНОСТЬ (ROI)</div><div class="val">${roi.toFixed(1)}%</div></div>
+</div>
+<p>Модель учитывает дискретные закупки, отсрочки поставщиков, налог на добавленную стоимость и стоимость заёмного капитала. Сгенерировано автоматически в защищённом контуре моделирования.</p>
+<div style="margin-top: 40px; text-align: right;"><button onclick="window.print()" style="padding: 10px 24px; background: #d4af37; color: black; font-weight: bold; border: none; cursor: pointer;">Печать / Сохранить в PDF</button></div>
+</div>
+</body>
+</html>`;
+    const win = window.open('', '_blank');
+    win.document.write(memoHtml);
+    win.document.close();
+}
+
+let isDark = true;
+function toggleTheme() {
+    isDark = !isDark;
+    document.documentElement.classList.toggle('dark', isDark);
+    const thumb = document.getElementById('sliderThumb'), lblNight = document.getElementById('lblNight'), lblDay = document.getElementById('lblDay');
+    const themeSlider = document.getElementById('themeSlider');
+    if (isDark) {
+        thumb.style.transform = 'translateX(0px)';
+        lblNight.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold text-black';
+        lblDay.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold opacity-70';
+        dashRingMat.color.setHex(0x00aaff); megaRingWireMat.color.setHex(0x00c3ff); secondaryWireMat.color.setHex(0x0077aa);
+        themeSlider.setAttribute('aria-checked', 'true');
+    } else {
+        thumb.style.transform = 'translateX(58px)';
+        lblDay.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold text-white';
+        lblNight.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold opacity-70';
+        dashRingMat.color.setHex(0x0055aa); megaRingWireMat.color.setHex(0x0066cc); secondaryWireMat.color.setHex(0x004488);
+        themeSlider.setAttribute('aria-checked', 'false');
+    }
+    playClickSound(900, 0.03);
+    dashRenderer.render(dashScene, dashCamera);
+    runCalculation();
+}
+
+const dashCanvas = document.getElementById('webgl-bg-canvas');
+const dashScene = new THREE.Scene();
+const dashCamera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 2000);
+dashCamera.position.z = 160;
+const dashRenderer = new THREE.WebGLRenderer({ canvas: dashCanvas, alpha: true, antialias: false, powerPreference: "low-power" });
+dashRenderer.setSize(window.innerWidth, window.innerHeight);
+dashRenderer.setPixelRatio(1);
+const dashArmillary = new THREE.Group();
+dashScene.add(dashArmillary);
+const dashRingMat = new THREE.MeshBasicMaterial({ color: 0x00aaff, wireframe: true, transparent: true, opacity: 0.15 });
+const dashRings = [];
+[65, 88, 110].forEach((radius, i) => {
+    const geo = new THREE.TorusGeometry(radius, 8 + i * 2, 14, 100);
+    const ring = new THREE.Mesh(geo, dashRingMat);
+    if (i === 0) ring.rotation.x = Math.PI / 2;
+    if (i === 1) ring.rotation.y = Math.PI / 3;
+    if (i === 2) ring.rotation.z = Math.PI / 4;
+    dashArmillary.add(ring); dashRings.push(ring);
+});
+dashRenderer.render(dashScene, dashCamera);
+let dashTurnProgress = 1.0, dashStartRot = [0, 0, 0], dashTargetRot = [0, 0, 0], dashAnimFrameId = null;
+function triggerDashRingTurn() {
+    dashStartRot = [dashRings[0].rotation.y, dashRings[1].rotation.x, dashRings[2].rotation.z];
+    dashTargetRot = [
+        dashStartRot[0] + (Math.PI / 2.618),
+        dashStartRot[1] - (Math.PI / 3.141),
+        dashStartRot[2] + (Math.PI / 4.0)
+    ];
+    dashTurnProgress = 0.0;
+    if (dashAnimFrameId) cancelAnimationFrame(dashAnimFrameId);
+    animateDashTurn();
+}
+function animateDashTurn() {
+    dashTurnProgress += 0.025;
+    const p = Math.min(dashTurnProgress, 1.0);
+    const ease = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+    dashRings[0].rotation.y = dashStartRot[0] + (dashTargetRot[0] - dashStartRot[0]) * ease;
+    dashRings[1].rotation.x = dashStartRot[1] + (dashTargetRot[1] - dashStartRot[1]) * ease;
+    dashRings[2].rotation.z = dashStartRot[2] + (dashTargetRot[2] - dashStartRot[2]) * ease;
+    dashRenderer.render(dashScene, dashCamera);
+    if (p < 1.0) dashAnimFrameId = requestAnimationFrame(animateDashTurn);
+    else dashAnimFrameId = null;
+}
+
+document.addEventListener('mousemove', (e) => {
+    const coord = document.getElementById('cursorCoordDisplay');
+    if (coord) coord.textContent = `X: ${e.clientX.toString().padStart(4, '0')} / Y: ${e.clientY.toString().padStart(4, '0')}`;
+});
+
+document.querySelectorAll('.tilt-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left, y = e.clientY - rect.top;
+        card.style.setProperty('--mouse-x', `${x}px`);
+        card.style.setProperty('--mouse-y', `${y}px`);
+        const cx = rect.width / 2, cy = rect.height / 2;
+        const rx = ((y - cy) / cy) * -6, ry = ((x - cx) / cx) * 6;
+        card.style.transform = `perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-3px)`;
+    });
+    card.addEventListener('mouseleave', () => {
+        card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)';
+    });
+});
 
 window.addEventListener('resize', () => {
     preCamera.aspect = window.innerWidth / window.innerHeight;
     preCamera.updateProjectionMatrix();
     preRenderer.setSize(window.innerWidth, window.innerHeight);
+    dashCamera.aspect = window.innerWidth / window.innerHeight;
+    dashCamera.updateProjectionMatrix();
+    dashRenderer.setSize(window.innerWidth, window.innerHeight);
+    dashRenderer.render(dashScene, dashCamera);
 });
 
-document.addEventListener('DOMContentLoaded', () => {
-    runCalculation();
+setInterval(() => {
+    const clock = document.getElementById('telemetryClock');
+    if (clock) clock.textContent = `[${new Date().toTimeString().split(' ')[0]}]`;
+}, 1000);
+
+function resetDefaults() { playClickSound(600, 0.05); document.getElementById('financialInputsForm').reset(); runCalculation(); }
+
+document.getElementById('themeSlider').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleTheme(); }
 });
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => runCalculation());
+else runCalculation();
 </script>
 </body>
 </html>
