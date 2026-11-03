@@ -86,6 +86,7 @@ button:focus:not(:focus-visible){outline:none}
 .codex-nav-btn:hover{background:rgba(212,175,55,0.25);border-color:var(--accent-gold);transform:scale(1.08)}
 .codex-items-list{display:flex;gap:6px}
 .codex-item-chip{
+    position:relative;
     padding:5px 12px;
     font-family:'Cormorant Garamond',serif;
     font-size:15px;
@@ -104,8 +105,19 @@ button:focus:not(:focus-visible){outline:none}
     border-color:var(--accent-gold);
     box-shadow:0 0 16px rgba(212,175,55,0.6);
 }
+.codex-item-chip.morph-mode{
+    color:#070709;
+    background:#2a9d8f !important;
+    border-color:#2a9d8f !important;
+    box-shadow:0 0 20px #2a9d8f !important;
+    animation:morphPulse 1.8s infinite alternate ease-in-out;
+}
+@keyframes morphPulse{
+    0%{filter:hue-rotate(0deg);transform:scale(1)}
+    100%{filter:hue-rotate(180deg);transform:scale(1.1)}
+}
 
-.bottom-dock{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;width:420px;height:62px}
+.bottom-dock{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;width:440px;height:62px}
 #preloaderHUD{display:flex;flex-direction:column;align-items:center;gap:8px;transition:opacity .4s}
 .progress-bar-bg{width:280px;height:2px;background:rgba(255,255,255,.12);position:relative;overflow:hidden}
 #loaderProgressBar{position:absolute;left:0;top:0;height:100%;width:0;background:var(--accent-gold);box-shadow:0 0 10px var(--accent-gold);transition:width .1s linear}
@@ -178,6 +190,7 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
         <div id="preloaderTitle">Архитектура финансов</div>
         <div id="blueprintSubtitle">Тяга и масштабирование выручки</div>
         
+        <!-- СЕЛЕКТОР КОДЕКСА С ТАЙНЫМ ТРИГГЕРОМ В "V" -->
         <div class="codex-selector-hud">
             <button class="codex-nav-btn" onclick="prevSlide()" aria-label="Предыдущий чертеж">‹</button>
             <div class="codex-items-list" id="codexChipsContainer">
@@ -185,7 +198,7 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
                 <button class="codex-item-chip" onclick="goToSlide(1)">II</button>
                 <button class="codex-item-chip" onclick="goToSlide(2)">III</button>
                 <button class="codex-item-chip" onclick="goToSlide(3)">IV</button>
-                <button class="codex-item-chip" onclick="goToSlide(4)">V</button>
+                <button class="codex-item-chip" onclick="goToSlide(4)" title="Нажмите повторно для алхимической метаморфозы">V</button>
             </div>
             <button class="codex-nav-btn" onclick="nextSlide()" aria-label="Следующий чертеж">›</button>
         </div>
@@ -194,7 +207,7 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
             <div id="preloaderHUD">
                 <div class="flex items-center gap-3 text-[#d4af37] text-[10px] tracking-[0.25em] uppercase font-mono">
                     <span class="pulse-dot" aria-hidden="true"></span>
-                    <span id="loaderStatusText" class="cursor-pointer hover:underline" onclick="window.triggerSputnikManually && window.triggerSputnikManually()" title="Нажмите для вызова спутника (или клавишу S)">Кодекс да Винчи • Ротация карусели [S — спутник]</span>
+                    <span id="loaderStatusText" class="cursor-pointer hover:underline" onclick="window.triggerSputnikManually && window.triggerSputnikManually()" title="Нажмите для вызова спутника (или клавишу S)">Кодекс да Винчи • [S — спутник | M — метаморфозы]</span>
                     <span id="loaderPercent" class="font-bold">0%</span>
                 </div>
                 <div class="progress-bar-bg mt-1"><div id="loaderProgressBar"></div></div>
@@ -417,7 +430,7 @@ const OBSCURA_DURATION = 6.8;
 let preloaderDismissed = false;
 
 /* =========================================================================
-   СТАБИЛИЗИРОВАННЫЙ RENAISSANCE WEB AUDIO ДВИЖОК
+   RENAISSANCE WEB AUDIO ДВИЖОК
    ========================================================================= */
 class RenaissanceSoundscapeEngine {
     constructor() {
@@ -654,8 +667,8 @@ const BLUEPRINT_PRESETS = [
         }
     },
     {
-        name: "Защита резервов и баланс",
-        subtitle: "Минимизация долга и удержание ликвидности",
+        name: "Защита резервов и баланс [Тайник]",
+        subtitle: "Повторный клик запускает метаморфозу форм",
         apply: () => {
             document.getElementById('paramSupplierPrepay').value = 20;
             document.getElementById('paramSupplierDelay').value = 3;
@@ -805,10 +818,15 @@ preScene.add(preGroup);
 const particleCount = 450;
 const particleGeo = new THREE.BufferGeometry();
 const particlePos = new Float32Array(particleCount * 3);
+const particleOrigPos = new Float32Array(particleCount * 3);
+
 for (let i = 0; i < particleCount * 3; i += 3) {
-    particlePos[i] = (Math.random() - 0.5) * 600;
-    particlePos[i + 1] = (Math.random() - 0.5) * 450;
-    particlePos[i + 2] = (Math.random() - 0.5) * 500;
+    const px = (Math.random() - 0.5) * 600;
+    const py = (Math.random() - 0.5) * 450;
+    const pz = (Math.random() - 0.5) * 500;
+    particlePos[i] = particleOrigPos[i] = px;
+    particlePos[i + 1] = particleOrigPos[i + 1] = py;
+    particlePos[i + 2] = particleOrigPos[i + 2] = pz;
 }
 particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePos, 3));
 const particleMat = new THREE.PointsMaterial({
@@ -962,8 +980,8 @@ function createCyclopeanTrussRing(mainRadius, tubeWidth, tubeDepth, segments, no
             linePts.push(p1_topIn, p2_botIn);
             linePts.push(p1_topOut, p2_topIn);
         } else {
-            linePts.push(p1_botOut, p2_topOut);
-            linePts.push(p1_botIn, p2_topIn);
+            linePts.push(p1_botOut, p2_botOut);
+            linePts.push(p1_botIn, p2_botIn);
             linePts.push(p1_botOut, p2_botIn);
         }
 
@@ -1027,24 +1045,40 @@ function createSafeDaVinciMaterial(initialTexture) {
         uniforms: {
             uTex: { value: initialTexture || DEFAULT_HOLO_TEX },
             uFocus: { value: 0.0 },
+            uMorph: { value: 0.0 },
             uTime: { value: 0.0 }
         },
         vertexShader: `
+            uniform float uMorph;
+            uniform float uTime;
             varying vec2 vUv;
             void main() {
                 vUv = uv;
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                vec3 p = position;
+                if (uMorph > 0.001) {
+                    float wave = sin(p.x * 0.1 + uTime * 3.0) * cos(p.y * 0.1 + uTime * 2.5);
+                    p.z += wave * 14.0 * uMorph;
+                    p.x += sin(p.y * 0.08 + uTime * 2.0) * 8.0 * uMorph;
+                }
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
             }
         `,
         fragmentShader: `
             precision mediump float;
             uniform sampler2D uTex;
             uniform float uFocus;
+            uniform float uMorph;
             uniform float uTime;
             varying vec2 vUv;
 
             void main() {
-                vec4 tex = texture2D(uTex, vUv);
+                vec2 uv = vUv;
+                if (uMorph > 0.001) {
+                    uv.x += sin(uv.y * 12.0 + uTime * 3.5) * 0.05 * uMorph;
+                    uv.y += cos(uv.x * 12.0 + uTime * 3.0) * 0.05 * uMorph;
+                }
+
+                vec4 tex = texture2D(uTex, uv);
                 float lum = dot(tex.rgb, vec3(0.299, 0.587, 0.114));
                 
                 float stroke = smoothstep(0.08, 0.65, lum);
@@ -1052,11 +1086,17 @@ function createSafeDaVinciMaterial(initialTexture) {
                 
                 vec3 baseGold = vec3(0.85, 0.70, 0.24);
                 vec3 glowGold = vec3(1.0, 0.94, 0.75);
+                vec3 psychedelic = vec3(
+                    0.5 + 0.5 * sin(uTime * 2.0 + vUv.x * 4.0),
+                    0.5 + 0.5 * sin(uTime * 2.5 + vUv.y * 4.0 + 2.0),
+                    0.5 + 0.5 * sin(uTime * 1.8 + (vUv.x+vUv.y) * 3.0 + 4.0)
+                );
                 
-                float wave = sin((vUv.x + vUv.y) * 10.0 - uTime * 2.5) * 0.5 + 0.5;
-                vec3 finalColor = mix(baseGold, glowGold, wave * 0.3 + uFocus * 0.4);
+                float wave = sin((uv.x + uv.y) * 10.0 - uTime * 2.5) * 0.5 + 0.5;
+                vec3 standardColor = mix(baseGold, glowGold, wave * 0.3 + uFocus * 0.4);
+                vec3 finalColor = mix(standardColor, psychedelic, uMorph * 0.85);
                 
-                float alpha = stroke * (0.35 + uFocus * 0.55);
+                float alpha = stroke * (0.35 + uFocus * 0.55 + uMorph * 0.2);
                 gl_FragColor = vec4(finalColor, clamp(alpha, 0.0, 1.0));
             }
         `,
@@ -1092,7 +1132,7 @@ function createCodexTablet(imageSource, romanNumeral = 'I') {
     tablet.add(frameMesh);
     tablet.frameMesh = frameMesh;
 
-    const sheetGeo = new THREE.PlaneGeometry(w - 1.2, h - 1.2);
+    const sheetGeo = new THREE.PlaneGeometry(w - 1.2, h - 1.2, 16, 16);
     const sheetMat = new THREE.MeshBasicMaterial({
         color: 0x09090e,
         transparent: true,
@@ -1106,7 +1146,7 @@ function createCodexTablet(imageSource, romanNumeral = 'I') {
     tablet.sheetMesh = sheetMesh;
 
     const holoMat = createSafeDaVinciMaterial(DEFAULT_HOLO_TEX);
-    const artMesh = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.90, h * 0.90), holoMat);
+    const artMesh = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.90, h * 0.90, 24, 24), holoMat);
     artMesh.position.z = 0.1;
     tablet.add(artMesh);
     tablet.holoMat = holoMat;
@@ -1168,6 +1208,42 @@ let carouselTargetAngle = 0;
 let carouselCurrentAngle = 0;
 let currentSlideIndex = 0;
 
+/* ТАЙНЫЙ РЕЖИМ МЕТАМОРФОЗЫ ФОРМ (METAMORPHOSIS MODE) */
+let isMorphingActive = false;
+let morphTransition = 0.0; // от 0.0 до 1.0
+
+function toggleMorphMode() {
+    isMorphingActive = !isMorphingActive;
+    playClickSound(isMorphingActive ? 1900 : 700, 0.04);
+    
+    const chipV = document.querySelectorAll('.codex-item-chip')[4];
+    if (chipV) {
+        if (isMorphingActive) chipV.classList.add('morph-mode');
+        else chipV.classList.remove('morph-mode');
+    }
+
+    const sub = document.getElementById('blueprintSubtitle');
+    if (sub) {
+        sub.textContent = isMorphingActive 
+            ? "✦ АЛХИМИЧЕСКАЯ МЕТАМОРФОЗА: НЕЕВКЛИДОВО ПЕРЕТЕКАНИЕ ФОРМ ✦" 
+            : BLUEPRINT_PRESETS[currentSlideIndex].subtitle;
+        sub.style.opacity = '1';
+    }
+
+    const statusEl = document.getElementById('loaderStatusText');
+    if (statusEl) {
+        statusEl.textContent = isMorphingActive 
+            ? "МЕТАМОРФОЗА АКТИВНА [Клик по V или M для стабилизации]" 
+            : "Кодекс да Винчи • [S — спутник | M — метаморфозы]";
+    }
+}
+
+window.addEventListener('keydown', (e) => {
+    if ((e.key === 'm' || e.key === 'M' || e.key === 'ь' || e.key === 'Ь') && !preloaderDismissed) {
+        toggleMorphMode();
+    }
+});
+
 function updateSelectorChips() {
     const chips = document.querySelectorAll('.codex-item-chip');
     chips.forEach((chip, idx) => {
@@ -1178,6 +1254,13 @@ function updateSelectorChips() {
 
 function focusSlide(idx, playSound = true) {
     if (idx < 0 || idx >= TOTAL_INVENTIONS) return;
+    
+    // Если кликнули по 5-му чертежу (V), когда он уже выбран — переключаем метаморфозу
+    if (idx === 4 && currentSlideIndex === 4) {
+        toggleMorphMode();
+        return;
+    }
+
     currentSlideIndex = idx;
     if (playSound) playClickSound(1600, 0.02);
     updateSelectorChips();
@@ -1187,9 +1270,9 @@ function focusSlide(idx, playSound = true) {
     const preset = BLUEPRINT_PRESETS[idx];
     if (preset) {
         const titleEl = document.getElementById('loaderStatusText');
-        if (titleEl) titleEl.textContent = `[${ROMAN_NUMERALS[idx]}/V] ${preset.name}`;
+        if (titleEl && !isMorphingActive) titleEl.textContent = `[${ROMAN_NUMERALS[idx]}/V] ${preset.name}`;
         const sub = document.getElementById('blueprintSubtitle');
-        if (sub) {
+        if (sub && !isMorphingActive) {
             sub.textContent = preset.subtitle;
             sub.style.opacity = '1';
         }
@@ -1446,7 +1529,7 @@ function performRaycastSelection(isExplicitClick = false) {
     if (intersects.length > 0) {
         const hit = intersects[0].object;
         const targetIdx = hit.userData.slideIdx;
-        if (typeof targetIdx === 'number' && (isExplicitClick || targetIdx !== currentSlideIndex)) {
+        if (typeof targetIdx === 'number') {
             focusSlide(targetIdx);
         }
     }
@@ -1537,6 +1620,10 @@ function animatePreloader() {
 
         checkSputnikScheduler(now);
 
+        // Плавная интерполяция активности метаморфозы
+        const targetMorph = isMorphingActive ? 1.0 : 0.0;
+        morphTransition = THREE.MathUtils.lerp(morphTransition, targetMorph, 0.04);
+
         /* АНИМАЦИЯ ПОЛЕТА СПУТНИКА */
         if (sputnikFlight.active) {
             const flightP = (now - sputnikFlight.startTime) / (sputnikFlight.duration * 1000);
@@ -1625,18 +1712,45 @@ function animatePreloader() {
             return;
         }
 
+        // Влияние метаморфозы на частицы пыли
+        const posArr = particleGeo.attributes.position.array;
+        for (let i = 0; i < particleCount * 3; i += 3) {
+            if (morphTransition > 0.01) {
+                const angle = t * 1.5 + i * 0.02;
+                const r = 160 + Math.sin(t * 2.0 + i) * 60;
+                posArr[i] = THREE.MathUtils.lerp(particleOrigPos[i], Math.cos(angle) * r, morphTransition);
+                posArr[i + 1] = THREE.MathUtils.lerp(particleOrigPos[i + 1], Math.sin(angle) * r + Math.sin(t * 3.0 + i) * 35, morphTransition);
+                posArr[i + 2] = THREE.MathUtils.lerp(particleOrigPos[i + 2], Math.sin(t + i) * 120, morphTransition);
+            } else {
+                posArr[i] = particleOrigPos[i];
+                posArr[i + 1] = particleOrigPos[i + 1];
+                posArr[i + 2] = particleOrigPos[i + 2];
+            }
+        }
+        particleGeo.attributes.position.needsUpdate = true;
         dustParticles.rotation.y = t * 0.02;
         dustParticles.rotation.x = Math.sin(t * 0.015) * 0.1;
 
-        astrolabeRings.forEach(item => {
-            item.group.rotation.x += item.sx;
-            item.group.rotation.y += item.sy;
-            item.group.rotation.z += item.sz;
+        // Вращение колец астролябии с нелинейным пульсирующим скручиванием при морфе
+        astrolabeRings.forEach((item, idx) => {
+            const speedMult = 1.0 + morphTransition * 4.0;
+            item.group.rotation.x += item.sx * speedMult;
+            item.group.rotation.y += item.sy * speedMult;
+            item.group.rotation.z += item.sz * speedMult;
+
+            if (morphTransition > 0.01) {
+                const waveScale = 1.0 + Math.sin(t * 2.5 + idx * 1.5) * 0.18 * morphTransition;
+                item.group.scale.set(waveScale, waveScale, waveScale);
+            } else {
+                item.group.scale.set(1, 1, 1);
+            }
         });
 
+        // Плавный поворот карусели
         carouselCurrentAngle = THREE.MathUtils.lerp(carouselCurrentAngle, carouselTargetAngle, 0.075);
         carouselGroup.rotation.y = carouselCurrentAngle;
 
+        // Неевклидово перетекание чертежей
         inventionItems.forEach(item => {
             const angle = item.baseAngle;
             const isCurrent = (item.index === currentSlideIndex);
@@ -1644,26 +1758,42 @@ function animatePreloader() {
             const orbitX = Math.sin(angle) * CAROUSEL_RADIUS;
             const orbitZ = Math.cos(angle) * CAROUSEL_RADIUS - 90;
 
-            const targetX = isCurrent ? 25 : orbitX;
-            const targetZ = isCurrent ? 155 : orbitZ;
-            const targetY = (isCurrent ? -6 : -18) + Math.sin(t * 1.5 + item.index) * 3.0;
+            let targetX = isCurrent ? 25 : orbitX;
+            let targetZ = isCurrent ? 155 : orbitZ;
+            let targetY = (isCurrent ? -6 : -18) + Math.sin(t * 1.5 + item.index) * 3.0;
+
+            // Если активен морф — добавляем нелинейные волны перемешивания
+            if (morphTransition > 0.01) {
+                targetX += Math.sin(t * 2.2 + item.index * 1.8) * 45.0 * morphTransition;
+                targetY += Math.cos(t * 2.5 + item.index * 1.5) * 35.0 * morphTransition;
+                targetZ += Math.sin(t * 1.8 + item.index * 2.0) * 40.0 * morphTransition;
+            }
 
             item.group.position.x = THREE.MathUtils.lerp(item.group.position.x, targetX, 0.08);
             item.group.position.y = THREE.MathUtils.lerp(item.group.position.y, targetY, 0.08);
             item.group.position.z = THREE.MathUtils.lerp(item.group.position.z, targetZ, 0.08);
 
-            item.group.rotation.y = -carouselGroup.rotation.y;
-            item.group.rotation.x = 0.04 + Math.sin(t + item.index) * 0.015;
+            item.group.rotation.y = -carouselGroup.rotation.y + (morphTransition > 0.01 ? Math.sin(t * 2.0 + item.index) * 0.35 * morphTransition : 0);
+            item.group.rotation.x = 0.04 + Math.sin(t + item.index) * 0.015 + (morphTransition > 0.01 ? Math.cos(t * 1.8 + item.index) * 0.25 * morphTransition : 0);
 
-            const targetScale = isCurrent ? 1.25 : 0.75;
+            const baseScale = isCurrent ? 1.25 : 0.75;
+            const targetScale = baseScale * (1.0 + Math.sin(t * 3.0 + item.index) * 0.22 * morphTransition);
             item.group.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1);
 
+            // Передача параметров морфинга в шейдер
             if (item.group.holoMat && item.group.holoMat.uniforms) {
                 item.group.holoMat.uniforms.uTime.value = t;
-                item.group.holoMat.uniforms.uFocus.value = THREE.MathUtils.lerp(item.group.holoMat.uniforms.uFocus.value, isCurrent ? 1.0 : 0.0, 0.1);
+                item.group.holoMat.uniforms.uMorph.value = morphTransition;
+                const curFocus = item.group.holoMat.uniforms.uFocus.value;
+                item.group.holoMat.uniforms.uFocus.value = THREE.MathUtils.lerp(curFocus, isCurrent ? 1.0 : 0.0, 0.1);
             }
             if (item.group.frameMesh) {
-                item.group.frameMesh.material.opacity = isCurrent ? 0.95 : 0.22;
+                item.group.frameMesh.material.opacity = THREE.MathUtils.lerp(isCurrent ? 0.95 : 0.22, 0.85, morphTransition);
+                if (morphTransition > 0.01) {
+                    item.group.frameMesh.material.color.setHSL((t * 0.1 + item.index * 0.2) % 1.0, 0.85, 0.55);
+                } else {
+                    item.group.frameMesh.material.color.setHex(0xd4af37);
+                }
             }
             if (item.group.sheetMesh) {
                 item.group.sheetMesh.material.opacity = isCurrent ? 0.72 : 0.25;
