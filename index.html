@@ -1217,7 +1217,7 @@ function createVisualEngine(THREE) {
     const {
         AdditiveBlending, BufferAttribute, BufferGeometry, CanvasTexture, Color,
         DoubleSide, Group, LinearFilter, LineBasicMaterial, LineSegments,
-        MathUtils, Mesh, MeshBasicMaterial, PerspectiveCamera, PlaneGeometry,
+        MathUtils, Mesh, MeshBasicMaterial, NormalBlending, PerspectiveCamera, PlaneGeometry,
         Points, PointsMaterial, Raycaster, Scene, SphereGeometry, TorusGeometry,
         Vector2, Vector3, WebGLRenderer
     } = THREE;
@@ -1408,27 +1408,24 @@ function createVisualEngine(THREE) {
                 data[idx + 2] = Math.min(255, Math.round(55 + ink * 60));
                 data[idx + 3] = Math.round(alpha * 245);
 
-                const wave = Math.sin(nx * 5.0 + slotIdx) * 0.5 + Math.cos(ny * 5.0 - slotIdx) * 0.5;
-                const thermal = Math.max(0, Math.min(1, ink * 0.7 + wave * 0.3));
+                const wave = Math.sin(nx * 6.5 + slotIdx * 1.3) * 0.5 + Math.cos(ny * 6.5 - slotIdx * 1.1) * 0.5;
+                const thermal = Math.max(0, Math.min(1, ink * 0.68 + wave * 0.32));
                 let pr, pg, pb;
-                if (thermal < 0.35) {
-                    const k = thermal / 0.35;
-                    pr = Math.round(145 * (1 - k) + 40 * k);
-                    pg = Math.round(15 * (1 - k) + 255 * k);
-                    pb = Math.round(240 * (1 - k) + 30 * k);
-                } else if (thermal < 0.72) {
-                    const k = (thermal - 0.35) / 0.37;
-                    pr = Math.round(40 * (1 - k) + 255 * k);
-                    pg = Math.round(255 * (1 - k) + 25 * k);
-                    pb = Math.round(30 * (1 - k) + 45 * k);
+                if (thermal < 0.34) {
+                    pr = 165;
+                    pg = 12;
+                    pb = 255;
+                } else if (thermal < 0.68) {
+                    pr = 28;
+                    pg = 255;
+                    pb = 20;
                 } else {
-                    const k = (thermal - 0.72) / 0.28;
-                    pr = Math.round(255 * (1 - k) + 210 * k);
-                    pg = Math.round(25 * (1 - k) + 20 * k);
-                    pb = Math.round(45 * (1 - k) + 255 * k);
+                    pr = 255;
+                    pg = 14;
+                    pb = 55;
                 }
                 pData[idx] = pr; pData[idx + 1] = pg; pData[idx + 2] = pb;
-                pData[idx + 3] = Math.round(Math.min(1.0, alpha * 1.15) * 255);
+                pData[idx + 3] = Math.round(Math.min(1.0, alpha * 1.1) * 255);
             }
         }
 
@@ -2037,16 +2034,26 @@ function createVisualEngine(THREE) {
             }
 
             if (item.texReady) {
-                if (predatorStrength > 0.15) {
+                if (predatorStrength > 0.12) {
+                    if (item.mat.blending !== NormalBlending) {
+                        item.mat.blending = NormalBlending;
+                        item.mat.needsUpdate = true;
+                    }
                     const pTex = PREDATOR_TEXTURES[(idx + stepFloor) % 5] || GOLD_TEXTURES[(idx + stepFloor) % 5];
                     if (pTex && item.mat.map !== pTex) {
                         item.mat.map = pTex;
                         item.mat.needsUpdate = true;
                     }
-                    const pulse = 0.45 + 0.55 * Math.sin(smoothMix * Math.PI + idx * 1.25);
-                    item.mat.opacity = MathUtils.lerp(item.mat.opacity, 0.35 + pulse * 0.65, 0.12);
-                    item.mat.color.setHSL((t * 0.22 + idx * 0.2) % 1.0, 1.0, 0.62);
+                    const PREDATOR_TINTS = [0x39ff14, 0xff1744, 0xb026ff, 0x00ff66, 0xff0055];
+                    const tintHex = PREDATOR_TINTS[(idx + stepFloor) % PREDATOR_TINTS.length];
+                    item.mat.color.setHex(tintHex);
+                    const pulse = 0.35 + 0.65 * Math.sin(smoothMix * Math.PI + idx * 1.25);
+                    item.mat.opacity = MathUtils.lerp(item.mat.opacity, 0.28 + pulse * 0.52, 0.14);
                 } else {
+                    if (item.mat.blending !== AdditiveBlending) {
+                        item.mat.blending = AdditiveBlending;
+                        item.mat.needsUpdate = true;
+                    }
                     const gTex = GOLD_TEXTURES[idx];
                     if (gTex && item.mat.map !== gTex) {
                         item.mat.map = gTex;
