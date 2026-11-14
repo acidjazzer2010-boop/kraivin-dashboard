@@ -938,35 +938,121 @@ astrolabeRings.push(
    ========================================================================= */
 const INVENTION_BASE_SIZE = 92; // Увеличенный размер голограммы изобретения
 
-function createDaVinciHoloMaterial(texture) {
+const LOADED_INVENTION_TEXTURES = new Array(5).fill(null);
+const MORPH_TRIGGER_INDEX = 2; // 3-е изобретение активирует режим зрения Хищника и плавный морфинг всех чертежей
+let isPredatorMorphActive = false;
+let predatorMorphStrength = 0.0;
+let predatorMorphClock = 0.0;
+
+function createDaVinciHoloMaterial(texture, slotIdx) {
     return new THREE.ShaderMaterial({
-        uniforms: { uTex: { value: texture }, uHover: { value: 0.0 }, uTime: { value: 0.0 } },
+        uniforms: {
+            uTex: { value: texture },
+            uTexNext: { value: texture },
+            uMorphMix: { value: 0.0 },
+            uPredator: { value: 0.0 },
+            uHover: { value: 0.0 },
+            uTime: { value: 0.0 },
+            uSeed: { value: slotIdx * 1.73 }
+        },
         vertexShader: `
+            uniform float uPredator;
+            uniform float uTime;
+            uniform float uSeed;
             varying vec2 vUv;
             void main() {
                 vUv = uv;
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                vec3 pos = position;
+                if (uPredator > 0.001) {
+                    float w1 = sin(pos.x * 0.08 + uTime * 3.2 + uSeed) * cos(pos.y * 0.08 - uTime * 2.6);
+                    float w2 = sin((pos.x - pos.y) * 0.06 + uTime * 4.1 - uSeed);
+                    pos.z += (w1 * 14.0 + w2 * 9.0) * uPredator;
+                    pos.x += sin(pos.y * 0.07 + uTime * 2.8 + uSeed) * 6.5 * uPredator;
+                    pos.y += cos(pos.x * 0.07 - uTime * 2.4 + uSeed) * 6.5 * uPredator;
+                }
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
             }
         `,
         fragmentShader: `
             precision mediump float;
             uniform sampler2D uTex;
+            uniform sampler2D uTexNext;
+            uniform float uMorphMix;
+            uniform float uPredator;
             uniform float uHover;
             uniform float uTime;
+            uniform float uSeed;
             varying vec2 vUv;
+
+            vec3 predatorThermalPalette(float t) {
+                // Глубокий фиолетовый -> кислотно-зелёный -> огненно-красный спектр Хищника
+                vec3 deepViolet = vec3(0.42, 0.04, 0.85);
+                vec3 acidGreen  = vec3(0.18, 1.00, 0.12);
+                vec3 crimsonRed = vec3(1.00, 0.08, 0.14);
+                vec3 hotYellow  = vec3(1.00, 0.92, 0.15);
+                if (t < 0.36) {
+                    return mix(deepViolet, acidGreen, t / 0.36);
+                } else if (t < 0.74) {
+                    return mix(acidGreen, crimsonRed, (t - 0.36) / 0.38);
+                } else {
+                    return mix(crimsonRed, hotYellow, (t - 0.74) / 0.26);
+                }
+            }
+
             void main() {
-                vec4 tex = texture2D(uTex, vUv);
-                float lum = dot(tex.rgb, vec3(0.299, 0.587, 0.114));
-                float stroke = smoothstep(0.10, 0.60, lum);
-                if (lum > 0.88) stroke = 1.0 - stroke;
-                // Мягкое затухание к краям, чтобы не было даже намека на квадратную границу
+                vec2 uv1 = vUv;
+                vec2 uv2 = vUv;
+
+                if (uPredator > 0.001) {
+                    // Жидкое перетекание координат при морфинге одного изображения в другое
+                    vec2 flow1 = vec2(
+                        sin(vUv.y * 9.0 + uTime * 2.9 + uSeed) * 0.085 + cos((vUv.x + vUv.y) * 6.0 - uTime * 2.1) * 0.045,
+                        cos(vUv.x * 9.0 - uTime * 2.5 + uSeed) * 0.085 + sin((vUv.x - vUv.y) * 6.0 + uTime * 2.3) * 0.045
+                    );
+                    vec2 flow2 = vec2(
+                        cos(vUv.y * 8.0 - uTime * 3.1 - uSeed) * 0.085,
+                        sin(vUv.x * 8.0 + uTime * 2.7 - uSeed) * 0.085
+                    );
+                    uv1 = clamp(vUv + flow1 * uPredator * (0.4 + uMorphMix * 0.8), 0.001, 0.999);
+                    uv2 = clamp(vUv + flow2 * uPredator * (1.2 - uMorphMix * 0.8), 0.001, 0.999);
+                }
+
+                vec4 tex1 = texture2D(uTex, uv1);
+                vec4 tex2 = texture2D(uTexNext, uv2);
+
+                float lum1 = dot(tex1.rgb, vec3(0.299, 0.587, 0.114));
+                float s1 = smoothstep(0.10, 0.60, lum1);
+                if (lum1 > 0.88) s1 = 1.0 - s1;
+
+                float lum2 = dot(tex2.rgb, vec3(0.299, 0.587, 0.114));
+                float s2 = smoothstep(0.10, 0.60, lum2);
+                if (lum2 > 0.88) s2 = 1.0 - s2;
+
+                // Плавное перетекание штрихов одного изобретения в другое
+                float stroke = mix(s1, s2, uMorphMix * uPredator);
+
                 vec2 edgeDist = smoothstep(vec2(0.0), vec2(0.12), vUv) * smoothstep(vec2(1.0), vec2(0.88), vUv);
                 float vignette = edgeDist.x * edgeDist.y;
+
                 vec3 baseGold = vec3(0.85, 0.71, 0.25);
                 vec3 highlight = vec3(1.0, 0.95, 0.78);
                 float wave = sin((vUv.x + vUv.y) * 12.0 - uTime * 4.0) * 0.5 + 0.5;
-                vec3 finalColor = mix(baseGold, highlight, wave * 0.4 + uHover * 0.6);
-                float alpha = stroke * vignette * (0.72 + uHover * 0.28);
+                vec3 goldColor = mix(baseGold, highlight, wave * 0.4 + uHover * 0.6);
+
+                // Тепловизионный градиент с переливами кислотно-зелёного, красного и фиолетового
+                float thermalField = fract(
+                    stroke * 0.65 +
+                    sin(vUv.x * 5.5 + uTime * 2.2 + uSeed) * 0.22 +
+                    cos(vUv.y * 5.5 - uTime * 1.9) * 0.22 +
+                    uTime * 0.28
+                );
+                vec3 predColor = predatorThermalPalette(thermalField);
+                // Добавляем контурную кислотную подсветку на границах штрихов
+                predColor += vec3(0.15, 0.95, 0.25) * smoothstep(0.35, 0.85, stroke) * 0.35;
+
+                vec3 finalColor = mix(goldColor, predColor, uPredator);
+                float alphaBoost = mix(0.72 + uHover * 0.28, 0.92, uPredator);
+                float alpha = stroke * vignette * alphaBoost;
                 if (alpha < 0.02) discard;
                 gl_FragColor = vec4(finalColor, alpha);
             }
@@ -975,9 +1061,8 @@ function createDaVinciHoloMaterial(texture) {
     });
 }
 
-function createCleanInventionBlueprint(imageSource) {
+function createCleanInventionBlueprint(imageSource, slotIdx) {
     const cardGroup = new THREE.Group();
-    // Никакой обводки каркаса — только чистая парящая голограмма чертежа
     if (imageSource && typeof imageSource === 'string' && imageSource.length > 2) {
         try {
             const textureLoader = new THREE.TextureLoader();
@@ -987,8 +1072,11 @@ function createCleanInventionBlueprint(imageSource) {
                 texture.minFilter = THREE.LinearFilter;
                 texture.magFilter = THREE.LinearFilter;
                 texture.generateMipmaps = false;
-                const holoMat = createDaVinciHoloMaterial(texture);
-                const plane = new THREE.Mesh(new THREE.PlaneGeometry(INVENTION_BASE_SIZE, INVENTION_BASE_SIZE), holoMat);
+                LOADED_INVENTION_TEXTURES[slotIdx] = texture;
+
+                const holoMat = createDaVinciHoloMaterial(texture, slotIdx);
+                // Сегментированная геометрия (32x32) для плавной волновой деформации при морфинге
+                const plane = new THREE.Mesh(new THREE.PlaneGeometry(INVENTION_BASE_SIZE, INVENTION_BASE_SIZE, 32, 32), holoMat);
                 cardGroup.add(plane);
                 cardGroup.holoMat = holoMat;
             });
@@ -1003,11 +1091,11 @@ const ORBIT_SPEED = 0.042; // Медленное плавное вращение
 
 const hoverTargets = [];
 for (let idx = 0; idx < 5; idx++) {
-    const group = createCleanInventionBlueprint(USER_IMAGES[idx]);
+    const group = createCleanInventionBlueprint(USER_IMAGES[idx], idx);
     const initialAngle = (idx / 5) * Math.PI * 2;
     preGroup.add(group);
 
-    const hitGeo = new THREE.PlaneGeometry(INVENTION_BASE_SIZE * 0.9, INVENTION_BASE_SIZE * 0.9);
+    const hitGeo = new THREE.PlaneGeometry(INVENTION_BASE_SIZE * 0.95, INVENTION_BASE_SIZE * 0.95);
     const hitMat = new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide });
     const hitMesh = new THREE.Mesh(hitGeo, hitMat);
     hitMesh.userData = { slideIdx: idx };
@@ -1019,7 +1107,8 @@ for (let idx = 0; idx < 5; idx++) {
         baseAngle: initialAngle,
         currentAngle: initialAngle,
         targetScale: 1.0,
-        isHovered: false
+        isHovered: false,
+        morphCycleIdx: idx
     });
 }
 
@@ -1075,10 +1164,11 @@ function focusSlide(idx) {
     });
 
     const preset = BLUEPRINT_PRESETS[idx];
-    if (preset) {
-        document.getElementById('loaderStatusText').textContent = `[${idx + 1}/5] ${preset.name}`;
+    if (preset && !isPredatorMorphActive) {
+        const hint = (idx === MORPH_TRIGGER_INDEX) ? ' • [НАЖМИТЕ НА ЧЕРТЁЖ ДЛЯ МОРФИНГА]' : '';
+        document.getElementById('loaderStatusText').textContent = `[${idx + 1}/5] ${preset.name}${hint}`;
         const sub = document.getElementById('blueprintSubtitle');
-        sub.textContent = preset.subtitle;
+        sub.textContent = (idx === MORPH_TRIGGER_INDEX) ? 'Нажмите на изображение: режим зрения Хищника и слияние форм' : preset.subtitle;
         sub.style.opacity = '1';
     }
 }
@@ -1356,6 +1446,76 @@ function checkSputnikScheduler(now) {
 const raycaster = new THREE.Raycaster();
 const mouseVec = new THREE.Vector2(-999, -999);
 
+function playPredatorVisionSound(activating = true) {
+    try {
+        if (!renaissanceAudio.ctx) renaissanceAudio.init();
+        const ctx = renaissanceAudio.ctx;
+        if (!ctx) return;
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime;
+
+        // Характерный низкий рокочущий импульс смены спектра визора Хищника
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const filter = ctx.createBiquadFilter();
+        const gain = ctx.createGain();
+
+        osc1.type = 'sawtooth';
+        osc2.type = 'triangle';
+        if (activating) {
+            osc1.frequency.setValueAtTime(68, now);
+            osc1.frequency.exponentialRampToValueAtTime(290, now + 0.35);
+            osc1.frequency.exponentialRampToValueAtTime(92, now + 0.85);
+            osc2.frequency.setValueAtTime(136, now);
+            osc2.frequency.exponentialRampToValueAtTime(580, now + 0.35);
+        } else {
+            osc1.frequency.setValueAtTime(220, now);
+            osc1.frequency.exponentialRampToValueAtTime(62, now + 0.6);
+            osc2.frequency.setValueAtTime(440, now);
+            osc2.frequency.exponentialRampToValueAtTime(110, now + 0.6);
+        }
+
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(420, now);
+        filter.Q.setValueAtTime(3.2, now);
+
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(0.09, now + 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.88);
+
+        osc1.connect(filter);
+        osc2.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + 0.9);
+        osc2.stop(now + 0.9);
+        osc1.onended = () => {
+            try { osc1.disconnect(); osc2.disconnect(); filter.disconnect(); gain.disconnect(); } catch (_) {}
+        };
+    } catch (_) {}
+}
+
+function togglePredatorMorphMode() {
+    isPredatorMorphActive = !isPredatorMorphActive;
+    predatorMorphClock = 0.0;
+    playPredatorVisionSound(isPredatorMorphActive);
+    const sub = document.getElementById('blueprintSubtitle');
+    if (isPredatorMorphActive) {
+        document.getElementById('loaderStatusText').textContent = `[СПЕКТР ХИЩНИКА] СЛИЯНИЕ И МЕТАМОРФОЗА ЧЕРТЕЖЕЙ`;
+        if (sub) {
+            sub.textContent = 'Тепловизионный морфинг: нажмите повторно для возврата в золото';
+            sub.style.color = '#39ff14';
+            sub.style.opacity = '1';
+        }
+    } else {
+        if (sub) sub.style.color = 'rgba(212,175,55,0.7)';
+        if (currentSlideIndex >= 0) focusSlide(currentSlideIndex);
+    }
+}
+
 function performRaycastSelection(isExplicitClick = false) {
     if (preloaderDismissed || isObscuraTransition) return;
     if (!isExplicitClick && (isProgrammaticNav || window.innerWidth < 768)) return;
@@ -1369,8 +1529,13 @@ function performRaycastSelection(isExplicitClick = false) {
     if (intersects.length > 0) {
         const hit = intersects[0].object;
         const targetIdx = hit.userData.slideIdx;
-        if (typeof targetIdx === 'number' && targetIdx !== currentSlideIndex) {
-            focusSlide(targetIdx);
+        if (typeof targetIdx === 'number') {
+            if (isExplicitClick && (targetIdx === currentSlideIndex || targetIdx === MORPH_TRIGGER_INDEX)) {
+                if (targetIdx !== currentSlideIndex) focusSlide(targetIdx);
+                togglePredatorMorphMode();
+            } else if (targetIdx !== currentSlideIndex) {
+                focusSlide(targetIdx);
+            }
         }
     }
 }
@@ -1587,24 +1752,71 @@ function animatePreloader() {
         });
 
         /* =====================================================================
-           ОРБИТАЛЬНОЕ ДВИЖЕНИЕ ИЗОБРЕТЕНИЙ ВДОЛЬ ГИГАНТСКОГО КОЛЬЦА + СЛЕЖЕНИЕ КАМЕРЫ
+           ОРБИТАЛЬНОЕ ДВИЖЕНИЕ + ТЕПЛОВИЗИОННЫЙ МОРФИНГ И НАСЛОЕНИЕ ИЗОБРЕТЕНИЙ
            ===================================================================== */
+        predatorMorphStrength = THREE.MathUtils.lerp(predatorMorphStrength, isPredatorMorphActive ? 1.0 : 0.0, 0.045);
+        if (predatorMorphStrength > 0.002) {
+            predatorMorphClock += 0.016 * predatorMorphStrength;
+        }
+
+        // Индекс центра слияния (выбранный слайд или MORPH_TRIGGER_INDEX)
+        const mergeAnchorIdx = (currentSlideIndex >= 0) ? currentSlideIndex : MORPH_TRIGGER_INDEX;
+        const anchorAngle = hoverTargets[mergeAnchorIdx].baseAngle + t * ORBIT_SPEED;
+        const _anchorWorldPos = getOrbitWorldPosition(anchorAngle, new THREE.Vector3());
+
+        // Циклическая фаза перетекания одного изображения в другое (0..5)
+        const morphPhase = predatorMorphClock * 0.55;
+        const stepFloor = Math.floor(morphPhase);
+        const stepFrac = morphPhase - stepFloor;
+        // Плавная S-кривая перетекания формы
+        const smoothMorphMix = stepFrac * stepFrac * (3.0 - 2.0 * stepFrac);
+
+        const validTextures = LOADED_INVENTION_TEXTURES.filter(Boolean);
+
         hoverTargets.forEach((item, idx) => {
             item.currentAngle = item.baseAngle + t * ORBIT_SPEED;
             getOrbitWorldPosition(item.currentAngle, _tmpOrbitPos);
 
+            if (predatorMorphStrength > 0.002) {
+                // Все 5 изображений плывут к единому центру и наслаиваются друг на друга с живым дрейфом
+                const driftAngle = t * 1.35 + idx * (Math.PI * 2 / 5);
+                const driftRadius = (18.0 + Math.sin(t * 2.1 + idx) * 10.0) * predatorMorphStrength;
+                const layerZ = (idx - 2) * 4.5 * predatorMorphStrength;
+
+                const mergedX = _anchorWorldPos.x + Math.cos(driftAngle) * driftRadius;
+                const mergedY = _anchorWorldPos.y + Math.sin(driftAngle) * driftRadius;
+                const mergedZ = _anchorWorldPos.z + layerZ;
+
+                _tmpOrbitPos.x = THREE.MathUtils.lerp(_tmpOrbitPos.x, mergedX, predatorMorphStrength);
+                _tmpOrbitPos.y = THREE.MathUtils.lerp(_tmpOrbitPos.y, mergedY, predatorMorphStrength);
+                _tmpOrbitPos.z = THREE.MathUtils.lerp(_tmpOrbitPos.z, mergedZ, predatorMorphStrength);
+            }
+
             item.group.position.copy(_tmpOrbitPos);
             item.hitMesh.position.copy(_tmpOrbitPos);
 
-            // Плоскость чертежа всегда обращена к камере, чтобы рисунок читался без искажений
             item.group.quaternion.copy(preCamera.quaternion);
             item.hitMesh.quaternion.copy(preCamera.quaternion);
 
             if (item.group.holoMat && item.group.holoMat.uniforms) {
-                item.group.holoMat.uniforms.uTime.value = t;
+                const u = item.group.holoMat.uniforms;
+                u.uTime.value = t;
+                u.uPredator.value = predatorMorphStrength;
+                u.uMorphMix.value = smoothMorphMix;
+
+                if (validTextures.length > 1 && predatorMorphStrength > 0.01) {
+                    const texA = validTextures[(idx + stepFloor) % validTextures.length];
+                    const texB = validTextures[(idx + stepFloor + 1) % validTextures.length];
+                    if (texA) u.uTex.value = texA;
+                    if (texB) u.uTexNext.value = texB;
+                } else if (LOADED_INVENTION_TEXTURES[idx]) {
+                    u.uTex.value = LOADED_INVENTION_TEXTURES[idx];
+                    u.uTexNext.value = LOADED_INVENTION_TEXTURES[idx];
+                }
             }
 
-            const sc = THREE.MathUtils.lerp(item.group.scale.x, item.targetScale, 0.08);
+            const morphScaleTarget = isPredatorMorphActive ? 1.28 : item.targetScale;
+            const sc = THREE.MathUtils.lerp(item.group.scale.x, morphScaleTarget, 0.08);
             item.group.scale.set(sc, sc, sc);
         });
 
