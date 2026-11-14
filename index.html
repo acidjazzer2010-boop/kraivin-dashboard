@@ -390,6 +390,7 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
     <div class="preloader-fixed-hud">
         <div id="preloaderTitle">Архитектура финансов</div>
         <div id="blueprintSubtitle">Тяга и масштабирование выручки</div>
+        <button id="predatorToggleBtn" type="button" data-action="toggle-predator" style="position:absolute;top:104px;left:50%;transform:translateX(-50%);pointer-events:auto;padding:5px 14px;background:rgba(13,13,18,0.82);border:1px solid rgba(212,175,55,0.45);color:var(--accent-gold);font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.25em;text-transform:uppercase;cursor:pointer;transition:all .25s ease;">◈ Спектр Хищника (Морф)</button>
         
         <div class="slider-ui-container">
             <button type="button" class="slide-nav-btn" data-action="prev-slide" aria-label="Предыдущий чертеж">‹</button>
@@ -1201,6 +1202,7 @@ function createVisualEngine(THREE) {
 
         return {
             nextSlide: () => { AudioEngine.click(1800, 0.015); updateSlideHud((currentSlide + 1) % 5); },
+            togglePredator: () => {},
             prevSlide: () => { AudioEngine.click(1800, 0.015); updateSlideHud((currentSlide + 4) % 5); },
             goToSlide: (i) => { AudioEngine.click(1800, 0.015); updateSlideHud(i); },
             getCurrentSlide: () => currentSlide,
@@ -1714,13 +1716,26 @@ function createVisualEngine(THREE) {
         predatorClock = 0;
         AudioEngine.predatorPulse(isPredatorActive);
         const sub = document.getElementById('blueprintSubtitle');
+        const pBtn = document.getElementById('predatorToggleBtn');
         if (isPredatorActive) {
             document.getElementById('loaderStatusText').textContent = '[СПЕКТР ХИЩНИКА] СЛИЯНИЕ И МЕТАМОРФОЗА ЧЕРТЕЖЕЙ';
             sub.textContent = 'Тепловизионный морфинг: нажмите повторно для возврата в золото';
             sub.style.color = '#39ff14';
             sub.style.opacity = '1';
+            if (pBtn) {
+                pBtn.style.borderColor = '#39ff14';
+                pBtn.style.color = '#39ff14';
+                pBtn.style.boxShadow = '0 0 18px rgba(57,255,20,0.45)';
+                pBtn.textContent = '◈ Спектр Хищника: ВКЛ';
+            }
         } else {
             sub.style.color = 'rgba(212,175,55,0.75)';
+            if (pBtn) {
+                pBtn.style.borderColor = 'rgba(212,175,55,0.45)';
+                pBtn.style.color = 'var(--accent-gold)';
+                pBtn.style.boxShadow = 'none';
+                pBtn.textContent = '◈ Спектр Хищника (Морф)';
+            }
             focusSlide(currentSlide, { silent: true });
         }
     }
@@ -1759,10 +1774,10 @@ function createVisualEngine(THREE) {
         if (typeof idx !== 'number') return;
 
         if (isExplicitClick) {
-            if (idx === CONFIG.MORPH_TRIGGER_INDEX) {
+            if (idx === currentSlide || idx === CONFIG.MORPH_TRIGGER_INDEX) {
                 if (idx !== currentSlide) focusSlide(idx);
                 togglePredatorMode();
-            } else if (idx !== currentSlide) {
+            } else {
                 focusSlide(idx);
             }
         } else if (idx !== currentSlide) {
@@ -2098,6 +2113,7 @@ function createVisualEngine(THREE) {
     return {
         nextSlide: () => focusSlide((currentSlide + 1) % inventions.length),
         prevSlide: () => focusSlide((currentSlide - 1 + inventions.length) % inventions.length),
+        togglePredator: () => togglePredatorMode(),
         goToSlide: (idx) => focusSlide(idx),
         getCurrentSlide: () => currentSlide,
         isDismissed: () => dismissed,
@@ -2120,7 +2136,7 @@ function createVisualEngine(THREE) {
             dashRenderer.render(dashScene, dashCamera);
         },
         resize: () => {
-            if (!dismissed) {
+            if (!dismissed && !isObscura) {
                 camera.aspect = window.innerWidth / window.innerHeight;
                 camera.updateProjectionMatrix();
                 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -2728,6 +2744,9 @@ p{font-size:14px;line-height:1.8;color:#ccc}
                     break;
                 case 'go-slide':
                     visuals.goToSlide(parseInt(target.dataset.slide, 10));
+                    break;
+                case 'toggle-predator':
+                    visuals.togglePredator();
                     break;
                 case 'apply-preset': {
                     const slideIdx = visuals.getCurrentSlide();
