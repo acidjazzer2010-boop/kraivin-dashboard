@@ -361,16 +361,7 @@ window.onerror = function(msg, url, line) {
 };
 
 const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const __RAW_PAYLOAD__ = (typeof __JSON_IMAGES_PAYLOAD__ !== 'undefined') ? __JSON_IMAGES_PAYLOAD__ : [];
-const USER_IMAGES = Array.isArray(__RAW_PAYLOAD__) && __RAW_PAYLOAD__.length > 0
-    ? __RAW_PAYLOAD__
-    : [
-        '1793030578548.jpg',
-        '1793030581888.jpg',
-        '1793030587821.jpg',
-        '1793030589564.jpg',
-        '1793030590445.jpg'
-    ];
+const USER_IMAGES = __JSON_IMAGES_PAYLOAD__;
 
 let isObscuraTransition = false;
 let obscuraStartTime = 0;
@@ -1070,11 +1061,125 @@ function createDaVinciHoloMaterial(texture, slotIdx) {
     });
 }
 
+function createFallbackDaVinciTexture(slotIdx) {
+    const size = 512;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#08080c';
+    ctx.fillRect(0, 0, size, size);
+
+    const cx = size / 2, cy = size / 2;
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 2.5;
+
+    // Геометрическая основа чертежа (золотое сечение и окружности)
+    ctx.beginPath();
+    ctx.arc(cx, cy, 185, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(cx, cy, 130, 0, Math.PI * 2);
+    ctx.stroke();
+
+    if (slotIdx === 0) {
+        // Орнитоптер / крыло Да Винчи
+        for (let s = -1; s <= 1; s += 2) {
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.bezierCurveTo(cx + s * 80, cy - 120, cx + s * 170, cy - 90, cx + s * 210, cy + 20);
+            ctx.stroke();
+            for (let r = 1; r <= 5; r++) {
+                ctx.beginPath();
+                ctx.moveTo(cx + s * r * 32, cy - r * 14);
+                ctx.lineTo(cx + s * (r * 36 + 15), cy + 65 - r * 6);
+                ctx.stroke();
+            }
+        }
+    } else if (slotIdx === 1) {
+        // Зубчатая передача / редуктор
+        const teeth = 18;
+        ctx.beginPath();
+        for (let i = 0; i <= teeth * 2; i++) {
+            const a = (i / (teeth * 2)) * Math.PI * 2;
+            const rad = (i % 2 === 0) ? 155 : 135;
+            const px = cx + Math.cos(a) * rad, py = cy + Math.sin(a) * rad;
+            if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+        for (let k = 0; k < 6; k++) {
+            const a = (k / 6) * Math.PI * 2;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + Math.cos(a) * 135, cy + Math.sin(a) * 135);
+            ctx.stroke();
+        }
+    } else if (slotIdx === 2) {
+        // Воздушный винт (геликоптер Да Винчи)
+        for (let t = 0; t < 180; t++) {
+            const ang = t * 0.14;
+            const rad = t * 0.95;
+            const px = cx + Math.cos(ang) * rad;
+            const py = cy + Math.sin(ang) * rad * 0.55 - 40 + t * 0.45;
+            if (t === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - 150);
+        ctx.lineTo(cx, cy + 150);
+        ctx.stroke();
+    } else if (slotIdx === 3) {
+        // Витрувианская пропорция (квадрат в круге + оси)
+        ctx.strokeRect(cx - 130, cy - 130, 260, 260);
+        ctx.beginPath();
+        ctx.moveTo(cx - 180, cy); ctx.lineTo(cx + 180, cy);
+        ctx.moveTo(cx, cy - 180); ctx.lineTo(cx, cy + 180);
+        ctx.moveTo(cx - 130, cy - 130); ctx.lineTo(cx + 130, cy + 130);
+        ctx.moveTo(cx + 130, cy - 130); ctx.lineTo(cx - 130, cy + 130);
+        ctx.stroke();
+    } else {
+        // Астрономический секстант / баллистическая дуга
+        for (let r = 40; r <= 170; r += 32) {
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, -Math.PI * 0.85, Math.PI * 0.15);
+            ctx.stroke();
+        }
+        for (let a = -0.8; a <= 0.15; a += 0.15) {
+            const ang = a * Math.PI;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + Math.cos(ang) * 180, cy + Math.sin(ang) * 180);
+            ctx.stroke();
+        }
+    }
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = THREE.ClampToEdgeWrapping;
+    tex.wrapT = THREE.ClampToEdgeWrapping;
+    tex.minFilter = THREE.LinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+    tex.generateMipmaps = false;
+    tex.needsUpdate = true;
+    return tex;
+}
+
 function createCleanInventionBlueprint(imageSource, slotIdx) {
     const cardGroup = new THREE.Group();
+
+    // 1. Сразу создаём плоскость с базовой текстурой, чтобы слайд НИКОГДА не был пустым
+    const initialTex = createFallbackDaVinciTexture(slotIdx);
+    LOADED_INVENTION_TEXTURES[slotIdx] = initialTex;
+    const holoMat = createDaVinciHoloMaterial(initialTex, slotIdx);
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(INVENTION_BASE_SIZE, INVENTION_BASE_SIZE, 32, 32), holoMat);
+    cardGroup.add(plane);
+    cardGroup.holoMat = holoMat;
+
+    // 2. Загружаем реальное изображение изобретения (Base64 из app.py или файл) и плавно подменяем текстуру
     if (imageSource && typeof imageSource === 'string' && imageSource.length > 2) {
         const img = new Image();
-        img.crossOrigin = 'anonymous';
+        if (/^https?:\/\//i.test(imageSource)) {
+            img.crossOrigin = 'anonymous';
+        }
         img.onload = function() {
             const texture = new THREE.Texture(img);
             texture.wrapS = THREE.ClampToEdgeWrapping;
@@ -1084,14 +1189,9 @@ function createCleanInventionBlueprint(imageSource, slotIdx) {
             texture.generateMipmaps = false;
             texture.needsUpdate = true;
             LOADED_INVENTION_TEXTURES[slotIdx] = texture;
-
-            const holoMat = createDaVinciHoloMaterial(texture, slotIdx);
-            const plane = new THREE.Mesh(new THREE.PlaneGeometry(INVENTION_BASE_SIZE, INVENTION_BASE_SIZE, 32, 32), holoMat);
-            cardGroup.add(plane);
-            cardGroup.holoMat = holoMat;
-        };
-        img.onerror = function() {
-            console.warn("Blueprint image failed to load for slot", slotIdx);
+            holoMat.uniforms.uTex.value = texture;
+            holoMat.uniforms.uTexNext.value = texture;
+            holoMat.needsUpdate = true;
         };
         img.src = imageSource;
     }
