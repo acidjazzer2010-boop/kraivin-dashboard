@@ -1566,6 +1566,29 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
                 dashRafId = p < 1.0 ? requestAnimationFrame(animateDashTurn) : null;
             }
 
+            function startObscuraTransition() {
+                if (isObscura) return;
+                isObscura = true;
+                obscuraStart = performance.now();
+                AudioEngine.gearSpinUp(CONFIG.OBSCURA_DURATION_SEC);
+
+                var hud = document.querySelector('.preloader-fixed-hud');
+                if (hud) hud.style.opacity = '0';
+
+                targetCamPos.set(0, 0, CONFIG.BASE_CAMERA_Z + 15);
+                targetLook.set(0, 0, 0);
+
+                astrolabeRings.forEach(function(r) {
+                    r.startRotX = r.group.rotation.x;
+                    r.startRotY = r.group.rotation.y;
+                    r.startRotZ = r.group.rotation.z;
+                });
+                inventions.forEach(function(item) {
+                    item.startPos = item.group.position.clone();
+                    item.startRot = item.group.rotation.clone();
+                });
+            }
+
             function cleanupWebGL() {
                 try {
                     scene.traverse(function(o) {
