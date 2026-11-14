@@ -361,7 +361,16 @@ window.onerror = function(msg, url, line) {
 };
 
 const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const USER_IMAGES = __JSON_IMAGES_PAYLOAD__;
+const __RAW_PAYLOAD__ = (typeof __JSON_IMAGES_PAYLOAD__ !== 'undefined') ? __JSON_IMAGES_PAYLOAD__ : [];
+const USER_IMAGES = Array.isArray(__RAW_PAYLOAD__) && __RAW_PAYLOAD__.length > 0
+    ? __RAW_PAYLOAD__
+    : [
+        '1793030578548.jpg',
+        '1793030581888.jpg',
+        '1793030587821.jpg',
+        '1793030589564.jpg',
+        '1793030590445.jpg'
+    ];
 
 let isObscuraTransition = false;
 let obscuraStartTime = 0;
@@ -985,7 +994,6 @@ function createDaVinciHoloMaterial(texture, slotIdx) {
             varying vec2 vUv;
 
             vec3 predatorThermalPalette(float t) {
-                // Глубокий фиолетовый -> кислотно-зелёный -> огненно-красный спектр Хищника
                 vec3 deepViolet = vec3(0.42, 0.04, 0.85);
                 vec3 acidGreen  = vec3(0.18, 1.00, 0.12);
                 vec3 crimsonRed = vec3(1.00, 0.08, 0.14);
@@ -999,12 +1007,21 @@ function createDaVinciHoloMaterial(texture, slotIdx) {
                 }
             }
 
+            float extractBlueprintStroke(vec3 rgb) {
+                float lum = dot(rgb, vec3(0.299, 0.587, 0.114));
+                // Автоматическая адаптация под светлый пергамент (тёмные чернила) и тёмный фон (светлые линии)
+                float darkInk = 1.0 - smoothstep(0.18, 0.85, lum);
+                float lightInk = smoothstep(0.12, 0.75, lum);
+                // Выбираем контрастный штрих, сохраняя полутона рисунка
+                float contrast = abs(lum - 0.5) * 2.0;
+                return clamp(max(darkInk * 0.95, lightInk * 0.85) * (0.45 + contrast * 0.75), 0.12, 1.0);
+            }
+
             void main() {
                 vec2 uv1 = vUv;
                 vec2 uv2 = vUv;
 
                 if (uPredator > 0.001) {
-                    // Жидкое перетекание координат при морфинге одного изображения в другое
                     vec2 flow1 = vec2(
                         sin(vUv.y * 9.0 + uTime * 2.9 + uSeed) * 0.085 + cos((vUv.x + vUv.y) * 6.0 - uTime * 2.1) * 0.045,
                         cos(vUv.x * 9.0 - uTime * 2.5 + uSeed) * 0.085 + sin((vUv.x - vUv.y) * 6.0 + uTime * 2.3) * 0.045
@@ -1020,26 +1037,19 @@ function createDaVinciHoloMaterial(texture, slotIdx) {
                 vec4 tex1 = texture2D(uTex, uv1);
                 vec4 tex2 = texture2D(uTexNext, uv2);
 
-                float lum1 = dot(tex1.rgb, vec3(0.299, 0.587, 0.114));
-                float s1 = smoothstep(0.10, 0.60, lum1);
-                if (lum1 > 0.88) s1 = 1.0 - s1;
-
-                float lum2 = dot(tex2.rgb, vec3(0.299, 0.587, 0.114));
-                float s2 = smoothstep(0.10, 0.60, lum2);
-                if (lum2 > 0.88) s2 = 1.0 - s2;
-
-                // Плавное перетекание штрихов одного изобретения в другое
+                float s1 = extractBlueprintStroke(tex1.rgb);
+                float s2 = extractBlueprintStroke(tex2.rgb);
                 float stroke = mix(s1, s2, uMorphMix * uPredator);
 
-                vec2 edgeDist = smoothstep(vec2(0.0), vec2(0.12), vUv) * smoothstep(vec2(1.0), vec2(0.88), vUv);
+                // Плавное затухание по краям без жёсткой рамки
+                vec2 edgeDist = smoothstep(vec2(0.0), vec2(0.10), vUv) * smoothstep(vec2(1.0), vec2(0.90), vUv);
                 float vignette = edgeDist.x * edgeDist.y;
 
-                vec3 baseGold = vec3(0.85, 0.71, 0.25);
+                vec3 baseGold = vec3(0.88, 0.73, 0.28);
                 vec3 highlight = vec3(1.0, 0.95, 0.78);
                 float wave = sin((vUv.x + vUv.y) * 12.0 - uTime * 4.0) * 0.5 + 0.5;
-                vec3 goldColor = mix(baseGold, highlight, wave * 0.4 + uHover * 0.6);
+                vec3 goldColor = mix(baseGold, highlight, wave * 0.35 + uHover * 0.55);
 
-                // Тепловизионный градиент с переливами кислотно-зелёного, красного и фиолетового
                 float thermalField = fract(
                     stroke * 0.65 +
                     sin(vUv.x * 5.5 + uTime * 2.2 + uSeed) * 0.22 +
@@ -1047,13 +1057,12 @@ function createDaVinciHoloMaterial(texture, slotIdx) {
                     uTime * 0.28
                 );
                 vec3 predColor = predatorThermalPalette(thermalField);
-                // Добавляем контурную кислотную подсветку на границах штрихов
                 predColor += vec3(0.15, 0.95, 0.25) * smoothstep(0.35, 0.85, stroke) * 0.35;
 
                 vec3 finalColor = mix(goldColor, predColor, uPredator);
-                float alphaBoost = mix(0.72 + uHover * 0.28, 0.92, uPredator);
+                float alphaBoost = mix(0.78 + uHover * 0.22, 0.94, uPredator);
                 float alpha = stroke * vignette * alphaBoost;
-                if (alpha < 0.02) discard;
+                if (alpha < 0.01) discard;
                 gl_FragColor = vec4(finalColor, alpha);
             }
         `,
@@ -1064,23 +1073,27 @@ function createDaVinciHoloMaterial(texture, slotIdx) {
 function createCleanInventionBlueprint(imageSource, slotIdx) {
     const cardGroup = new THREE.Group();
     if (imageSource && typeof imageSource === 'string' && imageSource.length > 2) {
-        try {
-            const textureLoader = new THREE.TextureLoader();
-            textureLoader.load(imageSource, function(texture) {
-                texture.wrapS = THREE.ClampToEdgeWrapping;
-                texture.wrapT = THREE.ClampToEdgeWrapping;
-                texture.minFilter = THREE.LinearFilter;
-                texture.magFilter = THREE.LinearFilter;
-                texture.generateMipmaps = false;
-                LOADED_INVENTION_TEXTURES[slotIdx] = texture;
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = function() {
+            const texture = new THREE.Texture(img);
+            texture.wrapS = THREE.ClampToEdgeWrapping;
+            texture.wrapT = THREE.ClampToEdgeWrapping;
+            texture.minFilter = THREE.LinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+            texture.generateMipmaps = false;
+            texture.needsUpdate = true;
+            LOADED_INVENTION_TEXTURES[slotIdx] = texture;
 
-                const holoMat = createDaVinciHoloMaterial(texture, slotIdx);
-                // Сегментированная геометрия (32x32) для плавной волновой деформации при морфинге
-                const plane = new THREE.Mesh(new THREE.PlaneGeometry(INVENTION_BASE_SIZE, INVENTION_BASE_SIZE, 32, 32), holoMat);
-                cardGroup.add(plane);
-                cardGroup.holoMat = holoMat;
-            });
-        } catch(e) {}
+            const holoMat = createDaVinciHoloMaterial(texture, slotIdx);
+            const plane = new THREE.Mesh(new THREE.PlaneGeometry(INVENTION_BASE_SIZE, INVENTION_BASE_SIZE, 32, 32), holoMat);
+            cardGroup.add(plane);
+            cardGroup.holoMat = holoMat;
+        };
+        img.onerror = function() {
+            console.warn("Blueprint image failed to load for slot", slotIdx);
+        };
+        img.src = imageSource;
     }
     return cardGroup;
 }
