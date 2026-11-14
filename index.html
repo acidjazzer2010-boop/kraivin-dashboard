@@ -739,7 +739,7 @@ preRenderer.setSize(window.innerWidth, window.innerHeight);
 
 const preScene = new THREE.Scene();
 const preCamera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 1, 6000);
-const baseCamZ = 390;
+const baseCamZ = 420;
 let targetCamPos = new THREE.Vector3(0, 0, baseCamZ);
 let currentLookTarget = new THREE.Vector3(0, 0, 0);
 let targetLookTarget = new THREE.Vector3(0, 0, 0);
@@ -933,6 +933,11 @@ astrolabeRings.push(
     { group: aRing3, sx: 0.00060, sy: -0.00050, sz: 0.00035, px: 1.5, py: 3.2, dir: 1.0 }
 );
 
+/* =========================================================================
+   ГОЛОГРАФИЧЕСКИЕ ИЗОБРАЖЕНИЯ ИЗОБРЕТЕНИЙ БЕЗ КАРКАСНОЙ ОБВОДКИ (УВЕЛИЧЕННЫЕ)
+   ========================================================================= */
+const INVENTION_BASE_SIZE = 92; // Увеличенный размер голограммы изобретения
+
 function createDaVinciHoloMaterial(texture) {
     return new THREE.ShaderMaterial({
         uniforms: { uTex: { value: texture }, uHover: { value: 0.0 }, uTime: { value: 0.0 } },
@@ -954,59 +959,25 @@ function createDaVinciHoloMaterial(texture) {
                 float lum = dot(tex.rgb, vec3(0.299, 0.587, 0.114));
                 float stroke = smoothstep(0.10, 0.60, lum);
                 if (lum > 0.88) stroke = 1.0 - stroke;
+                // Мягкое затухание к краям, чтобы не было даже намека на квадратную границу
+                vec2 edgeDist = smoothstep(vec2(0.0), vec2(0.12), vUv) * smoothstep(vec2(1.0), vec2(0.88), vUv);
+                float vignette = edgeDist.x * edgeDist.y;
                 vec3 baseGold = vec3(0.85, 0.71, 0.25);
                 vec3 highlight = vec3(1.0, 0.95, 0.78);
                 float wave = sin((vUv.x + vUv.y) * 12.0 - uTime * 4.0) * 0.5 + 0.5;
                 vec3 finalColor = mix(baseGold, highlight, wave * 0.4 + uHover * 0.6);
-                gl_FragColor = vec4(finalColor, stroke * (0.65 + uHover * 0.35));
+                float alpha = stroke * vignette * (0.72 + uHover * 0.28);
+                if (alpha < 0.02) discard;
+                gl_FragColor = vec4(finalColor, alpha);
             }
         `,
         transparent: true, side: THREE.DoubleSide, depthWrite: false
     });
 }
 
-function createBlueprintWireMaterial() {
-    return new THREE.ShaderMaterial({
-        uniforms: { uHover: { value: 0.0 }, uTime: { value: 0.0 } },
-        vertexShader: `
-            varying vec3 vPos;
-            void main() {
-                vPos = position;
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-            }
-        `,
-        fragmentShader: `
-            precision mediump float;
-            uniform float uHover;
-            uniform float uTime;
-            varying vec3 vPos;
-            void main() {
-                float wave = sin((vPos.x + vPos.y + vPos.z) * 0.2 - uTime * 3.5) * 0.5 + 0.5;
-                vec3 baseGold = vec3(0.85, 0.71, 0.25);
-                vec3 brightGlow = vec3(1.0, 0.96, 0.82);
-                vec3 col = mix(baseGold, brightGlow, wave * 0.4 + uHover * 0.6);
-                gl_FragColor = vec4(col, clamp(0.70 + wave * 0.30 + uHover * 0.30, 0.0, 1.0));
-            }
-        `,
-        transparent: true, depthWrite: false
-    });
-}
-
-function createSafeVolumetricBlueprintCard(imageSource) {
+function createCleanInventionBlueprint(imageSource) {
     const cardGroup = new THREE.Group();
-    const w = 58, h = 58, d = 26;
-    const pts = [];
-    const corners = [
-        new THREE.Vector3(-w/2, -h/2, -d/2), new THREE.Vector3(w/2, -h/2, -d/2),
-        new THREE.Vector3(w/2, h/2, -d/2), new THREE.Vector3(-w/2, h/2, -d/2),
-        new THREE.Vector3(-w/2, -h/2, d/2), new THREE.Vector3(w/2, -h/2, d/2),
-        new THREE.Vector3(w/2, h/2, d/2), new THREE.Vector3(-w/2, h/2, d/2)
-    ];
-    [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7],[0,6],[1,7],[2,4],[3,5]].forEach(e => pts.push(corners[e[0]], corners[e[1]]));
-
-    const wireframeMesh = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), createBlueprintWireMaterial());
-    cardGroup.add(wireframeMesh);
-
+    // Никакой обводки каркаса — только чистая парящая голограмма чертежа
     if (imageSource && typeof imageSource === 'string' && imageSource.length > 2) {
         try {
             const textureLoader = new THREE.TextureLoader();
@@ -1017,7 +988,8 @@ function createSafeVolumetricBlueprintCard(imageSource) {
                 texture.magFilter = THREE.LinearFilter;
                 texture.generateMipmaps = false;
                 const holoMat = createDaVinciHoloMaterial(texture);
-                cardGroup.add(new THREE.Mesh(new THREE.PlaneGeometry(50, 50), holoMat));
+                const plane = new THREE.Mesh(new THREE.PlaneGeometry(INVENTION_BASE_SIZE, INVENTION_BASE_SIZE), holoMat);
+                cardGroup.add(plane);
                 cardGroup.holoMat = holoMat;
             });
         } catch(e) {}
@@ -1025,32 +997,38 @@ function createSafeVolumetricBlueprintCard(imageSource) {
     return cardGroup;
 }
 
-const floatingInventions = [
-    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[0]), basePos: new THREE.Vector3(-110, 34, 45), rotSpeed: new THREE.Vector3(0.0016, 0.0014, -0.0008) },
-    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[1]), basePos: new THREE.Vector3(115, -28, -40), rotSpeed: new THREE.Vector3(0.0012, 0.0018, 0.0010) },
-    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[2]), basePos: new THREE.Vector3(90, 36, 75), rotSpeed: new THREE.Vector3(-0.0014, 0.0016, 0.0009) },
-    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[3]), basePos: new THREE.Vector3(-36, -42, -35), rotSpeed: new THREE.Vector3(0.0008, 0.0012, 0.0006) },
-    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[4]), basePos: new THREE.Vector3(-85, -25, 80), rotSpeed: new THREE.Vector3(-0.0012, 0.0015, -0.0007) }
-];
+// Орбитальные параметры движения изобретений вдоль гигантского кольца aRing2 (радиус 255)
+const ORBIT_RADIUS = 255;
+const ORBIT_SPEED = 0.042; // Медленное плавное вращение по орбите
 
 const hoverTargets = [];
-floatingInventions.forEach((item, idx) => {
-    item.group.position.copy(item.basePos);
-    preGroup.add(item.group);
+for (let idx = 0; idx < 5; idx++) {
+    const group = createCleanInventionBlueprint(USER_IMAGES[idx]);
+    const initialAngle = (idx / 5) * Math.PI * 2;
+    preGroup.add(group);
 
-    const hitGeo = new THREE.BoxGeometry(46, 46, 12);
-    const hitMat = new THREE.MeshBasicMaterial({ visible: false });
+    const hitGeo = new THREE.PlaneGeometry(INVENTION_BASE_SIZE * 0.9, INVENTION_BASE_SIZE * 0.9);
+    const hitMat = new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide });
     const hitMesh = new THREE.Mesh(hitGeo, hitMat);
-    hitMesh.position.copy(item.basePos);
     hitMesh.userData = { slideIdx: idx };
     preGroup.add(hitMesh);
 
-    item.hitMesh = hitMesh;
-    item.targetZ = item.basePos.z;
-    item.targetScale = 1.0;
-    item.isHovered = false;
-    hoverTargets.push(item);
-});
+    hoverTargets.push({
+        group,
+        hitMesh,
+        baseAngle: initialAngle,
+        currentAngle: initialAngle,
+        targetScale: 1.0,
+        isHovered: false
+    });
+}
+
+function getOrbitWorldPosition(angle, outVec) {
+    // Вычисляем точку на локальной окружности aRing2 (радиус ORBIT_RADIUS) и переводим в координаты preGroup с учётом текущего поворота кольца
+    outVec.set(Math.cos(angle) * ORBIT_RADIUS, Math.sin(angle) * ORBIT_RADIUS, 0);
+    outVec.applyEuler(aRing2.rotation);
+    return outVec;
+}
 
 let currentSlideIndex = -1;
 let isProgrammaticNav = false;
@@ -1069,7 +1047,8 @@ function getOptimalSlideDistance(cardWorldSize) {
     const visibleHeightFactor = 2 * Math.tan(vFovRad / 2);
     const visibleWidthFactor = visibleHeightFactor * aspect;
     const limitingFactor = Math.min(visibleHeightFactor, visibleWidthFactor);
-    return cardWorldSize / (0.33 * limitingFactor);
+    // Карточка занимает ~38% от меньшей стороны экрана (крупно, но с воздухом вокруг)
+    return cardWorldSize / (0.38 * limitingFactor);
 }
 
 function focusSlide(idx) {
@@ -1082,27 +1061,18 @@ function focusSlide(idx) {
     if (navResumeTimer) clearTimeout(navResumeTimer);
     navResumeTimer = setTimeout(() => { isProgrammaticNav = false; }, 350);
 
-    const activeScale = 1.15;
-    const activeZ = 95;
+    const activeScale = 1.25;
 
     hoverTargets.forEach((item, i) => {
         const isCurrent = (i === idx);
         item.isHovered = isCurrent;
-        item.targetScale = isCurrent ? activeScale : 0.92;
-        item.targetZ = isCurrent ? activeZ : item.basePos.z;
+        item.targetScale = isCurrent ? activeScale : 0.85;
         item.group.traverse(child => {
             if (child.material && child.material.uniforms && child.material.uniforms.uHover) {
                 child.material.uniforms.uHover.value = isCurrent ? 1.0 : 0.0;
             }
         });
     });
-
-    const target = hoverTargets[idx];
-    const cardWorldSize = 58 * activeScale;
-    const optimalDist = getOptimalSlideDistance(cardWorldSize);
-
-    targetCamPos.set(target.basePos.x, target.basePos.y, activeZ + optimalDist);
-    targetLookTarget.set(target.basePos.x, target.basePos.y, activeZ);
 
     const preset = BLUEPRINT_PRESETS[idx];
     if (preset) {
@@ -1125,106 +1095,183 @@ window.applySelectedPresetAndEnter = function(e) {
     triggerCameraObscuraTransition(e);
 };
 
+/* =========================================================================
+   СЛОЖНЫЙ ИНЖЕНЕРНЫЙ КАРКАСНЫЙ ЧЕРТЁЖ ПЕРВОГО ИСЗ (ШЕДЕВР ИНЖЕНЕРИИ СССР)
+   ========================================================================= */
 function createSputnikModel() {
     const sputnikGroup = new THREE.Group();
-    
-    const textureLoader = new THREE.TextureLoader();
-    const photoTex = textureLoader.load('__SPUTNIK_TEXTURE_SRC__', function(tex) {
-        tex.wrapS = THREE.ClampToEdgeWrapping;
-        tex.wrapT = THREE.ClampToEdgeWrapping;
-        tex.minFilter = THREE.LinearFilter;
-        tex.magFilter = THREE.LinearFilter;
-        tex.generateMipmaps = false;
-        tex.needsUpdate = true;
+
+    const wireGold = new THREE.LineBasicMaterial({ color: 0xffd700, transparent: true, opacity: 0.92 });
+    const wireCyan = new THREE.LineBasicMaterial({ color: 0x00d8ff, transparent: true, opacity: 0.72 });
+    const wireWhite = new THREE.LineBasicMaterial({ color: 0xf4f1ea, transparent: true, opacity: 0.85 });
+    const wireDim = new THREE.LineBasicMaterial({ color: 0xd4af37, transparent: true, opacity: 0.35 });
+
+    const R = 14.0; // Радиус герметичного приборного корпуса
+
+    // 1. Внешний геодезический каркас полусфер (меридианы + параллели + диагональная сетка)
+    const hullPts = [];
+    const latSteps = 12;
+    const lonSteps = 24;
+    for (let i = 0; i < latSteps; i++) {
+        const theta1 = (i / latSteps) * Math.PI;
+        const theta2 = ((i + 1) / latSteps) * Math.PI;
+        for (let j = 0; j < lonSteps; j++) {
+            const phi1 = (j / lonSteps) * Math.PI * 2;
+            const phi2 = ((j + 1) / lonSteps) * Math.PI * 2;
+
+            const p11 = new THREE.Vector3(R * Math.sin(theta1) * Math.cos(phi1), R * Math.cos(theta1), R * Math.sin(theta1) * Math.sin(phi1));
+            const p12 = new THREE.Vector3(R * Math.sin(theta1) * Math.cos(phi2), R * Math.cos(theta1), R * Math.sin(theta1) * Math.sin(phi2));
+            const p21 = new THREE.Vector3(R * Math.sin(theta2) * Math.cos(phi1), R * Math.cos(theta2), R * Math.sin(theta2) * Math.sin(phi1));
+            const p22 = new THREE.Vector3(R * Math.sin(theta2) * Math.cos(phi2), R * Math.cos(theta2), R * Math.sin(theta2) * Math.sin(phi2));
+
+            hullPts.push(p11, p12); // Параллель
+            hullPts.push(p11, p21); // Меридиан
+            if ((i + j) % 2 === 0) hullPts.push(p11, p22); // Геодезическая раскосная ферма
+        }
+    }
+    sputnikGroup.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(hullPts), wireCyan));
+
+    // 2. Экваториальный стыковочный шпангоут с двойным силовым поясом, ребрами жесткости и болтовыми узлами (36 шпилек)
+    const flangePts = [];
+    const flangeSegs = 36;
+    const rFlangeIn = R * 0.96;
+    const rFlangeOut = R * 1.13;
+    const zFlange = 0.85;
+    for (let i = 0; i < flangeSegs; i++) {
+        const a1 = (i / flangeSegs) * Math.PI * 2;
+        const a2 = ((i + 1) / flangeSegs) * Math.PI * 2;
+
+        const outTop1 = new THREE.Vector3(Math.cos(a1) * rFlangeOut, Math.sin(a1) * rFlangeOut, zFlange);
+        const outTop2 = new THREE.Vector3(Math.cos(a2) * rFlangeOut, Math.sin(a2) * rFlangeOut, zFlange);
+        const outBot1 = new THREE.Vector3(Math.cos(a1) * rFlangeOut, Math.sin(a1) * rFlangeOut, -zFlange);
+        const outBot2 = new THREE.Vector3(Math.cos(a2) * rFlangeOut, Math.sin(a2) * rFlangeOut, -zFlange);
+
+        const inTop1 = new THREE.Vector3(Math.cos(a1) * rFlangeIn, Math.sin(a1) * rFlangeIn, zFlange);
+        const inBot1 = new THREE.Vector3(Math.cos(a1) * rFlangeIn, Math.sin(a1) * rFlangeIn, -zFlange);
+
+        flangePts.push(outTop1, outTop2, outBot1, outBot2);
+        flangePts.push(outTop1, outBot1, outTop1, inTop1, outBot1, inBot1);
+        flangePts.push(outTop1, outBot2); // Ферменный раскос пояса
+    }
+    sputnikGroup.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(flangePts), wireGold));
+
+    // 3. Внутренняя приборная рама (силовая крестовина, радиопередатчик Д-200 и блок серебряно-цинковых батарей)
+    const internalPts = [];
+    // Силовые внутренние кольца (шпангоуты X, Y, Z)
+    for (let k = 0; k < 48; k++) {
+        const a1 = (k / 48) * Math.PI * 2;
+        const a2 = ((k + 1) / 48) * Math.PI * 2;
+        const rInt = R * 0.88;
+        internalPts.push(
+            new THREE.Vector3(Math.cos(a1) * rInt, Math.sin(a1) * rInt, 0),
+            new THREE.Vector3(Math.cos(a2) * rInt, Math.sin(a2) * rInt, 0),
+            new THREE.Vector3(Math.cos(a1) * rInt, 0, Math.sin(a1) * rInt),
+            new THREE.Vector3(Math.cos(a2) * rInt, 0, Math.sin(a2) * rInt),
+            new THREE.Vector3(0, Math.cos(a1) * rInt, Math.sin(a1) * rInt),
+            new THREE.Vector3(0, Math.cos(a2) * rInt, Math.sin(a2) * rInt)
+        );
+    }
+    // Каркас центрального восьмигранного энергоблока (батареи) и стойки крепления
+    const bx = 5.4, by = 6.2, bz = 5.4;
+    const boxVerts = [
+        new THREE.Vector3(-bx, -by, -bz), new THREE.Vector3(bx, -by, -bz),
+        new THREE.Vector3(bx, by, -bz), new THREE.Vector3(-bx, by, -bz),
+        new THREE.Vector3(-bx, -by, bz), new THREE.Vector3(bx, -by, bz),
+        new THREE.Vector3(bx, by, bz), new THREE.Vector3(-bx, by, bz)
+    ];
+    [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7],[0,2],[4,6],[1,7],[3,5]].forEach(e => {
+        internalPts.push(boxVerts[e[0]], boxVerts[e[1]]);
     });
-    photoTex.wrapS = THREE.ClampToEdgeWrapping;
-    photoTex.wrapT = THREE.ClampToEdgeWrapping;
-    photoTex.minFilter = THREE.LinearFilter;
-    photoTex.generateMipmaps = false;
-    
-    const cutoutMat = new THREE.ShaderMaterial({
-        uniforms: {
-            uTex: { value: photoTex },
-            uThreshold: { value: 0.08 }
-        },
-        vertexShader: `
-            varying vec2 vUv;
-            void main() {
-                vUv = uv;
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    // Раскосы от внутреннего блока к экваториальному шпангоуту (8 силовых ферменных тяг)
+    boxVerts.forEach((v, idx) => {
+        const ang = (idx / 8) * Math.PI * 2;
+        internalPts.push(v, new THREE.Vector3(Math.cos(ang) * rFlangeIn, Math.sin(ang) * rFlangeIn, 0));
+    });
+    // Контур вентилятора системы терморегулирования и реле в верхней полусфере
+    for (let m = 0; m < 16; m++) {
+        const a1 = (m / 16) * Math.PI * 2;
+        const a2 = ((m + 1) / 16) * Math.PI * 2;
+        internalPts.push(
+            new THREE.Vector3(Math.cos(a1) * 3.5, 8.5, Math.sin(a1) * 3.5),
+            new THREE.Vector3(Math.cos(a2) * 3.5, 8.5, Math.sin(a2) * 3.5),
+            new THREE.Vector3(0, 8.5, 0),
+            new THREE.Vector3(Math.cos(a1) * 3.5, 8.5, Math.sin(a1) * 3.5)
+        );
+    }
+    sputnikGroup.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(internalPts), wireDim));
+
+    // 4. Четыре шарнирных антенных узла на шпангоуте + 4 телескопические штыревые антенны с ферменными корневыми кронштейнами
+    const antPts = [];
+    const antAngles = [Math.PI * 0.25, Math.PI * 0.75, Math.PI * 1.25, Math.PI * 1.75];
+    const antLength = 96.0;
+
+    antAngles.forEach(ang => {
+        const ux = Math.cos(ang);
+        const uy = Math.sin(ang);
+        const tx = -uy; // Тангенциальный вектор для кронштейна
+        const ty = ux;
+
+        // Корневой кронштейн (треугольная пространственная ферма на стыковочном поясе)
+        const baseCenter = new THREE.Vector3(ux * rFlangeOut, uy * rFlangeOut, 0);
+        const lugLeft = new THREE.Vector3(ux * rFlangeIn + tx * 2.2, uy * rFlangeIn + ty * 2.2, 1.4);
+        const lugRight = new THREE.Vector3(ux * rFlangeIn - tx * 2.2, uy * rFlangeIn - ty * 2.2, 1.4);
+        const lugBack = new THREE.Vector3(ux * rFlangeIn, uy * rFlangeIn, -2.0);
+        const hingePivot = new THREE.Vector3(ux * (rFlangeOut + 2.6), uy * (rFlangeOut + 2.6), -1.8);
+
+        antPts.push(lugLeft, hingePivot, lugRight, hingePivot, lugBack, hingePivot);
+        antPts.push(lugLeft, lugRight, lugRight, lugBack, lugBack, lugLeft);
+        antPts.push(baseCenter, hingePivot);
+
+        // Конический корень антенны + 3 телескопических колена с муфтами сочленений (угол раскрытия 35° назад)
+        const dirVec = new THREE.Vector3(ux * 0.56, uy * 0.56, -0.828).normalize();
+        const segLens = [26, 32, 38];
+        const segRadii = [0.75, 0.45, 0.22];
+        let curStart = hingePivot.clone();
+
+        segLens.forEach((sLen, sIdx) => {
+            const curEnd = curStart.clone().addScaledVector(dirVec, sLen);
+            const rSeg = segRadii[sIdx];
+
+            // Осевая линия колена
+            antPts.push(curStart, curEnd);
+
+            // Четыре образующие конусного профиля колена + муфта на стыке
+            const ortho1 = new THREE.Vector3(tx, ty, 0).multiplyScalar(rSeg);
+            const ortho2 = new THREE.Vector3().crossVectors(dirVec, new THREE.Vector3(tx, ty, 0)).normalize().multiplyScalar(rSeg);
+
+            [ortho1, ortho1.clone().negate(), ortho2, ortho2.clone().negate()].forEach(off => {
+                antPts.push(curStart.clone().add(off), curEnd.clone().add(off.clone().multiplyScalar(0.65)));
+            });
+
+            // Кольцевая муфта сочленения
+            for (let c = 0; c < 8; c++) {
+                const ca1 = (c / 8) * Math.PI * 2;
+                const ca2 = ((c + 1) / 8) * Math.PI * 2;
+                const pC1 = curEnd.clone().addScaledVector(ortho1, Math.cos(ca1) * 1.4).addScaledVector(ortho2, Math.sin(ca1) * 1.4);
+                const pC2 = curEnd.clone().addScaledVector(ortho1, Math.cos(ca2) * 1.4).addScaledVector(ortho2, Math.sin(ca2) * 1.4);
+                antPts.push(pC1, pC2);
             }
-        `,
-        fragmentShader: `
-            precision mediump float;
-            uniform sampler2D uTex;
-            uniform float uThreshold;
-            varying vec2 vUv;
-            void main() {
-                vec4 tex = texture2D(uTex, vUv);
-                float brightness = max(tex.r, max(tex.g, tex.b));
-                float alpha = smoothstep(uThreshold, uThreshold + 0.16, brightness);
-                if (alpha < 0.02) discard;
-                gl_FragColor = vec4(tex.rgb * 1.15, alpha);
-            }
-        `,
-        transparent: true,
-        side: THREE.DoubleSide,
-        depthWrite: false
+
+            curStart = curEnd;
+        });
     });
+    sputnikGroup.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(antPts), wireWhite));
 
-    const photoPlaneGeo = new THREE.PlaneGeometry(38, 38);
-    const photoPlane1 = new THREE.Mesh(photoPlaneGeo, cutoutMat);
-    sputnikGroup.add(photoPlane1);
-
-    const photoPlane2 = new THREE.Mesh(photoPlaneGeo, cutoutMat);
-    photoPlane2.rotation.y = Math.PI / 2;
-    sputnikGroup.add(photoPlane2);
-
-    const sphereMat = new THREE.MeshStandardMaterial({
-        map: photoTex,
-        metalness: 0.88,
-        roughness: 0.22,
-        transparent: true,
-        opacity: 0.88
-    });
-    const sphereGeo = new THREE.SphereGeometry(12.5, 32, 32);
-    const sphereMesh = new THREE.Mesh(sphereGeo, sphereMat);
-    sputnikGroup.add(sphereMesh);
-
-    const beltGeo = new THREE.TorusGeometry(12.8, 0.45, 12, 48);
-    const beltMat = new THREE.MeshBasicMaterial({ color: 0xd4af37 });
-    const beltMesh = new THREE.Mesh(beltGeo, beltMat);
-    beltMesh.rotation.x = Math.PI / 2;
-    sputnikGroup.add(beltMesh);
-
-    const beaconGeo = new THREE.SphereGeometry(2.4, 16, 16);
-    const beaconMat = new THREE.MeshBasicMaterial({ color: 0xff1122 });
+    // 5. Импульсный радиомаяк в носовой части (мигающий красный сигнал)
+    const beaconGeo = new THREE.SphereGeometry(2.1, 16, 16);
+    const beaconMat = new THREE.MeshBasicMaterial({ color: 0xff1e2d });
     const beaconMesh = new THREE.Mesh(beaconGeo, beaconMat);
-    beaconMesh.position.set(0, 13.8, 0);
+    beaconMesh.position.set(0, 0, R + 1.2);
     sputnikGroup.add(beaconMesh);
     sputnikGroup.beaconMesh = beaconMesh;
 
-    const glowGeo = new THREE.SphereGeometry(5.2, 16, 16);
-    const glowMat = new THREE.MeshBasicMaterial({ color: 0xff3333, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending });
+    const glowGeo = new THREE.SphereGeometry(5.4, 16, 16);
+    const glowMat = new THREE.MeshBasicMaterial({ color: 0xff2a38, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending });
     const glowMesh = new THREE.Mesh(glowGeo, glowMat);
-    glowMesh.position.set(0, 13.8, 0);
+    glowMesh.position.set(0, 0, R + 1.2);
     sputnikGroup.add(glowMesh);
     sputnikGroup.glowMesh = glowMesh;
 
-    const antMat = new THREE.LineBasicMaterial({ color: 0xdddddd, linewidth: 2 });
-    const antLen = 85;
-    [Math.PI * 0.25, Math.PI * 0.75, Math.PI * 1.25, Math.PI * 1.75].forEach(ang => {
-        const rootX = Math.cos(ang) * 12.0, rootY = Math.sin(ang) * 12.0, rootZ = -2;
-        const tipX = Math.cos(ang) * (13 + antLen * 0.42), tipY = Math.sin(ang) * (13 + antLen * 0.42), tipZ = -antLen;
-        const pts = [
-            new THREE.Vector3(rootX, rootY, rootZ),
-            new THREE.Vector3(rootX * 1.35, rootY * 1.35, rootZ - 20),
-            new THREE.Vector3(tipX, tipY, tipZ)
-        ];
-        sputnikGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), antMat));
-    });
-
-    sputnikGroup.scale.set(0.85, 0.85, 0.85);
     sputnikGroup.visible = false;
     return sputnikGroup;
 }
@@ -1236,22 +1283,29 @@ function playSputnikBeep(volumeRatio = 1.0) {
     try {
         if (!renaissanceAudio.ctx) renaissanceAudio.init();
         const ctx = renaissanceAudio.ctx;
-        if (!ctx || ctx.state !== 'running') return;
+        if (!ctx) return;
+        if (ctx.state === 'suspended') ctx.resume();
+        if (ctx.state !== 'running') return;
+
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(1080, ctx.currentTime);
+        // Классическая частота телеметрии ПС-1 (~1000-1080 Гц)
+        osc.frequency.setValueAtTime(1040, ctx.currentTime);
         
-        const peakGain = THREE.MathUtils.clamp(0.065 * volumeRatio, 0.001, 0.085);
+        // Плавная квадратичная кривая громкости: от едва слышного издалека до пика при пролёте мимо камеры и затухания
+        const curvedVol = Math.pow(THREE.MathUtils.clamp(volumeRatio, 0.0, 1.0), 1.6);
+        const peakGain = THREE.MathUtils.lerp(0.002, 0.095, curvedVol);
+
         gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(peakGain, ctx.currentTime + 0.02);
-        gain.gain.setValueAtTime(peakGain, ctx.currentTime + 0.16);
-        gain.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + 0.22);
+        gain.gain.linearRampToValueAtTime(peakGain, ctx.currentTime + 0.025);
+        gain.gain.setValueAtTime(peakGain, ctx.currentTime + 0.17);
+        gain.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + 0.24);
         
         osc.connect(gain);
         gain.connect(renaissanceAudio.masterGain || ctx.destination);
         osc.start();
-        osc.stop(ctx.currentTime + 0.24);
+        osc.stop(ctx.currentTime + 0.26);
         osc.onended = () => { osc.disconnect(); gain.disconnect(); };
     } catch (_) {}
 }
@@ -1259,7 +1313,7 @@ function playSputnikBeep(volumeRatio = 1.0) {
 let sputnikFlight = { 
     active: false, 
     startTime: 0, 
-    duration: 11.0, 
+    duration: 14.0, 
     startP: new THREE.Vector3(), 
     endP: new THREE.Vector3(), 
     lastBeep: 0 
@@ -1268,22 +1322,28 @@ let sputnikFlight = {
 function launchSputnik() {
     if (preloaderDismissed || isObscuraTransition || sputnikFlight.active) return;
     
-    const sideX = (Math.random() - 0.5) * 480;
-    const sideY = (Math.random() - 0.5) * 340;
-    sputnikFlight.startP.set(sideX, sideY, -850);
-    sputnikFlight.endP.set(-sideX * 1.25 + (Math.random() - 0.5) * 150, -sideY * 1.25 + (Math.random() - 0.5) * 150, 750);
+    // Появление из маленькой точки в глубине космоса (-2400 по Z) и пролёт сквозь экран мимо камеры (+650 по Z)
+    const entryX = (Math.random() - 0.5) * 260;
+    const entryY = (Math.random() - 0.5) * 180;
+    const exitX = -entryX * 1.6 + (Math.random() - 0.5) * 220;
+    const exitY = -entryY * 1.6 + (Math.random() - 0.5) * 180;
+
+    sputnikFlight.startP.set(entryX, entryY, -2400);
+    sputnikFlight.endP.set(exitX, exitY, 680);
     
     sputnikFlight.active = true;
     sputnikFlight.startTime = performance.now();
     sputnikFlight.lastBeep = performance.now();
     sputnik.visible = true;
     sputnik.position.copy(sputnikFlight.startP);
+    sputnik.scale.set(0.04, 0.04, 0.04);
 }
 
 let sputnikTimerStarted = false;
 function checkSputnikScheduler(now) {
     if (preloaderDismissed || isObscuraTransition) return;
     const idleSeconds = (now - preloaderStartTime) * 0.001;
+    // Первый пролёт через 30 секунд открытого прелоадера, далее каждые 60 секунд
     if (idleSeconds >= 30.0 && !sputnikTimerStarted) {
         sputnikTimerStarted = true;
         launchSputnik();
@@ -1388,6 +1448,8 @@ function triggerShutterBlink() {
     }
 }
 
+const _tmpOrbitPos = new THREE.Vector3();
+
 function animatePreloader() {
     if (preloaderDismissed) return;
     requestAnimationFrame(animatePreloader);
@@ -1399,21 +1461,35 @@ function animatePreloader() {
 
         checkSputnikScheduler(now);
 
+        /* =====================================================================
+           АНИМАЦИЯ ПРОЛЁТА СПУТНИКА: ИЗ ТОЧКИ -> УСКОРЕНИЕ -> ВЫЛЕТ ЗА КАМЕРУ
+           ===================================================================== */
         if (sputnikFlight.active) {
-            const flightP = (now - sputnikFlight.startTime) / (sputnikFlight.duration * 1000);
-            if (flightP < 1.0) {
-                sputnik.position.lerpVectors(sputnikFlight.startP, sputnikFlight.endP, flightP);
-                sputnik.position.y += Math.sin(flightP * Math.PI) * 55;
-                sputnik.rotation.y += 0.015;
-                sputnik.rotation.x += 0.010;
+            const rawP = (now - sputnikFlight.startTime) / (sputnikFlight.duration * 1000);
+            if (rawP < 1.0) {
+                // Медленный старт из глубокой точки (0..0.45) и стремительное ускорение при подлёте к экрану (0.45..1.0)
+                const accelP = Math.pow(rawP, 2.35);
+                sputnik.position.lerpVectors(sputnikFlight.startP, sputnikFlight.endP, accelP);
+                sputnik.position.y += Math.sin(rawP * Math.PI) * 48;
+
+                // Плавный рост масштаба от крошечной точки (0.04) до натуральной величины (1.05)
+                const scaleGrow = THREE.MathUtils.lerp(0.04, 1.05, Math.pow(rawP, 1.4));
+                sputnik.scale.set(scaleGrow, scaleGrow, scaleGrow);
+
+                // Ориентация корпуса по вектору движения + стабилизирующее вращение вокруг продольной оси
+                sputnik.lookAt(sputnikFlight.endP);
+                sputnik.rotateZ(t * 0.45);
                 
-                const blinkState = (Math.floor(now / 300) % 2 === 0);
+                const blinkState = (Math.floor(now / 280) % 2 === 0);
                 if (sputnik.beaconMesh) sputnik.beaconMesh.visible = blinkState;
                 if (sputnik.glowMesh) sputnik.glowMesh.visible = blinkState;
                 
-                if (now - sputnikFlight.lastBeep > 950) {
-                    const distToCenter = Math.sin(flightP * Math.PI);
-                    playSputnikBeep(distToCenter);
+                // Импульсы бип-бип каждые 820 мс: громкость плавно нарастает при сближении с камерой и убывает после пролёта
+                if (now - sputnikFlight.lastBeep > 820) {
+                    const distToCam = sputnik.position.distanceTo(preCamera.position);
+                    // Пик громкости при дистанции <= 220, затухание на дистанции 2600
+                    const proximity = THREE.MathUtils.clamp(1.0 - (distToCam - 180) / 2300, 0.02, 1.0);
+                    playSputnikBeep(proximity);
                     sputnikFlight.lastBeep = now;
                 }
             } else {
@@ -1439,7 +1515,7 @@ function animatePreloader() {
                 if (item.startPos) {
                     const pull = Math.pow(progress, 1.85);
                     const vortexAngle = progress * Math.PI * 3.4 + idx * (Math.PI * 2 / 5);
-                    const currentRadius = (1.0 - pull) * 125.0;
+                    const currentRadius = (1.0 - pull) * 185.0;
                     
                     item.group.position.x = Math.cos(vortexAngle) * currentRadius;
                     item.group.position.y = Math.sin(vortexAngle) * currentRadius;
@@ -1502,7 +1578,7 @@ function animatePreloader() {
         dustParticles.rotation.x = Math.sin(t * 0.015) * 0.1;
 
         const isFocused = currentSlideIndex !== -1;
-        megaRingWireMat.opacity = THREE.MathUtils.lerp(megaRingWireMat.opacity, isFocused ? 0.12 : 0.38, 0.05);
+        megaRingWireMat.opacity = THREE.MathUtils.lerp(megaRingWireMat.opacity, isFocused ? 0.16 : 0.38, 0.05);
 
         astrolabeRings.forEach(item => {
             item.group.rotation.x += item.sx;
@@ -1510,22 +1586,44 @@ function animatePreloader() {
             item.group.rotation.z += item.sz;
         });
 
+        /* =====================================================================
+           ОРБИТАЛЬНОЕ ДВИЖЕНИЕ ИЗОБРЕТЕНИЙ ВДОЛЬ ГИГАНТСКОГО КОЛЬЦА + СЛЕЖЕНИЕ КАМЕРЫ
+           ===================================================================== */
         hoverTargets.forEach((item, idx) => {
-            if (!item.isHovered) {
-                item.group.position.y = item.basePos.y + Math.sin(t * 1.1 + idx * 1.5) * 7.5;
-                item.group.position.x = item.basePos.x + Math.cos(t * 0.75 + idx * 1.2) * 5.0;
-            } else {
-                item.group.position.x = THREE.MathUtils.lerp(item.group.position.x, item.basePos.x, 0.1);
-                item.group.position.y = THREE.MathUtils.lerp(item.group.position.y, item.basePos.y, 0.1);
+            item.currentAngle = item.baseAngle + t * ORBIT_SPEED;
+            getOrbitWorldPosition(item.currentAngle, _tmpOrbitPos);
+
+            item.group.position.copy(_tmpOrbitPos);
+            item.hitMesh.position.copy(_tmpOrbitPos);
+
+            // Плоскость чертежа всегда обращена к камере, чтобы рисунок читался без искажений
+            item.group.quaternion.copy(preCamera.quaternion);
+            item.hitMesh.quaternion.copy(preCamera.quaternion);
+
+            if (item.group.holoMat && item.group.holoMat.uniforms) {
+                item.group.holoMat.uniforms.uTime.value = t;
             }
-            item.group.position.z = THREE.MathUtils.lerp(item.group.position.z, item.targetZ, 0.08);
-            item.hitMesh.position.copy(item.group.position);
-            const sc = THREE.MathUtils.lerp(item.group.scale.x, item.targetScale, 0.1);
+
+            const sc = THREE.MathUtils.lerp(item.group.scale.x, item.targetScale, 0.08);
             item.group.scale.set(sc, sc, sc);
         });
 
-        preCamera.position.lerp(targetCamPos, 0.05);
-        currentLookTarget.lerp(targetLookTarget, 0.05);
+        // Если выбран конкретный слайд в карусели — камера плавно сопровождает его по орбите и держит строго по центру
+        if (currentSlideIndex >= 0 && currentSlideIndex < hoverTargets.length) {
+            const activeItem = hoverTargets[currentSlideIndex];
+            const cardWorldSize = INVENTION_BASE_SIZE * activeItem.targetScale;
+            const optimalDist = getOptimalSlideDistance(cardWorldSize);
+
+            targetLookTarget.copy(activeItem.group.position);
+            targetCamPos.set(
+                activeItem.group.position.x,
+                activeItem.group.position.y,
+                activeItem.group.position.z + optimalDist
+            );
+        }
+
+        preCamera.position.lerp(targetCamPos, 0.06);
+        currentLookTarget.lerp(targetLookTarget, 0.08);
         preCamera.lookAt(currentLookTarget);
 
         preRenderer.clear();
