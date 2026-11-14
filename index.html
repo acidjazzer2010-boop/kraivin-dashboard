@@ -1,65 +1,4 @@
-import base64
-import glob
-import json
-import os
-import streamlit as st
-import streamlit.components.v1 as components
-
-st.set_page_config(
-    page_title="Архитектура Капитала // Rota Fortunae",
-    page_icon="⚙️",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
-
-# Скрываем системные элементы Streamlit и убираем отступы для полноэкранного режима
-st.markdown(
-    """
-    <style>
-        #MainMenu, header, footer, [data-testid="stToolbar"], [data-testid="stDecoration"] {
-            display: none !important;
-        }
-        .stApp {
-            background-color: #070709 !important;
-        }
-        .block-container {
-            padding: 0 !important;
-            margin: 0 !important;
-            max-width: 100% !important;
-        }
-        iframe {
-            display: block !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            border: none !important;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-
-def encode_image_to_data_uri(filepath: str) -> str:
-    """Кодирует локальное изображение в Base64 Data URI для работы внутри iframe."""
-    ext = os.path.splitext(filepath)[1].lower().lstrip(".")
-    mime = "image/jpeg" if ext in ("jpg", "jpeg") else f"image/{ext}"
-    with open(filepath, "rb") as f:
-        b64 = base64.b64encode(f.read()).decode("utf-8")
-    return f"data:{mime};base64,{b64}"
-
-
-def load_discovery_images(folder: str = "images") -> list[str]:
-    """Собирает до 5 изображений из папки images/ для голографических карточек прелоадера."""
-    if not os.path.isdir(folder):
-        return []
-    files = []
-    for pattern in ("*.png", "*.jpg", "*.jpeg", "*.webp"):
-        files.extend(glob.glob(os.path.join(folder, pattern)))
-    files = sorted(files)[:5]
-    return [encode_image_to_data_uri(p) for p in files]
-
-
-html_code = r"""<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru" class="dark">
 <head>
 <meta charset="UTF-8">
@@ -422,18 +361,13 @@ window.onerror = function(msg, url, line) {
 };
 
 const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-// Массив изображений открытий / чертежей Да Винчи
 const USER_IMAGES = __JSON_IMAGES_PAYLOAD__;
 
-/* Флаги перехода и тайминги */
 let isObscuraTransition = false;
 let obscuraStartTime = 0;
 const OBSCURA_DURATION = 6.8;
 let preloaderDismissed = false;
 
-/* =========================================================================
-   СТАБИЛИЗИРОВАННЫЙ RENAISSANCE WEB AUDIO ДВИЖОК
-   ========================================================================= */
 class RenaissanceSoundscapeEngine {
     constructor() {
         this.ctx = null;
@@ -798,7 +732,6 @@ function updatePreloaderProgress(now) {
 }
 requestAnimationFrame(updatePreloaderProgress);
 
-/* THREE.JS ПРЕЛОАДЕР */
 const preCanvas = document.getElementById('preloader-webgl');
 const preRenderer = new THREE.WebGLRenderer({ canvas: preCanvas, alpha: true, antialias: true, powerPreference: "high-performance" });
 preRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -815,7 +748,6 @@ preCamera.position.copy(targetCamPos);
 const preGroup = new THREE.Group();
 preScene.add(preGroup);
 
-/* ЗОЛОТАЯ ВЗВЕСЬ ЧАСТИЦ */
 const particleCount = 450;
 const particleGeo = new THREE.BufferGeometry();
 const particlePos = new Float32Array(particleCount * 3);
@@ -838,9 +770,6 @@ preGroup.add(dustParticles);
 const megaRingWireMat = new THREE.MeshBasicMaterial({ color: 0x00c3ff, wireframe: true, transparent: true, opacity: 0.38 });
 const secondaryWireMat = new THREE.MeshBasicMaterial({ color: 0x0077aa, wireframe: true, transparent: true, opacity: 0.22 });
 
-/* =========================================================================
-   ГЕНЕРАЦИЯ ДИСКОВ СУДЬБЫ НОСТРАДАМУСА И РЕНЕССАНСНЫХ ЛАТИНСКИХ КАТРЕНОВ
-   ========================================================================= */
 const NOSTRADAMUS_PROPHECIES = [
     {
         innerRing: "ROTA FORTUNAE • FATORUM ORBIS • CENTURIA I • OMNIA FLUXUS",
@@ -926,7 +855,6 @@ function createNostradamusDiskTexture(dataIdx) {
     return tex;
 }
 
-/* ВОССТАНОВЛЕННАЯ ПОЛНАЯ СТРУКТУРА ГИГАНТСКИХ КОЛЕЦ */
 function createCyclopeanTrussRing(mainRadius, tubeWidth, tubeDepth, segments, nostradamusIdx = 0) {
     const group = new THREE.Group();
     group.add(new THREE.Mesh(new THREE.TorusGeometry(mainRadius, tubeWidth * 0.45, 12, segments), megaRingWireMat));
@@ -1005,9 +933,6 @@ astrolabeRings.push(
     { group: aRing3, sx: 0.00060, sy: -0.00050, sz: 0.00035, px: 1.5, py: 3.2, dir: 1.0 }
 );
 
-/* =========================================================================
-   ИЗОБРАЖЕНИЯ ОТКРЫТИЙ (ГОЛОГРАФИЧЕСКИЕ ЧЕРТЕЖИ ДА ВИНЧИ)
-   ========================================================================= */
 function createDaVinciHoloMaterial(texture) {
     return new THREE.ShaderMaterial({
         uniforms: { uTex: { value: texture }, uHover: { value: 0.0 }, uTime: { value: 0.0 } },
@@ -1185,9 +1110,6 @@ window.applySelectedPresetAndEnter = function(e) {
     triggerCameraObscuraTransition(e);
 };
 
-/* =========================================================================
-   3D СПУТНИК (1793046110105.jpg) БЕЗ РАМОК, МИГАЮЩИЙ МАЯК И СИГНАЛ
-   ========================================================================= */
 function createSputnikModel() {
     const sputnikGroup = new THREE.Group();
     
@@ -2031,19 +1953,4 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 else runCalculation();
 </script>
 </body>
-</html>"""
-
-# Инъекция текстуры спутника 1793046110105.jpg (или fallback-заглушки, если файл временно отсутствует)
-sputnik_file = "1793046110105.jpg"
-if os.path.exists(sputnik_file):
-    sputnik_src = encode_image_to_data_uri(sputnik_file)
-else:
-    sputnik_src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-
-html_code = html_code.replace("__SPUTNIK_TEXTURE_SRC__", sputnik_src)
-
-# Инъекция изображений чертежей из папки images/
-discovery_images = load_discovery_images("images")
-html_code = html_code.replace("__JSON_IMAGES_PAYLOAD__", json.dumps(discovery_images))
-
-components.html(html_code, height=1080, scrolling=True)
+</html>
