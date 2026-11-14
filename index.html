@@ -1063,6 +1063,15 @@ function updateSlideDots() {
     });
 }
 
+function getOptimalSlideDistance(cardWorldSize) {
+    const vFovRad = THREE.MathUtils.degToRad(preCamera.fov);
+    const aspect = window.innerWidth / window.innerHeight;
+    const visibleHeightFactor = 2 * Math.tan(vFovRad / 2);
+    const visibleWidthFactor = visibleHeightFactor * aspect;
+    const limitingFactor = Math.min(visibleHeightFactor, visibleWidthFactor);
+    return cardWorldSize / (0.33 * limitingFactor);
+}
+
 function focusSlide(idx) {
     if (idx < 0 || idx >= hoverTargets.length) return;
     currentSlideIndex = idx;
@@ -1073,11 +1082,14 @@ function focusSlide(idx) {
     if (navResumeTimer) clearTimeout(navResumeTimer);
     navResumeTimer = setTimeout(() => { isProgrammaticNav = false; }, 350);
 
+    const activeScale = 1.15;
+    const activeZ = 95;
+
     hoverTargets.forEach((item, i) => {
         const isCurrent = (i === idx);
         item.isHovered = isCurrent;
-        item.targetScale = isCurrent ? 1.35 : 1.0;
-        item.targetZ = isCurrent ? 120 : item.basePos.z;
+        item.targetScale = isCurrent ? activeScale : 0.92;
+        item.targetZ = isCurrent ? activeZ : item.basePos.z;
         item.group.traverse(child => {
             if (child.material && child.material.uniforms && child.material.uniforms.uHover) {
                 child.material.uniforms.uHover.value = isCurrent ? 1.0 : 0.0;
@@ -1086,8 +1098,11 @@ function focusSlide(idx) {
     });
 
     const target = hoverTargets[idx];
-    targetCamPos.set(target.group.position.x * 0.72, target.group.position.y * 0.72, target.group.position.z + 105);
-    targetLookTarget.copy(target.group.position);
+    const cardWorldSize = 58 * activeScale;
+    const optimalDist = getOptimalSlideDistance(cardWorldSize);
+
+    targetCamPos.set(target.basePos.x, target.basePos.y, activeZ + optimalDist);
+    targetLookTarget.set(target.basePos.x, target.basePos.y, activeZ);
 
     const preset = BLUEPRINT_PRESETS[idx];
     if (preset) {
@@ -1499,6 +1514,9 @@ function animatePreloader() {
             if (!item.isHovered) {
                 item.group.position.y = item.basePos.y + Math.sin(t * 1.1 + idx * 1.5) * 7.5;
                 item.group.position.x = item.basePos.x + Math.cos(t * 0.75 + idx * 1.2) * 5.0;
+            } else {
+                item.group.position.x = THREE.MathUtils.lerp(item.group.position.x, item.basePos.x, 0.1);
+                item.group.position.y = THREE.MathUtils.lerp(item.group.position.y, item.basePos.y, 0.1);
             }
             item.group.position.z = THREE.MathUtils.lerp(item.group.position.z, item.targetZ, 0.08);
             item.hitMesh.position.copy(item.group.position);
@@ -1932,6 +1950,9 @@ window.addEventListener('resize', () => {
     preCamera.aspect = window.innerWidth / window.innerHeight;
     preCamera.updateProjectionMatrix();
     preRenderer.setSize(window.innerWidth, window.innerHeight);
+    if (!preloaderDismissed && currentSlideIndex !== -1) {
+        focusSlide(currentSlideIndex);
+    }
     dashCamera.aspect = window.innerWidth / window.innerHeight;
     dashCamera.updateProjectionMatrix();
     dashRenderer.setSize(window.innerWidth, window.innerHeight);
