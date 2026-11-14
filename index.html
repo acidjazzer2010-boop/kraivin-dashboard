@@ -1106,9 +1106,105 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
             var megaRingMat = new THREE.MeshBasicMaterial({ color: 0x00c3ff, wireframe: true, transparent: true, opacity: 0.38 });
             var secondaryRingMat = new THREE.MeshBasicMaterial({ color: 0x0077aa, wireframe: true, transparent: true, opacity: 0.22 });
 
-            function buildTrussRing(mainRadius, tubeWidth, tubeDepth, segments) {
+            var NOSTRADAMUS_PROPHECIES = [
+                {
+                    innerRing: "ROTA FORTUNAE • FATORUM ORBIS • CENTURIA I • OMNIA FLUXUS",
+                    outerRing: "CLARUM COLLUM IMPERII POST TENEBRAS LUX • SOLIS ET LUNAE MOTUS • NOSTRADAMUS VATICINIUM",
+                    zodiac: "♈ ♉ ♊ ♋ ♌ ♍ ♎ ♏ ♐ ♑ ♒ ♓ • I • II • III • IV • V • VI • VII • VIII • IX • X • XI • XII"
+                },
+                {
+                    innerRing: "VERITAS TEMPORIS FILIA • OCCULTA PHILOSOPHIA • AUREA RATIO",
+                    outerRing: "GRANDES ORBES MUTABUNTUR IN DIEBUS ILLIS • SAPIENTIA ARCHITECTI PER ASPERA AD ASTRA",
+                    zodiac: "⚡ ☉ ☽ ☿ ♀ ♂ ♃ ♄ • METALLUM • LIQUIDITAS • NUMERUS • PONDUS • MENSURA • PROPORTIO"
+                },
+                {
+                    innerRing: "HARMONIA MUNDI • COSMICA PROPORTIO • CENTURIA DECIMA",
+                    outerRing: "TEMPORA TEMPORE TEMPERA • ARS LONGA VITA BREVIS • MAGNUM OPUS CAPITALIS",
+                    zodiac: "✦ ✧ ⚜ ✠ ✡ ❂ ☸ ✺ • FATUM INELUKTABILE • LUX IN TENEBRIS • AUREA PROPORTIO"
+                }
+            ];
+
+            function createNostradamusDiskTexture(dataIdx) {
+                var data = NOSTRADAMUS_PROPHECIES[dataIdx % 3];
+                var size = 1024;
+                var canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                var ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, size, size);
+
+                var cx = size / 2, cy = size / 2;
+                ctx.strokeStyle = 'rgba(212, 175, 55, 0.48)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(cx, cy, size * 0.46, 0, Math.PI * 2);
+                ctx.arc(cx, cy, size * 0.41, 0, Math.PI * 2);
+                ctx.arc(cx, cy, size * 0.35, 0, Math.PI * 2);
+                ctx.arc(cx, cy, size * 0.29, 0, Math.PI * 2);
+                ctx.stroke();
+
+                for (var i = 0; i < 144; i++) {
+                    var ang = (i / 144) * Math.PI * 2;
+                    var isMajor = (i % 12 === 0);
+                    var isMid = (i % 6 === 0);
+                    var len = isMajor ? 18 : (isMid ? 11 : 6);
+                    var r1 = size * 0.46;
+                    var r2 = r1 - len;
+                    ctx.strokeStyle = isMajor ? 'rgba(255, 215, 0, 0.88)' : 'rgba(212, 175, 55, 0.35)';
+                    ctx.lineWidth = isMajor ? 2 : 1;
+                    ctx.beginPath();
+                    ctx.moveTo(cx + Math.cos(ang) * r1, cy + Math.sin(ang) * r1);
+                    ctx.lineTo(cx + Math.cos(ang) * r2, cy + Math.sin(ang) * r2);
+                    ctx.stroke();
+                }
+
+                function drawCurvedText(text, radius, font, color) {
+                    ctx.font = font;
+                    ctx.fillStyle = color;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    var chars = text.split('');
+                    var step = (Math.PI * 2) / chars.length;
+                    for (var i = 0; i < chars.length; i++) {
+                        var angle = i * step;
+                        ctx.save();
+                        ctx.translate(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
+                        ctx.rotate(angle + Math.PI / 2);
+                        ctx.shadowColor = 'rgba(212, 175, 55, 0.75)';
+                        ctx.shadowBlur = 4;
+                        ctx.fillText(chars[i], 0, 0);
+                        ctx.restore();
+                    }
+                }
+
+                drawCurvedText(data.outerRing, size * 0.435, 'italic 600 13px "Cormorant Garamond", Georgia, serif', '#ffd700');
+                drawCurvedText(data.zodiac, size * 0.38, '400 12px "JetBrains Mono", monospace', 'rgba(244, 241, 234, 0.85)');
+                drawCurvedText(data.innerRing, size * 0.32, 'italic 700 14px "Cormorant Garamond", Georgia, serif', '#d4af37');
+
+                var tex = new THREE.CanvasTexture(canvas);
+                tex.wrapS = THREE.ClampToEdgeWrapping;
+                tex.wrapT = THREE.ClampToEdgeWrapping;
+                tex.minFilter = THREE.LinearFilter;
+                tex.magFilter = THREE.LinearFilter;
+                tex.generateMipmaps = false;
+                return tex;
+            }
+
+            function buildTrussRing(mainRadius, tubeWidth, tubeDepth, segments, nostradamusIdx) {
                 var group = new THREE.Group();
                 group.add(new THREE.Mesh(new THREE.TorusGeometry(mainRadius, tubeWidth * 0.45, 12, segments), megaRingMat));
+
+                var diskGeo = new THREE.RingGeometry(mainRadius - tubeWidth * 2.5, mainRadius + tubeWidth * 2.2, 96);
+                var diskMat = new THREE.MeshBasicMaterial({
+                    map: createNostradamusDiskTexture(nostradamusIdx || 0),
+                    transparent: true,
+                    opacity: 0.14,
+                    side: THREE.DoubleSide,
+                    depthWrite: false
+                });
+                var diskMesh = new THREE.Mesh(diskGeo, diskMat);
+                group.add(diskMesh);
+                group.diskMesh = diskMesh;
                 var pts = [];
                 var rOut = mainRadius + tubeWidth, rIn = mainRadius - tubeWidth;
                 for (var i = 0; i < segments; i++) {
@@ -1141,9 +1237,9 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
                 return group;
             }
 
-            var ring1 = buildTrussRing(340, 18.0, 12.0, 180);
-            var ring2 = buildTrussRing(CONFIG.ORBIT_RADIUS, 14.0, 10.0, 150);
-            var ring3 = buildTrussRing(175, 11.0, 8.0, 130);
+            var ring1 = buildTrussRing(340, 18.0, 12.0, 180, 0);
+            var ring2 = buildTrussRing(CONFIG.ORBIT_RADIUS, 14.0, 10.0, 150, 1);
+            var ring3 = buildTrussRing(175, 11.0, 8.0, 130, 2);
             ring2.rotation.x = Math.PI / 3.4;
             ring2.rotation.z = Math.PI / 6.0;
             ring3.rotation.y = Math.PI / 3.0;
@@ -1682,7 +1778,13 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
                     astrolabeRings.forEach(function(ring, idx) {
                         ring.group.rotation.x = THREE.MathUtils.lerp(ring.startRotX, 0, easeAlign);
                         ring.group.rotation.y = THREE.MathUtils.lerp(ring.startRotY, 0, easeAlign);
-                        ring.group.rotation.z += (ring.dir || (idx % 2 === 0 ? 1 : -1)) * currentSpeed;
+                        var direction = ring.dir || (idx % 2 === 0 ? 1 : -1);
+                        ring.group.rotation.z += direction * currentSpeed;
+
+                        if (ring.group.diskMesh && ring.group.diskMesh.material) {
+                            ring.group.diskMesh.material.opacity = Math.min(0.14 + easeAlign * 0.78, 0.92) * (1.0 - easeShrink * 0.95);
+                        }
+
                         var sf = Math.max(1.0 - easeShrink * 0.996, 0.004);
                         var zThin = Math.max(1.0 - easeAlign * 0.90, 0.06);
                         ring.group.scale.set(sf, sf, zThin * sf);
