@@ -1048,7 +1048,7 @@ function getOptimalSlideDistance(cardWorldSize) {
     const visibleWidthFactor = visibleHeightFactor * aspect;
     const limitingFactor = Math.min(visibleHeightFactor, visibleWidthFactor);
     // Карточка занимает ~38% от меньшей стороны экрана (крупно, но с воздухом вокруг)
-    return cardWorldSize / (0.38 * limitingFactor);
+    return cardWorldSize / (0.50 * limitingFactor);
 }
 
 function focusSlide(idx) {
