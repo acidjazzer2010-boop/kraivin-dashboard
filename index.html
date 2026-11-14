@@ -365,8 +365,25 @@ window.onerror = function(msg, url, line) {
 };
 
 const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const __RAW_PAYLOAD__ = (typeof __JSON_IMAGES_PAYLOAD__ !== 'undefined') ? __JSON_IMAGES_PAYLOAD__ : [];
-const USER_IMAGES = Array.isArray(__RAW_PAYLOAD__) && __RAW_PAYLOAD__.length > 0
+const __RAW_PAYLOAD__ = (function() {
+    try {
+        if (typeof __JSON_IMAGES_PAYLOAD__ !== 'undefined' && Array.isArray(__JSON_IMAGES_PAYLOAD__)) {
+            return __JSON_IMAGES_PAYLOAD__;
+        }
+    } catch (_) {}
+    try {
+        const el = document.getElementById('payload-images-json');
+        if (el) {
+            const raw = el.textContent.trim();
+            if (raw && !raw.startsWith('__JSON_')) {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) return parsed;
+            }
+        }
+    } catch (_) {}
+    return [];
+})();
+const USER_IMAGES = __RAW_PAYLOAD__.length > 0
     ? __RAW_PAYLOAD__
     : [
         '1793030578548.jpg',
@@ -1075,28 +1092,101 @@ function createDaVinciHoloMaterial(texture, slotIdx) {
     });
 }
 
+function createFallbackBlueprintCanvas(slotIdx) {
+    const size = 512;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#08080c';
+    ctx.fillRect(0, 0, size, size);
+    const cx = size / 2, cy = size / 2;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(cx, cy, 185, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx, cy, 132, 0, Math.PI * 2); ctx.stroke();
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 24; i++) {
+        const a = (i / 24) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(a) * 132, cy + Math.sin(a) * 132);
+        ctx.lineTo(cx + Math.cos(a) * 185, cy + Math.sin(a) * 185);
+        ctx.stroke();
+    }
+    ctx.lineWidth = 3;
+    if (slotIdx === 0) {
+        for (let side = -1; side <= 1; side += 2) {
+            ctx.beginPath(); ctx.moveTo(cx, cy);
+            ctx.bezierCurveTo(cx + side * 80, cy - 120, cx + side * 170, cy - 90, cx + side * 205, cy + 20);
+            ctx.stroke();
+            for (let r = 1; r <= 5; r++) {
+                ctx.beginPath(); ctx.moveTo(cx + side * r * 30, cy - r * 14);
+                ctx.lineTo(cx + side * (r * 34 + 15), cy + (65 - r * 6)); ctx.stroke();
+            }
+        }
+    } else if (slotIdx === 1) {
+        const teeth = 18;
+        ctx.beginPath();
+        for (let i = 0; i <= teeth * 2; i++) {
+            const a = (i / (teeth * 2)) * Math.PI * 2;
+            const rad = (i % 2 === 0) ? 155 : 128;
+            const px = cx + Math.cos(a) * rad, py = cy + Math.sin(a) * rad;
+            if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+    } else if (slotIdx === 2) {
+        ctx.beginPath();
+        for (let t = 0; t < 170; t++) {
+            const ang = t * 0.14, rad = t * 0.9;
+            const px = cx + Math.cos(ang) * rad, py = cy + Math.sin(ang) * rad * 0.55 + (-35 + t * 0.42);
+            if (t === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+    } else if (slotIdx === 3) {
+        ctx.strokeRect(cx - 120, cy - 120, 240, 240);
+        ctx.beginPath(); ctx.moveTo(cx - 175, cy); ctx.lineTo(cx + 175, cy);
+        ctx.moveTo(cx, cy - 175); ctx.lineTo(cx, cy + 175); ctx.stroke();
+    } else {
+        for (let r = 40; r <= 165; r += 30) {
+            ctx.beginPath(); ctx.arc(cx, cy, r, -Math.PI * 0.85, Math.PI * 0.15); ctx.stroke();
+        }
+    }
+    return canvas;
+}
+
+function attachTextureToCard(cardGroup, sourceElement, slotIdx) {
+    while (cardGroup.children.length > 0) {
+        cardGroup.remove(cardGroup.children[0]);
+    }
+    const texture = new THREE.Texture(sourceElement);
+    texture.wrapS = THREE.ClampToEdgeWrapping;
+    texture.wrapT = THREE.ClampToEdgeWrapping;
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.generateMipmaps = false;
+    texture.needsUpdate = true;
+    LOADED_INVENTION_TEXTURES[slotIdx] = texture;
+
+    const holoMat = createDaVinciHoloMaterial(texture, slotIdx);
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(INVENTION_BASE_SIZE, INVENTION_BASE_SIZE, 32, 32), holoMat);
+    cardGroup.add(plane);
+    cardGroup.holoMat = holoMat;
+}
+
 function createCleanInventionBlueprint(imageSource, slotIdx) {
     const cardGroup = new THREE.Group();
+    // Сразу ставим процедурный чертёж, чтобы слайд никогда не был пустым
+    attachTextureToCard(cardGroup, createFallbackBlueprintCanvas(slotIdx), slotIdx);
+
     if (imageSource && typeof imageSource === 'string' && imageSource.length > 2) {
         const img = new Image();
-        img.crossOrigin = 'anonymous';
+        if (!imageSource.startsWith('data:')) {
+            img.crossOrigin = 'anonymous';
+        }
         img.onload = function() {
-            const texture = new THREE.Texture(img);
-            texture.wrapS = THREE.ClampToEdgeWrapping;
-            texture.wrapT = THREE.ClampToEdgeWrapping;
-            texture.minFilter = THREE.LinearFilter;
-            texture.magFilter = THREE.LinearFilter;
-            texture.generateMipmaps = false;
-            texture.needsUpdate = true;
-            LOADED_INVENTION_TEXTURES[slotIdx] = texture;
-
-            const holoMat = createDaVinciHoloMaterial(texture, slotIdx);
-            const plane = new THREE.Mesh(new THREE.PlaneGeometry(INVENTION_BASE_SIZE, INVENTION_BASE_SIZE, 32, 32), holoMat);
-            cardGroup.add(plane);
-            cardGroup.holoMat = holoMat;
-        };
-        img.onerror = function() {
-            console.warn("Blueprint image failed to load for slot", slotIdx);
+            if (img.naturalWidth > 0) {
+                attachTextureToCard(cardGroup, img, slotIdx);
+            }
         };
         img.src = imageSource;
     }
