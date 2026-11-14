@@ -7,37 +7,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com/3.4.1"></script>
-<script>
-tailwind.config = {
-    darkMode: 'class',
-    theme: {
-        extend: {
-            fontFamily: {
-                serif: ['"Cormorant Garamond"', 'Georgia', 'serif'],
-                mono: ['"JetBrains Mono"', 'monospace']
-            },
-            colors: {
-                obsidian: '#070709',
-                obsidianCard: '#0d0d12',
-                alabaster: '#f4f1ea',
-                gold: '#d4af37',
-                vermilion: '#e63946',
-                jade: '#2a9d8f'
-            }
-        }
-    }
-};
-</script>
-<script type="importmap">
-{
-    "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"
-    }
-}
-</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
+/* =========================================================================
+   ТЕМЫ И БАЗОВЫЙ СБРОС
+   ========================================================================= */
 :root{
     --bg-space:#070709;
     --bg-panel:rgba(13,13,18,.94);
@@ -70,7 +44,7 @@ html:not(.dark){
     --table-header-bg:rgba(244,241,234,.98);
     --grain-opacity:.018;
 }
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;border-color:var(--border-line)}
 html,body{
     width:100%;height:100%;overflow:hidden;
     background:var(--bg-space);color:var(--text-main);
@@ -78,9 +52,146 @@ html,body{
     scrollbar-width:thin;scrollbar-color:var(--border-line) transparent;
     -webkit-tap-highlight-color:transparent;
 }
+::selection{background:#d4af37;color:#000}
 :focus-visible{outline:2px solid var(--accent-gold);outline-offset:2px}
 button:focus:not(:focus-visible){outline:none}
 
+/* =========================================================================
+   ПРЕДКОМПИЛИРОВАННЫЕ УТИЛИТЫ СЕТКИ И ТИПОГРАФИКИ (БЕЗ TAILWIND JIT CDN)
+   ========================================================================= */
+.font-serif{font-family:'Cormorant Garamond',Georgia,serif}
+.font-mono{font-family:'JetBrains Mono',monospace}
+.italic{font-style:italic}
+.font-bold{font-weight:700}
+.font-semibold{font-weight:600}
+.uppercase{text-transform:uppercase}
+.underline{text-decoration:underline}
+.leading-none{line-height:1}
+.text-center{text-align:center}
+.text-left{text-align:left}
+.tracking-tight{letter-spacing:-0.025em}
+.tracking-wide{letter-spacing:0.025em}
+.tracking-wider{letter-spacing:0.05em}
+.tracking-widest{letter-spacing:0.1em}
+.tracking-hud{letter-spacing:0.25em}
+
+.text-8{font-size:8px}
+.text-9{font-size:9px}
+.text-10{font-size:10px}
+.text-11{font-size:11px}
+.text-base{font-size:16px}
+.text-lg{font-size:18px}
+.text-2xl{font-size:24px}
+
+.text-gold{color:#d4af37}
+.text-alabaster{color:#f4f1ea}
+.text-vermilion{color:#e63946}
+.text-jade{color:#2a9d8f}
+.text-black{color:#000}
+.text-white{color:#fff}
+.bg-gold{background-color:#d4af37}
+
+.opacity-40{opacity:0.4}
+.opacity-60{opacity:0.6}
+.opacity-70{opacity:0.7}
+.opacity-75{opacity:0.75}
+.opacity-80{opacity:0.8}
+.opacity-90{opacity:0.9}
+.hover-op-100:hover{opacity:1}
+
+.relative{position:relative}
+.z-10{z-index:10}
+.block{display:block}
+.inline-block{display:inline-block}
+.flex{display:flex}
+.flex-col{display:flex;flex-direction:column}
+.flex-wrap{flex-wrap:wrap}
+.flex-1{flex:1 1 0%}
+.items-center{align-items:center}
+.items-baseline{align-items:baseline}
+.justify-between{justify-content:space-between}
+.hidden{display:none}
+.overflow-x-auto{overflow-x:auto}
+.w-full{width:100%}
+.w-7{width:28px}
+.h-7{height:28px}
+.h-320{height:320px}
+.h-360{height:360px}
+.h-400{height:400px}
+
+.grid{display:grid}
+.grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}
+.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.col-span-2{grid-column:span 2 / span 2}
+
+.gap-1-5{gap:6px}
+.gap-2{gap:8px}
+.gap-2-5{gap:10px}
+.gap-3{gap:12px}
+.gap-4{gap:16px}
+.gap-5{gap:20px}
+.gap-6{gap:24px}
+
+.p-3{padding:12px}
+.p-5{padding:20px}
+.px-3{padding-left:12px;padding-right:12px}
+.px-3-5{padding-left:14px;padding-right:14px}
+.px-4{padding-left:16px;padding-right:16px}
+.px-5{padding-left:20px;padding-right:20px}
+.py-1{padding-top:4px;padding-bottom:4px}
+.py-1-5{padding-top:6px;padding-bottom:6px}
+.py-2-5{padding-top:10px;padding-bottom:10px}
+.py-3{padding-top:12px;padding-bottom:12px}
+.py-3-5{padding-top:14px;padding-bottom:14px}
+.pl-5{padding-left:20px}
+.pt-1{padding-top:4px}
+.mb-1{margin-bottom:4px}
+.mb-4{margin-bottom:16px}
+.mt-1{margin-top:4px}
+.mt-1-5{margin-top:6px}
+
+.space-y-3 > * + *{margin-top:12px}
+.space-y-4 > * + *{margin-top:16px}
+.space-y-6 > * + *{margin-top:24px}
+
+.border{border-width:1px;border-style:solid}
+.border-t{border-top-width:1px;border-top-style:solid}
+.border-b{border-bottom-width:1px;border-bottom-style:solid}
+.border-l{border-left-width:1px;border-left-style:solid}
+.border-r{border-right-width:1px;border-right-style:solid}
+.border-gold-60{border-color:rgba(212,175,55,0.6)}
+.divide-y > * + *{border-top-width:1px;border-top-style:solid;border-color:var(--border-line)}
+.shadow-md{box-shadow:0 4px 6px -1px rgba(0,0,0,0.25)}
+.transition{transition:all .2s ease}
+
+.hdr-btn-gold:hover{background-color:rgba(212,175,55,0.15)}
+.hdr-btn-plain:hover{border-color:#d4af37;background-color:rgba(212,175,55,0.1)}
+.row-hover:hover{background-color:var(--bg-cell-hover)}
+
+.xl-only-flex{display:none}
+@media (min-width:640px){
+    .sm-grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .sm-col-span-1{grid-column:span 1 / span 1}
+}
+@media (min-width:1024px){
+    .lg-grid-cols-5{grid-template-columns:repeat(5,minmax(0,1fr))}
+    .lg-grid-cols-12{grid-template-columns:repeat(12,minmax(0,1fr))}
+    .lg-col-span-3{grid-column:span 3 / span 3}
+    .lg-col-span-9{grid-column:span 9 / span 9}
+    .lg-px-8{padding-left:32px;padding-right:32px}
+    .lg-p-7{padding:28px}
+    .lg-text-xl{font-size:20px}
+}
+@media (min-width:1280px){
+    .xl-only-flex{display:flex}
+    .xl-grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .xl-text-3xl{font-size:30px}
+}
+
+/* =========================================================================
+   СЦЕНА ПРЕЛОАДЕРА, ЭФФЕКТЫ И ЭЛЕМЕНТЫ ИНТЕРФЕЙСА
+   ========================================================================= */
 .film-grain{
     position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:999;
     opacity:var(--grain-opacity);
@@ -186,7 +297,7 @@ button:focus:not(:focus-visible){outline:none}
 }
 .preset-btn:hover{background:var(--accent-gold);color:#070709}
 
-#mainDashboardApp{display:none;position:relative;z-index:10;min-height:100vh;border-color:var(--border-line)}
+#mainDashboardApp{display:none;position:relative;z-index:10;min-height:100vh}
 #mainDashboardApp.ready{display:flex}
 
 .camera-obscura-reveal{animation:developNegative 3.2s cubic-bezier(0.16, 1, 0.3, 1) forwards}
@@ -200,7 +311,6 @@ button:focus:not(:focus-visible){outline:none}
 #webgl-bg-canvas{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none;opacity:.35}
 html:not(.dark) #webgl-bg-canvas{opacity:.18}
 
-/* Убран тяжелый backdrop-filter на множестве панелей; плотный полупрозрачный фон с micro-градиентом */
 .alche-block{
     position:relative;
     background:var(--bg-panel);
@@ -266,7 +376,7 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
 }
 </style>
 </head>
-<body class="selection:bg-[#d4af37] selection:text-black">
+<body>
 <div class="film-grain" aria-hidden="true"></div>
 <div id="shutter-flash"></div>
 
@@ -296,7 +406,7 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
 
         <div class="bottom-dock">
             <div id="preloaderHUD">
-                <div class="flex items-center gap-3 text-[#d4af37] text-[10px] tracking-[0.25em] uppercase font-mono">
+                <div class="flex items-center gap-3 text-gold text-10 tracking-hud uppercase font-mono">
                     <span class="pulse-dot" aria-hidden="true"></span>
                     <span id="loaderStatusText">Листайте 3D-чертежи Да Винчи...</span>
                     <span id="loaderPercent" class="font-bold">0%</span>
@@ -315,131 +425,131 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
 
 <!-- ДАШБОРД -->
 <div id="mainDashboardApp" class="flex-col border-t border-l">
-    <header class="alche-block px-5 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4 border-b">
+    <header class="alche-block px-5 lg-px-8 py-3 flex flex-wrap items-center justify-between gap-4 border-b">
         <div class="flex items-center gap-6">
             <div class="flex items-center gap-3 cursor-pointer" data-action="brand-ping">
-                <svg class="w-7 h-7 text-[#d4af37]" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true">
+                <svg class="w-7 h-7 text-gold" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true">
                     <circle cx="16" cy="16" r="14"/><rect x="6" y="6" width="20" height="20"/>
                     <polygon points="16,2 30,26 2,26" stroke-width="0.8" stroke-dasharray="1 1"/>
                     <line x1="2" y1="16" x2="30" y2="16" stroke-dasharray="2 2"/>
                     <line x1="16" y1="2" x2="16" y2="30" stroke-dasharray="2 2"/>
                 </svg>
                 <div>
-                    <div class="font-mono text-[9px] uppercase tracking-[0.25em] text-[#d4af37] opacity-80">AUREA PROPORTIO // 1 : 1.618</div>
-                    <div class="font-serif italic text-lg lg:text-xl font-bold tracking-wide leading-none">Архитектура Капитала и Ликвидности</div>
+                    <div class="font-mono text-9 uppercase tracking-hud text-gold opacity-80">AUREA PROPORTIO // 1 : 1.618</div>
+                    <div class="font-serif italic text-lg lg-text-xl font-bold tracking-wide leading-none">Архитектура Капитала и Ликвидности</div>
                 </div>
             </div>
-            <div class="hidden xl:flex items-center gap-5 pl-5 border-l font-mono text-[10px] opacity-75">
+            <div class="xl-only-flex items-center gap-5 pl-5 border-l font-mono text-10 opacity-75">
                 <span>[НАЛОГОВЫЙ КОДЕКС: 22% НДС]</span>
                 <span id="telemetryRate">[КАПИТАЛ: 16.0% ГОДОВЫХ]</span>
-                <span id="cursorCoordDisplay" class="text-[#d4af37]" aria-hidden="true">X: 0000 / Y: 0000</span>
+                <span id="cursorCoordDisplay" class="text-gold" aria-hidden="true">X: 0000 / Y: 0000</span>
                 <span id="telemetryClock">[15:00:00]</span>
             </div>
         </div>
         <div class="flex items-center gap-4">
-            <button id="toggleAudioBtn" data-action="toggle-audio" type="button" class="px-3 py-1.5 border border-[#d4af37]/60 text-[#d4af37] font-mono text-[10px] uppercase tracking-widest hover:bg-[#d4af37]/15 transition flex items-center gap-2" title="Включить / заглушить соборный эмбиент">
+            <button id="toggleAudioBtn" data-action="toggle-audio" type="button" class="px-3 py-1-5 border border-gold-60 text-gold font-mono text-10 uppercase tracking-widest hdr-btn-gold transition flex items-center gap-2" title="Включить / заглушить соборный эмбиент">
                 <span id="audioStatusDot" class="pulse-dot"></span>
                 <span id="audioBtnLabel">ЗВУК: ВЫСОКИЙ ХОР</span>
             </button>
-            <button id="downloadExecutiveMemoBtn" data-action="export-pdf" type="button" class="px-3.5 py-1.5 border border-[#d4af37]/60 text-[#d4af37] font-mono text-[10px] uppercase tracking-widest hover:bg-[#d4af37]/15 transition flex items-center gap-2"><span>★ Меморандум (PDF)</span></button>
-            <button id="downloadReportBtn" data-action="export-csv" type="button" class="px-3.5 py-1.5 border font-mono text-[10px] uppercase tracking-widest hover:border-[#d4af37] hover:bg-[#d4af37]/10 transition flex items-center gap-2"><span>↓ Скачать отчет</span></button>
+            <button id="downloadExecutiveMemoBtn" data-action="export-pdf" type="button" class="px-3-5 py-1-5 border border-gold-60 text-gold font-mono text-10 uppercase tracking-widest hdr-btn-gold transition flex items-center gap-2"><span>★ Меморандум (PDF)</span></button>
+            <button id="downloadReportBtn" data-action="export-csv" type="button" class="px-3-5 py-1-5 border font-mono text-10 uppercase tracking-widest hdr-btn-plain transition flex items-center gap-2"><span>↓ Скачать отчет</span></button>
             <div id="themeSlider" class="hw-slider-track" data-action="toggle-theme" role="switch" aria-checked="true" aria-label="Переключить режим: Ночь / День" tabindex="0" title="Переключить режим: Ночь / День">
                 <div id="sliderThumb" class="hw-slider-thumb" style="transform: translateX(0)"></div>
-                <span id="lblNight" class="relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold text-black">Ночь</span>
-                <span id="lblDay" class="relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold opacity-70">День</span>
+                <span id="lblNight" class="relative z-10 font-mono text-9 uppercase tracking-widest font-bold text-black">Ночь</span>
+                <span id="lblDay" class="relative z-10 font-mono text-9 uppercase tracking-widest font-bold opacity-70">День</span>
             </div>
         </div>
     </header>
 
-    <div class="flex-1 grid grid-cols-1 lg:grid-cols-12">
-        <aside class="lg:col-span-3 flex flex-col border-r">
-            <div class="alche-block cross-tl px-5 py-3.5 flex items-center justify-between">
-                <span class="font-mono text-[10px] uppercase tracking-[0.2em] text-[#d4af37] font-bold">[00] Параметры Модели</span>
-                <button id="defaultResetBtn" type="button" data-action="reset-defaults" class="font-mono text-[9px] uppercase underline opacity-60 hover:opacity-100 transition">Сброс</button>
+    <div class="flex-1 grid grid-cols-1 lg-grid-cols-12">
+        <aside class="lg-col-span-3 flex flex-col border-r">
+            <div class="alche-block cross-tl px-5 py-3-5 flex items-center justify-between">
+                <span class="font-mono text-10 uppercase tracking-hud text-gold font-bold">[00] Параметры Модели</span>
+                <button id="defaultResetBtn" type="button" data-action="reset-defaults" class="font-mono text-9 uppercase underline opacity-60 hover-op-100 transition">Сброс</button>
             </div>
             <form id="financialInputsForm" class="flex-1 flex flex-col">
                 <div class="alche-block p-5 space-y-4">
-                    <div class="flex justify-between items-baseline"><span class="font-serif italic text-base font-semibold">I. Временной горизонт и маржа</span><span class="font-mono text-[9px] opacity-40" aria-hidden="true">01 // 04</span></div>
-                    <div class="grid grid-cols-2 gap-2.5">
-                        <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Месяц старта</label>
+                    <div class="flex justify-between items-baseline"><span class="font-serif italic text-base font-semibold">I. Временной горизонт и маржа</span><span class="font-mono text-9 opacity-40" aria-hidden="true">01 // 04</span></div>
+                    <div class="grid grid-cols-2 gap-2-5">
+                        <div><label class="block font-mono text-9 uppercase opacity-70 mb-1">Месяц старта</label>
                             <select id="paramStartMonth" class="mono-input">
                                 <option value="0">Январь</option><option value="1">Февраль</option><option value="2">Март</option><option value="3">Апрель</option>
                                 <option value="4">Май</option><option value="5">Июнь</option><option value="6">Июль</option><option value="7">Август</option>
                                 <option value="8">Сентябрь</option><option value="9" selected>Октябрь</option><option value="10">Ноябрь</option><option value="11">Декабрь</option>
                             </select>
                         </div>
-                        <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Год старта</label>
+                        <div><label class="block font-mono text-9 uppercase opacity-70 mb-1">Год старта</label>
                             <select id="paramStartYear" class="mono-input">
                                 <option value="2026" selected>2026</option><option value="2027">2027</option>
                             </select>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-2.5">
-                        <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Горизонт</label>
+                    <div class="grid grid-cols-2 gap-2-5">
+                        <div><label class="block font-mono text-9 uppercase opacity-70 mb-1">Горизонт</label>
                             <select id="paramPeriod" class="mono-input">
                                 <option value="6">6 месяцев</option><option value="12" selected>12 месяцев</option><option value="18">18 месяцев</option><option value="24">24 месяца</option>
                             </select>
                         </div>
-                        <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Ставка НДС</label>
+                        <div><label class="block font-mono text-9 uppercase opacity-70 mb-1">Ставка НДС</label>
                             <select id="paramVatRate" class="mono-input">
                                 <option value="22" selected>22%</option><option value="20">20%</option><option value="10">10%</option><option value="0">0%</option>
                             </select>
                         </div>
                     </div>
                     <div>
-                        <div class="flex justify-between font-mono text-[10px] mb-1"><span class="opacity-70">МАРЖИНАЛЬНОСТЬ ПРОДАЖ</span><span id="lblMarginVal" class="text-[#d4af37] font-bold">20%</span></div>
+                        <div class="flex justify-between font-mono text-10 mb-1"><span class="opacity-70">МАРЖИНАЛЬНОСТЬ ПРОДАЖ</span><span id="lblMarginVal" class="text-gold font-bold">20%</span></div>
                         <input type="range" id="paramMargin" min="10" max="50" step="1" value="20">
                     </div>
                 </div>
                 <div class="alche-block p-5 space-y-4">
-                    <div class="flex justify-between items-baseline"><span class="font-serif italic text-base font-semibold">II. Партионный склад и кредитование</span><span class="font-mono text-[9px] opacity-40" aria-hidden="true">02 // 04</span></div>
-                    <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Стартовая закупка партии, ₽</label><input type="text" id="paramInitialPurchase" value="25 000 000" class="mono-input font-bold" data-numeric="true" inputmode="numeric"></div>
+                    <div class="flex justify-between items-baseline"><span class="font-serif italic text-base font-semibold">II. Партионный склад и кредитование</span><span class="font-mono text-9 opacity-40" aria-hidden="true">02 // 04</span></div>
+                    <div><label class="block font-mono text-9 uppercase opacity-70 mb-1">Стартовая закупка партии, ₽</label><input type="text" id="paramInitialPurchase" value="25 000 000" class="mono-input font-bold" data-numeric="true" inputmode="numeric"></div>
                     <div class="grid grid-cols-3 gap-2">
-                        <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Цикл, мес.</label><input type="number" id="paramBatchCycle" value="5" min="1" max="12" class="mono-input text-center"></div>
-                        <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">ЦБ РФ, %</label><input type="number" id="paramCbRate" value="14.0" step="0.5" class="mono-input text-center font-bold text-[#d4af37]"></div>
-                        <div><label class="block font-mono text-[8px] uppercase opacity-70 mb-1" title="Коммерческая наценка кредитора">Комиссия, %</label><input type="number" id="paramCommMargin" value="2.0" step="0.5" class="mono-input text-center"></div>
+                        <div><label class="block font-mono text-9 uppercase opacity-70 mb-1">Цикл, мес.</label><input type="number" id="paramBatchCycle" value="5" min="1" max="12" class="mono-input text-center"></div>
+                        <div><label class="block font-mono text-9 uppercase opacity-70 mb-1">ЦБ РФ, %</label><input type="number" id="paramCbRate" value="14.0" step="0.5" class="mono-input text-center font-bold text-gold"></div>
+                        <div><label class="block font-mono text-8 uppercase opacity-70 mb-1" title="Коммерческая наценка кредитора">Комиссия, %</label><input type="number" id="paramCommMargin" value="2.0" step="0.5" class="mono-input text-center"></div>
                     </div>
                     <div class="p-3 border space-y-3" style="border-color:rgba(212,175,55,.25);background:rgba(212,175,55,.02)">
-                        <div class="font-mono text-[8px] uppercase tracking-widest text-[#d4af37] font-bold">[УСЛОВИЯ ПОСТАВЩИКА]</div>
+                        <div class="font-mono text-8 uppercase tracking-widest text-gold font-bold">[УСЛОВИЯ ПОСТАВЩИКА]</div>
                         <div>
-                            <div class="flex justify-between font-mono text-[9px] mb-1"><span class="opacity-70">ПРЕДОПЛАТА ПОСТАВЩИКУ</span><span id="lblSupplierPrepVal" class="text-[#d4af37] font-bold">50%</span></div>
+                            <div class="flex justify-between font-mono text-9 mb-1"><span class="opacity-70">ПРЕДОПЛАТА ПОСТАВЩИКУ</span><span id="lblSupplierPrepVal" class="text-gold font-bold">50%</span></div>
                             <input type="range" id="paramSupplierPrepay" min="0" max="100" step="10" value="50">
                         </div>
                         <div>
-                            <div class="flex justify-between font-mono text-[9px] mb-1"><span class="opacity-70">ОТСРОЧКА ОСТАТКА</span><span id="lblSupplierDelayVal" class="text-[#d4af37] font-bold">1 мес.</span></div>
+                            <div class="flex justify-between font-mono text-9 mb-1"><span class="opacity-70">ОТСРОЧКА ОСТАТКА</span><span id="lblSupplierDelayVal" class="text-gold font-bold">1 мес.</span></div>
                             <input type="range" id="paramSupplierDelay" min="0" max="6" step="1" value="1">
                         </div>
                     </div>
                 </div>
                 <div class="alche-block p-5 space-y-4">
-                    <div class="flex justify-between items-baseline"><span class="font-serif italic text-base font-semibold">III. Масштабирование заказов</span><span class="font-mono text-[9px] opacity-40" aria-hidden="true">03 // 04</span></div>
-                    <div class="grid grid-cols-2 gap-2.5">
-                        <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Средний чек, ₽</label><input type="text" id="paramAov" value="150 000" class="mono-input font-bold" data-numeric="true" inputmode="numeric"></div>
-                        <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Заказов в 1-й мес.</label><input type="number" id="paramStartOrders" value="40" min="1" max="2000" class="mono-input text-center font-bold"></div>
+                    <div class="flex justify-between items-baseline"><span class="font-serif italic text-base font-semibold">III. Масштабирование заказов</span><span class="font-mono text-9 opacity-40" aria-hidden="true">03 // 04</span></div>
+                    <div class="grid grid-cols-2 gap-2-5">
+                        <div><label class="block font-mono text-9 uppercase opacity-70 mb-1">Средний чек, ₽</label><input type="text" id="paramAov" value="150 000" class="mono-input font-bold" data-numeric="true" inputmode="numeric"></div>
+                        <div><label class="block font-mono text-9 uppercase opacity-70 mb-1">Заказов в 1-й мес.</label><input type="number" id="paramStartOrders" value="40" min="1" max="2000" class="mono-input text-center font-bold"></div>
                     </div>
                     <div>
-                        <label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Логика прироста</label>
+                        <label class="block font-mono text-9 uppercase opacity-70 mb-1">Логика прироста</label>
                         <div class="grid grid-cols-2 border">
-                            <button type="button" id="btnModeAbs" data-action="growth-mode" data-mode="abs" class="py-1 font-mono text-[9px] uppercase tracking-wider bg-[#d4af37] text-black font-bold transition">В штуках</button>
-                            <button type="button" id="btnModePct" data-action="growth-mode" data-mode="pct" class="py-1 font-mono text-[9px] uppercase tracking-wider opacity-60 hover:opacity-100 transition">В процентах</button>
+                            <button type="button" id="btnModeAbs" data-action="growth-mode" data-mode="abs" class="py-1 font-mono text-9 uppercase tracking-wider bg-gold text-black font-bold transition">В штуках</button>
+                            <button type="button" id="btnModePct" data-action="growth-mode" data-mode="pct" class="py-1 font-mono text-9 uppercase tracking-wider opacity-60 hover-op-100 transition">В процентах</button>
                         </div>
                     </div>
                     <div>
-                        <div class="flex justify-between font-mono text-[10px] mb-1"><span id="lblGrowthModeTitle" class="opacity-70">ПРИРОСТ В МЕСЯЦ</span><span id="lblGrowthVal" class="text-[#d4af37] font-bold">+5 шт.</span></div>
+                        <div class="flex justify-between font-mono text-10 mb-1"><span id="lblGrowthModeTitle" class="opacity-70">ПРИРОСТ В МЕСЯЦ</span><span id="lblGrowthVal" class="text-gold font-bold">+5 шт.</span></div>
                         <input type="range" id="paramGrowthSlider" min="0" max="100" step="1" value="5">
                     </div>
-                    <div><label class="block font-mono text-[9px] uppercase opacity-70 mb-1">Потолок продаж в месяц, шт.</label><input type="number" id="paramMaxOrdersCap" value="300" min="10" step="10" class="mono-input text-center"></div>
+                    <div><label class="block font-mono text-9 uppercase opacity-70 mb-1">Потолок продаж в месяц, шт.</label><input type="number" id="paramMaxOrdersCap" value="300" min="10" step="10" class="mono-input text-center"></div>
                 </div>
                 <div class="alche-block p-5 space-y-4 flex-1">
-                    <div class="flex justify-between items-baseline"><span class="font-serif italic text-base font-semibold">IV. Постоянные затраты и факторинг</span><span class="font-mono text-[9px] opacity-40" aria-hidden="true">04 // 04</span></div>
+                    <div class="flex justify-between items-baseline"><span class="font-serif italic text-base font-semibold">IV. Постоянные затраты и факторинг</span><span class="font-mono text-9 opacity-40" aria-hidden="true">04 // 04</span></div>
                     <div class="grid grid-cols-3 gap-2">
-                        <div><label class="block font-mono text-[8px] uppercase opacity-70 mb-1">ФОТ, ₽</label><input type="text" id="paramFot" value="500 000" class="mono-input" data-numeric="true" inputmode="numeric"></div>
-                        <div><label class="block font-mono text-[8px] uppercase opacity-70 mb-1">Склад, ₽</label><input type="text" id="paramWh" value="200 000" class="mono-input" data-numeric="true" inputmode="numeric"></div>
-                        <div><label class="block font-mono text-[8px] uppercase opacity-70 mb-1">Офис, ₽</label><input type="text" id="paramOffice" value="150 000" class="mono-input" data-numeric="true" inputmode="numeric"></div>
+                        <div><label class="block font-mono text-8 uppercase opacity-70 mb-1">ФОТ, ₽</label><input type="text" id="paramFot" value="500 000" class="mono-input" data-numeric="true" inputmode="numeric"></div>
+                        <div><label class="block font-mono text-8 uppercase opacity-70 mb-1">Склад, ₽</label><input type="text" id="paramWh" value="200 000" class="mono-input" data-numeric="true" inputmode="numeric"></div>
+                        <div><label class="block font-mono text-8 uppercase opacity-70 mb-1">Офис, ₽</label><input type="text" id="paramOffice" value="150 000" class="mono-input" data-numeric="true" inputmode="numeric"></div>
                     </div>
                     <div class="pt-1">
                         <div>
-                            <div class="flex justify-between font-mono text-[9px] mb-1"><span class="opacity-70">ДОЛЯ ФАКТОРИНГА В ВЫРУЧКЕ</span><span id="lblFactShareVal" class="text-[#d4af37] font-bold">50%</span></div>
+                            <div class="flex justify-between font-mono text-9 mb-1"><span class="opacity-70">ДОЛЯ ФАКТОРИНГА В ВЫРУЧКЕ</span><span id="lblFactShareVal" class="text-gold font-bold">50%</span></div>
                             <input type="range" id="paramFactoringShare" min="0" max="100" step="10" value="50">
                         </div>
                     </div>
@@ -447,56 +557,56 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
             </form>
         </aside>
 
-        <section class="lg:col-span-9 flex flex-col">
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 border-b">
-                <div class="alche-block tilt-card p-5"><div class="flex justify-between items-center opacity-60 mb-1"><span class="metric-title font-mono text-[9px] uppercase tracking-widest" data-original="[01] Выручка">[01] Выручка</span></div><div id="kpiRev" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#f4f1ea]">0 ₽</div><div class="font-mono text-[9px] text-[#d4af37] mt-1.5 opacity-90" id="kpiRevSub">Маржа: 20%</div></div>
-                <div class="alche-block tilt-card p-5"><div class="flex justify-between items-center opacity-60 mb-1"><span class="metric-title font-mono text-[9px] uppercase tracking-widest" data-original="[02] Дефицит">[02] Дефицит</span></div><div id="kpiInjections" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#e63946]">0 ₽</div><div class="font-mono text-[9px] text-[#e63946] mt-1.5 opacity-90">Внешние дотации</div></div>
-                <div class="alche-block tilt-card p-5"><div class="flex justify-between items-center opacity-60 mb-1"><span class="metric-title font-mono text-[9px] uppercase tracking-widest" data-original="[03] Проценты">[03] Проценты</span></div><div id="kpiInterest" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#d4af37]">0 ₽</div><div id="kpiRateSub" class="font-mono text-[9px] text-[#d4af37] mt-1.5 opacity-90">Ставка 16.0%</div></div>
-                <div class="alche-block tilt-card p-5"><div class="flex justify-between items-center opacity-60 mb-1"><span class="metric-title font-mono text-[9px] uppercase tracking-widest" data-original="[04] Пиковый долг">[04] Пиковый долг</span></div><div id="kpiMaxDebt" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#f4f1ea]">0 ₽</div><div class="font-mono text-[9px] opacity-60 mt-1.5">Максимум тела</div></div>
-                <div class="alche-block tilt-card p-5 col-span-2 sm:col-span-1"><div class="flex justify-between items-center opacity-60 mb-1"><span class="metric-title font-mono text-[9px] uppercase tracking-widest" data-original="[05] Прибыль">[05] Прибыль</span></div><div id="kpiProfit" class="font-serif text-2xl xl:text-3xl font-bold tracking-tight text-[#2a9d8f]">0 ₽</div><div id="kpiRoiSub" class="font-mono text-[9px] text-[#2a9d8f] mt-1.5 opacity-90">Рентабельность: 0%</div></div>
+        <section class="lg-col-span-9 flex flex-col">
+            <div class="grid grid-cols-2 sm-grid-cols-3 lg-grid-cols-5 border-b">
+                <div class="alche-block tilt-card p-5"><div class="flex justify-between items-center opacity-60 mb-1"><span class="metric-title font-mono text-9 uppercase tracking-widest" data-original="[01] Выручка">[01] Выручка</span></div><div id="kpiRev" class="font-serif text-2xl xl-text-3xl font-bold tracking-tight text-alabaster">0 ₽</div><div class="font-mono text-9 text-gold mt-1-5 opacity-90" id="kpiRevSub">Маржа: 20%</div></div>
+                <div class="alche-block tilt-card p-5"><div class="flex justify-between items-center opacity-60 mb-1"><span class="metric-title font-mono text-9 uppercase tracking-widest" data-original="[02] Дефицит">[02] Дефицит</span></div><div id="kpiInjections" class="font-serif text-2xl xl-text-3xl font-bold tracking-tight text-vermilion">0 ₽</div><div class="font-mono text-9 text-vermilion mt-1-5 opacity-90">Внешние дотации</div></div>
+                <div class="alche-block tilt-card p-5"><div class="flex justify-between items-center opacity-60 mb-1"><span class="metric-title font-mono text-9 uppercase tracking-widest" data-original="[03] Проценты">[03] Проценты</span></div><div id="kpiInterest" class="font-serif text-2xl xl-text-3xl font-bold tracking-tight text-gold">0 ₽</div><div class="font-mono text-9 text-gold mt-1-5 opacity-90" id="kpiRateSub">Ставка 16.0%</div></div>
+                <div class="alche-block tilt-card p-5"><div class="flex justify-between items-center opacity-60 mb-1"><span class="metric-title font-mono text-9 uppercase tracking-widest" data-original="[04] Пиковый долг">[04] Пиковый долг</span></div><div id="kpiMaxDebt" class="font-serif text-2xl xl-text-3xl font-bold tracking-tight text-alabaster">0 ₽</div><div class="font-mono text-9 opacity-60 mt-1-5">Максимум тела</div></div>
+                <div class="alche-block tilt-card p-5 col-span-2 sm-col-span-1"><div class="flex justify-between items-center opacity-60 mb-1"><span class="metric-title font-mono text-9 uppercase tracking-widest" data-original="[05] Прибыль">[05] Прибыль</span></div><div id="kpiProfit" class="font-serif text-2xl xl-text-3xl font-bold tracking-tight text-jade">0 ₽</div><div class="font-mono text-9 text-jade mt-1-5 opacity-90" id="kpiRoiSub">Рентабельность: 0%</div></div>
             </div>
-            <div class="alche-block px-5 py-2.5 flex items-center justify-between border-b">
-                <div class="flex flex-wrap items-center gap-1.5" id="navTabsContainer">
-                    <button type="button" data-action="select-tab" data-tab="0" class="tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest bg-[#d4af37] text-black font-bold transition shadow-md">[01] ОБСЛУЖИВАНИЕ КАПИТАЛА</button>
-                    <button type="button" data-action="select-tab" data-tab="1" class="tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest opacity-70 hover:opacity-100 transition">[02] СКЛАДСКОЙ ЦИКЛ</button>
-                    <button type="button" data-action="select-tab" data-tab="2" class="tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest opacity-70 hover:opacity-100 transition">[03] ДЕНЕЖНЫЙ ПОТОК</button>
-                    <button type="button" data-action="select-tab" data-tab="3" class="tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest opacity-70 hover:opacity-100 transition">[04] ЭКОНОМИКА И ЗАКАЗЫ</button>
+            <div class="alche-block px-5 py-2-5 flex items-center justify-between border-b">
+                <div class="flex flex-wrap items-center gap-1-5" id="navTabsContainer">
+                    <button type="button" data-action="select-tab" data-tab="0" class="tab-btn px-4 py-1-5 font-mono text-10 uppercase tracking-widest bg-gold text-black font-bold transition shadow-md">[01] ОБСЛУЖИВАНИЕ КАПИТАЛА</button>
+                    <button type="button" data-action="select-tab" data-tab="1" class="tab-btn px-4 py-1-5 font-mono text-10 uppercase tracking-widest opacity-70 hover-op-100 transition">[02] СКЛАДСКОЙ ЦИКЛ</button>
+                    <button type="button" data-action="select-tab" data-tab="2" class="tab-btn px-4 py-1-5 font-mono text-10 uppercase tracking-widest opacity-70 hover-op-100 transition">[03] ДЕНЕЖНЫЙ ПОТОК</button>
+                    <button type="button" data-action="select-tab" data-tab="3" class="tab-btn px-4 py-1-5 font-mono text-10 uppercase tracking-widest opacity-70 hover-op-100 transition">[04] ЭКОНОМИКА И ЗАКАЗЫ</button>
                 </div>
             </div>
-            <div class="flex-1 p-5 lg:p-7 space-y-6">
+            <div class="flex-1 p-5 lg-p-7 space-y-6">
                 <div id="viewTab0" class="tab-view-enter space-y-6">
                     <div class="alche-block p-5 border">
-                        <div class="flex justify-between items-center mb-4"><div><h3 class="font-serif text-xl font-bold tracking-wide italic">График обслуживания долга и начисления процентов</h3><p class="font-mono text-[10px] opacity-60">Ежемесячные проценты по совокупной ставке кредитора (столбцы) и динамика тела долга (кривая)</p></div></div>
-                        <div class="h-[360px] relative"><canvas id="chartDebt"></canvas></div>
+                        <div class="flex justify-between items-center mb-4"><div><h3 class="font-serif text-xl font-bold tracking-wide italic">График обслуживания долга и начисления процентов</h3><p class="font-mono text-10 opacity-60">Ежемесячные проценты по совокупной ставке кредитора (столбцы) и динамика тела долга (кривая)</p></div></div>
+                        <div class="h-360 relative"><canvas id="chartDebt"></canvas></div>
                     </div>
                     <div class="alche-block border overflow-x-auto">
-                        <table class="w-full text-left font-mono text-[11px]">
-                            <thead class="border-b" style="background:var(--table-header-bg)"><tr class="text-[9px] uppercase tracking-widest text-[#d4af37]"><th class="p-3">Период</th><th class="p-3">Дотация (вход)</th><th class="p-3">Проценты</th><th class="p-3">Погашение долга</th><th class="p-3">Остаток долга</th><th class="p-3">Свободный остаток</th></tr></thead>
+                        <table class="w-full text-left font-mono text-11">
+                            <thead class="border-b" style="background:var(--table-header-bg)"><tr class="text-9 uppercase tracking-widest text-gold"><th class="p-3">Период</th><th class="p-3">Дотация (вход)</th><th class="p-3">Проценты</th><th class="p-3">Погашение долга</th><th class="p-3">Остаток долга</th><th class="p-3">Свободный остаток</th></tr></thead>
                             <tbody id="tableDebtBody" class="divide-y"></tbody>
                         </table>
                     </div>
                 </div>
                 <div id="viewTab1" class="hidden space-y-6">
                     <div class="alche-block p-5 border">
-                        <div class="flex justify-between items-center mb-4"><div><h3 class="font-serif text-xl font-bold tracking-wide italic">Партионные закупки и истощение склада</h3><p class="font-mono text-[10px] opacity-60">Закупка дискретными циклами с учетом предоплаты и отсрочки поставщика</p></div></div>
-                        <div class="h-[400px] relative"><canvas id="chartStock"></canvas></div>
+                        <div class="flex justify-between items-center mb-4"><div><h3 class="font-serif text-xl font-bold tracking-wide italic">Партионные закупки и истощение склада</h3><p class="font-mono text-10 opacity-60">Закупка дискретными циклами с учетом предоплаты и отсрочки поставщика</p></div></div>
+                        <div class="h-400 relative"><canvas id="chartStock"></canvas></div>
                     </div>
                 </div>
                 <div id="viewTab2" class="hidden space-y-6">
                     <div class="alche-block p-5 border">
-                        <div class="flex justify-between items-center mb-4"><div><h3 class="font-serif text-xl font-bold tracking-wide italic">Структура помесячного денежного потока</h3><p class="font-mono text-[10px] opacity-60">Сопоставление входящей выручки и совокупных выплат (закупки, аренда, ФОТ и налоги)</p></div></div>
-                        <div class="h-[400px] relative"><canvas id="chartCF"></canvas></div>
+                        <div class="flex justify-between items-center mb-4"><div><h3 class="font-serif text-xl font-bold tracking-wide italic">Структура помесячного денежного потока</h3><p class="font-mono text-10 opacity-60">Сопоставление входящей выручки и совокупных выплат (закупки, аренда, ФОТ и налоги)</p></div></div>
+                        <div class="h-400 relative"><canvas id="chartCF"></canvas></div>
                     </div>
                 </div>
                 <div id="viewTab3" class="hidden space-y-6">
-                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 xl-grid-cols-2 gap-6">
                         <div class="alche-block p-5 border">
-                            <h3 class="font-serif text-xl font-bold tracking-wide italic mb-1">Динамика заказов и выручки</h3><p class="font-mono text-[10px] opacity-60 mb-4">Рост клиентской базы и масштабирование объемов отгрузок</p>
-                            <div class="h-[320px] relative"><canvas id="chartOrders"></canvas></div>
+                            <h3 class="font-serif text-xl font-bold tracking-wide italic mb-1">Динамика заказов и выручки</h3><p class="font-mono text-10 opacity-60 mb-4">Рост клиентской базы и масштабирование объемов отгрузок</p>
+                            <div class="h-320 relative"><canvas id="chartOrders"></canvas></div>
                         </div>
                         <div class="alche-block p-5 border">
-                            <h3 class="font-serif text-xl font-bold tracking-wide italic mb-1">Структура совокупных затрат</h3><p class="font-mono text-[10px] opacity-60 mb-4">Доли расходов с учетом себестоимости, инфраструктуры и процентов по долгу</p>
-                            <div class="h-[320px] relative"><canvas id="chartPie"></canvas></div>
+                            <h3 class="font-serif text-xl font-bold tracking-wide italic mb-1">Структура совокупных затрат</h3><p class="font-mono text-10 opacity-60 mb-4">Доли расходов с учетом себестоимости, инфраструктуры и процентов по долгу</p>
+                            <div class="h-320 relative"><canvas id="chartPie"></canvas></div>
                         </div>
                     </div>
                 </div>
@@ -506,33 +616,6 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
 </div>
 
 <script type="module">
-import {
-    AdditiveBlending,
-    BufferAttribute,
-    BufferGeometry,
-    CanvasTexture,
-    Color,
-    DoubleSide,
-    Group,
-    LinearFilter,
-    LineBasicMaterial,
-    LineSegments,
-    MathUtils,
-    Mesh,
-    MeshBasicMaterial,
-    PerspectiveCamera,
-    PlaneGeometry,
-    Points,
-    PointsMaterial,
-    Raycaster,
-    Scene,
-    SphereGeometry,
-    TorusGeometry,
-    Vector2,
-    Vector3,
-    WebGLRenderer
-} from 'three';
-
 /* =========================================================================
    МОДУЛЬ 1: КОНФИГУРАЦИЯ, КОНСТАНТЫ И УТИЛИТЫ
    ========================================================================= */
@@ -568,7 +651,6 @@ const CONFIG = Object.freeze({
         '[03] ДЕНЕЖНЫЙ ПОТОК',
         '[04] ЭКОНОМИКА И ЗАКАЗЫ'
     ],
-    PIE_LABELS: ['Склад', 'Офис', 'ФОТ', 'Операц. база', 'Налоги 5%', 'Закупки', 'Проценты по долгу'],
     DORIAN_SCALE_HZ: [146.83, 164.81, 174.61, 196.00, 220.00, 246.94, 261.63, 293.66, 329.63]
 });
 
@@ -1007,12 +1089,134 @@ const AudioEngine = (() => {
 })();
 
 /* =========================================================================
-   МОДУЛЬ 3: 3D-ПРЕЛОАДЕР (TREE-SHAKEN THREE.JS ES MODULE)
+   МОДУЛЬ 3: УСТОЙЧИВАЯ ЗАГРУЗКА THREE.JS + 3D-ПРЕЛОАДЕР И ФОНОВАЯ СФЕРА
    ========================================================================= */
-const Preloader3D = (() => {
-    const canvas = document.getElementById('preloader-webgl');
+async function loadThreeWithFallback() {
+    const cdns = [
+        'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js',
+        'https://unpkg.com/three@0.170.0/build/three.module.js'
+    ];
+    for (const url of cdns) {
+        try {
+            return await import(url);
+        } catch (err) {
+            console.debug('Three.js CDN fallback triggered:', url, err);
+        }
+    }
+    return null;
+}
+
+function createVisualEngine(THREE) {
     const stage = document.getElementById('preloader-stage');
-    const renderer = new WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
+    const preCanvas = document.getElementById('preloader-webgl');
+    const dashCanvas = document.getElementById('webgl-bg-canvas');
+
+    let currentSlide = 0;
+    let dismissed = false;
+    let isObscura = false;
+    let sputnikIntervalId = null;
+    const startTime = performance.now();
+
+    const barEl = document.getElementById('loaderProgressBar');
+    const pctEl = document.getElementById('loaderPercent');
+    const hudEl = document.getElementById('preloaderHUD');
+    const btnWrapEl = document.getElementById('exploreBtnWrapper');
+
+    setTimeout(() => {
+        const pt = document.getElementById('preloaderTitle');
+        if (pt) pt.classList.add('locked-on');
+    }, 900);
+
+    function dismissNow() {
+        if (dismissed) return;
+        dismissed = true;
+        if (sputnikIntervalId) {
+            clearInterval(sputnikIntervalId);
+            sputnikIntervalId = null;
+        }
+        const app = document.getElementById('mainDashboardApp');
+        document.documentElement.style.overflow = 'auto';
+        document.body.style.overflow = 'auto';
+        if (app) app.classList.add('ready', 'camera-obscura-reveal');
+        setTimeout(() => {
+            if (stage) stage.style.display = 'none';
+        }, 1500);
+    }
+
+    function triggerShutter() {
+        AudioEngine.cathedralChord();
+        const flash = document.getElementById('shutter-flash');
+        if (flash) {
+            flash.style.transition = 'none';
+            flash.style.opacity = '0.75';
+            setTimeout(() => {
+                dismissNow();
+                flash.style.transition = 'opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1)';
+                flash.style.opacity = '0';
+            }, 60);
+        } else {
+            dismissNow();
+        }
+    }
+
+    function updateSlideHud(idx, isPredator = false) {
+        currentSlide = idx;
+        document.querySelectorAll('.slide-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+        const preset = BLUEPRINT_PRESETS[idx];
+        if (preset && !isPredator) {
+            const isMorph = idx === CONFIG.MORPH_TRIGGER_INDEX;
+            document.getElementById('loaderStatusText').textContent =
+                `[${idx + 1}/5] ${preset.name}${isMorph ? ' • [НАЖМИТЕ НА ЧЕРТЁЖ ДЛЯ МОРФИНГА]' : ''}`;
+            const sub = document.getElementById('blueprintSubtitle');
+            sub.textContent = isMorph
+                ? 'Нажмите на изображение: режим зрения Хищника и слияние форм'
+                : preset.subtitle;
+            sub.style.opacity = '1';
+        }
+    }
+
+    // Graceful degradation: если WebGL или все CDN Three.js недоступны — HUD и кнопки всё равно полностью работают
+    if (!THREE) {
+        console.debug('Running in 2D HUD fallback mode (Three.js unavailable)');
+        updateSlideHud(0);
+        let hudDone = false;
+        const tick2D = (now) => {
+            if (dismissed) return;
+            const p = Math.min((now - startTime) / CONFIG.PRELOADER_DURATION_MS, 1);
+            if (barEl) barEl.style.width = `${(p * 100).toFixed(0)}%`;
+            if (pctEl) pctEl.textContent = `${Math.floor(p * 100)}%`;
+            if (p >= 0.96 && !hudDone) {
+                hudDone = true;
+                if (hudEl) hudEl.style.opacity = '0';
+                if (btnWrapEl) btnWrapEl.classList.add('active');
+            }
+            if (!hudDone) requestAnimationFrame(tick2D);
+        };
+        requestAnimationFrame(tick2D);
+
+        return {
+            nextSlide: () => { AudioEngine.click(1800, 0.015); updateSlideHud((currentSlide + 1) % 5); },
+            prevSlide: () => { AudioEngine.click(1800, 0.015); updateSlideHud((currentSlide + 4) % 5); },
+            goToSlide: (i) => { AudioEngine.click(1800, 0.015); updateSlideHud(i); },
+            getCurrentSlide: () => currentSlide,
+            isDismissed: () => dismissed,
+            startObscuraTransition: () => { if (!isObscura) { isObscura = true; triggerShutter(); } },
+            turnDashRings: () => {},
+            setThemeColors: () => {},
+            resize: () => {}
+        };
+    }
+
+    const {
+        AdditiveBlending, BufferAttribute, BufferGeometry, CanvasTexture, Color,
+        DoubleSide, Group, LinearFilter, LineBasicMaterial, LineSegments,
+        MathUtils, Mesh, MeshBasicMaterial, PerspectiveCamera, PlaneGeometry,
+        Points, PointsMaterial, Raycaster, Scene, SphereGeometry, TorusGeometry,
+        Vector2, Vector3, WebGLRenderer
+    } = THREE;
+
+    /* --- 3D-сцена прелоадера --- */
+    const renderer = new WebGLRenderer({ canvas: preCanvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
 
@@ -1260,23 +1464,33 @@ const Preloader3D = (() => {
 
     function createInventionCard(imageSource, slotIdx) {
         const group = new Group();
+        // opacity: 0 до готовности текстуры, чтобы исключить вспышку белых квадратов
         const mat = new MeshBasicMaterial({
-            transparent: true, opacity: 0.92, side: DoubleSide,
+            transparent: true, opacity: 0, side: DoubleSide,
             depthWrite: false, blending: AdditiveBlending
         });
         const geo = new PlaneGeometry(CONFIG.INVENTION_BASE_SIZE, CONFIG.INVENTION_BASE_SIZE, 24, 24);
-        const origPositions = new Float32Array(geo.attributes.position.array);
-        geo.userData.origPositions = origPositions;
+        geo.userData.origPositions = new Float32Array(geo.attributes.position.array);
 
         const mesh = new Mesh(geo, mat);
         group.add(mesh);
 
-        // Отложенная генерация текстур в idle-слотах, чтобы не блокировать первый кадр
+        const itemState = {
+            group, mesh, mat,
+            texReady: false,
+            targetOpacity: 0.72
+        };
+
+        const applyTexture = (tex) => {
+            mat.map = tex;
+            mat.needsUpdate = true;
+            itemState.texReady = true;
+            mat.opacity = itemState.targetOpacity;
+        };
+
         IDLE_CALLBACK(() => {
             if (!GOLD_TEXTURES[slotIdx]) {
-                buildBlueprintTextures(createFallbackCanvas(slotIdx), slotIdx, (tex) => {
-                    mat.map = tex; mat.needsUpdate = true;
-                });
+                buildBlueprintTextures(createFallbackCanvas(slotIdx), slotIdx, applyTexture);
             }
         });
 
@@ -1284,21 +1498,19 @@ const Preloader3D = (() => {
             const img = new Image();
             img.onload = () => {
                 if (img.naturalWidth > 0) {
-                    buildBlueprintTextures(img, slotIdx, (tex) => {
-                        mat.map = tex; mat.needsUpdate = true;
-                    });
+                    buildBlueprintTextures(img, slotIdx, applyTexture);
                 }
             };
             img.src = imageSource;
         }
-        return { group, mesh, mat };
+        return itemState;
     }
 
     const inventions = [];
     for (let idx = 0; idx < 5; idx++) {
-        const { group, mesh, mat } = createInventionCard(USER_IMAGES[idx], idx);
+        const card = createInventionCard(USER_IMAGES[idx], idx);
         const initialAngle = (idx / 5) * Math.PI * 2;
-        rootGroup.add(group);
+        rootGroup.add(card.group);
 
         const hitMesh = new Mesh(
             new PlaneGeometry(CONFIG.INVENTION_BASE_SIZE * 0.95, CONFIG.INVENTION_BASE_SIZE * 0.95),
@@ -1308,7 +1520,8 @@ const Preloader3D = (() => {
         rootGroup.add(hitMesh);
 
         inventions.push({
-            group, mesh, mat, hitMesh,
+            ...card,
+            hitMesh,
             baseAngle: initialAngle,
             currentAngle: initialAngle,
             targetScale: 1.0,
@@ -1434,18 +1647,13 @@ const Preloader3D = (() => {
     const sputnik = createSputnikMesh();
     scene.add(sputnik.group);
 
-    let currentSlide = -1;
     let isPredatorActive = false;
     let predatorStrength = 0;
     let predatorClock = 0;
-    let isObscura = false;
     let obscuraStart = 0;
-    let dismissed = false;
     let isProgrammaticNav = false;
     let navTimer = null;
     let sputnikSchedulerStarted = false;
-    let sputnikIntervalId = null;
-    const startTime = performance.now();
 
     const sputnikFlight = {
         active: false, startTime: 0, lastBeep: 0,
@@ -1468,10 +1676,8 @@ const Preloader3D = (() => {
 
     function focusSlide(idx, { silent = false, snapCamera = false } = {}) {
         if (idx < 0 || idx >= inventions.length) return;
-        currentSlide = idx;
         if (!silent) AudioEngine.click(1800, 0.015);
-
-        document.querySelectorAll('.slide-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+        updateSlideHud(idx, isPredatorActive);
 
         isProgrammaticNav = true;
         if (navTimer) clearTimeout(navTimer);
@@ -1481,20 +1687,11 @@ const Preloader3D = (() => {
             const active = i === idx;
             item.isHovered = active;
             item.targetScale = active ? 1.25 : 0.85;
-            item.mat.opacity = active ? 1.0 : 0.72;
+            item.targetOpacity = active ? 1.0 : 0.72;
+            if (item.texReady) {
+                item.mat.opacity = item.targetOpacity;
+            }
         });
-
-        const preset = BLUEPRINT_PRESETS[idx];
-        if (preset && !isPredatorActive) {
-            const isMorphTrigger = idx === CONFIG.MORPH_TRIGGER_INDEX;
-            document.getElementById('loaderStatusText').textContent =
-                `[${idx + 1}/5] ${preset.name}${isMorphTrigger ? ' • [НАЖМИТЕ НА ЧЕРТЁЖ ДЛЯ МОРФИНГА]' : ''}`;
-            const sub = document.getElementById('blueprintSubtitle');
-            sub.textContent = isMorphTrigger
-                ? 'Нажмите на изображение: режим зрения Хищника и слияние форм'
-                : preset.subtitle;
-            sub.style.opacity = '1';
-        }
 
         if (snapCamera) {
             const active = inventions[idx];
@@ -1519,7 +1716,7 @@ const Preloader3D = (() => {
             sub.style.opacity = '1';
         } else {
             sub.style.color = 'rgba(212,175,55,0.75)';
-            if (currentSlide >= 0) focusSlide(currentSlide, { silent: true });
+            focusSlide(currentSlide, { silent: true });
         }
     }
 
@@ -1581,7 +1778,7 @@ const Preloader3D = (() => {
         }
     });
 
-    canvas.addEventListener('pointerdown', (e) => {
+    preCanvas.addEventListener('pointerdown', (e) => {
         mouseVec.x = (e.clientX / window.innerWidth) * 2 - 1;
         mouseVec.y = -(e.clientY / window.innerHeight) * 2 + 1;
         runRaycast(true);
@@ -1600,14 +1797,10 @@ const Preloader3D = (() => {
         const dx = e.changedTouches[0].clientX - touchStartX;
         const dy = e.changedTouches[0].clientY - touchStartY;
         if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
-            e.preventDefault();
-            if (dx < 0) nextSlide();
-            else prevSlide();
+            if (dx < 0) focusSlide((currentSlide + 1) % inventions.length);
+            else focusSlide((currentSlide - 1 + inventions.length) % inventions.length);
         }
-    }, { passive: false });
-
-    function nextSlide() { focusSlide((currentSlide + 1) % inventions.length); }
-    function prevSlide() { focusSlide((currentSlide - 1 + inventions.length) % inventions.length); }
+    }, { passive: true });
 
     function startObscuraTransition() {
         if (isObscura) return;
@@ -1632,66 +1825,22 @@ const Preloader3D = (() => {
         });
     }
 
-    function dismiss() {
-        if (dismissed) return;
-        dismissed = true;
-        if (sputnikIntervalId) {
-            clearInterval(sputnikIntervalId);
-            sputnikIntervalId = null;
-        }
-
-        const app = document.getElementById('mainDashboardApp');
-        document.documentElement.style.overflow = 'auto';
-        document.body.style.overflow = 'auto';
-        if (app) {
-            app.classList.add('ready', 'camera-obscura-reveal');
-        }
-
-        setTimeout(() => {
-            if (stage) stage.style.display = 'none';
-            try {
-                scene.traverse(o => {
-                    if (o.geometry) o.geometry.dispose();
-                    if (o.material) {
-                        (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.dispose());
-                    }
-                });
-                renderer.dispose();
-                renderer.forceContextLoss();
-            } catch (err) { console.debug(err); }
-        }, 1500);
+    function cleanupWebGL() {
+        try {
+            scene.traverse(o => {
+                if (o.geometry) o.geometry.dispose();
+                if (o.material) {
+                    (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.dispose());
+                }
+            });
+            renderer.dispose();
+            renderer.forceContextLoss();
+        } catch (err) { console.debug(err); }
     }
 
-    function triggerShutterBlink() {
-        AudioEngine.cathedralChord();
-        const flash = document.getElementById('shutter-flash');
-        if (flash) {
-            flash.style.transition = 'none';
-            flash.style.opacity = '0.75';
-            setTimeout(() => {
-                dismiss();
-                flash.style.transition = 'opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1)';
-                flash.style.opacity = '0';
-            }, 60);
-        } else {
-            dismiss();
-        }
-    }
-
-    setTimeout(() => {
-        const pt = document.getElementById('preloaderTitle');
-        if (pt) pt.classList.add('locked-on');
-    }, 900);
-
-    setTimeout(() => {
-        if (!dismissed && currentSlide === -1) focusSlide(0, { silent: true });
-    }, 1200);
+    focusSlide(0, { silent: true });
 
     let hudCompleted = false;
-    const barEl = document.getElementById('loaderProgressBar');
-    const pctEl = document.getElementById('loaderPercent');
-    const hudEl = document.getElementById('preloaderHUD');
-    const btnWrapEl = document.getElementById('exploreBtnWrapper');
 
     function animate(now) {
         if (dismissed) return;
@@ -1770,7 +1919,9 @@ const Preloader3D = (() => {
                 item.group.rotation.y = MathUtils.lerp(item.startRot.y, 0, alignP);
                 const s = Math.max(1.0 - pull * 1.05, 0.001);
                 item.group.scale.set(s, s, s);
-                item.mat.opacity = Math.max(1.0 - progress * 1.25, 0.0);
+                if (item.texReady) {
+                    item.mat.opacity = Math.max(1.0 - progress * 1.25, 0.0);
+                }
             });
 
             const posArr = particleGeo.attributes.position.array;
@@ -1801,14 +1952,17 @@ const Preloader3D = (() => {
             camera.lookAt(currentLook);
             renderer.render(scene, camera);
 
-            if (progress >= 1.0) triggerShutterBlink();
+            if (progress >= 1.0) {
+                triggerShutter();
+                setTimeout(cleanupWebGL, 1600);
+            }
             return;
         }
 
         dustParticles.rotation.y = t * 0.02;
         dustParticles.rotation.x = Math.sin(t * 0.015) * 0.1;
 
-        megaRingMat.opacity = MathUtils.lerp(megaRingMat.opacity, currentSlide !== -1 ? 0.16 : 0.38, 0.05);
+        megaRingMat.opacity = MathUtils.lerp(megaRingMat.opacity, 0.16, 0.05);
         astrolabeRings.forEach(r => {
             r.group.rotation.x += r.sx;
             r.group.rotation.y += r.sy;
@@ -1862,31 +2016,33 @@ const Preloader3D = (() => {
                 posAttr.needsUpdate = true;
             }
 
-            if (predatorStrength > 0.15) {
-                const pTex = PREDATOR_TEXTURES[(idx + stepFloor) % 5] || GOLD_TEXTURES[(idx + stepFloor) % 5];
-                if (pTex && item.mat.map !== pTex) {
-                    item.mat.map = pTex;
-                    item.mat.needsUpdate = true;
+            if (item.texReady) {
+                if (predatorStrength > 0.15) {
+                    const pTex = PREDATOR_TEXTURES[(idx + stepFloor) % 5] || GOLD_TEXTURES[(idx + stepFloor) % 5];
+                    if (pTex && item.mat.map !== pTex) {
+                        item.mat.map = pTex;
+                        item.mat.needsUpdate = true;
+                    }
+                    const pulse = 0.45 + 0.55 * Math.sin(smoothMix * Math.PI + idx * 1.25);
+                    item.mat.opacity = MathUtils.lerp(item.mat.opacity, 0.35 + pulse * 0.65, 0.12);
+                    item.mat.color.setHSL((t * 0.22 + idx * 0.2) % 1.0, 1.0, 0.62);
+                } else {
+                    const gTex = GOLD_TEXTURES[idx];
+                    if (gTex && item.mat.map !== gTex) {
+                        item.mat.map = gTex;
+                        item.mat.needsUpdate = true;
+                    }
+                    item.mat.color.setHex(0xffffff);
+                    item.mat.opacity = MathUtils.lerp(item.mat.opacity, item.targetOpacity, 0.1);
                 }
-                const pulse = 0.45 + 0.55 * Math.sin(smoothMix * Math.PI + idx * 1.25);
-                item.mat.opacity = MathUtils.lerp(item.mat.opacity, 0.35 + pulse * 0.65, 0.12);
-                item.mat.color.setHSL((t * 0.22 + idx * 0.2) % 1.0, 1.0, 0.62);
-            } else {
-                const gTex = GOLD_TEXTURES[idx];
-                if (gTex && item.mat.map !== gTex) {
-                    item.mat.map = gTex;
-                    item.mat.needsUpdate = true;
-                }
-                item.mat.color.setHex(0xffffff);
-                item.mat.opacity = MathUtils.lerp(item.mat.opacity, item.isHovered ? 1.0 : 0.72, 0.1);
             }
 
             const sc = MathUtils.lerp(item.group.scale.x, isPredatorActive ? 1.28 : item.targetScale, 0.08);
             item.group.scale.set(sc, sc, sc);
         });
 
-        if (currentSlide >= 0 && currentSlide < inventions.length) {
-            const active = inventions[currentSlide];
+        const active = inventions[currentSlide];
+        if (active) {
             const dist = getSlideDistance(CONFIG.INVENTION_BASE_SIZE * active.targetScale);
             targetLook.copy(active.group.position);
             targetCamPos.set(active.group.position.x, active.group.position.y, active.group.position.z + dist);
@@ -1900,96 +2056,83 @@ const Preloader3D = (() => {
 
     requestAnimationFrame(animate);
 
+    /* --- Фоновая армиллярная сфера дашборда --- */
+    const dashScene = new Scene();
+    const dashCamera = new PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 2000);
+    dashCamera.position.z = 160;
+    const dashRenderer = new WebGLRenderer({ canvas: dashCanvas, alpha: true, antialias: false, powerPreference: 'low-power' });
+    dashRenderer.setSize(window.innerWidth, window.innerHeight);
+    dashRenderer.setPixelRatio(1);
+
+    const dashGroup = new Group();
+    dashScene.add(dashGroup);
+    const dashMat = new MeshBasicMaterial({ color: 0x00aaff, wireframe: true, transparent: true, opacity: 0.15 });
+    const dashRings = [65, 88, 110].map((radius, i) => {
+        const mesh = new Mesh(new TorusGeometry(radius, 8 + i * 2, 14, 100), dashMat);
+        if (i === 0) mesh.rotation.x = Math.PI / 2;
+        if (i === 1) mesh.rotation.y = Math.PI / 3;
+        if (i === 2) mesh.rotation.z = Math.PI / 4;
+        dashGroup.add(mesh);
+        return mesh;
+    });
+    dashRenderer.render(dashScene, dashCamera);
+
+    let dashProgress = 1.0, dashStartRot = [0, 0, 0], dashTargetRot = [0, 0, 0], dashRafId = null;
+
+    function animateDashTurn() {
+        dashProgress += 0.025;
+        const p = Math.min(dashProgress, 1.0);
+        const ease = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+        dashRings[0].rotation.y = dashStartRot[0] + (dashTargetRot[0] - dashStartRot[0]) * ease;
+        dashRings[1].rotation.x = dashStartRot[1] + (dashTargetRot[1] - dashStartRot[1]) * ease;
+        dashRings[2].rotation.z = dashStartRot[2] + (dashTargetRot[2] - dashStartRot[2]) * ease;
+        dashRenderer.render(dashScene, dashCamera);
+        dashRafId = p < 1.0 ? requestAnimationFrame(animateDashTurn) : null;
+    }
+
     return {
-        nextSlide,
-        prevSlide,
+        nextSlide: () => focusSlide((currentSlide + 1) % inventions.length),
+        prevSlide: () => focusSlide((currentSlide - 1 + inventions.length) % inventions.length),
         goToSlide: (idx) => focusSlide(idx),
         getCurrentSlide: () => currentSlide,
         isDismissed: () => dismissed,
         startObscuraTransition,
+        turnDashRings: () => {
+            dashStartRot = [dashRings[0].rotation.y, dashRings[1].rotation.x, dashRings[2].rotation.z];
+            dashTargetRot = [
+                dashStartRot[0] + Math.PI / 2.618,
+                dashStartRot[1] - Math.PI / 3.141,
+                dashStartRot[2] + Math.PI / 4.0
+            ];
+            dashProgress = 0;
+            if (dashRafId) cancelAnimationFrame(dashRafId);
+            animateDashTurn();
+        },
         setThemeColors: (isDark) => {
             megaRingMat.color.setHex(isDark ? 0x00c3ff : 0x0066cc);
             secondaryRingMat.color.setHex(isDark ? 0x0077aa : 0x004488);
+            dashMat.color.setHex(isDark ? 0x00aaff : 0x0055aa);
+            dashRenderer.render(dashScene, dashCamera);
         },
         resize: () => {
-            if (dismissed) return;
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            if (currentSlide !== -1) {
+            if (!dismissed) {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
                 focusSlide(currentSlide, { silent: true, snapCamera: true });
             }
+            dashCamera.aspect = window.innerWidth / window.innerHeight;
+            dashCamera.updateProjectionMatrix();
+            dashRenderer.setSize(window.innerWidth, window.innerHeight);
+            dashRenderer.render(dashScene, dashCamera);
         }
     };
-})();
+}
 
 /* =========================================================================
-   МОДУЛЬ 4: ФОНОВАЯ АРМИЛЛЯРНАЯ СФЕРА ДАШБОРДА
+   МОДУЛЬ 4: ФИНАНСОВАЯ МОДЕЛЬ, ЛЕНИВЫЕ ГРАФИКИ И UI
    ========================================================================= */
-const DashBackground3D = (() => {
-    const canvas = document.getElementById('webgl-bg-canvas');
-    const scene = new Scene();
-    const camera = new PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 2000);
-    camera.position.z = 160;
-    const renderer = new WebGLRenderer({ canvas, alpha: true, antialias: false, powerPreference: 'low-power' });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(1);
-
-    const group = new Group();
-    scene.add(group);
-    const mat = new MeshBasicMaterial({ color: 0x00aaff, wireframe: true, transparent: true, opacity: 0.15 });
-    const rings = [65, 88, 110].map((radius, i) => {
-        const mesh = new Mesh(new TorusGeometry(radius, 8 + i * 2, 14, 100), mat);
-        if (i === 0) mesh.rotation.x = Math.PI / 2;
-        if (i === 1) mesh.rotation.y = Math.PI / 3;
-        if (i === 2) mesh.rotation.z = Math.PI / 4;
-        group.add(mesh);
-        return mesh;
-    });
-    renderer.render(scene, camera);
-
-    let progress = 1.0, startRot = [0, 0, 0], targetRot = [0, 0, 0], rafId = null;
-
-    function animateTurn() {
-        progress += 0.025;
-        const p = Math.min(progress, 1.0);
-        const ease = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
-        rings[0].rotation.y = startRot[0] + (targetRot[0] - startRot[0]) * ease;
-        rings[1].rotation.x = startRot[1] + (targetRot[1] - startRot[1]) * ease;
-        rings[2].rotation.z = startRot[2] + (targetRot[2] - startRot[2]) * ease;
-        renderer.render(scene, camera);
-        rafId = p < 1.0 ? requestAnimationFrame(animateTurn) : null;
-    }
-
-    return {
-        turn: () => {
-            startRot = [rings[0].rotation.y, rings[1].rotation.x, rings[2].rotation.z];
-            targetRot = [
-                startRot[0] + Math.PI / 2.618,
-                startRot[1] - Math.PI / 3.141,
-                startRot[2] + Math.PI / 4.0
-            ];
-            progress = 0;
-            if (rafId) cancelAnimationFrame(rafId);
-            animateTurn();
-        },
-        setThemeColor: (isDark) => {
-            mat.color.setHex(isDark ? 0x00aaff : 0x0055aa);
-            renderer.render(scene, camera);
-        },
-        resize: () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.render(scene, camera);
-        }
-    };
-})();
-
-/* =========================================================================
-   МОДУЛЬ 5: ФИНАНСОВАЯ МОДЕЛЬ, ЛЕНИВЫЕ ГРАФИКИ И UI
-   ========================================================================= */
-const DashboardApp = (() => {
+function initDashboardApp(visuals) {
     const dom = {
         form: document.getElementById('financialInputsForm'),
         startMonth: document.getElementById('paramStartMonth'),
@@ -2037,7 +2180,6 @@ const DashboardApp = (() => {
     let latestData = null;
     let calcTimer = null;
 
-    // Ленивый реестр графиков (создаются только при первом открытии соответствующей вкладки)
     const charts = {
         debt: null,
         stock: null,
@@ -2073,9 +2215,10 @@ const DashboardApp = (() => {
         };
     }
 
-    function ensureTabCharts(tabIdx) {
+    function ensureTabCharts(tabIdx, sampleData) {
+        if (typeof window.Chart === 'undefined') return;
         if (tabIdx === 0 && !charts.debt) {
-            charts.debt = new Chart(document.getElementById('chartDebt'), {
+            charts.debt = new window.Chart(document.getElementById('chartDebt'), {
                 type: 'bar',
                 data: {
                     labels: [],
@@ -2087,7 +2230,7 @@ const DashboardApp = (() => {
                 options: baseChartOptions('#e63946')
             });
         } else if (tabIdx === 1 && !charts.stock) {
-            charts.stock = new Chart(document.getElementById('chartStock'), {
+            charts.stock = new window.Chart(document.getElementById('chartStock'), {
                 type: 'bar',
                 data: {
                     labels: [],
@@ -2099,7 +2242,7 @@ const DashboardApp = (() => {
                 options: baseChartOptions('#d4af37')
             });
         } else if (tabIdx === 2 && !charts.cf) {
-            charts.cf = new Chart(document.getElementById('chartCF'), {
+            charts.cf = new window.Chart(document.getElementById('chartCF'), {
                 type: 'bar',
                 data: {
                     labels: [],
@@ -2113,7 +2256,7 @@ const DashboardApp = (() => {
         } else if (tabIdx === 3) {
             const pal = getChartPalette();
             if (!charts.orders) {
-                charts.orders = new Chart(document.getElementById('chartOrders'), {
+                charts.orders = new window.Chart(document.getElementById('chartOrders'), {
                     type: 'bar',
                     data: {
                         labels: [],
@@ -2125,14 +2268,14 @@ const DashboardApp = (() => {
                     options: baseChartOptions('#2a9d8f')
                 });
             }
-            if (!charts.pie) {
-                charts.pie = new Chart(document.getElementById('chartPie'), {
+            if (!charts.pie && sampleData) {
+                charts.pie = new window.Chart(document.getElementById('chartPie'), {
                     type: 'doughnut',
                     data: {
-                        labels: CONFIG.PIE_LABELS,
+                        labels: sampleData.costBreakdown.map(item => item.label),
                         datasets: [{
-                            data: new Array(CONFIG.PIE_LABELS.length).fill(0),
-                            backgroundColor: ['#52525b', '#71717a', '#d4af37', '#a1a1aa', '#e63946', '#2a9d8f', '#457b9d'],
+                            data: sampleData.costBreakdown.map(item => item.value),
+                            backgroundColor: sampleData.costBreakdown.map(item => item.color),
                             borderWidth: 0
                         }]
                     },
@@ -2149,33 +2292,34 @@ const DashboardApp = (() => {
 
     function updateVisibleCharts(m) {
         if (!m) return;
-        ensureTabCharts(activeTab);
+        ensureTabCharts(activeTab, m);
 
         if (activeTab === 0 && charts.debt) {
             charts.debt.data.labels = m.xLabels;
             charts.debt.data.datasets[0].data = m.interestPayments;
             charts.debt.data.datasets[1].data = m.debtBalance;
-            charts.debt.update();
+            charts.debt.update('none');
         } else if (activeTab === 1 && charts.stock) {
             charts.stock.data.labels = m.xLabels;
             charts.stock.data.datasets[0].data = m.cogsPayments;
             charts.stock.data.datasets[1].data = m.inventoryBalance;
-            charts.stock.update();
+            charts.stock.update('none');
         } else if (activeTab === 2 && charts.cf) {
             charts.cf.data.labels = m.xLabels;
             charts.cf.data.datasets[0].data = m.inflows;
             charts.cf.data.datasets[1].data = m.totalOutflows.map(v => -v);
-            charts.cf.update();
+            charts.cf.update('none');
         } else if (activeTab === 3) {
             if (charts.orders) {
                 charts.orders.data.labels = m.xLabels;
                 charts.orders.data.datasets[0].data = m.orders;
                 charts.orders.data.datasets[1].data = m.rev;
-                charts.orders.update();
+                charts.orders.update('none');
             }
             if (charts.pie) {
-                charts.pie.data.datasets[0].data = Object.values(m.costBreakdown);
-                charts.pie.update();
+                charts.pie.data.labels = m.costBreakdown.map(item => item.label);
+                charts.pie.data.datasets[0].data = m.costBreakdown.map(item => item.value);
+                charts.pie.update('none');
             }
         }
     }
@@ -2341,16 +2485,16 @@ const DashboardApp = (() => {
         const netProfit = sumRev * (marginPct / 100) - sumOpex - sumTaxes - sumInterest;
         const roi = sumRev > 0 ? (netProfit / sumRev) * 100 : 0;
 
-        // Именованный контракт статей расходов (порядок ключей соответствует CONFIG.PIE_LABELS)
-        const costBreakdown = {
-            warehouse: totalWh,
-            office: totalOffice,
-            payroll: totalFot,
-            adminBase: totalAdminBase,
-            taxes: sumTaxes,
-            purchases: sumPurchases,
-            interest: sumInterest
-        };
+        // Декларативная структура затрат (метка, значение и цвет связаны в одном объекте)
+        const costBreakdown = [
+            { label: 'Склад', value: totalWh, color: '#52525b' },
+            { label: 'Офис', value: totalOffice, color: '#71717a' },
+            { label: 'ФОТ', value: totalFot, color: '#d4af37' },
+            { label: 'Операц. база', value: totalAdminBase, color: '#a1a1aa' },
+            { label: 'Налоги 5%', value: sumTaxes, color: '#e63946' },
+            { label: 'Закупки', value: sumPurchases, color: '#2a9d8f' },
+            { label: 'Проценты по долгу', value: sumInterest, color: '#457b9d' }
+        ];
 
         return {
             marginPct, totalRateAnnual, prepayPct, delayMonths, growthVal, factShare,
@@ -2384,18 +2528,17 @@ const DashboardApp = (() => {
 
         let rows = '';
         for (let i = 0; i < m.xLabels.length; i++) {
-            rows += `<tr class="hover:bg-[var(--bg-cell-hover)] transition">
+            rows += `<tr class="row-hover transition">
                 <td class="p-3 font-bold">${m.xLabels[i]}</td>
-                <td class="p-3 text-[#e63946]">${NumFmt.format(m.monthlyInvestments[i])} ₽</td>
-                <td class="p-3 text-[#d4af37]">${NumFmt.format(m.interestPayments[i])} ₽</td>
-                <td class="p-3 text-[#2a9d8f]">${NumFmt.format(m.debtRepayments[i])} ₽</td>
+                <td class="p-3 text-vermilion">${NumFmt.format(m.monthlyInvestments[i])} ₽</td>
+                <td class="p-3 text-gold">${NumFmt.format(m.interestPayments[i])} ₽</td>
+                <td class="p-3 text-jade">${NumFmt.format(m.debtRepayments[i])} ₽</td>
                 <td class="p-3 font-bold">${NumFmt.format(m.debtBalance[i])} ₽</td>
                 <td class="p-3">${NumFmt.format(m.cashBalance[i])} ₽</td>
             </tr>`;
         }
         dom.tableDebtBody.innerHTML = rows;
 
-        // Обновляем ТОЛЬКО графики активной вкладки
         updateVisibleCharts(m);
     }
 
@@ -2411,14 +2554,14 @@ const DashboardApp = (() => {
         if (!silent) AudioEngine.click(950, 0.02);
         growthMode = mode;
         if (mode === 'abs') {
-            dom.btnModeAbs.className = 'py-1 font-mono text-[9px] uppercase tracking-wider bg-[#d4af37] text-black font-bold transition';
-            dom.btnModePct.className = 'py-1 font-mono text-[9px] uppercase tracking-wider opacity-60 hover:opacity-100 transition';
+            dom.btnModeAbs.className = 'py-1 font-mono text-9 uppercase tracking-wider bg-gold text-black font-bold transition';
+            dom.btnModePct.className = 'py-1 font-mono text-9 uppercase tracking-wider opacity-60 hover-op-100 transition';
             dom.lblGrowthTitle.textContent = 'ПРИРОСТ В МЕСЯЦ';
             dom.growthSlider.max = 100;
             dom.growthSlider.value = 5;
         } else {
-            dom.btnModePct.className = 'py-1 font-mono text-[9px] uppercase tracking-wider bg-[#d4af37] text-black font-bold transition';
-            dom.btnModeAbs.className = 'py-1 font-mono text-[9px] uppercase tracking-wider opacity-60 hover:opacity-100 transition';
+            dom.btnModePct.className = 'py-1 font-mono text-9 uppercase tracking-wider bg-gold text-black font-bold transition';
+            dom.btnModeAbs.className = 'py-1 font-mono text-9 uppercase tracking-wider opacity-60 hover-op-100 transition';
             dom.lblGrowthTitle.textContent = 'ПРИРОСТ В %';
             dom.growthSlider.max = 50;
             dom.growthSlider.value = 10;
@@ -2435,15 +2578,15 @@ const DashboardApp = (() => {
     function selectTab(index) {
         activeTab = index;
         AudioEngine.click(1400, 0.025);
-        DashBackground3D.turn();
+        visuals.turnDashRings();
 
         const buttons = document.querySelectorAll('#navTabsContainer .tab-btn');
         buttons.forEach((btn, idx) => {
             if (idx === index) {
-                btn.className = 'tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest bg-[#d4af37] text-black font-bold transition shadow-md';
+                btn.className = 'tab-btn px-4 py-1-5 font-mono text-10 uppercase tracking-widest bg-gold text-black font-bold transition shadow-md';
                 TextScrambler.text(btn, CONFIG.TAB_TITLES[idx], 400);
             } else {
-                btn.className = 'tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest opacity-70 hover:opacity-100 transition';
+                btn.className = 'tab-btn px-4 py-1-5 font-mono text-10 uppercase tracking-widest opacity-70 hover-op-100 transition';
                 btn.textContent = CONFIG.TAB_TITLES[idx];
             }
         });
@@ -2459,7 +2602,6 @@ const DashboardApp = (() => {
             }
         }
 
-        // Лениво инициализируем и обновляем графики только открытой вкладки
         updateVisibleCharts(latestData);
     }
 
@@ -2473,19 +2615,18 @@ const DashboardApp = (() => {
 
         if (isDark) {
             thumb.style.transform = 'translateX(0px)';
-            lblNight.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold text-black';
-            lblDay.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold opacity-70';
+            lblNight.className = 'relative z-10 font-mono text-9 uppercase tracking-widest font-bold text-black';
+            lblDay.className = 'relative z-10 font-mono text-9 uppercase tracking-widest font-bold opacity-70';
             slider.setAttribute('aria-checked', 'true');
         } else {
             thumb.style.transform = 'translateX(58px)';
-            lblDay.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold text-white';
-            lblNight.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold opacity-70';
+            lblDay.className = 'relative z-10 font-mono text-9 uppercase tracking-widest font-bold text-white';
+            lblNight.className = 'relative z-10 font-mono text-9 uppercase tracking-widest font-bold opacity-70';
             slider.setAttribute('aria-checked', 'false');
         }
 
         AudioEngine.click(900, 0.03);
-        Preloader3D.setThemeColors(isDark);
-        DashBackground3D.setThemeColor(isDark);
+        visuals.setThemeColors(isDark);
         syncChartsTheme();
     }
 
@@ -2526,7 +2667,8 @@ h1{font-family:'Cormorant Garamond',serif;color:#d4af37;font-style:italic;font-s
 .metric{border:1px solid rgba(212,175,55,0.2);padding:15px;background:rgba(255,255,255,0.02)}
 .val{font-size:24px;color:#d4af37;font-weight:bold;margin-top:5px}
 p{font-size:14px;line-height:1.8;color:#ccc}
-@media print{body{background:white;color:black}.memo-card{border:none;box-shadow:none}}
+.print-btn{padding:10px 24px;background:#d4af37;color:#000;font-weight:bold;border:none;cursor:pointer}
+@media print{body{background:#fff;color:#000}.memo-card{border:none;box-shadow:none}.print-btn{display:none}}
 </style>
 </head>
 <body>
@@ -2540,7 +2682,7 @@ p{font-size:14px;line-height:1.8;color:#ccc}
 <div class="metric"><div>РЕНТАБЕЛЬНОСТЬ (ROI)</div><div class="val">${roi.toFixed(1)}%</div></div>
 </div>
 <p>Модель учитывает дискретные закупки, отсрочки поставщиков, налог на добавленную стоимость и стоимость заёмного капитала. Сгенерировано автоматически в защищённом контуре моделирования.</p>
-<div style="margin-top:40px;text-align:right"><button onclick="window.print()" style="padding:10px 24px;background:#d4af37;color:black;font-weight:bold;border:none;cursor:pointer">Печать / Сохранить в PDF</button></div>
+<div style="margin-top:40px;text-align:right"><button id="memoPrintBtn" type="button" class="print-btn">Печать / Сохранить в PDF</button></div>
 </div>
 </body>
 </html>`;
@@ -2548,6 +2690,12 @@ p{font-size:14px;line-height:1.8;color:#ccc}
         if (win) {
             win.document.write(memoHtml);
             win.document.close();
+            const bindPrint = () => {
+                const btn = win.document.getElementById('memoPrintBtn');
+                if (btn) btn.addEventListener('click', () => win.print());
+            };
+            if (win.document.readyState === 'complete') bindPrint();
+            else win.addEventListener('load', bindPrint);
         }
     }
 
@@ -2559,25 +2707,25 @@ p{font-size:14px;line-height:1.8;color:#ccc}
 
             switch (action) {
                 case 'prev-slide':
-                    Preloader3D.prevSlide();
+                    visuals.prevSlide();
                     break;
                 case 'next-slide':
-                    Preloader3D.nextSlide();
+                    visuals.nextSlide();
                     break;
                 case 'go-slide':
-                    Preloader3D.goToSlide(parseInt(target.dataset.slide, 10));
+                    visuals.goToSlide(parseInt(target.dataset.slide, 10));
                     break;
                 case 'apply-preset': {
-                    const slideIdx = Preloader3D.getCurrentSlide();
+                    const slideIdx = visuals.getCurrentSlide();
                     if (slideIdx >= 0 && BLUEPRINT_PRESETS[slideIdx]) {
                         BLUEPRINT_PRESETS[slideIdx].apply(dom, setGrowthMode);
                         runCalculation();
                     }
-                    Preloader3D.startObscuraTransition();
+                    visuals.startObscuraTransition();
                     break;
                 }
                 case 'enter-dashboard':
-                    Preloader3D.startObscuraTransition();
+                    visuals.startObscuraTransition();
                     break;
                 case 'brand-ping':
                     AudioEngine.click(1500, 0.04);
@@ -2636,7 +2784,7 @@ p{font-size:14px;line-height:1.8;color:#ccc}
 
         const coordEl = document.getElementById('cursorCoordDisplay');
         document.addEventListener('mousemove', (e) => {
-            if (coordEl && Preloader3D.isDismissed()) {
+            if (coordEl && visuals.isDismissed()) {
                 coordEl.textContent = `X: ${String(e.clientX).padStart(4, '0')} / Y: ${String(e.clientY).padStart(4, '0')}`;
             }
         });
@@ -2669,25 +2817,25 @@ p{font-size:14px;line-height:1.8;color:#ccc}
             if (clockEl) clockEl.textContent = `[${new Date().toTimeString().split(' ')[0]}]`;
         }, 1000);
 
-        window.addEventListener('resize', () => {
-            Preloader3D.resize();
-            DashBackground3D.resize();
-        });
+        window.addEventListener('resize', () => visuals.resize());
     }
 
-    return {
-        init: () => {
-            bindEvents();
-            runCalculation();
-        }
-    };
-})();
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', DashboardApp.init);
-} else {
-    DashboardApp.init();
+    bindEvents();
+    runCalculation();
 }
+
+/* =========================================================================
+   ТОЧКА ВХОДА: АСИНХРОННАЯ ИНИЦИАЛИЗАЦИЯ С FALLBACK
+   ========================================================================= */
+(async function bootstrap() {
+    const THREE = await loadThreeWithFallback();
+    const visuals = createVisualEngine(THREE);
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => initDashboardApp(visuals));
+    } else {
+        initDashboardApp(visuals);
+    }
+})();
 </script>
 </body>
 </html>
