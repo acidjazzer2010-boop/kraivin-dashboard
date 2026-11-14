@@ -29,13 +29,19 @@ tailwind.config = {
     }
 };
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"
+    }
+}
+</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
 :root{
     --bg-space:#070709;
-    --bg-panel:rgba(13,13,18,.88);
-    --bg-cell-hover:rgba(24,24,34,.95);
+    --bg-panel:rgba(13,13,18,.94);
+    --bg-cell-hover:rgba(24,24,34,.96);
     --text-main:#f4f1ea;
     --text-muted:#8e8a80;
     --border-line:rgba(212,175,55,.16);
@@ -46,11 +52,11 @@ tailwind.config = {
     --input-bg:rgba(255,255,255,.025);
     --cursor-glow:rgba(212,175,55,.2);
     --table-header-bg:rgba(13,13,18,.98);
-    --grain-opacity:.028;
+    --grain-opacity:.026;
 }
 html:not(.dark){
     --bg-space:#f4f1ea;
-    --bg-panel:rgba(255,255,255,.94);
+    --bg-panel:rgba(255,255,255,.96);
     --bg-cell-hover:rgba(246,243,235,.98);
     --text-main:#141416;
     --text-muted:#6b665c;
@@ -75,7 +81,6 @@ html,body{
 :focus-visible{outline:2px solid var(--accent-gold);outline-offset:2px}
 button:focus:not(:focus-visible){outline:none}
 
-/* Лёгкий статичный паттерн зерна без GPU-тяжёлого feTurbulence */
 .film-grain{
     position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:999;
     opacity:var(--grain-opacity);
@@ -130,7 +135,7 @@ button:focus:not(:focus-visible){outline:none}
 }
 .slide-nav-btn{
     width:46px;height:46px;border-radius:50%;
-    background:rgba(13,13,18,0.82);border:1px solid rgba(212,175,55,0.45);
+    background:rgba(13,13,18,0.85);border:1px solid rgba(212,175,55,0.45);
     color:var(--accent-gold);display:flex;align-items:center;justify-content:center;
     font-size:22px;cursor:pointer;pointer-events:auto;
     transition:transform .25s ease, background-color .25s ease, border-color .25s ease;
@@ -174,7 +179,7 @@ button:focus:not(:focus-visible){outline:none}
 .explore-btn:hover{border-color:#ffd700;color:#ffd700;box-shadow:0 0 60px rgba(212,175,55,.7),inset 0 0 24px rgba(212,175,55,.35);transform:scale(1.04)}
 
 .preset-btn{
-    padding:12px 18px;background:rgba(13,13,18,.88);
+    padding:12px 18px;background:rgba(13,13,18,.9);
     border:1px solid var(--accent-gold);color:var(--accent-gold);
     font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.2em;
     text-transform:uppercase;cursor:pointer;transition:all .3s;
@@ -195,12 +200,17 @@ button:focus:not(:focus-visible){outline:none}
 #webgl-bg-canvas{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none;opacity:.35}
 html:not(.dark) #webgl-bg-canvas{opacity:.18}
 
+/* Убран тяжелый backdrop-filter на множестве панелей; плотный полупрозрачный фон с micro-градиентом */
 .alche-block{
-    position:relative;background:var(--bg-panel);
-    backdrop-filter:blur(12px);
+    position:relative;
+    background:var(--bg-panel);
     border-right:1px solid var(--border-line);
     border-bottom:1px solid var(--border-line);
 }
+@media (min-width: 1024px) and (hover: hover) {
+    .alche-block { backdrop-filter: blur(8px); }
+}
+
 .cross-tl::before{content:'+';position:absolute;top:-6px;left:-4px;font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1;color:var(--accent-gold);pointer-events:none;z-index:10}
 .cross-br::after{content:'+';position:absolute;bottom:-6px;right:-4px;font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1;color:var(--accent-gold);pointer-events:none;z-index:10}
 
@@ -495,1520 +505,1576 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
     </div>
 </div>
 
-<script>
-(() => {
-    'use strict';
+<script type="module">
+import {
+    AdditiveBlending,
+    BufferAttribute,
+    BufferGeometry,
+    CanvasTexture,
+    Color,
+    DoubleSide,
+    Group,
+    LinearFilter,
+    LineBasicMaterial,
+    LineSegments,
+    MathUtils,
+    Mesh,
+    MeshBasicMaterial,
+    PerspectiveCamera,
+    PlaneGeometry,
+    Points,
+    PointsMaterial,
+    Raycaster,
+    Scene,
+    SphereGeometry,
+    TorusGeometry,
+    Vector2,
+    Vector3,
+    WebGLRenderer
+} from 'three';
 
-    /* =========================================================================
-       МОДУЛЬ 1: КОНФИГУРАЦИЯ, КОНСТАНТЫ И УТИЛИТЫ
-       ========================================================================= */
-    const CONFIG = Object.freeze({
-        REDUCE_MOTION: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-        PRELOADER_DURATION_MS: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 1200 : 9000,
-        OBSCURA_DURATION_SEC: 6.8,
-        CAMERA_FOV_DEG: 48,
-        BASE_CAMERA_Z: 420,
-        ORBIT_RADIUS: 255,
-        ORBIT_SPEED: 0.042,
-        INVENTION_BASE_SIZE: 96,
-        SCREEN_COVERAGE_RATIO: 0.50,
-        MORPH_TRIGGER_INDEX: 2,
-        SPUTNIK_FIRST_DELAY_SEC: 30.0,
-        SPUTNIK_REPEAT_MS: 60000,
-        SPUTNIK_FLIGHT_SEC: 14.0,
-        SPUTNIK_BEEP_INTERVAL_MS: 820,
-        CALC_DEBOUNCE_MS: 60,
-        OPEX_BASE_FIXED: 150000,
-        OPEX_GROWTH_MONTH_IDX: 6,
-        OPEX_GROWTH_FACTOR: 1.2,
-        FACTORING_ADVANCE_RATIO: 0.8,
-        REVENUE_TAX_RATE: 0.05,
-        SHORT_MONTHS: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'],
-        TAB_TITLES: [
-            '[01] ОБСЛУЖИВАНИЕ КАПИТАЛА',
-            '[02] СКЛАДСКОЙ ЦИКЛ',
-            '[03] ДЕНЕЖНЫЙ ПОТОК',
-            '[04] ЭКОНОМИКА И ЗАКАЗЫ'
-        ],
-        DORIAN_SCALE_HZ: [146.83, 164.81, 174.61, 196.00, 220.00, 246.94, 261.63, 293.66, 329.63]
-    });
+/* =========================================================================
+   МОДУЛЬ 1: КОНФИГУРАЦИЯ, КОНСТАНТЫ И УТИЛИТЫ
+   ========================================================================= */
+const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const IDLE_CALLBACK = window.requestIdleCallback || ((cb) => setTimeout(cb, 16));
 
-    const BLUEPRINT_PRESETS = Object.freeze([
-        {
-            name: 'Тяга и масштабирование',
-            subtitle: 'Сверхбыстрый прирост заказов (+15 шт./мес)',
-            apply: (dom, setMode) => {
-                setMode('abs');
-                dom.growthSlider.value = 15;
-                dom.margin.value = 25;
-                dom.startOrders.value = 50;
+const CONFIG = Object.freeze({
+    REDUCE_MOTION,
+    PRELOADER_DURATION_MS: REDUCE_MOTION ? 1200 : 9000,
+    OBSCURA_DURATION_SEC: 6.8,
+    CAMERA_FOV_DEG: 48,
+    BASE_CAMERA_Z: 420,
+    ORBIT_RADIUS: 255,
+    ORBIT_SPEED: 0.042,
+    INVENTION_BASE_SIZE: 96,
+    BLUEPRINT_TEX_SIZE: 256,
+    SCREEN_COVERAGE_RATIO: 0.54,
+    MORPH_TRIGGER_INDEX: 2,
+    SPUTNIK_FIRST_DELAY_SEC: 30.0,
+    SPUTNIK_REPEAT_MS: 60000,
+    SPUTNIK_FLIGHT_SEC: 14.0,
+    SPUTNIK_BEEP_INTERVAL_MS: 820,
+    CALC_DEBOUNCE_MS: 60,
+    OPEX_BASE_FIXED: 150000,
+    OPEX_GROWTH_MONTH_IDX: 6,
+    OPEX_GROWTH_FACTOR: 1.2,
+    FACTORING_ADVANCE_RATIO: 0.8,
+    REVENUE_TAX_RATE: 0.05,
+    SHORT_MONTHS: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'],
+    TAB_TITLES: [
+        '[01] ОБСЛУЖИВАНИЕ КАПИТАЛА',
+        '[02] СКЛАДСКОЙ ЦИКЛ',
+        '[03] ДЕНЕЖНЫЙ ПОТОК',
+        '[04] ЭКОНОМИКА И ЗАКАЗЫ'
+    ],
+    PIE_LABELS: ['Склад', 'Офис', 'ФОТ', 'Операц. база', 'Налоги 5%', 'Закупки', 'Проценты по долгу'],
+    DORIAN_SCALE_HZ: [146.83, 164.81, 174.61, 196.00, 220.00, 246.94, 261.63, 293.66, 329.63]
+});
+
+const BLUEPRINT_PRESETS = Object.freeze([
+    {
+        name: 'Тяга и масштабирование',
+        subtitle: 'Сверхбыстрый прирост заказов (+15 шт./мес)',
+        apply: (dom, setMode) => {
+            setMode('abs', { silent: true, skipCalc: true });
+            dom.growthSlider.value = 15;
+            dom.margin.value = 25;
+            dom.startOrders.value = 50;
+        }
+    },
+    {
+        name: 'Механика оборачиваемости',
+        subtitle: 'Короткий 3-месячный цикл закупки партий',
+        apply: (dom) => {
+            dom.batchCycle.value = 3;
+            dom.supplierPrepay.value = 30;
+            dom.supplierDelay.value = 2;
+        }
+    },
+    {
+        name: 'Аэродинамика кассовых разрывов',
+        subtitle: 'Факторинг 80% для ликвидации дефицита',
+        apply: (dom) => {
+            dom.factoringShare.value = 80;
+            dom.margin.value = 22;
+        }
+    },
+    {
+        name: 'Золотая пропорция (Канон)',
+        subtitle: 'Сбалансированная модель 1 : 1.618',
+        apply: (dom) => {
+            dom.margin.value = 20;
+            dom.factoringShare.value = 50;
+            dom.batchCycle.value = 5;
+        }
+    },
+    {
+        name: 'Защита резервов и баланс',
+        subtitle: 'Минимизация долга и удержание ликвидности',
+        apply: (dom) => {
+            dom.supplierPrepay.value = 20;
+            dom.supplierDelay.value = 3;
+            dom.maxOrdersCap.value = 180;
+        }
+    }
+]);
+
+function loadInjectedImages() {
+    try {
+        const node = document.getElementById('payload-images-json');
+        if (!node) return [];
+        const raw = node.textContent.trim();
+        if (!raw || raw.startsWith('__JSON_')) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (err) {
+        console.debug('Payload JSON parse fallback:', err);
+        return [];
+    }
+}
+
+const USER_IMAGES = loadInjectedImages();
+
+const NumFmt = {
+    parse(val) {
+        if (typeof val === 'number') return Number.isFinite(val) ? val : 0;
+        return parseFloat(String(val).replace(/[^\d.-]/g, '')) || 0;
+    },
+    format(num, plainSpace = false) {
+        const formatted = Math.round(num).toLocaleString('ru-RU');
+        return plainSpace ? formatted.replace(/\u00A0/g, ' ') : formatted;
+    },
+    bindInput(el) {
+        const cursorPos = el.selectionStart ?? el.value.length;
+        const digitsBefore = el.value.slice(0, cursorPos).replace(/\D/g, '').length;
+        el.value = NumFmt.format(NumFmt.parse(el.value));
+        let newPos = 0, seen = 0;
+        while (newPos < el.value.length && seen < digitsBefore) {
+            if (/\d/.test(el.value[newPos])) seen++;
+            newPos++;
+        }
+        try { el.setSelectionRange(newPos, newPos); } catch (err) { console.debug(err); }
+    }
+};
+
+const TextScrambler = (() => {
+    const ALPHABET = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ0123456789§$%*#@!/[]:;';
+    const DIGITS = '0123456789 ';
+    function run(el, finalText, duration = 420, useAlphabet = true) {
+        if (!el) return;
+        const glyphs = useAlphabet ? ALPHABET : DIGITS;
+        const start = performance.now();
+        const len = finalText.length;
+        if (el._scrambleTimer) cancelAnimationFrame(el._scrambleTimer);
+
+        function tick(now) {
+            const progress = Math.min((now - start) / duration, 1);
+            const revealIdx = Math.floor(progress * len);
+            let out = '';
+            for (let i = 0; i < len; i++) {
+                const ch = finalText[i];
+                out += (i < revealIdx || ' ₽%.,()/[]:\u00A0'.includes(ch))
+                    ? ch
+                    : glyphs[Math.floor(Math.random() * glyphs.length)];
             }
-        },
-        {
-            name: 'Механика оборачиваемости',
-            subtitle: 'Короткий 3-месячный цикл закупки партий',
-            apply: (dom) => {
-                dom.batchCycle.value = 3;
-                dom.supplierPrepay.value = 30;
-                dom.supplierDelay.value = 2;
-            }
-        },
-        {
-            name: 'Аэродинамика кассовых разрывов',
-            subtitle: 'Факторинг 80% для ликвидации дефицита',
-            apply: (dom) => {
-                dom.factoringShare.value = 80;
-                dom.margin.value = 22;
-            }
-        },
-        {
-            name: 'Золотая пропорция (Канон)',
-            subtitle: 'Сбалансированная модель 1 : 1.618',
-            apply: (dom) => {
-                dom.margin.value = 20;
-                dom.factoringShare.value = 50;
-                dom.batchCycle.value = 5;
-            }
-        },
-        {
-            name: 'Защита резервов и баланс',
-            subtitle: 'Минимизация долга и удержание ликвидности',
-            apply: (dom) => {
-                dom.supplierPrepay.value = 20;
-                dom.supplierDelay.value = 3;
-                dom.maxOrdersCap.value = 180;
+            el.textContent = out;
+            el._scrambleTimer = progress < 1 ? requestAnimationFrame(tick) : null;
+        }
+        el._scrambleTimer = requestAnimationFrame(tick);
+    }
+    return {
+        text: (el, str, dur = 420) => run(el, str, dur, true),
+        number: (el, str, dur = 380) => run(el, str, dur, false)
+    };
+})();
+
+/* =========================================================================
+   МОДУЛЬ 2: АУДИО-ДВИЖОК (RENAISSANCE SOUNDSCAPE + ТЕЛЕМЕТРИЯ)
+   ========================================================================= */
+const AudioEngine = (() => {
+    class Soundscape {
+        constructor() {
+            this.ctx = null;
+            this.isPlaying = false;
+            this.timer = null;
+            this.masterGain = null;
+            this.limiter = null;
+            this.warmthFilter = null;
+            this.droneStarted = false;
+            this.activeVoices = 0;
+            this.maxVoices = 2;
+
+            document.addEventListener('visibilitychange', () => {
+                if (!this.ctx) return;
+                if (document.hidden && this.ctx.state === 'running') {
+                    this.ctx.suspend().catch(e => console.debug(e));
+                } else if (!document.hidden && this.isPlaying && this.ctx.state === 'suspended') {
+                    this.ctx.resume().catch(e => console.debug(e));
+                }
+            });
+        }
+
+        init() {
+            if (this.ctx) return;
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioCtx({ latencyHint: 'playback' });
+
+                this.limiter = this.ctx.createDynamicsCompressor();
+                this.limiter.threshold.setValueAtTime(-12, this.ctx.currentTime);
+                this.limiter.knee.setValueAtTime(30, this.ctx.currentTime);
+                this.limiter.ratio.setValueAtTime(12, this.ctx.currentTime);
+                this.limiter.attack.setValueAtTime(0.005, this.ctx.currentTime);
+                this.limiter.release.setValueAtTime(0.25, this.ctx.currentTime);
+                this.limiter.connect(this.ctx.destination);
+
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.gain.setValueAtTime(0.22, this.ctx.currentTime);
+                this.masterGain.connect(this.limiter);
+
+                this.warmthFilter = this.ctx.createBiquadFilter();
+                this.warmthFilter.type = 'lowpass';
+                this.warmthFilter.frequency.setValueAtTime(950, this.ctx.currentTime);
+                this.warmthFilter.Q.setValueAtTime(1.0, this.ctx.currentTime);
+
+                const convolver = this.ctx.createConvolver();
+                convolver.buffer = this.buildImpulse(3.2, 1.8);
+                this.warmthFilter.connect(convolver);
+                convolver.connect(this.masterGain);
+
+                const dry = this.ctx.createGain();
+                dry.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                this.warmthFilter.connect(dry);
+                dry.connect(this.masterGain);
+            } catch (err) {
+                console.debug('AudioContext init unavailable:', err);
             }
         }
-    ]);
 
-    function loadInjectedImages() {
-        try {
-            const node = document.getElementById('payload-images-json');
-            if (!node) return [];
-            const raw = node.textContent.trim();
-            if (!raw || raw.startsWith('__JSON_')) return [];
-            const parsed = JSON.parse(raw);
-            return Array.isArray(parsed) ? parsed : [];
-        } catch (err) {
-            console.debug('Payload JSON parse fallback:', err);
-            return [];
+        buildImpulse(duration, decay) {
+            const rate = this.ctx.sampleRate;
+            const length = Math.floor(rate * duration);
+            const impulse = this.ctx.createBuffer(2, length, rate);
+            const left = impulse.getChannelData(0);
+            const right = impulse.getChannelData(1);
+            for (let i = 0; i < length; i++) {
+                const factor = Math.exp(-i / (rate * (decay * 0.4)));
+                left[i] = (Math.random() * 2 - 1) * factor;
+                right[i] = (Math.random() * 2 - 1) * factor;
+            }
+            return impulse;
+        }
+
+        startDrone() {
+            if (!this.ctx || this.droneStarted) return;
+            this.droneStarted = true;
+            [73.42, 110.00].forEach(freq => {
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(0.035, this.ctx.currentTime);
+                    osc.connect(gain);
+                    gain.connect(this.warmthFilter);
+                    osc.start();
+                } catch (err) { console.debug(err); }
+            });
+        }
+
+        playVoice(freq, duration = 5.5) {
+            if (!this.ctx || this.ctx.state !== 'running' || this.activeVoices >= this.maxVoices) return;
+            this.activeVoices++;
+            try {
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, now);
+                gain.gain.setValueAtTime(0.0001, now);
+                gain.gain.linearRampToValueAtTime(0.065, now + 1.8);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+                osc.connect(gain);
+                gain.connect(this.warmthFilter);
+                osc.start(now);
+                osc.stop(now + duration + 0.1);
+                osc.onended = () => {
+                    this.activeVoices = Math.max(0, this.activeVoices - 1);
+                    try { osc.disconnect(); gain.disconnect(); } catch (e) { console.debug(e); }
+                };
+            } catch (err) {
+                this.activeVoices = Math.max(0, this.activeVoices - 1);
+                console.debug(err);
+            }
+        }
+
+        start() {
+            this.init();
+            if (!this.ctx) return;
+            if (this.ctx.state === 'suspended') this.ctx.resume().catch(e => console.debug(e));
+            if (this.isPlaying) return;
+            this.isPlaying = true;
+            if (this.masterGain) {
+                this.masterGain.gain.setValueAtTime(0.22, this.ctx.currentTime);
+            }
+            this.startDrone();
+
+            const schedule = () => {
+                if (!this.isPlaying) return;
+                const scale = CONFIG.DORIAN_SCALE_HZ;
+                const note = scale[Math.floor(Math.random() * scale.length)];
+                this.playVoice(note, 4.5 + Math.random() * 2.5);
+                this.timer = setTimeout(schedule, 4000 + Math.random() * 4000);
+            };
+            schedule();
+        }
+
+        stop() {
+            this.isPlaying = false;
+            if (this.timer) clearTimeout(this.timer);
+            if (this.ctx && this.masterGain) {
+                try {
+                    this.masterGain.gain.linearRampToValueAtTime(0.0001, this.ctx.currentTime + 0.8);
+                    setTimeout(() => {
+                        if (!this.isPlaying && this.ctx && this.ctx.state === 'running') {
+                            this.ctx.suspend().catch(e => console.debug(e));
+                        }
+                    }, 850);
+                } catch (err) { console.debug(err); }
+            }
+        }
+
+        toggle() {
+            if (this.isPlaying) { this.stop(); return false; }
+            this.start();
+            return true;
         }
     }
 
-    const USER_IMAGES = loadInjectedImages();
+    const engine = new Soundscape();
 
-    const NumFmt = {
-        parse(val) {
-            if (typeof val === 'number') return Number.isFinite(val) ? val : 0;
-            return parseFloat(String(val).replace(/[^\d.-]/g, '')) || 0;
-        },
-        format(num) {
-            return Math.round(num).toLocaleString('ru-RU');
-        },
-        bindInput(el) {
-            const cursorPos = el.selectionStart ?? el.value.length;
-            const digitsBefore = el.value.slice(0, cursorPos).replace(/\D/g, '').length;
-            el.value = NumFmt.format(NumFmt.parse(el.value));
-            let newPos = 0, seen = 0;
-            while (newPos < el.value.length && seen < digitsBefore) {
-                if (/\d/.test(el.value[newPos])) seen++;
-                newPos++;
-            }
-            try { el.setSelectionRange(newPos, newPos); } catch (err) { console.debug(err); }
+    function ensureRunningCtx() {
+        if (!engine.ctx) engine.init();
+        if (engine.ctx && engine.ctx.state === 'suspended') {
+            engine.ctx.resume().catch(e => console.debug(e));
         }
+        return engine.ctx;
+    }
+
+    function click(freq = 1200, duration = 0.02) {
+        try {
+            const ctx = ensureRunningCtx();
+            if (!ctx) return;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(320, ctx.currentTime + duration);
+            gain.gain.setValueAtTime(0.035, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + duration);
+        } catch (err) { console.debug(err); }
+    }
+
+    function cathedralChord() {
+        try {
+            const ctx = ensureRunningCtx();
+            if (!ctx) return;
+            [146.83, 174.61, 220.00, 293.66].forEach((f, idx) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = idx === 0 ? 'sine' : 'triangle';
+                osc.frequency.setValueAtTime(f, ctx.currentTime);
+                gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.08 / (idx + 1), ctx.currentTime + 0.2);
+                gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 3.4);
+                osc.connect(gain);
+                gain.connect(engine.warmthFilter || ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 3.5);
+                osc.onended = () => { try { osc.disconnect(); gain.disconnect(); } catch (e) { console.debug(e); } };
+            });
+        } catch (err) { console.debug(err); }
+    }
+
+    function gearSpinUp(duration = CONFIG.OBSCURA_DURATION_SEC) {
+        try {
+            const ctx = ensureRunningCtx();
+            if (!ctx) return;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(38, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(180, ctx.currentTime + duration * 0.92);
+            gain.gain.setValueAtTime(0.008, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.038, ctx.currentTime + duration * 0.85);
+            gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + duration);
+            osc.onended = () => { try { osc.disconnect(); gain.disconnect(); } catch (e) { console.debug(e); } };
+        } catch (err) { console.debug(err); }
+    }
+
+    function sputnikBeep(volumeRatio = 1.0) {
+        try {
+            const ctx = engine.ctx;
+            if (!ctx || ctx.state !== 'running') return;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(1040, ctx.currentTime);
+            const curved = Math.pow(Math.max(0, Math.min(1, volumeRatio)), 1.6);
+            const peak = 0.002 + (0.095 - 0.002) * curved;
+            gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(peak, ctx.currentTime + 0.025);
+            gain.gain.setValueAtTime(peak, ctx.currentTime + 0.17);
+            gain.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + 0.24);
+            osc.connect(gain);
+            gain.connect(engine.masterGain || ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.26);
+            osc.onended = () => { try { osc.disconnect(); gain.disconnect(); } catch (e) { console.debug(e); } };
+        } catch (err) { console.debug(err); }
+    }
+
+    function predatorPulse(activating = true) {
+        try {
+            const ctx = ensureRunningCtx();
+            if (!ctx) return;
+            const now = ctx.currentTime;
+            const osc1 = ctx.createOscillator();
+            const osc2 = ctx.createOscillator();
+            const filter = ctx.createBiquadFilter();
+            const gain = ctx.createGain();
+
+            osc1.type = 'sawtooth';
+            osc2.type = 'triangle';
+            if (activating) {
+                osc1.frequency.setValueAtTime(68, now);
+                osc1.frequency.exponentialRampToValueAtTime(290, now + 0.35);
+                osc1.frequency.exponentialRampToValueAtTime(92, now + 0.85);
+                osc2.frequency.setValueAtTime(136, now);
+                osc2.frequency.exponentialRampToValueAtTime(580, now + 0.35);
+            } else {
+                osc1.frequency.setValueAtTime(220, now);
+                osc1.frequency.exponentialRampToValueAtTime(62, now + 0.6);
+                osc2.frequency.setValueAtTime(440, now);
+                osc2.frequency.exponentialRampToValueAtTime(110, now + 0.6);
+            }
+
+            filter.type = 'bandpass';
+            filter.frequency.setValueAtTime(420, now);
+            filter.Q.setValueAtTime(3.2, now);
+
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.linearRampToValueAtTime(0.09, now + 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.88);
+
+            osc1.connect(filter);
+            osc2.connect(filter);
+            filter.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc1.start(now);
+            osc2.start(now);
+            osc1.stop(now + 0.9);
+            osc2.stop(now + 0.9);
+            osc1.onended = () => {
+                try { osc1.disconnect(); osc2.disconnect(); filter.disconnect(); gain.disconnect(); } catch (e) { console.debug(e); }
+            };
+        } catch (err) { console.debug(err); }
+    }
+
+    return {
+        start: () => engine.start(),
+        toggle: () => engine.toggle(),
+        resumeIfSuspended: () => {
+            if (engine.ctx && engine.ctx.state === 'suspended') engine.ctx.resume().catch(e => console.debug(e));
+            else if (!engine.isPlaying) engine.start();
+        },
+        click,
+        cathedralChord,
+        gearSpinUp,
+        sputnikBeep,
+        predatorPulse
+    };
+})();
+
+/* =========================================================================
+   МОДУЛЬ 3: 3D-ПРЕЛОАДЕР (TREE-SHAKEN THREE.JS ES MODULE)
+   ========================================================================= */
+const Preloader3D = (() => {
+    const canvas = document.getElementById('preloader-webgl');
+    const stage = document.getElementById('preloader-stage');
+    const renderer = new WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    const scene = new Scene();
+    const camera = new PerspectiveCamera(CONFIG.CAMERA_FOV_DEG, window.innerWidth / window.innerHeight, 1, 6000);
+    const targetCamPos = new Vector3(0, 0, CONFIG.BASE_CAMERA_Z);
+    const currentLook = new Vector3(0, 0, 0);
+    const targetLook = new Vector3(0, 0, 0);
+    camera.position.copy(targetCamPos);
+
+    const rootGroup = new Group();
+    scene.add(rootGroup);
+
+    const _tmpOrbitPos = new Vector3();
+    const _tmpAnchorPos = new Vector3();
+    const _colorGold = new Color(0xd4af37);
+    const _colorDarkGold = new Color(0xb8860b);
+
+    const particleCount = 420;
+    const particleGeo = new BufferGeometry();
+    const particlePos = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount * 3; i += 3) {
+        particlePos[i] = (Math.random() - 0.5) * 600;
+        particlePos[i + 1] = (Math.random() - 0.5) * 450;
+        particlePos[i + 2] = (Math.random() - 0.5) * 500;
+    }
+    particleGeo.setAttribute('position', new BufferAttribute(particlePos, 3));
+    const particleMat = new PointsMaterial({
+        color: 0xd4af37, size: 2.2, transparent: true, opacity: 0.38, blending: AdditiveBlending
+    });
+    const dustParticles = new Points(particleGeo, particleMat);
+    rootGroup.add(dustParticles);
+
+    const megaRingMat = new MeshBasicMaterial({ color: 0x00c3ff, wireframe: true, transparent: true, opacity: 0.38 });
+    const secondaryRingMat = new MeshBasicMaterial({ color: 0x0077aa, wireframe: true, transparent: true, opacity: 0.22 });
+
+    class TrussRing {
+        constructor(mainRadius, tubeWidth, tubeDepth, segments) {
+            this.group = new Group();
+            this.group.add(new Mesh(new TorusGeometry(mainRadius, tubeWidth * 0.45, 12, segments), megaRingMat));
+
+            const pts = [];
+            const rOut = mainRadius + tubeWidth;
+            const rIn = mainRadius - tubeWidth;
+            for (let i = 0; i < segments; i++) {
+                const next = (i + 1) % segments;
+                const a1 = (i / segments) * Math.PI * 2;
+                const a2 = (next / segments) * Math.PI * 2;
+                const c1 = Math.cos(a1), s1 = Math.sin(a1);
+                const c2 = Math.cos(a2), s2 = Math.sin(a2);
+
+                const p1TO = new Vector3(c1 * rOut, s1 * rOut, tubeDepth);
+                const p2TO = new Vector3(c2 * rOut, s2 * rOut, tubeDepth);
+                const p1BO = new Vector3(c1 * rOut, s1 * rOut, -tubeDepth);
+                const p2BO = new Vector3(c2 * rOut, s2 * rOut, -tubeDepth);
+                const p1TI = new Vector3(c1 * rIn, s1 * rIn, tubeDepth);
+                const p2TI = new Vector3(c2 * rIn, s2 * rIn, tubeDepth);
+                const p1BI = new Vector3(c1 * rIn, s1 * rIn, -tubeDepth);
+                const p2BI = new Vector3(c2 * rIn, s2 * rIn, -tubeDepth);
+
+                pts.push(p1TO, p2TO, p1BO, p2BO, p1TI, p2TI, p1BI, p2BI);
+                pts.push(p1TO, p1BO, p1TI, p1BI, p1TO, p1TI, p1BO, p1BI);
+                if (i % 2 === 0) pts.push(p1TO, p2BO, p1TI, p2BI, p1TO, p2TI);
+                else pts.push(p1BO, p2TO, p1BI, p2TI, p1BO, p2BI);
+
+                if (i % 3 === 0) {
+                    const toothR = rOut + tubeWidth * 0.42;
+                    const pTooth = new Vector3(c1 * toothR, s1 * toothR, 0);
+                    pts.push(p1TO, pTooth, pTooth, p1BO);
+                }
+            }
+            this.group.add(new LineSegments(new BufferGeometry().setFromPoints(pts), megaRingMat));
+            this.group.add(new Mesh(
+                new TorusGeometry(mainRadius - tubeWidth * 1.6, tubeWidth * 0.18, 8, Math.floor(segments * 0.75)),
+                secondaryRingMat
+            ));
+        }
+    }
+
+    const ring1 = new TrussRing(340, 18.0, 12.0, 180).group;
+    const ring2 = new TrussRing(CONFIG.ORBIT_RADIUS, 14.0, 10.0, 150).group;
+    const ring3 = new TrussRing(175, 11.0, 8.0, 130).group;
+    ring2.rotation.x = Math.PI / 3.4;
+    ring2.rotation.z = Math.PI / 6.0;
+    ring3.rotation.y = Math.PI / 3.0;
+    rootGroup.add(ring1, ring2, ring3);
+
+    const astrolabeRings = [
+        { group: ring1, sx: 0.00045, sy: 0.00065, sz: 0.00025, dir: 1.0, startRotX: 0, startRotY: 0, startRotZ: 0 },
+        { group: ring2, sx: -0.00055, sy: 0.00040, sz: -0.00045, dir: -1.0, startRotX: 0, startRotY: 0, startRotZ: 0 },
+        { group: ring3, sx: 0.00060, sy: -0.00050, sz: 0.00035, dir: 1.0, startRotX: 0, startRotY: 0, startRotZ: 0 }
+    ];
+
+    const PROCEDURAL_DRAWERS = [
+        (ctx, cx, cy, s) => {
+            for (let side = -1; side <= 1; side += 2) {
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.bezierCurveTo(cx + side * 80 * s, cy - 120 * s, cx + side * 170 * s, cy - 90 * s, cx + side * 205 * s, cy + 20 * s);
+                ctx.stroke();
+                for (let r = 1; r <= 5; r++) {
+                    ctx.beginPath();
+                    ctx.moveTo(cx + side * r * 30 * s, cy - r * 14 * s);
+                    ctx.lineTo(cx + side * (r * 34 + 15) * s, cy + (65 - r * 6) * s);
+                    ctx.stroke();
+                }
+            }
+        },
+        (ctx, cx, cy, s) => {
+            const teeth = 18;
+            ctx.beginPath();
+            for (let i = 0; i <= teeth * 2; i++) {
+                const a = (i / (teeth * 2)) * Math.PI * 2;
+                const rad = ((i % 2 === 0) ? 150 : 128) * s;
+                const px = cx + Math.cos(a) * rad, py = cy + Math.sin(a) * rad;
+                if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+        },
+        (ctx, cx, cy, s) => {
+            ctx.beginPath();
+            for (let t = 0; t < 170; t++) {
+                const ang = t * 0.14, rad = t * 0.9 * s;
+                const px = cx + Math.cos(ang) * rad;
+                const py = cy + Math.sin(ang) * rad * 0.55 + (-35 + t * 0.42) * s;
+                if (t === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+        },
+        (ctx, cx, cy, s) => {
+            const box = 120 * s, arm = 170 * s;
+            ctx.strokeRect(cx - box, cy - box, box * 2, box * 2);
+            ctx.beginPath();
+            ctx.moveTo(cx - arm, cy); ctx.lineTo(cx + arm, cy);
+            ctx.moveTo(cx, cy - arm); ctx.lineTo(cx, cy + arm);
+            ctx.stroke();
+        },
+        (ctx, cx, cy, s) => {
+            for (let r = 40; r <= 165; r += 30) {
+                ctx.beginPath();
+                ctx.arc(cx, cy, r * s, -Math.PI * 0.85, Math.PI * 0.15);
+                ctx.stroke();
+            }
+        }
+    ];
+
+    const GOLD_TEXTURES = new Array(5).fill(null);
+    const PREDATOR_TEXTURES = new Array(5).fill(null);
+
+    function buildBlueprintTextures(source, slotIdx, onReady) {
+        const size = CONFIG.BLUEPRINT_TEX_SIZE;
+        const goldCanvas = document.createElement('canvas');
+        goldCanvas.width = size; goldCanvas.height = size;
+        const gCtx = goldCanvas.getContext('2d');
+
+        const predCanvas = document.createElement('canvas');
+        predCanvas.width = size; predCanvas.height = size;
+        const pCtx = predCanvas.getContext('2d');
+
+        gCtx.drawImage(source, 0, 0, size, size);
+        const imgData = gCtx.getImageData(0, 0, size, size);
+        const data = imgData.data;
+        const predImgData = pCtx.createImageData(size, size);
+        const pData = predImgData.data;
+
+        const half = size * 0.5;
+        for (let y = 0; y < size; y++) {
+            const ny = (y - half) / half;
+            for (let x = 0; x < size; x++) {
+                const nx = (x - half) / half;
+                const dist = Math.sqrt(nx * nx + ny * ny);
+                const radial = Math.max(0, Math.min(1, (1.0 - dist) / 0.28));
+                const fade = radial * radial * (3.0 - 2.0 * radial);
+
+                const idx = (y * size + x) * 4;
+                const lum = (0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2]) / 255.0;
+                const ink = Math.abs(lum - 0.5) * 2.0;
+                const alpha = Math.min(1.0, (0.22 + ink * 0.95)) * fade;
+
+                data[idx]     = Math.min(255, Math.round(215 + ink * 40));
+                data[idx + 1] = Math.min(255, Math.round(175 + ink * 55));
+                data[idx + 2] = Math.min(255, Math.round(55 + ink * 60));
+                data[idx + 3] = Math.round(alpha * 245);
+
+                const wave = Math.sin(nx * 5.0 + slotIdx) * 0.5 + Math.cos(ny * 5.0 - slotIdx) * 0.5;
+                const thermal = Math.max(0, Math.min(1, ink * 0.7 + wave * 0.3));
+                let pr, pg, pb;
+                if (thermal < 0.35) {
+                    const k = thermal / 0.35;
+                    pr = Math.round(145 * (1 - k) + 40 * k);
+                    pg = Math.round(15 * (1 - k) + 255 * k);
+                    pb = Math.round(240 * (1 - k) + 30 * k);
+                } else if (thermal < 0.72) {
+                    const k = (thermal - 0.35) / 0.37;
+                    pr = Math.round(40 * (1 - k) + 255 * k);
+                    pg = Math.round(255 * (1 - k) + 25 * k);
+                    pb = Math.round(30 * (1 - k) + 45 * k);
+                } else {
+                    const k = (thermal - 0.72) / 0.28;
+                    pr = Math.round(255 * (1 - k) + 210 * k);
+                    pg = Math.round(25 * (1 - k) + 20 * k);
+                    pb = Math.round(45 * (1 - k) + 255 * k);
+                }
+                pData[idx] = pr; pData[idx + 1] = pg; pData[idx + 2] = pb;
+                pData[idx + 3] = Math.round(Math.min(1.0, alpha * 1.15) * 255);
+            }
+        }
+
+        gCtx.putImageData(imgData, 0, 0);
+        pCtx.putImageData(predImgData, 0, 0);
+
+        const makeTex = (cnv) => {
+            const tex = new CanvasTexture(cnv);
+            tex.minFilter = LinearFilter;
+            tex.magFilter = LinearFilter;
+            tex.generateMipmaps = false;
+            tex.needsUpdate = true;
+            return tex;
+        };
+
+        const goldTex = makeTex(goldCanvas);
+        const predTex = makeTex(predCanvas);
+        GOLD_TEXTURES[slotIdx] = goldTex;
+        PREDATOR_TEXTURES[slotIdx] = predTex;
+        if (onReady) onReady(goldTex);
+    }
+
+    function createFallbackCanvas(slotIdx) {
+        const size = CONFIG.BLUEPRINT_TEX_SIZE;
+        const scale = size / 512;
+        const canvas = document.createElement('canvas');
+        canvas.width = size; canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#808080';
+        ctx.fillRect(0, 0, size, size);
+        const cx = size / 2, cy = size / 2;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = Math.max(2, 4 * scale);
+        ctx.beginPath(); ctx.arc(cx, cy, 175 * scale, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(cx, cy, 120 * scale, 0, Math.PI * 2); ctx.stroke();
+        const drawer = PROCEDURAL_DRAWERS[slotIdx % PROCEDURAL_DRAWERS.length];
+        if (drawer) drawer(ctx, cx, cy, scale);
+        return canvas;
+    }
+
+    function createInventionCard(imageSource, slotIdx) {
+        const group = new Group();
+        const mat = new MeshBasicMaterial({
+            transparent: true, opacity: 0.92, side: DoubleSide,
+            depthWrite: false, blending: AdditiveBlending
+        });
+        const geo = new PlaneGeometry(CONFIG.INVENTION_BASE_SIZE, CONFIG.INVENTION_BASE_SIZE, 24, 24);
+        const origPositions = new Float32Array(geo.attributes.position.array);
+        geo.userData.origPositions = origPositions;
+
+        const mesh = new Mesh(geo, mat);
+        group.add(mesh);
+
+        // Отложенная генерация текстур в idle-слотах, чтобы не блокировать первый кадр
+        IDLE_CALLBACK(() => {
+            if (!GOLD_TEXTURES[slotIdx]) {
+                buildBlueprintTextures(createFallbackCanvas(slotIdx), slotIdx, (tex) => {
+                    mat.map = tex; mat.needsUpdate = true;
+                });
+            }
+        });
+
+        if (typeof imageSource === 'string' && imageSource.length > 2) {
+            const img = new Image();
+            img.onload = () => {
+                if (img.naturalWidth > 0) {
+                    buildBlueprintTextures(img, slotIdx, (tex) => {
+                        mat.map = tex; mat.needsUpdate = true;
+                    });
+                }
+            };
+            img.src = imageSource;
+        }
+        return { group, mesh, mat };
+    }
+
+    const inventions = [];
+    for (let idx = 0; idx < 5; idx++) {
+        const { group, mesh, mat } = createInventionCard(USER_IMAGES[idx], idx);
+        const initialAngle = (idx / 5) * Math.PI * 2;
+        rootGroup.add(group);
+
+        const hitMesh = new Mesh(
+            new PlaneGeometry(CONFIG.INVENTION_BASE_SIZE * 0.95, CONFIG.INVENTION_BASE_SIZE * 0.95),
+            new MeshBasicMaterial({ visible: false, side: DoubleSide })
+        );
+        hitMesh.userData = { slideIdx: idx };
+        rootGroup.add(hitMesh);
+
+        inventions.push({
+            group, mesh, mat, hitMesh,
+            baseAngle: initialAngle,
+            currentAngle: initialAngle,
+            targetScale: 1.0,
+            isHovered: false,
+            startPos: null,
+            startRot: null
+        });
+    }
+
+    function createSputnikMesh() {
+        const group = new Group();
+        const wireGold = new LineBasicMaterial({ color: 0xffd700, transparent: true, opacity: 0.92 });
+        const wireCyan = new LineBasicMaterial({ color: 0x00d8ff, transparent: true, opacity: 0.72 });
+        const wireWhite = new LineBasicMaterial({ color: 0xf4f1ea, transparent: true, opacity: 0.85 });
+        const wireDim = new LineBasicMaterial({ color: 0xd4af37, transparent: true, opacity: 0.35 });
+        const R = 14.0;
+
+        const hullPts = [];
+        for (let i = 0; i < 12; i++) {
+            const t1 = (i / 12) * Math.PI, t2 = ((i + 1) / 12) * Math.PI;
+            for (let j = 0; j < 24; j++) {
+                const p1 = (j / 24) * Math.PI * 2, p2 = ((j + 1) / 24) * Math.PI * 2;
+                const v11 = new Vector3(R * Math.sin(t1) * Math.cos(p1), R * Math.cos(t1), R * Math.sin(t1) * Math.sin(p1));
+                const v12 = new Vector3(R * Math.sin(t1) * Math.cos(p2), R * Math.cos(t1), R * Math.sin(t1) * Math.sin(p2));
+                const v21 = new Vector3(R * Math.sin(t2) * Math.cos(p1), R * Math.cos(t2), R * Math.sin(t2) * Math.sin(p1));
+                const v22 = new Vector3(R * Math.sin(t2) * Math.cos(p2), R * Math.cos(t2), R * Math.sin(t2) * Math.sin(p2));
+                hullPts.push(v11, v12, v11, v21);
+                if ((i + j) % 2 === 0) hullPts.push(v11, v22);
+            }
+        }
+        group.add(new LineSegments(new BufferGeometry().setFromPoints(hullPts), wireCyan));
+
+        const flangePts = [];
+        const rIn = R * 0.96, rOut = R * 1.13, zF = 0.85;
+        for (let i = 0; i < 36; i++) {
+            const a1 = (i / 36) * Math.PI * 2, a2 = ((i + 1) / 36) * Math.PI * 2;
+            const oT1 = new Vector3(Math.cos(a1) * rOut, Math.sin(a1) * rOut, zF);
+            const oT2 = new Vector3(Math.cos(a2) * rOut, Math.sin(a2) * rOut, zF);
+            const oB1 = new Vector3(Math.cos(a1) * rOut, Math.sin(a1) * rOut, -zF);
+            const oB2 = new Vector3(Math.cos(a2) * rOut, Math.sin(a2) * rOut, -zF);
+            const iT1 = new Vector3(Math.cos(a1) * rIn, Math.sin(a1) * rIn, zF);
+            const iB1 = new Vector3(Math.cos(a1) * rIn, Math.sin(a1) * rIn, -zF);
+            flangePts.push(oT1, oT2, oB1, oB2, oT1, oB1, oT1, iT1, oB1, iB1, oT1, oB2);
+        }
+        group.add(new LineSegments(new BufferGeometry().setFromPoints(flangePts), wireGold));
+
+        const internalPts = [];
+        const rInt = R * 0.88;
+        for (let k = 0; k < 48; k++) {
+            const a1 = (k / 48) * Math.PI * 2, a2 = ((k + 1) / 48) * Math.PI * 2;
+            internalPts.push(
+                new Vector3(Math.cos(a1) * rInt, Math.sin(a1) * rInt, 0),
+                new Vector3(Math.cos(a2) * rInt, Math.sin(a2) * rInt, 0),
+                new Vector3(Math.cos(a1) * rInt, 0, Math.sin(a1) * rInt),
+                new Vector3(Math.cos(a2) * rInt, 0, Math.sin(a2) * rInt),
+                new Vector3(0, Math.cos(a1) * rInt, Math.sin(a1) * rInt),
+                new Vector3(0, Math.cos(a2) * rInt, Math.sin(a2) * rInt)
+            );
+        }
+        const bx = 5.4, by = 6.2, bz = 5.4;
+        const boxVerts = [
+            new Vector3(-bx, -by, -bz), new Vector3(bx, -by, -bz),
+            new Vector3(bx, by, -bz), new Vector3(-bx, by, -bz),
+            new Vector3(-bx, -by, bz), new Vector3(bx, -by, bz),
+            new Vector3(bx, by, bz), new Vector3(-bx, by, bz)
+        ];
+        [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7],[0,2],[4,6],[1,7],[3,5]].forEach(e => {
+            internalPts.push(boxVerts[e[0]], boxVerts[e[1]]);
+        });
+        boxVerts.forEach((v, idx) => {
+            const ang = (idx / 8) * Math.PI * 2;
+            internalPts.push(v, new Vector3(Math.cos(ang) * rIn, Math.sin(ang) * rIn, 0));
+        });
+        group.add(new LineSegments(new BufferGeometry().setFromPoints(internalPts), wireDim));
+
+        const antPts = [];
+        [Math.PI * 0.25, Math.PI * 0.75, Math.PI * 1.25, Math.PI * 1.75].forEach(ang => {
+            const ux = Math.cos(ang), uy = Math.sin(ang), tx = -uy, ty = ux;
+            const baseC = new Vector3(ux * rOut, uy * rOut, 0);
+            const lugL = new Vector3(ux * rIn + tx * 2.2, uy * rIn + ty * 2.2, 1.4);
+            const lugR = new Vector3(ux * rIn - tx * 2.2, uy * rIn - ty * 2.2, 1.4);
+            const lugB = new Vector3(ux * rIn, uy * rIn, -2.0);
+            const pivot = new Vector3(ux * (rOut + 2.6), uy * (rOut + 2.6), -1.8);
+            antPts.push(lugL, pivot, lugR, pivot, lugB, pivot, lugL, lugR, lugR, lugB, lugB, lugL, baseC, pivot);
+
+            const dirVec = new Vector3(ux * 0.56, uy * 0.56, -0.828).normalize();
+            const segLens = [26, 32, 38], segRadii = [0.75, 0.45, 0.22];
+            let curStart = pivot.clone();
+            segLens.forEach((sLen, sIdx) => {
+                const curEnd = curStart.clone().addScaledVector(dirVec, sLen);
+                const rSeg = segRadii[sIdx];
+                antPts.push(curStart, curEnd);
+                const o1 = new Vector3(tx, ty, 0).multiplyScalar(rSeg);
+                const o2 = new Vector3().crossVectors(dirVec, new Vector3(tx, ty, 0)).normalize().multiplyScalar(rSeg);
+                [o1, o1.clone().negate(), o2, o2.clone().negate()].forEach(off => {
+                    antPts.push(curStart.clone().add(off), curEnd.clone().add(off.clone().multiplyScalar(0.65)));
+                });
+                for (let c = 0; c < 8; c++) {
+                    const ca1 = (c / 8) * Math.PI * 2, ca2 = ((c + 1) / 8) * Math.PI * 2;
+                    antPts.push(
+                        curEnd.clone().addScaledVector(o1, Math.cos(ca1) * 1.4).addScaledVector(o2, Math.sin(ca1) * 1.4),
+                        curEnd.clone().addScaledVector(o1, Math.cos(ca2) * 1.4).addScaledVector(o2, Math.sin(ca2) * 1.4)
+                    );
+                }
+                curStart = curEnd;
+            });
+        });
+        group.add(new LineSegments(new BufferGeometry().setFromPoints(antPts), wireWhite));
+
+        const beacon = new Mesh(new SphereGeometry(2.1, 16, 16), new MeshBasicMaterial({ color: 0xff1e2d }));
+        beacon.position.set(0, 0, R + 1.2);
+        const glow = new Mesh(
+            new SphereGeometry(5.4, 16, 16),
+            new MeshBasicMaterial({ color: 0xff2a38, transparent: true, opacity: 0.55, blending: AdditiveBlending })
+        );
+        glow.position.set(0, 0, R + 1.2);
+        group.add(beacon, glow);
+        group.visible = false;
+
+        return { group, beacon, glow };
+    }
+
+    const sputnik = createSputnikMesh();
+    scene.add(sputnik.group);
+
+    let currentSlide = -1;
+    let isPredatorActive = false;
+    let predatorStrength = 0;
+    let predatorClock = 0;
+    let isObscura = false;
+    let obscuraStart = 0;
+    let dismissed = false;
+    let isProgrammaticNav = false;
+    let navTimer = null;
+    let sputnikSchedulerStarted = false;
+    let sputnikIntervalId = null;
+    const startTime = performance.now();
+
+    const sputnikFlight = {
+        active: false, startTime: 0, lastBeep: 0,
+        startP: new Vector3(), endP: new Vector3()
     };
 
-    const TextScrambler = (() => {
-        const ALPHABET = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ0123456789§$%*#@!/[]:;';
-        const DIGITS = '0123456789 ';
-        function run(el, finalText, duration = 420, useAlphabet = true) {
-            if (!el) return;
-            const glyphs = useAlphabet ? ALPHABET : DIGITS;
-            const start = performance.now();
-            const len = finalText.length;
-            if (el._scrambleTimer) cancelAnimationFrame(el._scrambleTimer);
+    function getOrbitPos(angle, outVec) {
+        outVec.set(Math.cos(angle) * CONFIG.ORBIT_RADIUS, Math.sin(angle) * CONFIG.ORBIT_RADIUS, 0);
+        outVec.applyEuler(ring2.rotation);
+        return outVec;
+    }
 
-            function tick(now) {
-                const progress = Math.min((now - start) / duration, 1);
-                const revealIdx = Math.floor(progress * len);
-                let out = '';
-                for (let i = 0; i < len; i++) {
-                    const ch = finalText[i];
-                    out += (i < revealIdx || ' ₽%.,()/[]:\u00A0'.includes(ch))
-                        ? ch
-                        : glyphs[Math.floor(Math.random() * glyphs.length)];
-                }
-                el.textContent = out;
-                el._scrambleTimer = progress < 1 ? requestAnimationFrame(tick) : null;
-            }
-            el._scrambleTimer = requestAnimationFrame(tick);
-        }
-        return {
-            text: (el, str, dur = 420) => run(el, str, dur, true),
-            number: (el, str, dur = 380) => run(el, str, dur, false)
-        };
-    })();
+    function getSlideDistance(cardWorldSize) {
+        const vFovRad = MathUtils.degToRad(camera.fov);
+        const aspect = window.innerWidth / window.innerHeight;
+        const visH = 2 * Math.tan(vFovRad / 2);
+        const visW = visH * aspect;
+        return cardWorldSize / (CONFIG.SCREEN_COVERAGE_RATIO * Math.min(visH, visW));
+    }
 
-    /* =========================================================================
-       МОДУЛЬ 2: АУДИО-ДВИЖОК (RENAISSANCE SOUNDSCAPE + ТЕЛЕМЕТРИЯ)
-       ========================================================================= */
-    const AudioEngine = (() => {
-        class Soundscape {
-            constructor() {
-                this.ctx = null;
-                this.isPlaying = false;
-                this.timer = null;
-                this.masterGain = null;
-                this.limiter = null;
-                this.warmthFilter = null;
-                this.droneStarted = false;
-                this.activeVoices = 0;
-                this.maxVoices = 2;
+    function focusSlide(idx, { silent = false, snapCamera = false } = {}) {
+        if (idx < 0 || idx >= inventions.length) return;
+        currentSlide = idx;
+        if (!silent) AudioEngine.click(1800, 0.015);
 
-                document.addEventListener('visibilitychange', () => {
-                    if (!this.ctx) return;
-                    if (document.hidden && this.ctx.state === 'running') {
-                        this.ctx.suspend().catch(e => console.debug(e));
-                    } else if (!document.hidden && this.isPlaying && this.ctx.state === 'suspended') {
-                        this.ctx.resume().catch(e => console.debug(e));
-                    }
-                });
-            }
+        document.querySelectorAll('.slide-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
 
-            init() {
-                if (this.ctx) return;
-                try {
-                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-                    this.ctx = new AudioCtx({ latencyHint: 'playback' });
+        isProgrammaticNav = true;
+        if (navTimer) clearTimeout(navTimer);
+        navTimer = setTimeout(() => { isProgrammaticNav = false; }, 350);
 
-                    this.limiter = this.ctx.createDynamicsCompressor();
-                    this.limiter.threshold.setValueAtTime(-12, this.ctx.currentTime);
-                    this.limiter.knee.setValueAtTime(30, this.ctx.currentTime);
-                    this.limiter.ratio.setValueAtTime(12, this.ctx.currentTime);
-                    this.limiter.attack.setValueAtTime(0.005, this.ctx.currentTime);
-                    this.limiter.release.setValueAtTime(0.25, this.ctx.currentTime);
-                    this.limiter.connect(this.ctx.destination);
-
-                    this.masterGain = this.ctx.createGain();
-                    this.masterGain.gain.setValueAtTime(0.22, this.ctx.currentTime);
-                    this.masterGain.connect(this.limiter);
-
-                    this.warmthFilter = this.ctx.createBiquadFilter();
-                    this.warmthFilter.type = 'lowpass';
-                    this.warmthFilter.frequency.setValueAtTime(950, this.ctx.currentTime);
-                    this.warmthFilter.Q.setValueAtTime(1.0, this.ctx.currentTime);
-
-                    const convolver = this.ctx.createConvolver();
-                    convolver.buffer = this.buildImpulse(3.2, 1.8);
-                    this.warmthFilter.connect(convolver);
-                    convolver.connect(this.masterGain);
-
-                    const dry = this.ctx.createGain();
-                    dry.gain.setValueAtTime(0.3, this.ctx.currentTime);
-                    this.warmthFilter.connect(dry);
-                    dry.connect(this.masterGain);
-                } catch (err) {
-                    console.debug('AudioContext init unavailable:', err);
-                }
-            }
-
-            buildImpulse(duration, decay) {
-                const rate = this.ctx.sampleRate;
-                const length = Math.floor(rate * duration);
-                const impulse = this.ctx.createBuffer(2, length, rate);
-                const left = impulse.getChannelData(0);
-                const right = impulse.getChannelData(1);
-                for (let i = 0; i < length; i++) {
-                    const factor = Math.exp(-i / (rate * (decay * 0.4)));
-                    left[i] = (Math.random() * 2 - 1) * factor;
-                    right[i] = (Math.random() * 2 - 1) * factor;
-                }
-                return impulse;
-            }
-
-            startDrone() {
-                if (!this.ctx || this.droneStarted) return;
-                this.droneStarted = true;
-                [73.42, 110.00].forEach(freq => {
-                    try {
-                        const osc = this.ctx.createOscillator();
-                        const gain = this.ctx.createGain();
-                        osc.type = 'triangle';
-                        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-                        gain.gain.setValueAtTime(0.035, this.ctx.currentTime);
-                        osc.connect(gain);
-                        gain.connect(this.warmthFilter);
-                        osc.start();
-                    } catch (err) { console.debug(err); }
-                });
-            }
-
-            playVoice(freq, duration = 5.5) {
-                if (!this.ctx || this.ctx.state !== 'running' || this.activeVoices >= this.maxVoices) return;
-                this.activeVoices++;
-                try {
-                    const now = this.ctx.currentTime;
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(freq, now);
-                    gain.gain.setValueAtTime(0.0001, now);
-                    gain.gain.linearRampToValueAtTime(0.065, now + 1.8);
-                    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-                    osc.connect(gain);
-                    gain.connect(this.warmthFilter);
-                    osc.start(now);
-                    osc.stop(now + duration + 0.1);
-                    osc.onended = () => {
-                        this.activeVoices = Math.max(0, this.activeVoices - 1);
-                        try { osc.disconnect(); gain.disconnect(); } catch (e) { console.debug(e); }
-                    };
-                } catch (err) {
-                    this.activeVoices = Math.max(0, this.activeVoices - 1);
-                    console.debug(err);
-                }
-            }
-
-            start() {
-                this.init();
-                if (!this.ctx) return;
-                if (this.ctx.state === 'suspended') this.ctx.resume().catch(e => console.debug(e));
-                if (this.isPlaying) return;
-                this.isPlaying = true;
-                if (this.masterGain) {
-                    this.masterGain.gain.setValueAtTime(0.22, this.ctx.currentTime);
-                }
-                this.startDrone();
-
-                const schedule = () => {
-                    if (!this.isPlaying) return;
-                    const scale = CONFIG.DORIAN_SCALE_HZ;
-                    const note = scale[Math.floor(Math.random() * scale.length)];
-                    this.playVoice(note, 4.5 + Math.random() * 2.5);
-                    this.timer = setTimeout(schedule, 4000 + Math.random() * 4000);
-                };
-                schedule();
-            }
-
-            stop() {
-                this.isPlaying = false;
-                if (this.timer) clearTimeout(this.timer);
-                if (this.ctx && this.masterGain) {
-                    try {
-                        this.masterGain.gain.linearRampToValueAtTime(0.0001, this.ctx.currentTime + 0.8);
-                        setTimeout(() => {
-                            if (!this.isPlaying && this.ctx && this.ctx.state === 'running') {
-                                this.ctx.suspend().catch(e => console.debug(e));
-                            }
-                        }, 850);
-                    } catch (err) { console.debug(err); }
-                }
-            }
-
-            toggle() {
-                if (this.isPlaying) { this.stop(); return false; }
-                this.start();
-                return true;
-            }
-        }
-
-        const engine = new Soundscape();
-
-        function ensureRunningCtx() {
-            if (!engine.ctx) engine.init();
-            if (engine.ctx && engine.ctx.state === 'suspended') {
-                engine.ctx.resume().catch(e => console.debug(e));
-            }
-            return engine.ctx;
-        }
-
-        function click(freq = 1200, duration = 0.02) {
-            try {
-                const ctx = ensureRunningCtx();
-                if (!ctx) return;
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(freq, ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(320, ctx.currentTime + duration);
-                gain.gain.setValueAtTime(0.035, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start();
-                osc.stop(ctx.currentTime + duration);
-            } catch (err) { console.debug(err); }
-        }
-
-        function cathedralChord() {
-            try {
-                const ctx = ensureRunningCtx();
-                if (!ctx) return;
-                [146.83, 174.61, 220.00, 293.66].forEach((f, idx) => {
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    osc.type = idx === 0 ? 'sine' : 'triangle';
-                    osc.frequency.setValueAtTime(f, ctx.currentTime);
-                    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-                    gain.gain.linearRampToValueAtTime(0.08 / (idx + 1), ctx.currentTime + 0.2);
-                    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 3.4);
-                    osc.connect(gain);
-                    gain.connect(engine.warmthFilter || ctx.destination);
-                    osc.start();
-                    osc.stop(ctx.currentTime + 3.5);
-                    osc.onended = () => { try { osc.disconnect(); gain.disconnect(); } catch (e) { console.debug(e); } };
-                });
-            } catch (err) { console.debug(err); }
-        }
-
-        function gearSpinUp(duration = CONFIG.OBSCURA_DURATION_SEC) {
-            try {
-                const ctx = ensureRunningCtx();
-                if (!ctx) return;
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(38, ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(180, ctx.currentTime + duration * 0.92);
-                gain.gain.setValueAtTime(0.008, ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.038, ctx.currentTime + duration * 0.85);
-                gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start();
-                osc.stop(ctx.currentTime + duration);
-                osc.onended = () => { try { osc.disconnect(); gain.disconnect(); } catch (e) { console.debug(e); } };
-            } catch (err) { console.debug(err); }
-        }
-
-        function sputnikBeep(volumeRatio = 1.0) {
-            try {
-                const ctx = engine.ctx;
-                if (!ctx || ctx.state !== 'running') return;
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(1040, ctx.currentTime);
-                const curved = Math.pow(Math.max(0, Math.min(1, volumeRatio)), 1.6);
-                const peak = 0.002 + (0.095 - 0.002) * curved;
-                gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(peak, ctx.currentTime + 0.025);
-                gain.gain.setValueAtTime(peak, ctx.currentTime + 0.17);
-                gain.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + 0.24);
-                osc.connect(gain);
-                gain.connect(engine.masterGain || ctx.destination);
-                osc.start();
-                osc.stop(ctx.currentTime + 0.26);
-                osc.onended = () => { try { osc.disconnect(); gain.disconnect(); } catch (e) { console.debug(e); } };
-            } catch (err) { console.debug(err); }
-        }
-
-        function predatorPulse(activating = true) {
-            try {
-                const ctx = ensureRunningCtx();
-                if (!ctx) return;
-                const now = ctx.currentTime;
-                const osc1 = ctx.createOscillator();
-                const osc2 = ctx.createOscillator();
-                const filter = ctx.createBiquadFilter();
-                const gain = ctx.createGain();
-
-                osc1.type = 'sawtooth';
-                osc2.type = 'triangle';
-                if (activating) {
-                    osc1.frequency.setValueAtTime(68, now);
-                    osc1.frequency.exponentialRampToValueAtTime(290, now + 0.35);
-                    osc1.frequency.exponentialRampToValueAtTime(92, now + 0.85);
-                    osc2.frequency.setValueAtTime(136, now);
-                    osc2.frequency.exponentialRampToValueAtTime(580, now + 0.35);
-                } else {
-                    osc1.frequency.setValueAtTime(220, now);
-                    osc1.frequency.exponentialRampToValueAtTime(62, now + 0.6);
-                    osc2.frequency.setValueAtTime(440, now);
-                    osc2.frequency.exponentialRampToValueAtTime(110, now + 0.6);
-                }
-
-                filter.type = 'bandpass';
-                filter.frequency.setValueAtTime(420, now);
-                filter.Q.setValueAtTime(3.2, now);
-
-                gain.gain.setValueAtTime(0.0001, now);
-                gain.gain.linearRampToValueAtTime(0.09, now + 0.08);
-                gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.88);
-
-                osc1.connect(filter);
-                osc2.connect(filter);
-                filter.connect(gain);
-                gain.connect(ctx.destination);
-
-                osc1.start(now);
-                osc2.start(now);
-                osc1.stop(now + 0.9);
-                osc2.stop(now + 0.9);
-                osc1.onended = () => {
-                    try { osc1.disconnect(); osc2.disconnect(); filter.disconnect(); gain.disconnect(); } catch (e) { console.debug(e); }
-                };
-            } catch (err) { console.debug(err); }
-        }
-
-        return {
-            start: () => engine.start(),
-            toggle: () => engine.toggle(),
-            resumeIfSuspended: () => {
-                if (engine.ctx && engine.ctx.state === 'suspended') engine.ctx.resume().catch(e => console.debug(e));
-                else if (!engine.isPlaying) engine.start();
-            },
-            click,
-            cathedralChord,
-            gearSpinUp,
-            sputnikBeep,
-            predatorPulse
-        };
-    })();
-
-    /* =========================================================================
-       МОДУЛЬ 3: 3D-ПРЕЛОАДЕР (АСТРОЛЯБИЯ, ОРБИТАЛЬНЫЕ ЧЕРТЕЖИ, МОРФ, СПУТНИК)
-       ========================================================================= */
-    const Preloader3D = (() => {
-        const canvas = document.getElementById('preloader-webgl');
-        const stage = document.getElementById('preloader-stage');
-        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.setSize(window.innerWidth, window.innerHeight);
-
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(CONFIG.CAMERA_FOV_DEG, window.innerWidth / window.innerHeight, 1, 6000);
-        const targetCamPos = new THREE.Vector3(0, 0, CONFIG.BASE_CAMERA_Z);
-        const currentLook = new THREE.Vector3(0, 0, 0);
-        const targetLook = new THREE.Vector3(0, 0, 0);
-        camera.position.copy(targetCamPos);
-
-        const rootGroup = new THREE.Group();
-        scene.add(rootGroup);
-
-        // Переиспользуемые векторы и цвета (ноль аллокаций в цикле анимации)
-        const _tmpOrbitPos = new THREE.Vector3();
-        const _tmpAnchorPos = new THREE.Vector3();
-        const _colorGold = new THREE.Color(0xd4af37);
-        const _colorDarkGold = new THREE.Color(0xb8860b);
-
-        // Пылевая взвесь
-        const particleCount = 420;
-        const particleGeo = new THREE.BufferGeometry();
-        const particlePos = new Float32Array(particleCount * 3);
-        for (let i = 0; i < particleCount * 3; i += 3) {
-            particlePos[i] = (Math.random() - 0.5) * 600;
-            particlePos[i + 1] = (Math.random() - 0.5) * 450;
-            particlePos[i + 2] = (Math.random() - 0.5) * 500;
-        }
-        particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePos, 3));
-        const particleMat = new THREE.PointsMaterial({
-            color: 0xd4af37, size: 2.2, transparent: true, opacity: 0.38, blending: THREE.AdditiveBlending
+        inventions.forEach((item, i) => {
+            const active = i === idx;
+            item.isHovered = active;
+            item.targetScale = active ? 1.25 : 0.85;
+            item.mat.opacity = active ? 1.0 : 0.72;
         });
-        const dustParticles = new THREE.Points(particleGeo, particleMat);
-        rootGroup.add(dustParticles);
 
-        const megaRingMat = new THREE.MeshBasicMaterial({ color: 0x00c3ff, wireframe: true, transparent: true, opacity: 0.38 });
-        const secondaryRingMat = new THREE.MeshBasicMaterial({ color: 0x0077aa, wireframe: true, transparent: true, opacity: 0.22 });
-
-        class TrussRing {
-            constructor(mainRadius, tubeWidth, tubeDepth, segments) {
-                this.group = new THREE.Group();
-                this.group.add(new THREE.Mesh(new THREE.TorusGeometry(mainRadius, tubeWidth * 0.45, 12, segments), megaRingMat));
-
-                const pts = [];
-                const rOut = mainRadius + tubeWidth;
-                const rIn = mainRadius - tubeWidth;
-                for (let i = 0; i < segments; i++) {
-                    const next = (i + 1) % segments;
-                    const a1 = (i / segments) * Math.PI * 2;
-                    const a2 = (next / segments) * Math.PI * 2;
-                    const c1 = Math.cos(a1), s1 = Math.sin(a1);
-                    const c2 = Math.cos(a2), s2 = Math.sin(a2);
-
-                    const p1TO = new THREE.Vector3(c1 * rOut, s1 * rOut, tubeDepth);
-                    const p2TO = new THREE.Vector3(c2 * rOut, s2 * rOut, tubeDepth);
-                    const p1BO = new THREE.Vector3(c1 * rOut, s1 * rOut, -tubeDepth);
-                    const p2BO = new THREE.Vector3(c2 * rOut, s2 * rOut, -tubeDepth);
-                    const p1TI = new THREE.Vector3(c1 * rIn, s1 * rIn, tubeDepth);
-                    const p2TI = new THREE.Vector3(c2 * rIn, s2 * rIn, tubeDepth);
-                    const p1BI = new THREE.Vector3(c1 * rIn, s1 * rIn, -tubeDepth);
-                    const p2BI = new THREE.Vector3(c2 * rIn, s2 * rIn, -tubeDepth);
-
-                    pts.push(p1TO, p2TO, p1BO, p2BO, p1TI, p2TI, p1BI, p2BI);
-                    pts.push(p1TO, p1BO, p1TI, p1BI, p1TO, p1TI, p1BO, p1BI);
-                    if (i % 2 === 0) pts.push(p1TO, p2BO, p1TI, p2BI, p1TO, p2TI);
-                    else pts.push(p1BO, p2TO, p1BI, p2TI, p1BO, p2BI);
-
-                    if (i % 3 === 0) {
-                        const toothR = rOut + tubeWidth * 0.42;
-                        const pTooth = new THREE.Vector3(c1 * toothR, s1 * toothR, 0);
-                        pts.push(p1TO, pTooth, pTooth, p1BO);
-                    }
-                }
-                this.group.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), megaRingMat));
-                this.group.add(new THREE.Mesh(
-                    new THREE.TorusGeometry(mainRadius - tubeWidth * 1.6, tubeWidth * 0.18, 8, Math.floor(segments * 0.75)),
-                    secondaryRingMat
-                ));
-            }
-        }
-
-        const ring1 = new TrussRing(340, 18.0, 12.0, 180).group;
-        const ring2 = new TrussRing(CONFIG.ORBIT_RADIUS, 14.0, 10.0, 150).group;
-        const ring3 = new TrussRing(175, 11.0, 8.0, 130).group;
-        ring2.rotation.x = Math.PI / 3.4;
-        ring2.rotation.z = Math.PI / 6.0;
-        ring3.rotation.y = Math.PI / 3.0;
-        rootGroup.add(ring1, ring2, ring3);
-
-        const astrolabeRings = [
-            { group: ring1, sx: 0.00045, sy: 0.00065, sz: 0.00025, dir: 1.0, startRotX: 0, startRotY: 0, startRotZ: 0 },
-            { group: ring2, sx: -0.00055, sy: 0.00040, sz: -0.00045, dir: -1.0, startRotX: 0, startRotY: 0, startRotZ: 0 },
-            { group: ring3, sx: 0.00060, sy: -0.00050, sz: 0.00035, dir: 1.0, startRotX: 0, startRotY: 0, startRotZ: 0 }
-        ];
-
-        // Таблица процедурных чертежей Да Винчи (вместо длинной цепочки if/else)
-        const PROCEDURAL_DRAWERS = [
-            (ctx, cx, cy) => { // Орнитоптер
-                for (let s = -1; s <= 1; s += 2) {
-                    ctx.beginPath();
-                    ctx.moveTo(cx, cy);
-                    ctx.bezierCurveTo(cx + s * 80, cy - 120, cx + s * 170, cy - 90, cx + s * 205, cy + 20);
-                    ctx.stroke();
-                    for (let r = 1; r <= 5; r++) {
-                        ctx.beginPath();
-                        ctx.moveTo(cx + s * r * 30, cy - r * 14);
-                        ctx.lineTo(cx + s * (r * 34 + 15), cy + 65 - r * 6);
-                        ctx.stroke();
-                    }
-                }
-            },
-            (ctx, cx, cy) => { // Редуктор
-                const teeth = 18;
-                ctx.beginPath();
-                for (let i = 0; i <= teeth * 2; i++) {
-                    const a = (i / (teeth * 2)) * Math.PI * 2;
-                    const rad = (i % 2 === 0) ? 150 : 128;
-                    const px = cx + Math.cos(a) * rad, py = cy + Math.sin(a) * rad;
-                    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-                }
-                ctx.stroke();
-            },
-            (ctx, cx, cy) => { // Воздушный винт
-                ctx.beginPath();
-                for (let t = 0; t < 170; t++) {
-                    const ang = t * 0.14, rad = t * 0.9;
-                    const px = cx + Math.cos(ang) * rad;
-                    const py = cy + Math.sin(ang) * rad * 0.55 - 35 + t * 0.42;
-                    if (t === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-                }
-                ctx.stroke();
-            },
-            (ctx, cx, cy) => { // Витрувианская пропорция
-                ctx.strokeRect(cx - 120, cy - 120, 240, 240);
-                ctx.beginPath();
-                ctx.moveTo(cx - 170, cy); ctx.lineTo(cx + 170, cy);
-                ctx.moveTo(cx, cy - 170); ctx.lineTo(cx, cy + 170);
-                ctx.stroke();
-            },
-            (ctx, cx, cy) => { // Секстант
-                for (let r = 40; r <= 165; r += 30) {
-                    ctx.beginPath();
-                    ctx.arc(cx, cy, r, -Math.PI * 0.85, Math.PI * 0.15);
-                    ctx.stroke();
-                }
-            }
-        ];
-
-        const GOLD_TEXTURES = new Array(5).fill(null);
-        const PREDATOR_TEXTURES = new Array(5).fill(null);
-
-        function buildBlueprintTextures(source, slotIdx, onReady) {
-            const size = 512;
-            const goldCanvas = document.createElement('canvas');
-            goldCanvas.width = size; goldCanvas.height = size;
-            const gCtx = goldCanvas.getContext('2d');
-
-            const predCanvas = document.createElement('canvas');
-            predCanvas.width = size; predCanvas.height = size;
-            const pCtx = predCanvas.getContext('2d');
-
-            gCtx.drawImage(source, 0, 0, size, size);
-            const imgData = gCtx.getImageData(0, 0, size, size);
-            const data = imgData.data;
-            const predImgData = pCtx.createImageData(size, size);
-            const pData = predImgData.data;
-
-            const half = size * 0.5;
-            for (let y = 0; y < size; y++) {
-                const ny = (y - half) / half;
-                for (let x = 0; x < size; x++) {
-                    const nx = (x - half) / half;
-                    const dist = Math.sqrt(nx * nx + ny * ny);
-                    const radial = Math.max(0, Math.min(1, (1.0 - dist) / 0.28));
-                    const fade = radial * radial * (3.0 - 2.0 * radial);
-
-                    const idx = (y * size + x) * 4;
-                    const lum = (0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2]) / 255.0;
-                    const ink = Math.abs(lum - 0.5) * 2.0;
-                    const alpha = Math.min(1.0, (0.22 + ink * 0.95)) * fade;
-
-                    data[idx]     = Math.min(255, Math.round(215 + ink * 40));
-                    data[idx + 1] = Math.min(255, Math.round(175 + ink * 55));
-                    data[idx + 2] = Math.min(255, Math.round(55 + ink * 60));
-                    data[idx + 3] = Math.round(alpha * 245);
-
-                    const wave = Math.sin(nx * 5.0 + slotIdx) * 0.5 + Math.cos(ny * 5.0 - slotIdx) * 0.5;
-                    const thermal = Math.max(0, Math.min(1, ink * 0.7 + wave * 0.3));
-                    let pr, pg, pb;
-                    if (thermal < 0.35) {
-                        const k = thermal / 0.35;
-                        pr = Math.round(145 * (1 - k) + 40 * k);
-                        pg = Math.round(15 * (1 - k) + 255 * k);
-                        pb = Math.round(240 * (1 - k) + 30 * k);
-                    } else if (thermal < 0.72) {
-                        const k = (thermal - 0.35) / 0.37;
-                        pr = Math.round(40 * (1 - k) + 255 * k);
-                        pg = Math.round(255 * (1 - k) + 25 * k);
-                        pb = Math.round(30 * (1 - k) + 45 * k);
-                    } else {
-                        const k = (thermal - 0.72) / 0.28;
-                        pr = Math.round(255 * (1 - k) + 210 * k);
-                        pg = Math.round(25 * (1 - k) + 20 * k);
-                        pb = Math.round(45 * (1 - k) + 255 * k);
-                    }
-                    pData[idx] = pr; pData[idx + 1] = pg; pData[idx + 2] = pb;
-                    pData[idx + 3] = Math.round(Math.min(1.0, alpha * 1.15) * 255);
-                }
-            }
-
-            gCtx.putImageData(imgData, 0, 0);
-            pCtx.putImageData(predImgData, 0, 0);
-
-            const makeTex = (cnv) => {
-                const tex = new THREE.CanvasTexture(cnv);
-                tex.minFilter = THREE.LinearFilter;
-                tex.magFilter = THREE.LinearFilter;
-                tex.generateMipmaps = false;
-                tex.needsUpdate = true;
-                return tex;
-            };
-
-            const goldTex = makeTex(goldCanvas);
-            const predTex = makeTex(predCanvas);
-            GOLD_TEXTURES[slotIdx] = goldTex;
-            PREDATOR_TEXTURES[slotIdx] = predTex;
-            if (onReady) onReady(goldTex);
-        }
-
-        function createFallbackCanvas(slotIdx) {
-            const size = 512;
-            const canvas = document.createElement('canvas');
-            canvas.width = size; canvas.height = size;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#808080';
-            ctx.fillRect(0, 0, size, size);
-            const cx = size / 2, cy = size / 2;
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 4;
-            ctx.beginPath(); ctx.arc(cx, cy, 175, 0, Math.PI * 2); ctx.stroke();
-            ctx.beginPath(); ctx.arc(cx, cy, 120, 0, Math.PI * 2); ctx.stroke();
-            const drawer = PROCEDURAL_DRAWERS[slotIdx % PROCEDURAL_DRAWERS.length];
-            if (drawer) drawer(ctx, cx, cy);
-            return canvas;
-        }
-
-        function createInventionCard(imageSource, slotIdx) {
-            const group = new THREE.Group();
-            const mat = new THREE.MeshBasicMaterial({
-                transparent: true, opacity: 0.92, side: THREE.DoubleSide,
-                depthWrite: false, blending: THREE.AdditiveBlending
-            });
-            const geo = new THREE.PlaneGeometry(CONFIG.INVENTION_BASE_SIZE, CONFIG.INVENTION_BASE_SIZE, 24, 24);
-            const origPositions = new Float32Array(geo.attributes.position.array);
-            geo.userData.origPositions = origPositions;
-
-            const mesh = new THREE.Mesh(geo, mat);
-            group.add(mesh);
-
-            buildBlueprintTextures(createFallbackCanvas(slotIdx), slotIdx, (tex) => {
-                mat.map = tex; mat.needsUpdate = true;
-            });
-
-            if (typeof imageSource === 'string' && imageSource.length > 2) {
-                const img = new Image();
-                img.onload = () => {
-                    if (img.naturalWidth > 0) {
-                        buildBlueprintTextures(img, slotIdx, (tex) => {
-                            mat.map = tex; mat.needsUpdate = true;
-                        });
-                    }
-                };
-                img.src = imageSource;
-            }
-            return { group, mesh, mat };
-        }
-
-        const inventions = [];
-        for (let idx = 0; idx < 5; idx++) {
-            const { group, mesh, mat } = createInventionCard(USER_IMAGES[idx], idx);
-            const initialAngle = (idx / 5) * Math.PI * 2;
-            rootGroup.add(group);
-
-            const hitMesh = new THREE.Mesh(
-                new THREE.PlaneGeometry(CONFIG.INVENTION_BASE_SIZE * 0.95, CONFIG.INVENTION_BASE_SIZE * 0.95),
-                new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide })
-            );
-            hitMesh.userData = { slideIdx: idx };
-            rootGroup.add(hitMesh);
-
-            inventions.push({
-                group, mesh, mat, hitMesh,
-                baseAngle: initialAngle,
-                currentAngle: initialAngle,
-                targetScale: 1.0,
-                isHovered: false,
-                startPos: null,
-                startRot: null
-            });
-        }
-
-        // Инженерный каркасный чертёж Первого ИСЗ
-        function createSputnikMesh() {
-            const group = new THREE.Group();
-            const wireGold = new THREE.LineBasicMaterial({ color: 0xffd700, transparent: true, opacity: 0.92 });
-            const wireCyan = new THREE.LineBasicMaterial({ color: 0x00d8ff, transparent: true, opacity: 0.72 });
-            const wireWhite = new THREE.LineBasicMaterial({ color: 0xf4f1ea, transparent: true, opacity: 0.85 });
-            const wireDim = new THREE.LineBasicMaterial({ color: 0xd4af37, transparent: true, opacity: 0.35 });
-            const R = 14.0;
-
-            const hullPts = [];
-            for (let i = 0; i < 12; i++) {
-                const t1 = (i / 12) * Math.PI, t2 = ((i + 1) / 12) * Math.PI;
-                for (let j = 0; j < 24; j++) {
-                    const p1 = (j / 24) * Math.PI * 2, p2 = ((j + 1) / 24) * Math.PI * 2;
-                    const v11 = new THREE.Vector3(R * Math.sin(t1) * Math.cos(p1), R * Math.cos(t1), R * Math.sin(t1) * Math.sin(p1));
-                    const v12 = new THREE.Vector3(R * Math.sin(t1) * Math.cos(p2), R * Math.cos(t1), R * Math.sin(t1) * Math.sin(p2));
-                    const v21 = new THREE.Vector3(R * Math.sin(t2) * Math.cos(p1), R * Math.cos(t2), R * Math.sin(t2) * Math.sin(p1));
-                    const v22 = new THREE.Vector3(R * Math.sin(t2) * Math.cos(p2), R * Math.cos(t2), R * Math.sin(t2) * Math.sin(p2));
-                    hullPts.push(v11, v12, v11, v21);
-                    if ((i + j) % 2 === 0) hullPts.push(v11, v22);
-                }
-            }
-            group.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(hullPts), wireCyan));
-
-            const flangePts = [];
-            const rIn = R * 0.96, rOut = R * 1.13, zF = 0.85;
-            for (let i = 0; i < 36; i++) {
-                const a1 = (i / 36) * Math.PI * 2, a2 = ((i + 1) / 36) * Math.PI * 2;
-                const oT1 = new THREE.Vector3(Math.cos(a1) * rOut, Math.sin(a1) * rOut, zF);
-                const oT2 = new THREE.Vector3(Math.cos(a2) * rOut, Math.sin(a2) * rOut, zF);
-                const oB1 = new THREE.Vector3(Math.cos(a1) * rOut, Math.sin(a1) * rOut, -zF);
-                const oB2 = new THREE.Vector3(Math.cos(a2) * rOut, Math.sin(a2) * rOut, -zF);
-                const iT1 = new THREE.Vector3(Math.cos(a1) * rIn, Math.sin(a1) * rIn, zF);
-                const iB1 = new THREE.Vector3(Math.cos(a1) * rIn, Math.sin(a1) * rIn, -zF);
-                flangePts.push(oT1, oT2, oB1, oB2, oT1, oB1, oT1, iT1, oB1, iB1, oT1, oB2);
-            }
-            group.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(flangePts), wireGold));
-
-            const internalPts = [];
-            const rInt = R * 0.88;
-            for (let k = 0; k < 48; k++) {
-                const a1 = (k / 48) * Math.PI * 2, a2 = ((k + 1) / 48) * Math.PI * 2;
-                internalPts.push(
-                    new THREE.Vector3(Math.cos(a1) * rInt, Math.sin(a1) * rInt, 0),
-                    new THREE.Vector3(Math.cos(a2) * rInt, Math.sin(a2) * rInt, 0),
-                    new THREE.Vector3(Math.cos(a1) * rInt, 0, Math.sin(a1) * rInt),
-                    new THREE.Vector3(Math.cos(a2) * rInt, 0, Math.sin(a2) * rInt),
-                    new THREE.Vector3(0, Math.cos(a1) * rInt, Math.sin(a1) * rInt),
-                    new THREE.Vector3(0, Math.cos(a2) * rInt, Math.sin(a2) * rInt)
-                );
-            }
-            const bx = 5.4, by = 6.2, bz = 5.4;
-            const boxVerts = [
-                new THREE.Vector3(-bx, -by, -bz), new THREE.Vector3(bx, -by, -bz),
-                new THREE.Vector3(bx, by, -bz), new THREE.Vector3(-bx, by, -bz),
-                new THREE.Vector3(-bx, -by, bz), new THREE.Vector3(bx, -by, bz),
-                new THREE.Vector3(bx, by, bz), new THREE.Vector3(-bx, by, bz)
-            ];
-            [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7],[0,2],[4,6],[1,7],[3,5]].forEach(e => {
-                internalPts.push(boxVerts[e[0]], boxVerts[e[1]]);
-            });
-            boxVerts.forEach((v, idx) => {
-                const ang = (idx / 8) * Math.PI * 2;
-                internalPts.push(v, new THREE.Vector3(Math.cos(ang) * rIn, Math.sin(ang) * rIn, 0));
-            });
-            group.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(internalPts), wireDim));
-
-            const antPts = [];
-            [Math.PI * 0.25, Math.PI * 0.75, Math.PI * 1.25, Math.PI * 1.75].forEach(ang => {
-                const ux = Math.cos(ang), uy = Math.sin(ang), tx = -uy, ty = ux;
-                const baseC = new THREE.Vector3(ux * rOut, uy * rOut, 0);
-                const lugL = new THREE.Vector3(ux * rIn + tx * 2.2, uy * rIn + ty * 2.2, 1.4);
-                const lugR = new THREE.Vector3(ux * rIn - tx * 2.2, uy * rIn - ty * 2.2, 1.4);
-                const lugB = new THREE.Vector3(ux * rIn, uy * rIn, -2.0);
-                const pivot = new THREE.Vector3(ux * (rOut + 2.6), uy * (rOut + 2.6), -1.8);
-                antPts.push(lugL, pivot, lugR, pivot, lugB, pivot, lugL, lugR, lugR, lugB, lugB, lugL, baseC, pivot);
-
-                const dirVec = new THREE.Vector3(ux * 0.56, uy * 0.56, -0.828).normalize();
-                const segLens = [26, 32, 38], segRadii = [0.75, 0.45, 0.22];
-                let curStart = pivot.clone();
-                segLens.forEach((sLen, sIdx) => {
-                    const curEnd = curStart.clone().addScaledVector(dirVec, sLen);
-                    const rSeg = segRadii[sIdx];
-                    antPts.push(curStart, curEnd);
-                    const o1 = new THREE.Vector3(tx, ty, 0).multiplyScalar(rSeg);
-                    const o2 = new THREE.Vector3().crossVectors(dirVec, new THREE.Vector3(tx, ty, 0)).normalize().multiplyScalar(rSeg);
-                    [o1, o1.clone().negate(), o2, o2.clone().negate()].forEach(off => {
-                        antPts.push(curStart.clone().add(off), curEnd.clone().add(off.clone().multiplyScalar(0.65)));
-                    });
-                    for (let c = 0; c < 8; c++) {
-                        const ca1 = (c / 8) * Math.PI * 2, ca2 = ((c + 1) / 8) * Math.PI * 2;
-                        antPts.push(
-                            curEnd.clone().addScaledVector(o1, Math.cos(ca1) * 1.4).addScaledVector(o2, Math.sin(ca1) * 1.4),
-                            curEnd.clone().addScaledVector(o1, Math.cos(ca2) * 1.4).addScaledVector(o2, Math.sin(ca2) * 1.4)
-                        );
-                    }
-                    curStart = curEnd;
-                });
-            });
-            group.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(antPts), wireWhite));
-
-            const beacon = new THREE.Mesh(new THREE.SphereGeometry(2.1, 16, 16), new THREE.MeshBasicMaterial({ color: 0xff1e2d }));
-            beacon.position.set(0, 0, R + 1.2);
-            const glow = new THREE.Mesh(
-                new THREE.SphereGeometry(5.4, 16, 16),
-                new THREE.MeshBasicMaterial({ color: 0xff2a38, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending })
-            );
-            glow.position.set(0, 0, R + 1.2);
-            group.add(beacon, glow);
-            group.visible = false;
-
-            return { group, beacon, glow };
-        }
-
-        const sputnik = createSputnikMesh();
-        scene.add(sputnik.group);
-
-        // Состояние прелоадера
-        let currentSlide = -1;
-        let isPredatorActive = false;
-        let predatorStrength = 0;
-        let predatorClock = 0;
-        let isObscura = false;
-        let obscuraStart = 0;
-        let dismissed = false;
-        let isProgrammaticNav = false;
-        let navTimer = null;
-        let sputnikSchedulerStarted = false;
-        let sputnikIntervalId = null;
-        const startTime = performance.now();
-
-        const sputnikFlight = {
-            active: false, startTime: 0, lastBeep: 0,
-            startP: new THREE.Vector3(), endP: new THREE.Vector3()
-        };
-
-        function getOrbitPos(angle, outVec) {
-            outVec.set(Math.cos(angle) * CONFIG.ORBIT_RADIUS, Math.sin(angle) * CONFIG.ORBIT_RADIUS, 0);
-            outVec.applyEuler(ring2.rotation);
-            return outVec;
-        }
-
-        function getSlideDistance(cardWorldSize) {
-            const vFovRad = THREE.MathUtils.degToRad(camera.fov);
-            const aspect = window.innerWidth / window.innerHeight;
-            const visH = 2 * Math.tan(vFovRad / 2);
-            const visW = visH * aspect;
-            return cardWorldSize / (CONFIG.SCREEN_COVERAGE_RATIO * Math.min(visH, visW));
-        }
-
-        function focusSlide(idx, { silent = false } = {}) {
-            if (idx < 0 || idx >= inventions.length) return;
-            currentSlide = idx;
-            if (!silent) AudioEngine.click(1800, 0.015);
-
-            document.querySelectorAll('.slide-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
-
-            isProgrammaticNav = true;
-            if (navTimer) clearTimeout(navTimer);
-            navTimer = setTimeout(() => { isProgrammaticNav = false; }, 350);
-
-            inventions.forEach((item, i) => {
-                const active = i === idx;
-                item.isHovered = active;
-                item.targetScale = active ? 1.25 : 0.85;
-                item.mat.opacity = active ? 1.0 : 0.72;
-            });
-
-            const preset = BLUEPRINT_PRESETS[idx];
-            if (preset && !isPredatorActive) {
-                const isMorphTrigger = idx === CONFIG.MORPH_TRIGGER_INDEX;
-                document.getElementById('loaderStatusText').textContent =
-                    `[${idx + 1}/5] ${preset.name}${isMorphTrigger ? ' • [НАЖМИТЕ НА ЧЕРТЁЖ ДЛЯ МОРФИНГА]' : ''}`;
-                const sub = document.getElementById('blueprintSubtitle');
-                sub.textContent = isMorphTrigger
-                    ? 'Нажмите на изображение: режим зрения Хищника и слияние форм'
-                    : preset.subtitle;
-                sub.style.opacity = '1';
-            }
-        }
-
-        function togglePredatorMode() {
-            isPredatorActive = !isPredatorActive;
-            predatorClock = 0;
-            AudioEngine.predatorPulse(isPredatorActive);
+        const preset = BLUEPRINT_PRESETS[idx];
+        if (preset && !isPredatorActive) {
+            const isMorphTrigger = idx === CONFIG.MORPH_TRIGGER_INDEX;
+            document.getElementById('loaderStatusText').textContent =
+                `[${idx + 1}/5] ${preset.name}${isMorphTrigger ? ' • [НАЖМИТЕ НА ЧЕРТЁЖ ДЛЯ МОРФИНГА]' : ''}`;
             const sub = document.getElementById('blueprintSubtitle');
-            if (isPredatorActive) {
-                document.getElementById('loaderStatusText').textContent = '[СПЕКТР ХИЩНИКА] СЛИЯНИЕ И МЕТАМОРФОЗА ЧЕРТЕЖЕЙ';
-                sub.textContent = 'Тепловизионный морфинг: нажмите повторно для возврата в золото';
-                sub.style.color = '#39ff14';
-                sub.style.opacity = '1';
-            } else {
-                sub.style.color = 'rgba(212,175,55,0.75)';
-                if (currentSlide >= 0) focusSlide(currentSlide, { silent: true });
-            }
+            sub.textContent = isMorphTrigger
+                ? 'Нажмите на изображение: режим зрения Хищника и слияние форм'
+                : preset.subtitle;
+            sub.style.opacity = '1';
         }
 
-        function launchSputnik() {
-            if (dismissed || isObscura || sputnikFlight.active) return;
-            const entryX = (Math.random() - 0.5) * 260;
-            const entryY = (Math.random() - 0.5) * 180;
-            sputnikFlight.startP.set(entryX, entryY, -2400);
-            sputnikFlight.endP.set(-entryX * 1.6 + (Math.random() - 0.5) * 220, -entryY * 1.6 + (Math.random() - 0.5) * 180, 680);
-            sputnikFlight.active = true;
-            sputnikFlight.startTime = performance.now();
-            sputnikFlight.lastBeep = performance.now();
-            sputnik.group.visible = true;
-            sputnik.group.position.copy(sputnikFlight.startP);
-            sputnik.group.scale.set(0.04, 0.04, 0.04);
+        if (snapCamera) {
+            const active = inventions[idx];
+            const dist = getSlideDistance(CONFIG.INVENTION_BASE_SIZE * active.targetScale);
+            targetLook.copy(active.group.position);
+            targetCamPos.set(active.group.position.x, active.group.position.y, active.group.position.z + dist);
+            camera.position.copy(targetCamPos);
+            currentLook.copy(targetLook);
+            camera.lookAt(currentLook);
         }
+    }
 
-        // Троттлинг raycast (не чаще 1 раза за кадр анимации)
-        const raycaster = new THREE.Raycaster();
-        const mouseVec = new THREE.Vector2(-999, -999);
-        let raycastScheduled = false;
+    function togglePredatorMode() {
+        isPredatorActive = !isPredatorActive;
+        predatorClock = 0;
+        AudioEngine.predatorPulse(isPredatorActive);
+        const sub = document.getElementById('blueprintSubtitle');
+        if (isPredatorActive) {
+            document.getElementById('loaderStatusText').textContent = '[СПЕКТР ХИЩНИКА] СЛИЯНИЕ И МЕТАМОРФОЗА ЧЕРТЕЖЕЙ';
+            sub.textContent = 'Тепловизионный морфинг: нажмите повторно для возврата в золото';
+            sub.style.color = '#39ff14';
+            sub.style.opacity = '1';
+        } else {
+            sub.style.color = 'rgba(212,175,55,0.75)';
+            if (currentSlide >= 0) focusSlide(currentSlide, { silent: true });
+        }
+    }
 
-        function runRaycast(isExplicitClick) {
-            if (dismissed || isObscura) return;
-            if (!isExplicitClick && (isProgrammaticNav || window.innerWidth < 768)) return;
+    function launchSputnik() {
+        if (dismissed || isObscura || sputnikFlight.active) return;
+        const entryX = (Math.random() - 0.5) * 260;
+        const entryY = (Math.random() - 0.5) * 180;
+        sputnikFlight.startP.set(entryX, entryY, -2400);
+        sputnikFlight.endP.set(-entryX * 1.6 + (Math.random() - 0.5) * 220, -entryY * 1.6 + (Math.random() - 0.5) * 180, 680);
+        sputnikFlight.active = true;
+        sputnikFlight.startTime = performance.now();
+        sputnikFlight.lastBeep = performance.now();
+        sputnik.group.visible = true;
+        sputnik.group.position.copy(sputnikFlight.startP);
+        sputnik.group.scale.set(0.04, 0.04, 0.04);
+    }
 
-            raycaster.setFromCamera(mouseVec, camera);
-            const candidates = isExplicitClick
-                ? inventions.map(h => h.hitMesh)
-                : inventions.filter((_, i) => i !== currentSlide).map(h => h.hitMesh);
+    const raycaster = new Raycaster();
+    const mouseVec = new Vector2(-999, -999);
+    let raycastScheduled = false;
 
-            const hits = raycaster.intersectObjects(candidates, false);
-            if (!hits.length) return;
+    function runRaycast(isExplicitClick) {
+        if (dismissed || isObscura) return;
+        if (!isExplicitClick && (isProgrammaticNav || window.innerWidth < 768)) return;
 
-            const idx = hits[0].object.userData.slideIdx;
-            if (typeof idx !== 'number') return;
+        raycaster.setFromCamera(mouseVec, camera);
+        const candidates = isExplicitClick
+            ? inventions.map(h => h.hitMesh)
+            : inventions.filter((_, i) => i !== currentSlide).map(h => h.hitMesh);
 
-            if (isExplicitClick) {
-                const shouldMorph = idx === currentSlide || idx === CONFIG.MORPH_TRIGGER_INDEX;
+        const hits = raycaster.intersectObjects(candidates, false);
+        if (!hits.length) return;
+
+        const idx = hits[0].object.userData.slideIdx;
+        if (typeof idx !== 'number') return;
+
+        if (isExplicitClick) {
+            if (idx === CONFIG.MORPH_TRIGGER_INDEX) {
                 if (idx !== currentSlide) focusSlide(idx);
-                if (shouldMorph) togglePredatorMode();
+                togglePredatorMode();
             } else if (idx !== currentSlide) {
                 focusSlide(idx);
             }
+        } else if (idx !== currentSlide) {
+            focusSlide(idx);
+        }
+    }
+
+    window.addEventListener('mousemove', (e) => {
+        if (dismissed || isObscura) return;
+        mouseVec.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouseVec.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        if (!raycastScheduled) {
+            raycastScheduled = true;
+            requestAnimationFrame(() => {
+                raycastScheduled = false;
+                runRaycast(false);
+            });
+        }
+    });
+
+    canvas.addEventListener('pointerdown', (e) => {
+        mouseVec.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouseVec.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        runRaycast(true);
+    });
+
+    let touchStartX = 0, touchStartY = 0;
+    stage.addEventListener('touchstart', (e) => {
+        if (e.touches.length) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }
+    }, { passive: true });
+
+    stage.addEventListener('touchend', (e) => {
+        if (!e.changedTouches.length) return;
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+        if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+            e.preventDefault();
+            if (dx < 0) nextSlide();
+            else prevSlide();
+        }
+    }, { passive: false });
+
+    function nextSlide() { focusSlide((currentSlide + 1) % inventions.length); }
+    function prevSlide() { focusSlide((currentSlide - 1 + inventions.length) % inventions.length); }
+
+    function startObscuraTransition() {
+        if (isObscura) return;
+        isObscura = true;
+        obscuraStart = performance.now();
+        AudioEngine.gearSpinUp(CONFIG.OBSCURA_DURATION_SEC);
+
+        const hud = document.querySelector('.preloader-fixed-hud');
+        if (hud) hud.style.opacity = '0';
+
+        targetCamPos.set(0, 0, CONFIG.BASE_CAMERA_Z + 15);
+        targetLook.set(0, 0, 0);
+
+        astrolabeRings.forEach(r => {
+            r.startRotX = r.group.rotation.x;
+            r.startRotY = r.group.rotation.y;
+            r.startRotZ = r.group.rotation.z;
+        });
+        inventions.forEach(item => {
+            item.startPos = item.group.position.clone();
+            item.startRot = item.group.rotation.clone();
+        });
+    }
+
+    function dismiss() {
+        if (dismissed) return;
+        dismissed = true;
+        if (sputnikIntervalId) {
+            clearInterval(sputnikIntervalId);
+            sputnikIntervalId = null;
         }
 
-        window.addEventListener('mousemove', (e) => {
-            if (dismissed || isObscura) return;
-            mouseVec.x = (e.clientX / window.innerWidth) * 2 - 1;
-            mouseVec.y = -(e.clientY / window.innerHeight) * 2 + 1;
-            if (!raycastScheduled) {
-                raycastScheduled = true;
-                requestAnimationFrame(() => {
-                    raycastScheduled = false;
-                    runRaycast(false);
+        const app = document.getElementById('mainDashboardApp');
+        document.documentElement.style.overflow = 'auto';
+        document.body.style.overflow = 'auto';
+        if (app) {
+            app.classList.add('ready', 'camera-obscura-reveal');
+        }
+
+        setTimeout(() => {
+            if (stage) stage.style.display = 'none';
+            try {
+                scene.traverse(o => {
+                    if (o.geometry) o.geometry.dispose();
+                    if (o.material) {
+                        (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.dispose());
+                    }
                 });
-            }
-        });
+                renderer.dispose();
+                renderer.forceContextLoss();
+            } catch (err) { console.debug(err); }
+        }, 1500);
+    }
 
-        canvas.addEventListener('pointerdown', (e) => {
-            mouseVec.x = (e.clientX / window.innerWidth) * 2 - 1;
-            mouseVec.y = -(e.clientY / window.innerHeight) * 2 + 1;
-            runRaycast(true);
-        });
-
-        let touchStartX = 0, touchStartY = 0;
-        stage.addEventListener('touchstart', (e) => {
-            if (e.touches.length) {
-                touchStartX = e.touches[0].clientX;
-                touchStartY = e.touches[0].clientY;
-            }
-        }, { passive: true });
-
-        stage.addEventListener('touchend', (e) => {
-            if (!e.changedTouches.length) return;
-            const dx = e.changedTouches[0].clientX - touchStartX;
-            const dy = e.changedTouches[0].clientY - touchStartY;
-            if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
-                if (dx < 0) nextSlide();
-                else prevSlide();
-            }
-        }, { passive: true });
-
-        function nextSlide() { focusSlide((currentSlide + 1) % inventions.length); }
-        function prevSlide() { focusSlide((currentSlide - 1 + inventions.length) % inventions.length); }
-
-        function startObscuraTransition() {
-            if (isObscura) return;
-            isObscura = true;
-            obscuraStart = performance.now();
-            AudioEngine.gearSpinUp(CONFIG.OBSCURA_DURATION_SEC);
-
-            const hud = document.querySelector('.preloader-fixed-hud');
-            if (hud) hud.style.opacity = '0';
-
-            targetCamPos.set(0, 0, CONFIG.BASE_CAMERA_Z + 15);
-            targetLook.set(0, 0, 0);
-
-            astrolabeRings.forEach(r => {
-                r.startRotX = r.group.rotation.x;
-                r.startRotY = r.group.rotation.y;
-                r.startRotZ = r.group.rotation.z;
-            });
-            inventions.forEach(item => {
-                item.startPos = item.group.position.clone();
-                item.startRot = item.group.rotation.clone();
-            });
-        }
-
-        function dismiss() {
-            if (dismissed) return;
-            dismissed = true;
-            if (sputnikIntervalId) {
-                clearInterval(sputnikIntervalId);
-                sputnikIntervalId = null;
-            }
-
-            const app = document.getElementById('mainDashboardApp');
-            document.documentElement.style.overflow = 'auto';
-            document.body.style.overflow = 'auto';
-            if (app) {
-                app.classList.add('ready', 'camera-obscura-reveal');
-            }
-
+    function triggerShutterBlink() {
+        AudioEngine.cathedralChord();
+        const flash = document.getElementById('shutter-flash');
+        if (flash) {
+            flash.style.transition = 'none';
+            flash.style.opacity = '0.75';
             setTimeout(() => {
-                if (stage) stage.style.display = 'none';
-                try {
-                    scene.traverse(o => {
-                        if (o.geometry) o.geometry.dispose();
-                        if (o.material) {
-                            (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.dispose());
-                        }
-                    });
-                    renderer.dispose();
-                    renderer.forceContextLoss();
-                } catch (err) { console.debug(err); }
-            }, 1500);
-        }
-
-        function triggerShutterBlink() {
-            AudioEngine.cathedralChord();
-            const flash = document.getElementById('shutter-flash');
-            if (flash) {
-                flash.style.transition = 'none';
-                flash.style.opacity = '0.75';
-                setTimeout(() => {
-                    dismiss();
-                    flash.style.transition = 'opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1)';
-                    flash.style.opacity = '0';
-                }, 60);
-            } else {
                 dismiss();
-            }
+                flash.style.transition = 'opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1)';
+                flash.style.opacity = '0';
+            }, 60);
+        } else {
+            dismiss();
         }
+    }
 
-        // Прогресс загрузки прелоадера
-        setTimeout(() => {
-            const pt = document.getElementById('preloaderTitle');
-            if (pt) pt.classList.add('locked-on');
-        }, 900);
+    setTimeout(() => {
+        const pt = document.getElementById('preloaderTitle');
+        if (pt) pt.classList.add('locked-on');
+    }, 900);
 
-        setTimeout(() => {
-            if (!dismissed && currentSlide === -1) focusSlide(0, { silent: true });
-        }, 1200);
+    setTimeout(() => {
+        if (!dismissed && currentSlide === -1) focusSlide(0, { silent: true });
+    }, 1200);
 
-        let hudCompleted = false;
-        const barEl = document.getElementById('loaderProgressBar');
-        const pctEl = document.getElementById('loaderPercent');
-        const hudEl = document.getElementById('preloaderHUD');
-        const btnWrapEl = document.getElementById('exploreBtnWrapper');
+    let hudCompleted = false;
+    const barEl = document.getElementById('loaderProgressBar');
+    const pctEl = document.getElementById('loaderPercent');
+    const hudEl = document.getElementById('preloaderHUD');
+    const btnWrapEl = document.getElementById('exploreBtnWrapper');
 
-        function animate(now) {
-            if (dismissed) return;
-            requestAnimationFrame(animate);
-
-            const elapsed = now - startTime;
-            const t = elapsed * 0.001;
-
-            if (!hudCompleted) {
-                const p = Math.min(elapsed / CONFIG.PRELOADER_DURATION_MS, 1);
-                if (barEl) barEl.style.width = `${(p * 100).toFixed(0)}%`;
-                if (pctEl) pctEl.textContent = `${Math.floor(p * 100)}%`;
-                if (p >= 0.96) {
-                    hudCompleted = true;
-                    if (hudEl) hudEl.style.opacity = '0';
-                    if (btnWrapEl) btnWrapEl.classList.add('active');
-                }
-            }
-
-            if (!isObscura && t >= CONFIG.SPUTNIK_FIRST_DELAY_SEC && !sputnikSchedulerStarted) {
-                sputnikSchedulerStarted = true;
-                launchSputnik();
-                sputnikIntervalId = setInterval(() => {
-                    if (!dismissed && !isObscura) launchSputnik();
-                }, CONFIG.SPUTNIK_REPEAT_MS);
-            }
-
-            if (sputnikFlight.active) {
-                const rawP = (now - sputnikFlight.startTime) / (CONFIG.SPUTNIK_FLIGHT_SEC * 1000);
-                if (rawP < 1.0) {
-                    const accelP = Math.pow(rawP, 2.35);
-                    sputnik.group.position.lerpVectors(sputnikFlight.startP, sputnikFlight.endP, accelP);
-                    sputnik.group.position.y += Math.sin(rawP * Math.PI) * 48;
-                    const sc = 0.04 + (1.05 - 0.04) * Math.pow(rawP, 1.4);
-                    sputnik.group.scale.set(sc, sc, sc);
-                    sputnik.group.lookAt(sputnikFlight.endP);
-                    sputnik.group.rotateZ(t * 0.45);
-
-                    const blink = (Math.floor(now / 280) % 2) === 0;
-                    sputnik.beacon.visible = blink;
-                    sputnik.glow.visible = blink;
-
-                    if (now - sputnikFlight.lastBeep > CONFIG.SPUTNIK_BEEP_INTERVAL_MS) {
-                        const dist = sputnik.group.position.distanceTo(camera.position);
-                        const prox = Math.max(0.02, Math.min(1.0, 1.0 - (dist - 180) / 2300));
-                        AudioEngine.sputnikBeep(prox);
-                        sputnikFlight.lastBeep = now;
-                    }
-                } else {
-                    sputnikFlight.active = false;
-                    sputnik.group.visible = false;
-                }
-            }
-
-            if (isObscura) {
-                const obsElapsed = (now - obscuraStart) * 0.001;
-                const progress = Math.min(obsElapsed / CONFIG.OBSCURA_DURATION_SEC, 1.0);
-                const alignP = Math.min(progress / 0.44, 1.0);
-                const easeAlign = 0.5 - 0.5 * Math.cos(alignP * Math.PI);
-                const currentSpeed = 0.0003 + Math.pow(progress, 3.4) * 0.17;
-                const shrinkP = Math.max(0, (progress - 0.42) / 0.58);
-                const easeShrink = Math.pow(shrinkP, 3.6);
-
-                inventions.forEach((item, idx) => {
-                    if (!item.startPos) return;
-                    const pull = Math.pow(progress, 1.85);
-                    const vAngle = progress * Math.PI * 3.4 + idx * (Math.PI * 2 / 5);
-                    const curR = (1.0 - pull) * 185.0;
-                    item.group.position.set(
-                        Math.cos(vAngle) * curR,
-                        Math.sin(vAngle) * curR,
-                        THREE.MathUtils.lerp(item.startPos.z, 0, pull)
-                    );
-                    item.group.rotation.z += 0.02 + progress * 0.07;
-                    item.group.rotation.x = THREE.MathUtils.lerp(item.startRot.x, 0, alignP);
-                    item.group.rotation.y = THREE.MathUtils.lerp(item.startRot.y, 0, alignP);
-                    const s = Math.max(1.0 - pull * 1.05, 0.001);
-                    item.group.scale.set(s, s, s);
-                    item.mat.opacity = Math.max(1.0 - progress * 1.25, 0.0);
-                });
-
-                const posArr = particleGeo.attributes.position.array;
-                const attract = 0.012 + progress * 0.045;
-                for (let i = 0; i < particleCount * 3; i += 3) {
-                    posArr[i] -= posArr[i] * attract;
-                    posArr[i + 1] -= posArr[i + 1] * attract;
-                    posArr[i + 2] -= posArr[i + 2] * (attract + 0.004);
-                }
-                particleGeo.attributes.position.needsUpdate = true;
-                particleMat.opacity = Math.max(0.38 * (1.0 - progress * 0.92), 0.0);
-
-                megaRingMat.opacity = THREE.MathUtils.lerp(megaRingMat.opacity, 0.92, 0.025);
-                megaRingMat.color.lerp(_colorGold, 0.025);
-                secondaryRingMat.color.lerp(_colorDarkGold, 0.025);
-
-                astrolabeRings.forEach((ring, idx) => {
-                    ring.group.rotation.x = THREE.MathUtils.lerp(ring.startRotX, 0, easeAlign);
-                    ring.group.rotation.y = THREE.MathUtils.lerp(ring.startRotY, 0, easeAlign);
-                    ring.group.rotation.z += (ring.dir || (idx % 2 === 0 ? 1 : -1)) * currentSpeed;
-                    const sf = Math.max(1.0 - easeShrink * 0.996, 0.004);
-                    const zThin = Math.max(1.0 - easeAlign * 0.90, 0.06);
-                    ring.group.scale.set(sf, sf, zThin * sf);
-                });
-
-                camera.position.lerp(targetCamPos, 0.035);
-                currentLook.lerp(targetLook, 0.035);
-                camera.lookAt(currentLook);
-                renderer.render(scene, camera);
-
-                if (progress >= 1.0) triggerShutterBlink();
-                return;
-            }
-
-            dustParticles.rotation.y = t * 0.02;
-            dustParticles.rotation.x = Math.sin(t * 0.015) * 0.1;
-
-            megaRingMat.opacity = THREE.MathUtils.lerp(megaRingMat.opacity, currentSlide !== -1 ? 0.16 : 0.38, 0.05);
-            astrolabeRings.forEach(r => {
-                r.group.rotation.x += r.sx;
-                r.group.rotation.y += r.sy;
-                r.group.rotation.z += r.sz;
-            });
-
-            predatorStrength = THREE.MathUtils.lerp(predatorStrength, isPredatorActive ? 1.0 : 0.0, 0.045);
-            if (predatorStrength > 0.002) predatorClock += 0.016 * predatorStrength;
-
-            const anchorIdx = currentSlide >= 0 ? currentSlide : CONFIG.MORPH_TRIGGER_INDEX;
-            getOrbitPos(inventions[anchorIdx].baseAngle + t * CONFIG.ORBIT_SPEED, _tmpAnchorPos);
-
-            const morphPhase = predatorClock * 0.45;
-            const stepFloor = Math.floor(morphPhase);
-            const stepFrac = morphPhase - stepFloor;
-            const smoothMix = stepFrac * stepFrac * (3.0 - 2.0 * stepFrac);
-
-            inventions.forEach((item, idx) => {
-                item.currentAngle = item.baseAngle + t * CONFIG.ORBIT_SPEED;
-                getOrbitPos(item.currentAngle, _tmpOrbitPos);
-
-                if (predatorStrength > 0.002) {
-                    const dAngle = t * 1.45 + idx * (Math.PI * 2 / 5);
-                    const dRadius = (16.0 + Math.sin(t * 2.2 + idx) * 9.0) * predatorStrength;
-                    const layerZ = (idx - 2) * 3.5 * predatorStrength;
-                    _tmpOrbitPos.set(
-                        THREE.MathUtils.lerp(_tmpOrbitPos.x, _tmpAnchorPos.x + Math.cos(dAngle) * dRadius, predatorStrength),
-                        THREE.MathUtils.lerp(_tmpOrbitPos.y, _tmpAnchorPos.y + Math.sin(dAngle) * dRadius, predatorStrength),
-                        THREE.MathUtils.lerp(_tmpOrbitPos.z, _tmpAnchorPos.z + layerZ, predatorStrength)
-                    );
-                }
-
-                item.group.position.copy(_tmpOrbitPos);
-                item.hitMesh.position.copy(_tmpOrbitPos);
-                item.group.quaternion.copy(camera.quaternion);
-                item.hitMesh.quaternion.copy(camera.quaternion);
-
-                const posAttr = item.mesh.geometry.attributes.position;
-                const orig = item.mesh.geometry.userData.origPositions;
-                if (predatorStrength > 0.005) {
-                    const seed = idx * 1.618;
-                    for (let v = 0; v < orig.length; v += 3) {
-                        const ox = orig[v], oy = orig[v + 1];
-                        posAttr.array[v]     = ox + Math.sin(oy * 0.075 + t * 2.8 + seed) * 7.5 * predatorStrength;
-                        posAttr.array[v + 1] = oy + Math.cos(ox * 0.075 - t * 2.4 + seed) * 7.5 * predatorStrength;
-                        posAttr.array[v + 2] = Math.sin((ox + oy) * 0.06 + t * 3.5 + seed) * 12.0 * predatorStrength;
-                    }
-                    posAttr.needsUpdate = true;
-                } else {
-                    posAttr.array.set(orig);
-                    posAttr.needsUpdate = true;
-                }
-
-                if (predatorStrength > 0.15) {
-                    const pTex = PREDATOR_TEXTURES[(idx + stepFloor) % 5] || GOLD_TEXTURES[(idx + stepFloor) % 5];
-                    if (pTex && item.mat.map !== pTex) {
-                        item.mat.map = pTex;
-                        item.mat.needsUpdate = true;
-                    }
-                    const pulse = 0.45 + 0.55 * Math.sin(smoothMix * Math.PI + idx * 1.25);
-                    item.mat.opacity = THREE.MathUtils.lerp(item.mat.opacity, 0.35 + pulse * 0.65, 0.12);
-                    item.mat.color.setHSL((t * 0.22 + idx * 0.2) % 1.0, 1.0, 0.62);
-                } else {
-                    const gTex = GOLD_TEXTURES[idx];
-                    if (gTex && item.mat.map !== gTex) {
-                        item.mat.map = gTex;
-                        item.mat.needsUpdate = true;
-                    }
-                    item.mat.color.setHex(0xffffff);
-                    item.mat.opacity = THREE.MathUtils.lerp(item.mat.opacity, item.isHovered ? 1.0 : 0.72, 0.1);
-                }
-
-                const sc = THREE.MathUtils.lerp(item.group.scale.x, isPredatorActive ? 1.28 : item.targetScale, 0.08);
-                item.group.scale.set(sc, sc, sc);
-            });
-
-            if (currentSlide >= 0 && currentSlide < inventions.length) {
-                const active = inventions[currentSlide];
-                const dist = getSlideDistance(CONFIG.INVENTION_BASE_SIZE * active.targetScale);
-                targetLook.copy(active.group.position);
-                targetCamPos.set(active.group.position.x, active.group.position.y, active.group.position.z + dist);
-            }
-
-            camera.position.lerp(targetCamPos, 0.06);
-            currentLook.lerp(targetLook, 0.08);
-            camera.lookAt(currentLook);
-            renderer.render(scene, camera);
-        }
-
+    function animate(now) {
+        if (dismissed) return;
         requestAnimationFrame(animate);
 
-        return {
-            nextSlide,
-            prevSlide,
-            goToSlide: (idx) => focusSlide(idx),
-            getCurrentSlide: () => currentSlide,
-            isDismissed: () => dismissed,
-            startObscuraTransition,
-            setThemeColors: (isDark) => {
-                megaRingMat.color.setHex(isDark ? 0x00c3ff : 0x0066cc);
-                secondaryRingMat.color.setHex(isDark ? 0x0077aa : 0x004488);
-            },
-            resize: () => {
-                if (dismissed) return;
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                if (currentSlide !== -1) focusSlide(currentSlide, { silent: true });
+        const elapsed = now - startTime;
+        const t = elapsed * 0.001;
+
+        if (!hudCompleted) {
+            const p = Math.min(elapsed / CONFIG.PRELOADER_DURATION_MS, 1);
+            if (barEl) barEl.style.width = `${(p * 100).toFixed(0)}%`;
+            if (pctEl) pctEl.textContent = `${Math.floor(p * 100)}%`;
+            if (p >= 0.96) {
+                hudCompleted = true;
+                if (hudEl) hudEl.style.opacity = '0';
+                if (btnWrapEl) btnWrapEl.classList.add('active');
             }
-        };
-    })();
-
-    /* =========================================================================
-       МОДУЛЬ 4: ФОНОВАЯ АРМИЛЛЯРНАЯ СФЕРА ДАШБОРДА
-       ========================================================================= */
-    const DashBackground3D = (() => {
-        const canvas = document.getElementById('webgl-bg-canvas');
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 2000);
-        camera.position.z = 160;
-        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false, powerPreference: 'low-power' });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(1);
-
-        const group = new THREE.Group();
-        scene.add(group);
-        const mat = new THREE.MeshBasicMaterial({ color: 0x00aaff, wireframe: true, transparent: true, opacity: 0.15 });
-        const rings = [65, 88, 110].map((radius, i) => {
-            const mesh = new THREE.Mesh(new THREE.TorusGeometry(radius, 8 + i * 2, 14, 100), mat);
-            if (i === 0) mesh.rotation.x = Math.PI / 2;
-            if (i === 1) mesh.rotation.y = Math.PI / 3;
-            if (i === 2) mesh.rotation.z = Math.PI / 4;
-            group.add(mesh);
-            return mesh;
-        });
-        renderer.render(scene, camera);
-
-        let progress = 1.0, startRot = [0, 0, 0], targetRot = [0, 0, 0], rafId = null;
-
-        function animateTurn() {
-            progress += 0.025;
-            const p = Math.min(progress, 1.0);
-            const ease = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
-            rings[0].rotation.y = startRot[0] + (targetRot[0] - startRot[0]) * ease;
-            rings[1].rotation.x = startRot[1] + (targetRot[1] - startRot[1]) * ease;
-            rings[2].rotation.z = startRot[2] + (targetRot[2] - startRot[2]) * ease;
-            renderer.render(scene, camera);
-            rafId = p < 1.0 ? requestAnimationFrame(animateTurn) : null;
         }
 
-        return {
-            turn: () => {
-                startRot = [rings[0].rotation.y, rings[1].rotation.x, rings[2].rotation.z];
-                targetRot = [
-                    startRot[0] + Math.PI / 2.618,
-                    startRot[1] - Math.PI / 3.141,
-                    startRot[2] + Math.PI / 4.0
-                ];
-                progress = 0;
-                if (rafId) cancelAnimationFrame(rafId);
-                animateTurn();
-            },
-            setThemeColor: (isDark) => {
-                mat.color.setHex(isDark ? 0x00aaff : 0x0055aa);
-                renderer.render(scene, camera);
-            },
-            resize: () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                renderer.render(scene, camera);
-            }
-        };
-    })();
-
-    /* =========================================================================
-       МОДУЛЬ 5: ФИНАНСОВАЯ МОДЕЛЬ, ГРАФИКИ (UPDATE БЕЗ DESTROY) И UI
-       ========================================================================= */
-    const DashboardApp = (() => {
-        const dom = {
-            form: document.getElementById('financialInputsForm'),
-            startMonth: document.getElementById('paramStartMonth'),
-            startYear: document.getElementById('paramStartYear'),
-            period: document.getElementById('paramPeriod'),
-            vatRate: document.getElementById('paramVatRate'),
-            margin: document.getElementById('paramMargin'),
-            lblMargin: document.getElementById('lblMarginVal'),
-            initialPurchase: document.getElementById('paramInitialPurchase'),
-            batchCycle: document.getElementById('paramBatchCycle'),
-            cbRate: document.getElementById('paramCbRate'),
-            commMargin: document.getElementById('paramCommMargin'),
-            supplierPrepay: document.getElementById('paramSupplierPrepay'),
-            lblSupplierPrep: document.getElementById('lblSupplierPrepVal'),
-            supplierDelay: document.getElementById('paramSupplierDelay'),
-            lblSupplierDelay: document.getElementById('lblSupplierDelayVal'),
-            aov: document.getElementById('paramAov'),
-            startOrders: document.getElementById('paramStartOrders'),
-            btnModeAbs: document.getElementById('btnModeAbs'),
-            btnModePct: document.getElementById('btnModePct'),
-            lblGrowthTitle: document.getElementById('lblGrowthModeTitle'),
-            growthSlider: document.getElementById('paramGrowthSlider'),
-            lblGrowth: document.getElementById('lblGrowthVal'),
-            maxOrdersCap: document.getElementById('paramMaxOrdersCap'),
-            fot: document.getElementById('paramFot'),
-            wh: document.getElementById('paramWh'),
-            office: document.getElementById('paramOffice'),
-            factoringShare: document.getElementById('paramFactoringShare'),
-            lblFactShare: document.getElementById('lblFactShareVal'),
-            kpiRev: document.getElementById('kpiRev'),
-            kpiRevSub: document.getElementById('kpiRevSub'),
-            kpiInjections: document.getElementById('kpiInjections'),
-            kpiInterest: document.getElementById('kpiInterest'),
-            kpiRateSub: document.getElementById('kpiRateSub'),
-            kpiMaxDebt: document.getElementById('kpiMaxDebt'),
-            kpiProfit: document.getElementById('kpiProfit'),
-            kpiRoiSub: document.getElementById('kpiRoiSub'),
-            telemetryRate: document.getElementById('telemetryRate'),
-            tableDebtBody: document.getElementById('tableDebtBody')
-        };
-
-        let growthMode = 'abs';
-        let isDark = true;
-        let latestData = null;
-        let calcTimer = null;
-
-        // Инициализируем 5 графиков один раз и далее обновляем через .update('none')
-        const charts = {};
-
-        function getChartPalette() {
-            return {
-                text: isDark ? '#8e8a80' : '#6b665c',
-                grid: isDark ? 'rgba(212,175,55,.08)' : 'rgba(184,134,11,.12)',
-                barMuted: isDark ? '#52525b' : '#cbd5e1',
-                font: { family: 'JetBrains Mono', size: 10 },
-                legendFont: { family: 'JetBrains Mono', size: 11 }
-            };
+        if (!isObscura && t >= CONFIG.SPUTNIK_FIRST_DELAY_SEC && !sputnikSchedulerStarted) {
+            sputnikSchedulerStarted = true;
+            launchSputnik();
+            sputnikIntervalId = setInterval(() => {
+                if (!dismissed && !isObscura) launchSputnik();
+            }, CONFIG.SPUTNIK_REPEAT_MS);
         }
 
-        function initCharts() {
-            const pal = getChartPalette();
-            const baseOptions = (rightAxisColor) => ({
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: false,
-                scales: {
-                    x: { grid: { display: false }, ticks: { color: pal.text, font: pal.font } },
-                    y: { grid: { color: pal.grid }, ticks: { color: pal.text, font: pal.font } },
-                    ...(rightAxisColor ? {
-                        y1: { position: 'right', grid: { display: false }, ticks: { color: rightAxisColor, font: pal.font } }
-                    } : {})
-                },
-                plugins: { legend: { labels: { color: pal.text, font: pal.legendFont } } }
+        if (sputnikFlight.active) {
+            const rawP = (now - sputnikFlight.startTime) / (CONFIG.SPUTNIK_FLIGHT_SEC * 1000);
+            if (rawP < 1.0) {
+                const accelP = Math.pow(rawP, 2.35);
+                sputnik.group.position.lerpVectors(sputnikFlight.startP, sputnikFlight.endP, accelP);
+                sputnik.group.position.y += Math.sin(rawP * Math.PI) * 48;
+                const sc = 0.04 + (1.05 - 0.04) * Math.pow(rawP, 1.4);
+                sputnik.group.scale.set(sc, sc, sc);
+                sputnik.group.lookAt(sputnikFlight.endP);
+                sputnik.group.rotateZ(t * 0.45);
+
+                const blink = (Math.floor(now / 280) % 2) === 0;
+                sputnik.beacon.visible = blink;
+                sputnik.glow.visible = blink;
+
+                if (now - sputnikFlight.lastBeep > CONFIG.SPUTNIK_BEEP_INTERVAL_MS) {
+                    const dist = sputnik.group.position.distanceTo(camera.position);
+                    const prox = Math.max(0.02, Math.min(1.0, 1.0 - (dist - 180) / 2300));
+                    AudioEngine.sputnikBeep(prox);
+                    sputnikFlight.lastBeep = now;
+                }
+            } else {
+                sputnikFlight.active = false;
+                sputnik.group.visible = false;
+            }
+        }
+
+        if (isObscura) {
+            const obsElapsed = (now - obscuraStart) * 0.001;
+            const progress = Math.min(obsElapsed / CONFIG.OBSCURA_DURATION_SEC, 1.0);
+            const alignP = Math.min(progress / 0.44, 1.0);
+            const easeAlign = 0.5 - 0.5 * Math.cos(alignP * Math.PI);
+            const currentSpeed = 0.0003 + Math.pow(progress, 3.4) * 0.17;
+            const shrinkP = Math.max(0, (progress - 0.42) / 0.58);
+            const easeShrink = Math.pow(shrinkP, 3.6);
+
+            inventions.forEach((item, idx) => {
+                if (!item.startPos) return;
+                const pull = Math.pow(progress, 1.85);
+                const vAngle = progress * Math.PI * 3.4 + idx * (Math.PI * 2 / 5);
+                const curR = (1.0 - pull) * 185.0;
+                item.group.position.set(
+                    Math.cos(vAngle) * curR,
+                    Math.sin(vAngle) * curR,
+                    MathUtils.lerp(item.startPos.z, 0, pull)
+                );
+                item.group.rotation.z += 0.02 + progress * 0.07;
+                item.group.rotation.x = MathUtils.lerp(item.startRot.x, 0, alignP);
+                item.group.rotation.y = MathUtils.lerp(item.startRot.y, 0, alignP);
+                const s = Math.max(1.0 - pull * 1.05, 0.001);
+                item.group.scale.set(s, s, s);
+                item.mat.opacity = Math.max(1.0 - progress * 1.25, 0.0);
             });
 
+            const posArr = particleGeo.attributes.position.array;
+            const attract = 0.012 + progress * 0.045;
+            for (let i = 0; i < particleCount * 3; i += 3) {
+                posArr[i] -= posArr[i] * attract;
+                posArr[i + 1] -= posArr[i + 1] * attract;
+                posArr[i + 2] -= posArr[i + 2] * (attract + 0.004);
+            }
+            particleGeo.attributes.position.needsUpdate = true;
+            particleMat.opacity = Math.max(0.38 * (1.0 - progress * 0.92), 0.0);
+
+            megaRingMat.opacity = MathUtils.lerp(megaRingMat.opacity, 0.92, 0.025);
+            megaRingMat.color.lerp(_colorGold, 0.025);
+            secondaryRingMat.color.lerp(_colorDarkGold, 0.025);
+
+            astrolabeRings.forEach((ring, idx) => {
+                ring.group.rotation.x = MathUtils.lerp(ring.startRotX, 0, easeAlign);
+                ring.group.rotation.y = MathUtils.lerp(ring.startRotY, 0, easeAlign);
+                ring.group.rotation.z += (ring.dir || (idx % 2 === 0 ? 1 : -1)) * currentSpeed;
+                const sf = Math.max(1.0 - easeShrink * 0.996, 0.004);
+                const zThin = Math.max(1.0 - easeAlign * 0.90, 0.06);
+                ring.group.scale.set(sf, sf, zThin * sf);
+            });
+
+            camera.position.lerp(targetCamPos, 0.035);
+            currentLook.lerp(targetLook, 0.035);
+            camera.lookAt(currentLook);
+            renderer.render(scene, camera);
+
+            if (progress >= 1.0) triggerShutterBlink();
+            return;
+        }
+
+        dustParticles.rotation.y = t * 0.02;
+        dustParticles.rotation.x = Math.sin(t * 0.015) * 0.1;
+
+        megaRingMat.opacity = MathUtils.lerp(megaRingMat.opacity, currentSlide !== -1 ? 0.16 : 0.38, 0.05);
+        astrolabeRings.forEach(r => {
+            r.group.rotation.x += r.sx;
+            r.group.rotation.y += r.sy;
+            r.group.rotation.z += r.sz;
+        });
+
+        predatorStrength = MathUtils.lerp(predatorStrength, isPredatorActive ? 1.0 : 0.0, 0.045);
+        if (predatorStrength > 0.002) predatorClock += 0.016 * predatorStrength;
+
+        const anchorIdx = currentSlide >= 0 ? currentSlide : CONFIG.MORPH_TRIGGER_INDEX;
+        getOrbitPos(inventions[anchorIdx].baseAngle + t * CONFIG.ORBIT_SPEED, _tmpAnchorPos);
+
+        const morphPhase = predatorClock * 0.45;
+        const stepFloor = Math.floor(morphPhase);
+        const stepFrac = morphPhase - stepFloor;
+        const smoothMix = stepFrac * stepFrac * (3.0 - 2.0 * stepFrac);
+
+        inventions.forEach((item, idx) => {
+            item.currentAngle = item.baseAngle + t * CONFIG.ORBIT_SPEED;
+            getOrbitPos(item.currentAngle, _tmpOrbitPos);
+
+            if (predatorStrength > 0.002) {
+                const dAngle = t * 1.45 + idx * (Math.PI * 2 / 5);
+                const dRadius = (16.0 + Math.sin(t * 2.2 + idx) * 9.0) * predatorStrength;
+                const layerZ = (idx - 2) * 3.5 * predatorStrength;
+                _tmpOrbitPos.set(
+                    MathUtils.lerp(_tmpOrbitPos.x, _tmpAnchorPos.x + Math.cos(dAngle) * dRadius, predatorStrength),
+                    MathUtils.lerp(_tmpOrbitPos.y, _tmpAnchorPos.y + Math.sin(dAngle) * dRadius, predatorStrength),
+                    MathUtils.lerp(_tmpOrbitPos.z, _tmpAnchorPos.z + layerZ, predatorStrength)
+                );
+            }
+
+            item.group.position.copy(_tmpOrbitPos);
+            item.hitMesh.position.copy(_tmpOrbitPos);
+            item.group.quaternion.copy(camera.quaternion);
+            item.hitMesh.quaternion.copy(camera.quaternion);
+
+            const posAttr = item.mesh.geometry.attributes.position;
+            const orig = item.mesh.geometry.userData.origPositions;
+            if (predatorStrength > 0.005) {
+                const seed = idx * 1.618;
+                for (let v = 0; v < orig.length; v += 3) {
+                    const ox = orig[v], oy = orig[v + 1];
+                    posAttr.array[v]     = ox + Math.sin(oy * 0.075 + t * 2.8 + seed) * 7.5 * predatorStrength;
+                    posAttr.array[v + 1] = oy + Math.cos(ox * 0.075 - t * 2.4 + seed) * 7.5 * predatorStrength;
+                    posAttr.array[v + 2] = Math.sin((ox + oy) * 0.06 + t * 3.5 + seed) * 12.0 * predatorStrength;
+                }
+                posAttr.needsUpdate = true;
+            } else {
+                posAttr.array.set(orig);
+                posAttr.needsUpdate = true;
+            }
+
+            if (predatorStrength > 0.15) {
+                const pTex = PREDATOR_TEXTURES[(idx + stepFloor) % 5] || GOLD_TEXTURES[(idx + stepFloor) % 5];
+                if (pTex && item.mat.map !== pTex) {
+                    item.mat.map = pTex;
+                    item.mat.needsUpdate = true;
+                }
+                const pulse = 0.45 + 0.55 * Math.sin(smoothMix * Math.PI + idx * 1.25);
+                item.mat.opacity = MathUtils.lerp(item.mat.opacity, 0.35 + pulse * 0.65, 0.12);
+                item.mat.color.setHSL((t * 0.22 + idx * 0.2) % 1.0, 1.0, 0.62);
+            } else {
+                const gTex = GOLD_TEXTURES[idx];
+                if (gTex && item.mat.map !== gTex) {
+                    item.mat.map = gTex;
+                    item.mat.needsUpdate = true;
+                }
+                item.mat.color.setHex(0xffffff);
+                item.mat.opacity = MathUtils.lerp(item.mat.opacity, item.isHovered ? 1.0 : 0.72, 0.1);
+            }
+
+            const sc = MathUtils.lerp(item.group.scale.x, isPredatorActive ? 1.28 : item.targetScale, 0.08);
+            item.group.scale.set(sc, sc, sc);
+        });
+
+        if (currentSlide >= 0 && currentSlide < inventions.length) {
+            const active = inventions[currentSlide];
+            const dist = getSlideDistance(CONFIG.INVENTION_BASE_SIZE * active.targetScale);
+            targetLook.copy(active.group.position);
+            targetCamPos.set(active.group.position.x, active.group.position.y, active.group.position.z + dist);
+        }
+
+        camera.position.lerp(targetCamPos, 0.06);
+        currentLook.lerp(targetLook, 0.08);
+        camera.lookAt(currentLook);
+        renderer.render(scene, camera);
+    }
+
+    requestAnimationFrame(animate);
+
+    return {
+        nextSlide,
+        prevSlide,
+        goToSlide: (idx) => focusSlide(idx),
+        getCurrentSlide: () => currentSlide,
+        isDismissed: () => dismissed,
+        startObscuraTransition,
+        setThemeColors: (isDark) => {
+            megaRingMat.color.setHex(isDark ? 0x00c3ff : 0x0066cc);
+            secondaryRingMat.color.setHex(isDark ? 0x0077aa : 0x004488);
+        },
+        resize: () => {
+            if (dismissed) return;
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            if (currentSlide !== -1) {
+                focusSlide(currentSlide, { silent: true, snapCamera: true });
+            }
+        }
+    };
+})();
+
+/* =========================================================================
+   МОДУЛЬ 4: ФОНОВАЯ АРМИЛЛЯРНАЯ СФЕРА ДАШБОРДА
+   ========================================================================= */
+const DashBackground3D = (() => {
+    const canvas = document.getElementById('webgl-bg-canvas');
+    const scene = new Scene();
+    const camera = new PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 2000);
+    camera.position.z = 160;
+    const renderer = new WebGLRenderer({ canvas, alpha: true, antialias: false, powerPreference: 'low-power' });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(1);
+
+    const group = new Group();
+    scene.add(group);
+    const mat = new MeshBasicMaterial({ color: 0x00aaff, wireframe: true, transparent: true, opacity: 0.15 });
+    const rings = [65, 88, 110].map((radius, i) => {
+        const mesh = new Mesh(new TorusGeometry(radius, 8 + i * 2, 14, 100), mat);
+        if (i === 0) mesh.rotation.x = Math.PI / 2;
+        if (i === 1) mesh.rotation.y = Math.PI / 3;
+        if (i === 2) mesh.rotation.z = Math.PI / 4;
+        group.add(mesh);
+        return mesh;
+    });
+    renderer.render(scene, camera);
+
+    let progress = 1.0, startRot = [0, 0, 0], targetRot = [0, 0, 0], rafId = null;
+
+    function animateTurn() {
+        progress += 0.025;
+        const p = Math.min(progress, 1.0);
+        const ease = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+        rings[0].rotation.y = startRot[0] + (targetRot[0] - startRot[0]) * ease;
+        rings[1].rotation.x = startRot[1] + (targetRot[1] - startRot[1]) * ease;
+        rings[2].rotation.z = startRot[2] + (targetRot[2] - startRot[2]) * ease;
+        renderer.render(scene, camera);
+        rafId = p < 1.0 ? requestAnimationFrame(animateTurn) : null;
+    }
+
+    return {
+        turn: () => {
+            startRot = [rings[0].rotation.y, rings[1].rotation.x, rings[2].rotation.z];
+            targetRot = [
+                startRot[0] + Math.PI / 2.618,
+                startRot[1] - Math.PI / 3.141,
+                startRot[2] + Math.PI / 4.0
+            ];
+            progress = 0;
+            if (rafId) cancelAnimationFrame(rafId);
+            animateTurn();
+        },
+        setThemeColor: (isDark) => {
+            mat.color.setHex(isDark ? 0x00aaff : 0x0055aa);
+            renderer.render(scene, camera);
+        },
+        resize: () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.render(scene, camera);
+        }
+    };
+})();
+
+/* =========================================================================
+   МОДУЛЬ 5: ФИНАНСОВАЯ МОДЕЛЬ, ЛЕНИВЫЕ ГРАФИКИ И UI
+   ========================================================================= */
+const DashboardApp = (() => {
+    const dom = {
+        form: document.getElementById('financialInputsForm'),
+        startMonth: document.getElementById('paramStartMonth'),
+        startYear: document.getElementById('paramStartYear'),
+        period: document.getElementById('paramPeriod'),
+        vatRate: document.getElementById('paramVatRate'),
+        margin: document.getElementById('paramMargin'),
+        lblMargin: document.getElementById('lblMarginVal'),
+        initialPurchase: document.getElementById('paramInitialPurchase'),
+        batchCycle: document.getElementById('paramBatchCycle'),
+        cbRate: document.getElementById('paramCbRate'),
+        commMargin: document.getElementById('paramCommMargin'),
+        supplierPrepay: document.getElementById('paramSupplierPrepay'),
+        lblSupplierPrep: document.getElementById('lblSupplierPrepVal'),
+        supplierDelay: document.getElementById('paramSupplierDelay'),
+        lblSupplierDelay: document.getElementById('lblSupplierDelayVal'),
+        aov: document.getElementById('paramAov'),
+        startOrders: document.getElementById('paramStartOrders'),
+        btnModeAbs: document.getElementById('btnModeAbs'),
+        btnModePct: document.getElementById('btnModePct'),
+        lblGrowthTitle: document.getElementById('lblGrowthModeTitle'),
+        growthSlider: document.getElementById('paramGrowthSlider'),
+        lblGrowth: document.getElementById('lblGrowthVal'),
+        maxOrdersCap: document.getElementById('paramMaxOrdersCap'),
+        fot: document.getElementById('paramFot'),
+        wh: document.getElementById('paramWh'),
+        office: document.getElementById('paramOffice'),
+        factoringShare: document.getElementById('paramFactoringShare'),
+        lblFactShare: document.getElementById('lblFactShareVal'),
+        kpiRev: document.getElementById('kpiRev'),
+        kpiRevSub: document.getElementById('kpiRevSub'),
+        kpiInjections: document.getElementById('kpiInjections'),
+        kpiInterest: document.getElementById('kpiInterest'),
+        kpiRateSub: document.getElementById('kpiRateSub'),
+        kpiMaxDebt: document.getElementById('kpiMaxDebt'),
+        kpiProfit: document.getElementById('kpiProfit'),
+        kpiRoiSub: document.getElementById('kpiRoiSub'),
+        telemetryRate: document.getElementById('telemetryRate'),
+        tableDebtBody: document.getElementById('tableDebtBody')
+    };
+
+    let growthMode = 'abs';
+    let activeTab = 0;
+    let isDark = true;
+    let latestData = null;
+    let calcTimer = null;
+
+    // Ленивый реестр графиков (создаются только при первом открытии соответствующей вкладки)
+    const charts = {
+        debt: null,
+        stock: null,
+        cf: null,
+        orders: null,
+        pie: null
+    };
+
+    function getChartPalette() {
+        return {
+            text: isDark ? '#8e8a80' : '#6b665c',
+            grid: isDark ? 'rgba(212,175,55,.08)' : 'rgba(184,134,11,.12)',
+            barMuted: isDark ? '#52525b' : '#cbd5e1',
+            font: { family: 'JetBrains Mono', size: 10 },
+            legendFont: { family: 'JetBrains Mono', size: 11 }
+        };
+    }
+
+    function baseChartOptions(rightAxisColor) {
+        const pal = getChartPalette();
+        return {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            scales: {
+                x: { grid: { display: false }, ticks: { color: pal.text, font: pal.font } },
+                y: { grid: { color: pal.grid }, ticks: { color: pal.text, font: pal.font } },
+                ...(rightAxisColor ? {
+                    y1: { position: 'right', grid: { display: false }, ticks: { color: rightAxisColor, font: pal.font } }
+                } : {})
+            },
+            plugins: { legend: { labels: { color: pal.text, font: pal.legendFont } } }
+        };
+    }
+
+    function ensureTabCharts(tabIdx) {
+        if (tabIdx === 0 && !charts.debt) {
             charts.debt = new Chart(document.getElementById('chartDebt'), {
                 type: 'bar',
                 data: {
@@ -2018,21 +2084,21 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
                         { label: 'Остаток тела долга', data: [], type: 'line', borderColor: '#e63946', backgroundColor: '#e63946', borderWidth: 2.5, yAxisID: 'y1', tension: 0.3, order: 1 }
                     ]
                 },
-                options: baseOptions('#e63946')
+                options: baseChartOptions('#e63946')
             });
-
+        } else if (tabIdx === 1 && !charts.stock) {
             charts.stock = new Chart(document.getElementById('chartStock'), {
                 type: 'bar',
                 data: {
                     labels: [],
                     datasets: [
-                        { label: 'Оплата партии поставщику', data: [], backgroundColor: pal.barMuted, order: 2 },
+                        { label: 'Оплата партии поставщику', data: [], backgroundColor: getChartPalette().barMuted, order: 2 },
                         { label: 'Остаток склада', data: [], type: 'line', borderColor: '#d4af37', borderWidth: 2.5, yAxisID: 'y1', tension: 0.3, order: 1 }
                     ]
                 },
-                options: baseOptions('#d4af37')
+                options: baseChartOptions('#d4af37')
             });
-
+        } else if (tabIdx === 2 && !charts.cf) {
             charts.cf = new Chart(document.getElementById('chartCF'), {
                 type: 'bar',
                 data: {
@@ -2042,378 +2108,411 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
                         { label: 'Выплаты (закупки + OPEX + %)', data: [], backgroundColor: '#e63946' }
                     ]
                 },
-                options: baseOptions(null)
+                options: baseChartOptions(null)
             });
-
-            charts.orders = new Chart(document.getElementById('chartOrders'), {
-                type: 'bar',
-                data: {
-                    labels: [],
-                    datasets: [
-                        { label: 'Заказы, шт.', data: [], backgroundColor: '#d4af37' },
-                        { label: 'Выручка, ₽', data: [], type: 'line', borderColor: '#2a9d8f', yAxisID: 'y1', borderWidth: 2.5 }
-                    ]
-                },
-                options: baseOptions('#2a9d8f')
-            });
-
-            charts.pie = new Chart(document.getElementById('chartPie'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['Склад', 'Офис', 'ФОТ', 'Операц. база', 'Налоги 5%', 'Закупки', 'Проценты по долгу'],
-                    datasets: [{
-                        data: [0, 0, 0, 0, 0, 0, 0],
-                        backgroundColor: ['#52525b', '#71717a', '#d4af37', '#a1a1aa', '#e63946', '#2a9d8f', '#457b9d'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: false,
-                    plugins: { legend: { position: 'bottom', labels: { color: pal.text, font: pal.font } } }
-                }
-            });
-        }
-
-        function syncChartsTheme() {
+        } else if (tabIdx === 3) {
             const pal = getChartPalette();
-            [charts.debt, charts.stock, charts.cf, charts.orders].forEach(ch => {
-                if (!ch) return;
-                ch.options.scales.x.ticks.color = pal.text;
-                ch.options.scales.y.ticks.color = pal.text;
-                ch.options.scales.y.grid.color = pal.grid;
-                ch.options.plugins.legend.labels.color = pal.text;
-            });
-            if (charts.stock) {
-                charts.stock.data.datasets[0].backgroundColor = pal.barMuted;
+            if (!charts.orders) {
+                charts.orders = new Chart(document.getElementById('chartOrders'), {
+                    type: 'bar',
+                    data: {
+                        labels: [],
+                        datasets: [
+                            { label: 'Заказы, шт.', data: [], backgroundColor: '#d4af37' },
+                            { label: 'Выручка, ₽', data: [], type: 'line', borderColor: '#2a9d8f', yAxisID: 'y1', borderWidth: 2.5 }
+                        ]
+                    },
+                    options: baseChartOptions('#2a9d8f')
+                });
             }
-            if (charts.pie) {
-                charts.pie.options.plugins.legend.labels.color = pal.text;
+            if (!charts.pie) {
+                charts.pie = new Chart(document.getElementById('chartPie'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: CONFIG.PIE_LABELS,
+                        datasets: [{
+                            data: new Array(CONFIG.PIE_LABELS.length).fill(0),
+                            backgroundColor: ['#52525b', '#71717a', '#d4af37', '#a1a1aa', '#e63946', '#2a9d8f', '#457b9d'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: false,
+                        plugins: { legend: { position: 'bottom', labels: { color: pal.text, font: pal.font } } }
+                    }
+                });
             }
         }
+    }
 
-        function computeModel() {
-            const startMonth = parseInt(dom.startMonth.value, 10);
-            const startYear = parseInt(dom.startYear.value, 10);
-            const period = parseInt(dom.period.value, 10);
-            const vatRate = parseFloat(dom.vatRate.value);
-            const vatMult = 1 + vatRate / 100;
-            const marginPct = parseFloat(dom.margin.value);
+    function updateVisibleCharts(m) {
+        if (!m) return;
+        ensureTabCharts(activeTab);
 
-            const initialPurchase = NumFmt.parse(dom.initialPurchase.value);
-            const batchCycle = parseInt(dom.batchCycle.value, 10) || 5;
-            const cbRate = parseFloat(dom.cbRate.value) || 14.0;
-            const commMargin = parseFloat(dom.commMargin.value) || 2.0;
-            const totalRateAnnual = cbRate + commMargin;
-            const monthlyRate = (totalRateAnnual / 100) / 12;
-
-            const prepayPct = parseFloat(dom.supplierPrepay.value);
-            const delayMonths = parseInt(dom.supplierDelay.value, 10);
-            const aov = NumFmt.parse(dom.aov.value);
-            const startOrders = parseInt(dom.startOrders.value, 10) || 40;
-            const growthVal = parseFloat(dom.growthSlider.value);
-            const maxOrdersCap = parseInt(dom.maxOrdersCap.value, 10) || 300;
-
-            const fot = NumFmt.parse(dom.fot.value);
-            const wh = NumFmt.parse(dom.wh.value);
-            const office = NumFmt.parse(dom.office.value);
-            const factShare = parseFloat(dom.factoringShare.value);
-
-            const xLabels = [];
-            const orders = [];
-            const rev = [];
-
-            for (let i = 0; i < period; i++) {
-                const mIdx = (startMonth + i) % 12;
-                const yOff = Math.floor((startMonth + i) / 12);
-                xLabels.push(`${CONFIG.SHORT_MONTHS[mIdx]} ${startYear + yOff}`);
-
-                let curOrders = i === 0
-                    ? startOrders
-                    : (growthMode === 'abs' ? orders[i - 1] + growthVal : orders[i - 1] * (1 + growthVal / 100));
-                curOrders = Math.min(curOrders, maxOrdersCap);
-                orders.push(curOrders);
-                rev.push(curOrders * aov);
-            }
-
-            const cogsPct = 1 - marginPct / 100;
-            const cogsVat = rev.map(r => r * cogsPct * vatMult);
-            const cogsPayments = new Array(period).fill(0);
-            const deliveries = new Array(period).fill(0);
-
-            cogsPayments[0] += initialPurchase * (prepayPct / 100);
-            if (delayMonths < period) {
-                cogsPayments[delayMonths] += initialPurchase * ((100 - prepayPct) / 100);
-            }
-            deliveries[0] = initialPurchase;
-
-            for (let b = batchCycle; b < period; b += batchCycle) {
-                const bEnd = Math.min(b + batchCycle, period);
-                let batchTotal = 0;
-                for (let k = b; k < bEnd; k++) batchTotal += cogsVat[k];
-                deliveries[b] = batchTotal;
-                cogsPayments[b] += batchTotal * (prepayPct / 100);
-                const secondTranche = b + delayMonths;
-                if (secondTranche < period) {
-                    cogsPayments[secondTranche] += batchTotal * ((100 - prepayPct) / 100);
-                }
-            }
-
-            const inventoryBalance = [];
-            let curStock = 0;
-            for (let i = 0; i < period; i++) {
-                curStock += deliveries[i] - cogsVat[i];
-                inventoryBalance.push(Math.max(curStock, 0));
-            }
-
-            const inflows = new Array(period).fill(0);
-            for (let i = 0; i < period; i++) {
-                const invVat = rev[i] * vatMult;
-                inflows[i] += invVat * (factShare / 100) * CONFIG.FACTORING_ADVANCE_RATIO;
-                const targetM = i + 2;
-                if (targetM < period) {
-                    inflows[targetM] += invVat * ((100 - factShare) / 100);
-                    inflows[targetM] += invVat * (factShare / 100) * (1 - CONFIG.FACTORING_ADVANCE_RATIO);
-                }
-            }
-
-            // Помесячный OPEX с учётом индексации ×1.2 после 6-го месяца (включая детализацию для круговой диаграммы)
-            const opex = [];
-            const taxes = rev.map(r => r * CONFIG.REVENUE_TAX_RATE);
-            const baseOutflows = [];
-            let totalWh = 0, totalOffice = 0, totalFot = 0, totalAdminBase = 0;
-
-            for (let i = 0; i < period; i++) {
-                const mult = i >= CONFIG.OPEX_GROWTH_MONTH_IDX ? CONFIG.OPEX_GROWTH_FACTOR : 1.0;
-                const mWh = wh * mult;
-                const mOffice = office * mult;
-                const mFot = fot * mult;
-                const mAdmin = CONFIG.OPEX_BASE_FIXED * mult;
-
-                totalWh += mWh;
-                totalOffice += mOffice;
-                totalFot += mFot;
-                totalAdminBase += mAdmin;
-
-                const monthOpex = mWh + mOffice + mFot + mAdmin;
-                opex.push(monthOpex);
-                baseOutflows.push(cogsPayments[i] + monthOpex + taxes[i]);
-            }
-
-            const monthlyInvestments = new Array(period).fill(0);
-            const interestPayments = new Array(period).fill(0);
-            const debtRepayments = new Array(period).fill(0);
-            const debtBalance = new Array(period).fill(0);
-            const cashBalance = new Array(period).fill(0);
-
-            let currentDebt = 0, currentCash = 0;
-            for (let i = 0; i < period; i++) {
-                const interestDue = currentDebt * monthlyRate;
-                interestPayments[i] = interestDue;
-                const potCash = currentCash + (inflows[i] - (baseOutflows[i] + interestDue));
-                if (potCash < 0) {
-                    const needed = Math.abs(potCash);
-                    monthlyInvestments[i] = needed;
-                    currentDebt += needed;
-                    currentCash = 0;
-                } else {
-                    const repay = Math.min(potCash, currentDebt);
-                    debtRepayments[i] = repay;
-                    currentDebt -= repay;
-                    currentCash = potCash - repay;
-                }
-                debtBalance[i] = currentDebt;
-                cashBalance[i] = currentCash;
-            }
-
-            const sumRev = rev.reduce((a, b) => a + b, 0);
-            const sumInvestments = monthlyInvestments.reduce((a, b) => a + b, 0);
-            const sumInterest = interestPayments.reduce((a, b) => a + b, 0);
-            const maxDebt = Math.max(...debtBalance);
-            const sumOpex = opex.reduce((a, b) => a + b, 0);
-            const sumTaxes = taxes.reduce((a, b) => a + b, 0);
-            const sumPurchases = cogsPayments.reduce((a, b) => a + b, 0);
-            const netProfit = sumRev * (marginPct / 100) - sumOpex - sumTaxes - sumInterest;
-            const roi = sumRev > 0 ? (netProfit / sumRev) * 100 : 0;
-
-            return {
-                marginPct, totalRateAnnual, prepayPct, delayMonths, growthVal, factShare,
-                xLabels, orders, rev, cogsPayments, inventoryBalance, inflows,
-                totalOutflows: baseOutflows.map((b, i) => b + interestPayments[i]),
-                monthlyInvestments, interestPayments, debtRepayments, debtBalance, cashBalance,
-                sumRev, sumInvestments, sumInterest, maxDebt, netProfit, roi,
-                pieBreakdown: [totalWh, totalOffice, totalFot, totalAdminBase, sumTaxes, sumPurchases, sumInterest]
-            };
-        }
-
-        function runCalculation() {
-            const m = computeModel();
-            latestData = m;
-
-            dom.lblMargin.textContent = `${m.marginPct}%`;
-            dom.kpiRevSub.textContent = `Маржа: ${m.marginPct}%`;
-            dom.telemetryRate.textContent = `[КАПИТАЛ: ${m.totalRateAnnual.toFixed(1)}% ГОДОВЫХ]`;
-            dom.kpiRateSub.textContent = `Ставка ${m.totalRateAnnual.toFixed(1)}%`;
-            dom.lblSupplierPrep.textContent = `${m.prepayPct}%`;
-            dom.lblSupplierDelay.textContent = `${m.delayMonths} мес.`;
-            dom.lblGrowth.textContent = growthMode === 'abs' ? `+${m.growthVal} шт.` : `+${m.growthVal}%`;
-            dom.lblFactShare.textContent = `${m.factShare}%`;
-
-            TextScrambler.number(dom.kpiRev, `${NumFmt.format(m.sumRev)} ₽`);
-            TextScrambler.number(dom.kpiInjections, `${NumFmt.format(m.sumInvestments)} ₽`);
-            TextScrambler.number(dom.kpiInterest, `${NumFmt.format(m.sumInterest)} ₽`);
-            TextScrambler.number(dom.kpiMaxDebt, `${NumFmt.format(m.maxDebt)} ₽`);
-            TextScrambler.number(dom.kpiProfit, `${NumFmt.format(m.netProfit)} ₽`);
-            dom.kpiRoiSub.textContent = `Рентабельность: ${m.roi.toFixed(1)}%`;
-
-            let rows = '';
-            for (let i = 0; i < m.xLabels.length; i++) {
-                rows += `<tr class="hover:bg-[var(--bg-cell-hover)] transition">
-                    <td class="p-3 font-bold">${m.xLabels[i]}</td>
-                    <td class="p-3 text-[#e63946]">${NumFmt.format(m.monthlyInvestments[i])} ₽</td>
-                    <td class="p-3 text-[#d4af37]">${NumFmt.format(m.interestPayments[i])} ₽</td>
-                    <td class="p-3 text-[#2a9d8f]">${NumFmt.format(m.debtRepayments[i])} ₽</td>
-                    <td class="p-3 font-bold">${NumFmt.format(m.debtBalance[i])} ₽</td>
-                    <td class="p-3">${NumFmt.format(m.cashBalance[i])} ₽</td>
-                </tr>`;
-            }
-            dom.tableDebtBody.innerHTML = rows;
-
-            // Быстрое обновление графиков без destroy()
+        if (activeTab === 0 && charts.debt) {
             charts.debt.data.labels = m.xLabels;
             charts.debt.data.datasets[0].data = m.interestPayments;
             charts.debt.data.datasets[1].data = m.debtBalance;
-            charts.debt.update('none');
-
+            charts.debt.update();
+        } else if (activeTab === 1 && charts.stock) {
             charts.stock.data.labels = m.xLabels;
             charts.stock.data.datasets[0].data = m.cogsPayments;
             charts.stock.data.datasets[1].data = m.inventoryBalance;
-            charts.stock.update('none');
-
+            charts.stock.update();
+        } else if (activeTab === 2 && charts.cf) {
             charts.cf.data.labels = m.xLabels;
             charts.cf.data.datasets[0].data = m.inflows;
             charts.cf.data.datasets[1].data = m.totalOutflows.map(v => -v);
-            charts.cf.update('none');
-
-            charts.orders.data.labels = m.xLabels;
-            charts.orders.data.datasets[0].data = m.orders;
-            charts.orders.data.datasets[1].data = m.rev;
-            charts.orders.update('none');
-
-            charts.pie.data.datasets[0].data = m.pieBreakdown;
-            charts.pie.update('none');
-        }
-
-        function scheduleCalc() {
-            if (calcTimer) clearTimeout(calcTimer);
-            calcTimer = setTimeout(() => {
-                calcTimer = null;
-                runCalculation();
-            }, CONFIG.CALC_DEBOUNCE_MS);
-        }
-
-        function setGrowthMode(mode, silent = false) {
-            if (!silent) AudioEngine.click(950, 0.02);
-            growthMode = mode;
-            if (mode === 'abs') {
-                dom.btnModeAbs.className = 'py-1 font-mono text-[9px] uppercase tracking-wider bg-[#d4af37] text-black font-bold transition';
-                dom.btnModePct.className = 'py-1 font-mono text-[9px] uppercase tracking-wider opacity-60 hover:opacity-100 transition';
-                dom.lblGrowthTitle.textContent = 'ПРИРОСТ В МЕСЯЦ';
-                dom.growthSlider.max = 100;
-                dom.growthSlider.value = 5;
-            } else {
-                dom.btnModePct.className = 'py-1 font-mono text-[9px] uppercase tracking-wider bg-[#d4af37] text-black font-bold transition';
-                dom.btnModeAbs.className = 'py-1 font-mono text-[9px] uppercase tracking-wider opacity-60 hover:opacity-100 transition';
-                dom.lblGrowthTitle.textContent = 'ПРИРОСТ В %';
-                dom.growthSlider.max = 50;
-                dom.growthSlider.value = 10;
+            charts.cf.update();
+        } else if (activeTab === 3) {
+            if (charts.orders) {
+                charts.orders.data.labels = m.xLabels;
+                charts.orders.data.datasets[0].data = m.orders;
+                charts.orders.data.datasets[1].data = m.rev;
+                charts.orders.update();
             }
+            if (charts.pie) {
+                charts.pie.data.datasets[0].data = Object.values(m.costBreakdown);
+                charts.pie.update();
+            }
+        }
+    }
+
+    function syncChartsTheme() {
+        const pal = getChartPalette();
+        [charts.debt, charts.stock, charts.cf, charts.orders].forEach(ch => {
+            if (!ch) return;
+            ch.options.scales.x.ticks.color = pal.text;
+            ch.options.scales.y.ticks.color = pal.text;
+            ch.options.scales.y.grid.color = pal.grid;
+            ch.options.plugins.legend.labels.color = pal.text;
+        });
+        if (charts.stock) {
+            charts.stock.data.datasets[0].backgroundColor = pal.barMuted;
+        }
+        if (charts.pie) {
+            charts.pie.options.plugins.legend.labels.color = pal.text;
+        }
+        updateVisibleCharts(latestData);
+    }
+
+    function computeModel() {
+        const startMonth = parseInt(dom.startMonth.value, 10);
+        const startYear = parseInt(dom.startYear.value, 10);
+        const period = parseInt(dom.period.value, 10);
+        const vatRate = parseFloat(dom.vatRate.value);
+        const vatMult = 1 + vatRate / 100;
+        const marginPct = parseFloat(dom.margin.value);
+
+        const initialPurchase = NumFmt.parse(dom.initialPurchase.value);
+        const batchCycle = parseInt(dom.batchCycle.value, 10) || 5;
+        const cbRate = parseFloat(dom.cbRate.value) || 14.0;
+        const commMargin = parseFloat(dom.commMargin.value) || 2.0;
+        const totalRateAnnual = cbRate + commMargin;
+        const monthlyRate = (totalRateAnnual / 100) / 12;
+
+        const prepayPct = parseFloat(dom.supplierPrepay.value);
+        const delayMonths = parseInt(dom.supplierDelay.value, 10);
+        const aov = NumFmt.parse(dom.aov.value);
+        const startOrders = parseInt(dom.startOrders.value, 10) || 40;
+        const growthVal = parseFloat(dom.growthSlider.value);
+        const maxOrdersCap = parseInt(dom.maxOrdersCap.value, 10) || 300;
+
+        const fot = NumFmt.parse(dom.fot.value);
+        const wh = NumFmt.parse(dom.wh.value);
+        const office = NumFmt.parse(dom.office.value);
+        const factShare = parseFloat(dom.factoringShare.value);
+
+        const xLabels = [];
+        const orders = [];
+        const rev = [];
+
+        for (let i = 0; i < period; i++) {
+            const mIdx = (startMonth + i) % 12;
+            const yOff = Math.floor((startMonth + i) / 12);
+            xLabels.push(`${CONFIG.SHORT_MONTHS[mIdx]} ${startYear + yOff}`);
+
+            let curOrders = i === 0
+                ? startOrders
+                : (growthMode === 'abs' ? orders[i - 1] + growthVal : orders[i - 1] * (1 + growthVal / 100));
+            curOrders = Math.min(curOrders, maxOrdersCap);
+            orders.push(curOrders);
+            rev.push(curOrders * aov);
+        }
+
+        const cogsPct = 1 - marginPct / 100;
+        const cogsVat = rev.map(r => r * cogsPct * vatMult);
+        const cogsPayments = new Array(period).fill(0);
+        const deliveries = new Array(period).fill(0);
+
+        cogsPayments[0] += initialPurchase * (prepayPct / 100);
+        if (delayMonths < period) {
+            cogsPayments[delayMonths] += initialPurchase * ((100 - prepayPct) / 100);
+        }
+        deliveries[0] = initialPurchase;
+
+        for (let b = batchCycle; b < period; b += batchCycle) {
+            const bEnd = Math.min(b + batchCycle, period);
+            let batchTotal = 0;
+            for (let k = b; k < bEnd; k++) batchTotal += cogsVat[k];
+            deliveries[b] = batchTotal;
+            cogsPayments[b] += batchTotal * (prepayPct / 100);
+            const secondTranche = b + delayMonths;
+            if (secondTranche < period) {
+                cogsPayments[secondTranche] += batchTotal * ((100 - prepayPct) / 100);
+            }
+        }
+
+        const inventoryBalance = [];
+        let curStock = 0;
+        for (let i = 0; i < period; i++) {
+            curStock += deliveries[i] - cogsVat[i];
+            inventoryBalance.push(Math.max(curStock, 0));
+        }
+
+        const inflows = new Array(period).fill(0);
+        for (let i = 0; i < period; i++) {
+            const invVat = rev[i] * vatMult;
+            inflows[i] += invVat * (factShare / 100) * CONFIG.FACTORING_ADVANCE_RATIO;
+            const targetM = i + 2;
+            if (targetM < period) {
+                inflows[targetM] += invVat * ((100 - factShare) / 100);
+                inflows[targetM] += invVat * (factShare / 100) * (1 - CONFIG.FACTORING_ADVANCE_RATIO);
+            }
+        }
+
+        const opex = [];
+        const taxes = rev.map(r => r * CONFIG.REVENUE_TAX_RATE);
+        const baseOutflows = [];
+        let totalWh = 0, totalOffice = 0, totalFot = 0, totalAdminBase = 0;
+
+        for (let i = 0; i < period; i++) {
+            const mult = i >= CONFIG.OPEX_GROWTH_MONTH_IDX ? CONFIG.OPEX_GROWTH_FACTOR : 1.0;
+            const mWh = wh * mult;
+            const mOffice = office * mult;
+            const mFot = fot * mult;
+            const mAdmin = CONFIG.OPEX_BASE_FIXED * mult;
+
+            totalWh += mWh;
+            totalOffice += mOffice;
+            totalFot += mFot;
+            totalAdminBase += mAdmin;
+
+            const monthOpex = mWh + mOffice + mFot + mAdmin;
+            opex.push(monthOpex);
+            baseOutflows.push(cogsPayments[i] + monthOpex + taxes[i]);
+        }
+
+        const monthlyInvestments = new Array(period).fill(0);
+        const interestPayments = new Array(period).fill(0);
+        const debtRepayments = new Array(period).fill(0);
+        const debtBalance = new Array(period).fill(0);
+        const cashBalance = new Array(period).fill(0);
+
+        let currentDebt = 0, currentCash = 0;
+        for (let i = 0; i < period; i++) {
+            const interestDue = currentDebt * monthlyRate;
+            interestPayments[i] = interestDue;
+            const potCash = currentCash + (inflows[i] - (baseOutflows[i] + interestDue));
+            if (potCash < 0) {
+                const needed = Math.abs(potCash);
+                monthlyInvestments[i] = needed;
+                currentDebt += needed;
+                currentCash = 0;
+            } else {
+                const repay = Math.min(potCash, currentDebt);
+                debtRepayments[i] = repay;
+                currentDebt -= repay;
+                currentCash = potCash - repay;
+            }
+            debtBalance[i] = currentDebt;
+            cashBalance[i] = currentCash;
+        }
+
+        const sumRev = rev.reduce((a, b) => a + b, 0);
+        const sumInvestments = monthlyInvestments.reduce((a, b) => a + b, 0);
+        const sumInterest = interestPayments.reduce((a, b) => a + b, 0);
+        const maxDebt = Math.max(...debtBalance);
+        const sumOpex = opex.reduce((a, b) => a + b, 0);
+        const sumTaxes = taxes.reduce((a, b) => a + b, 0);
+        const sumPurchases = cogsPayments.reduce((a, b) => a + b, 0);
+        const netProfit = sumRev * (marginPct / 100) - sumOpex - sumTaxes - sumInterest;
+        const roi = sumRev > 0 ? (netProfit / sumRev) * 100 : 0;
+
+        // Именованный контракт статей расходов (порядок ключей соответствует CONFIG.PIE_LABELS)
+        const costBreakdown = {
+            warehouse: totalWh,
+            office: totalOffice,
+            payroll: totalFot,
+            adminBase: totalAdminBase,
+            taxes: sumTaxes,
+            purchases: sumPurchases,
+            interest: sumInterest
+        };
+
+        return {
+            marginPct, totalRateAnnual, prepayPct, delayMonths, growthVal, factShare,
+            xLabels, orders, rev, cogsPayments, inventoryBalance, inflows,
+            totalOutflows: baseOutflows.map((b, i) => b + interestPayments[i]),
+            monthlyInvestments, interestPayments, debtRepayments, debtBalance, cashBalance,
+            sumRev, sumInvestments, sumInterest, maxDebt, netProfit, roi,
+            costBreakdown
+        };
+    }
+
+    function runCalculation() {
+        const m = computeModel();
+        latestData = m;
+
+        dom.lblMargin.textContent = `${m.marginPct}%`;
+        dom.kpiRevSub.textContent = `Маржа: ${m.marginPct}%`;
+        dom.telemetryRate.textContent = `[КАПИТАЛ: ${m.totalRateAnnual.toFixed(1)}% ГОДОВЫХ]`;
+        dom.kpiRateSub.textContent = `Ставка ${m.totalRateAnnual.toFixed(1)}%`;
+        dom.lblSupplierPrep.textContent = `${m.prepayPct}%`;
+        dom.lblSupplierDelay.textContent = `${m.delayMonths} мес.`;
+        dom.lblGrowth.textContent = growthMode === 'abs' ? `+${m.growthVal} шт.` : `+${m.growthVal}%`;
+        dom.lblFactShare.textContent = `${m.factShare}%`;
+
+        TextScrambler.number(dom.kpiRev, `${NumFmt.format(m.sumRev)} ₽`);
+        TextScrambler.number(dom.kpiInjections, `${NumFmt.format(m.sumInvestments)} ₽`);
+        TextScrambler.number(dom.kpiInterest, `${NumFmt.format(m.sumInterest)} ₽`);
+        TextScrambler.number(dom.kpiMaxDebt, `${NumFmt.format(m.maxDebt)} ₽`);
+        TextScrambler.number(dom.kpiProfit, `${NumFmt.format(m.netProfit)} ₽`);
+        dom.kpiRoiSub.textContent = `Рентабельность: ${m.roi.toFixed(1)}%`;
+
+        let rows = '';
+        for (let i = 0; i < m.xLabels.length; i++) {
+            rows += `<tr class="hover:bg-[var(--bg-cell-hover)] transition">
+                <td class="p-3 font-bold">${m.xLabels[i]}</td>
+                <td class="p-3 text-[#e63946]">${NumFmt.format(m.monthlyInvestments[i])} ₽</td>
+                <td class="p-3 text-[#d4af37]">${NumFmt.format(m.interestPayments[i])} ₽</td>
+                <td class="p-3 text-[#2a9d8f]">${NumFmt.format(m.debtRepayments[i])} ₽</td>
+                <td class="p-3 font-bold">${NumFmt.format(m.debtBalance[i])} ₽</td>
+                <td class="p-3">${NumFmt.format(m.cashBalance[i])} ₽</td>
+            </tr>`;
+        }
+        dom.tableDebtBody.innerHTML = rows;
+
+        // Обновляем ТОЛЬКО графики активной вкладки
+        updateVisibleCharts(m);
+    }
+
+    function scheduleCalc() {
+        if (calcTimer) clearTimeout(calcTimer);
+        calcTimer = setTimeout(() => {
+            calcTimer = null;
             runCalculation();
+        }, CONFIG.CALC_DEBOUNCE_MS);
+    }
+
+    function setGrowthMode(mode, { silent = false, skipCalc = false } = {}) {
+        if (!silent) AudioEngine.click(950, 0.02);
+        growthMode = mode;
+        if (mode === 'abs') {
+            dom.btnModeAbs.className = 'py-1 font-mono text-[9px] uppercase tracking-wider bg-[#d4af37] text-black font-bold transition';
+            dom.btnModePct.className = 'py-1 font-mono text-[9px] uppercase tracking-wider opacity-60 hover:opacity-100 transition';
+            dom.lblGrowthTitle.textContent = 'ПРИРОСТ В МЕСЯЦ';
+            dom.growthSlider.max = 100;
+            dom.growthSlider.value = 5;
+        } else {
+            dom.btnModePct.className = 'py-1 font-mono text-[9px] uppercase tracking-wider bg-[#d4af37] text-black font-bold transition';
+            dom.btnModeAbs.className = 'py-1 font-mono text-[9px] uppercase tracking-wider opacity-60 hover:opacity-100 transition';
+            dom.lblGrowthTitle.textContent = 'ПРИРОСТ В %';
+            dom.growthSlider.max = 50;
+            dom.growthSlider.value = 10;
         }
+        if (!skipCalc) runCalculation();
+    }
 
-        function resetDefaults() {
-            AudioEngine.click(600, 0.05);
-            dom.form.reset();
-            setGrowthMode('abs', true);
-        }
+    function resetDefaults() {
+        AudioEngine.click(600, 0.05);
+        dom.form.reset();
+        setGrowthMode('abs', { silent: true, skipCalc: false });
+    }
 
-        function selectTab(index) {
-            AudioEngine.click(1400, 0.025);
-            DashBackground3D.turn();
-            const buttons = document.querySelectorAll('#navTabsContainer .tab-btn');
-            buttons.forEach((btn, idx) => {
-                if (idx === index) {
-                    btn.className = 'tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest bg-[#d4af37] text-black font-bold transition shadow-md';
-                    TextScrambler.text(btn, CONFIG.TAB_TITLES[idx], 400);
-                } else {
-                    btn.className = 'tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest opacity-70 hover:opacity-100 transition';
-                    btn.textContent = CONFIG.TAB_TITLES[idx];
-                }
-            });
-            for (let i = 0; i < 4; i++) {
-                const view = document.getElementById(`viewTab${i}`);
-                if (i === index) {
-                    view.classList.remove('hidden', 'tab-view-enter');
-                    void view.offsetWidth;
-                    view.classList.add('tab-view-enter');
-                } else {
-                    view.classList.add('hidden');
-                }
-            }
-        }
+    function selectTab(index) {
+        activeTab = index;
+        AudioEngine.click(1400, 0.025);
+        DashBackground3D.turn();
 
-        function toggleTheme() {
-            isDark = !isDark;
-            document.documentElement.classList.toggle('dark', isDark);
-            const thumb = document.getElementById('sliderThumb');
-            const lblNight = document.getElementById('lblNight');
-            const lblDay = document.getElementById('lblDay');
-            const slider = document.getElementById('themeSlider');
-
-            if (isDark) {
-                thumb.style.transform = 'translateX(0px)';
-                lblNight.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold text-black';
-                lblDay.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold opacity-70';
-                slider.setAttribute('aria-checked', 'true');
+        const buttons = document.querySelectorAll('#navTabsContainer .tab-btn');
+        buttons.forEach((btn, idx) => {
+            if (idx === index) {
+                btn.className = 'tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest bg-[#d4af37] text-black font-bold transition shadow-md';
+                TextScrambler.text(btn, CONFIG.TAB_TITLES[idx], 400);
             } else {
-                thumb.style.transform = 'translateX(58px)';
-                lblDay.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold text-white';
-                lblNight.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold opacity-70';
-                slider.setAttribute('aria-checked', 'false');
+                btn.className = 'tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest opacity-70 hover:opacity-100 transition';
+                btn.textContent = CONFIG.TAB_TITLES[idx];
             }
+        });
 
-            AudioEngine.click(900, 0.03);
-            Preloader3D.setThemeColors(isDark);
-            DashBackground3D.setThemeColor(isDark);
-            syncChartsTheme();
-            Object.values(charts).forEach(ch => ch && ch.update('none'));
+        for (let i = 0; i < 4; i++) {
+            const view = document.getElementById(`viewTab${i}`);
+            if (i === index) {
+                view.classList.remove('hidden', 'tab-view-enter');
+                void view.offsetWidth;
+                view.classList.add('tab-view-enter');
+            } else {
+                view.classList.add('hidden');
+            }
         }
 
-        function exportCsv() {
-            AudioEngine.click(1600, 0.05);
-            if (!latestData) return;
-            const { xLabels, monthlyInvestments, interestPayments, debtRepayments, debtBalance, cashBalance } = latestData;
-            let csv = '\uFEFFПериод;Дотация (дефицит);Проценты по долгу;Погашение долга;Остаток тела долга;Свободный остаток счета\n';
-            for (let i = 0; i < xLabels.length; i++) {
-                csv += `${xLabels[i]};${Math.round(monthlyInvestments[i])};${Math.round(interestPayments[i])};${Math.round(debtRepayments[i])};${Math.round(debtBalance[i])};${Math.round(cashBalance[i])}\n`;
-            }
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'Finansovaya_Model_Kapital.csv';
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            URL.revokeObjectURL(url);
+        // Лениво инициализируем и обновляем графики только открытой вкладки
+        updateVisibleCharts(latestData);
+    }
+
+    function toggleTheme() {
+        isDark = !isDark;
+        document.documentElement.classList.toggle('dark', isDark);
+        const thumb = document.getElementById('sliderThumb');
+        const lblNight = document.getElementById('lblNight');
+        const lblDay = document.getElementById('lblDay');
+        const slider = document.getElementById('themeSlider');
+
+        if (isDark) {
+            thumb.style.transform = 'translateX(0px)';
+            lblNight.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold text-black';
+            lblDay.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold opacity-70';
+            slider.setAttribute('aria-checked', 'true');
+        } else {
+            thumb.style.transform = 'translateX(58px)';
+            lblDay.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold text-white';
+            lblNight.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold opacity-70';
+            slider.setAttribute('aria-checked', 'false');
         }
 
-        function generateExecutiveMemo() {
-            AudioEngine.click(1800, 0.04);
-            if (!latestData) return;
-            const { sumRev, netProfit, roi } = latestData;
-            const memoHtml = `<!DOCTYPE html>
+        AudioEngine.click(900, 0.03);
+        Preloader3D.setThemeColors(isDark);
+        DashBackground3D.setThemeColor(isDark);
+        syncChartsTheme();
+    }
+
+    function exportCsv() {
+        AudioEngine.click(1600, 0.05);
+        if (!latestData) return;
+        const { xLabels, monthlyInvestments, interestPayments, debtRepayments, debtBalance, cashBalance } = latestData;
+        let csv = '\uFEFFПериод;Дотация (дефицит);Проценты по долгу;Погашение долга;Остаток тела долга;Свободный остаток счета\n';
+        for (let i = 0; i < xLabels.length; i++) {
+            csv += `${xLabels[i]};${Math.round(monthlyInvestments[i])};${Math.round(interestPayments[i])};${Math.round(debtRepayments[i])};${Math.round(debtBalance[i])};${Math.round(cashBalance[i])}\n`;
+        }
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'Finansovaya_Model_Kapital.csv';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+    }
+
+    function generateExecutiveMemo() {
+        AudioEngine.click(1800, 0.04);
+        if (!latestData) return;
+        const { sumRev, netProfit, roi } = latestData;
+        const memoHtml = `<!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
@@ -2436,8 +2535,8 @@ p{font-size:14px;line-height:1.8;color:#ccc}
 <h1>Архитектура Капитала и Ликвидности</h1>
 <p>Настоящий меморандум фиксирует расчётные показатели финансовой модели оборотных средств, партионных поставок и факторингового плеча.</p>
 <div class="grid">
-<div class="metric"><div>СОВОКУПНАЯ ВЫРУЧКА</div><div class="val">${NumFmt.format(sumRev)} ₽</div></div>
-<div class="metric"><div>ЧИСТАЯ ПРИБЫЛЬ</div><div class="val">${NumFmt.format(netProfit)} ₽</div></div>
+<div class="metric"><div>СОВОКУПНАЯ ВЫРУЧКА</div><div class="val">${NumFmt.format(sumRev, true)} ₽</div></div>
+<div class="metric"><div>ЧИСТАЯ ПРИБЫЛЬ</div><div class="val">${NumFmt.format(netProfit, true)} ₽</div></div>
 <div class="metric"><div>РЕНТАБЕЛЬНОСТЬ (ROI)</div><div class="val">${roi.toFixed(1)}%</div></div>
 </div>
 <p>Модель учитывает дискретные закупки, отсрочки поставщиков, налог на добавленную стоимость и стоимость заёмного капитала. Сгенерировано автоматически в защищённом контуре моделирования.</p>
@@ -2445,160 +2544,150 @@ p{font-size:14px;line-height:1.8;color:#ccc}
 </div>
 </body>
 </html>`;
-            const win = window.open('', '_blank');
-            if (win) {
-                win.document.write(memoHtml);
-                win.document.close();
-            }
+        const win = window.open('', '_blank');
+        if (win) {
+            win.document.write(memoHtml);
+            win.document.close();
         }
+    }
 
-        function bindEvents() {
-            // Единое делегирование кликов через data-action (без inline onclick)
-            document.addEventListener('click', (e) => {
-                const target = e.target.closest('[data-action]');
-                if (!target) return;
-                const action = target.dataset.action;
+    function bindEvents() {
+        document.addEventListener('click', (e) => {
+            const target = e.target.closest('[data-action]');
+            if (!target) return;
+            const action = target.dataset.action;
 
-                switch (action) {
-                    case 'prev-slide':
-                        Preloader3D.prevSlide();
-                        break;
-                    case 'next-slide':
-                        Preloader3D.nextSlide();
-                        break;
-                    case 'go-slide':
-                        Preloader3D.goToSlide(parseInt(target.dataset.slide, 10));
-                        break;
-                    case 'apply-preset': {
-                        const slideIdx = Preloader3D.getCurrentSlide();
-                        if (slideIdx >= 0 && BLUEPRINT_PRESETS[slideIdx]) {
-                            BLUEPRINT_PRESETS[slideIdx].apply(dom, setGrowthMode);
-                            runCalculation();
-                        }
-                        Preloader3D.startObscuraTransition();
-                        break;
+            switch (action) {
+                case 'prev-slide':
+                    Preloader3D.prevSlide();
+                    break;
+                case 'next-slide':
+                    Preloader3D.nextSlide();
+                    break;
+                case 'go-slide':
+                    Preloader3D.goToSlide(parseInt(target.dataset.slide, 10));
+                    break;
+                case 'apply-preset': {
+                    const slideIdx = Preloader3D.getCurrentSlide();
+                    if (slideIdx >= 0 && BLUEPRINT_PRESETS[slideIdx]) {
+                        BLUEPRINT_PRESETS[slideIdx].apply(dom, setGrowthMode);
+                        runCalculation();
                     }
-                    case 'enter-dashboard':
-                        Preloader3D.startObscuraTransition();
-                        break;
-                    case 'brand-ping':
-                        AudioEngine.click(1500, 0.04);
-                        break;
-                    case 'toggle-audio': {
-                        const active = AudioEngine.toggle();
-                        document.getElementById('audioStatusDot').style.display = active ? 'inline-block' : 'none';
-                        document.getElementById('audioBtnLabel').textContent = active ? 'ЗВУК: ВЫСОКИЙ ХОР' : 'ЗВУК: ТИШИНА';
-                        break;
-                    }
-                    case 'export-pdf':
-                        generateExecutiveMemo();
-                        break;
-                    case 'export-csv':
-                        exportCsv();
-                        break;
-                    case 'toggle-theme':
-                        toggleTheme();
-                        break;
-                    case 'reset-defaults':
-                        resetDefaults();
-                        break;
-                    case 'growth-mode':
-                        setGrowthMode(target.dataset.mode);
-                        break;
-                    case 'select-tab':
-                        selectTab(parseInt(target.dataset.tab, 10));
-                        break;
+                    Preloader3D.startObscuraTransition();
+                    break;
                 }
-            });
-
-            // Делегирование ввода и изменений параметров формы
-            dom.form.addEventListener('submit', (e) => e.preventDefault());
-            dom.form.addEventListener('input', (e) => {
-                if (e.target.dataset.numeric === 'true') {
-                    NumFmt.bindInput(e.target);
+                case 'enter-dashboard':
+                    Preloader3D.startObscuraTransition();
+                    break;
+                case 'brand-ping':
+                    AudioEngine.click(1500, 0.04);
+                    break;
+                case 'toggle-audio': {
+                    const active = AudioEngine.toggle();
+                    document.getElementById('audioStatusDot').style.display = active ? 'inline-block' : 'none';
+                    document.getElementById('audioBtnLabel').textContent = active ? 'ЗВУК: ВЫСОКИЙ ХОР' : 'ЗВУК: ТИШИНА';
+                    break;
                 }
-                scheduleCalc();
-            });
-            dom.form.addEventListener('change', (e) => {
-                if (e.target.tagName === 'SELECT') {
-                    AudioEngine.click();
-                    runCalculation();
-                }
-            });
-
-            // Автозапуск аудио при первом взаимодействии пользователя
-            ['click', 'touchstart', 'keydown'].forEach(evt => {
-                window.addEventListener(evt, () => AudioEngine.resumeIfSuspended(), { once: true });
-            });
-
-            // Клавиатурное управление переключателем темы
-            document.getElementById('themeSlider').addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
+                case 'export-pdf':
+                    generateExecutiveMemo();
+                    break;
+                case 'export-csv':
+                    exportCsv();
+                    break;
+                case 'toggle-theme':
                     toggleTheme();
-                }
-            });
+                    break;
+                case 'reset-defaults':
+                    resetDefaults();
+                    break;
+                case 'growth-mode':
+                    setGrowthMode(target.dataset.mode);
+                    break;
+                case 'select-tab':
+                    selectTab(parseInt(target.dataset.tab, 10));
+                    break;
+            }
+        });
 
-            // Координаты курсора в шапке
-            const coordEl = document.getElementById('cursorCoordDisplay');
-            document.addEventListener('mousemove', (e) => {
-                if (coordEl && Preloader3D.isDismissed()) {
-                    coordEl.textContent = `X: ${String(e.clientX).padStart(4, '0')} / Y: ${String(e.clientY).padStart(4, '0')}`;
-                }
-            });
-
-            // 3D-наклон KPI-карточек и скрамбл заголовков
-            document.querySelectorAll('.tilt-card').forEach(card => {
-                const titleEl = card.querySelector('.metric-title');
-                card.addEventListener('mouseenter', () => {
-                    AudioEngine.click(1600, 0.015);
-                    if (titleEl) {
-                        const orig = titleEl.dataset.original || titleEl.textContent;
-                        TextScrambler.text(titleEl, orig, 380);
-                    }
-                });
-                card.addEventListener('mousemove', (e) => {
-                    const rect = card.getBoundingClientRect();
-                    const x = e.clientX - rect.left, y = e.clientY - rect.top;
-                    card.style.setProperty('--mouse-x', `${x}px`);
-                    card.style.setProperty('--mouse-y', `${y}px`);
-                    const rx = ((y - rect.height / 2) / (rect.height / 2)) * -6;
-                    const ry = ((x - rect.width / 2) / (rect.width / 2)) * 6;
-                    card.style.transform = `perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-3px)`;
-                });
-                card.addEventListener('mouseleave', () => {
-                    card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)';
-                });
-            });
-
-            // Телеметрия часов
-            const clockEl = document.getElementById('telemetryClock');
-            setInterval(() => {
-                if (clockEl) clockEl.textContent = `[${new Date().toTimeString().split(' ')[0]}]`;
-            }, 1000);
-
-            // Единый обработчик resize
-            window.addEventListener('resize', () => {
-                Preloader3D.resize();
-                DashBackground3D.resize();
-            });
-        }
-
-        return {
-            init: () => {
-                initCharts();
-                bindEvents();
+        dom.form.addEventListener('submit', (e) => e.preventDefault());
+        dom.form.addEventListener('input', (e) => {
+            if (e.target.dataset.numeric === 'true') {
+                NumFmt.bindInput(e.target);
+            }
+            scheduleCalc();
+        });
+        dom.form.addEventListener('change', (e) => {
+            if (e.target.tagName === 'SELECT') {
+                AudioEngine.click();
                 runCalculation();
             }
-        };
-    })();
+        });
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', DashboardApp.init);
-    } else {
-        DashboardApp.init();
+        ['click', 'touchstart', 'keydown'].forEach(evt => {
+            window.addEventListener(evt, () => AudioEngine.resumeIfSuspended(), { once: true });
+        });
+
+        document.getElementById('themeSlider').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleTheme();
+            }
+        });
+
+        const coordEl = document.getElementById('cursorCoordDisplay');
+        document.addEventListener('mousemove', (e) => {
+            if (coordEl && Preloader3D.isDismissed()) {
+                coordEl.textContent = `X: ${String(e.clientX).padStart(4, '0')} / Y: ${String(e.clientY).padStart(4, '0')}`;
+            }
+        });
+
+        document.querySelectorAll('.tilt-card').forEach(card => {
+            const titleEl = card.querySelector('.metric-title');
+            card.addEventListener('mouseenter', () => {
+                AudioEngine.click(1600, 0.015);
+                if (titleEl) {
+                    const orig = titleEl.dataset.original || titleEl.textContent;
+                    TextScrambler.text(titleEl, orig, 380);
+                }
+            });
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left, y = e.clientY - rect.top;
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+                const rx = ((y - rect.height / 2) / (rect.height / 2)) * -6;
+                const ry = ((x - rect.width / 2) / (rect.width / 2)) * 6;
+                card.style.transform = `perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-3px)`;
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)';
+            });
+        });
+
+        const clockEl = document.getElementById('telemetryClock');
+        setInterval(() => {
+            if (clockEl) clockEl.textContent = `[${new Date().toTimeString().split(' ')[0]}]`;
+        }, 1000);
+
+        window.addEventListener('resize', () => {
+            Preloader3D.resize();
+            DashBackground3D.resize();
+        });
     }
+
+    return {
+        init: () => {
+            bindEvents();
+            runCalculation();
+        }
+    };
 })();
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', DashboardApp.init);
+} else {
+    DashboardApp.init();
+}
 </script>
 </body>
 </html>
