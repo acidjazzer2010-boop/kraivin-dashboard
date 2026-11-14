@@ -1,4 +1,65 @@
-<!DOCTYPE html>
+import base64
+import glob
+import json
+import os
+import streamlit as st
+import streamlit.components.v1 as components
+
+st.set_page_config(
+    page_title="Архитектура Капитала // Rota Fortunae",
+    page_icon="⚙️",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
+# Скрываем системные элементы Streamlit и убираем отступы для полноэкранного режима
+st.markdown(
+    """
+    <style>
+        #MainMenu, header, footer, [data-testid="stToolbar"], [data-testid="stDecoration"] {
+            display: none !important;
+        }
+        .stApp {
+            background-color: #070709 !important;
+        }
+        .block-container {
+            padding: 0 !important;
+            margin: 0 !important;
+            max-width: 100% !important;
+        }
+        iframe {
+            display: block !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            border: none !important;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+def encode_image_to_data_uri(filepath: str) -> str:
+    """Кодирует локальное изображение в Base64 Data URI для работы внутри iframe."""
+    ext = os.path.splitext(filepath)[1].lower().lstrip(".")
+    mime = "image/jpeg" if ext in ("jpg", "jpeg") else f"image/{ext}"
+    with open(filepath, "rb") as f:
+        b64 = base64.b64encode(f.read()).decode("utf-8")
+    return f"data:{mime};base64,{b64}"
+
+
+def load_discovery_images(folder: str = "images") -> list[str]:
+    """Собирает до 5 изображений из папки images/ для голографических карточек прелоадера."""
+    if not os.path.isdir(folder):
+        return []
+    files = []
+    for pattern in ("*.png", "*.jpg", "*.jpeg", "*.webp"):
+        files.extend(glob.glob(os.path.join(folder, pattern)))
+    files = sorted(files)[:5]
+    return [encode_image_to_data_uri(p) for p in files]
+
+
+html_code = r"""<!DOCTYPE html>
 <html lang="ru" class="dark">
 <head>
 <meta charset="UTF-8">
@@ -146,7 +207,7 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
             <div id="preloaderHUD">
                 <div class="flex items-center gap-3 text-[#d4af37] text-[10px] tracking-[0.25em] uppercase font-mono">
                     <span class="pulse-dot" aria-hidden="true"></span>
-                    <span id="loaderStatusText" class="cursor-pointer hover:underline" onclick="window.triggerSputnikManually && window.triggerSputnikManually()" title="Нажмите для мгновенного вызова спутника (или клавишу S)">Листайте 3D-чертежи Да Винчи... [S — спутник]</span>
+                    <span id="loaderStatusText">Листайте 3D-чертежи Да Винчи...</span>
                     <span id="loaderPercent" class="font-bold">0%</span>
                 </div>
                 <div class="progress-bar-bg mt-1"><div id="loaderProgressBar"></div></div>
@@ -356,12 +417,13 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
 <script>
 'use strict';
 window.onerror = function(msg, url, line) {
-    console.error("Runtime Notice:", msg, "line:", line);
+    console.error("Runtime Info:", msg, "line:", line);
     return false;
 };
 
 const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const USER_IMAGES = typeof __JSON_IMAGES_PAYLOAD__ !== 'undefined' ? __JSON_IMAGES_PAYLOAD__ : [];
+// Массив изображений открытий / чертежей Да Винчи
+const USER_IMAGES = __JSON_IMAGES_PAYLOAD__;
 
 /* Флаги перехода и тайминги */
 let isObscuraTransition = false;
@@ -714,7 +776,7 @@ function dismissPreloader() {
 const PRELOADER_TOTAL_TIME = REDUCE_MOTION ? 1200 : 9000;
 const preloaderStartTime = performance.now();
 
-setTimeout(() => { const pt = document.getElementById('preloaderTitle'); if (pt) pt.classList.add('locked-on'); }, 500);
+setTimeout(() => { const pt = document.getElementById('preloaderTitle'); if (pt) pt.classList.add('locked-on'); }, 900);
 
 let drawingCompleted = false;
 function updatePreloaderProgress(now) {
@@ -749,7 +811,6 @@ let targetCamPos = new THREE.Vector3(0, 0, baseCamZ);
 let currentLookTarget = new THREE.Vector3(0, 0, 0);
 let targetLookTarget = new THREE.Vector3(0, 0, 0);
 preCamera.position.copy(targetCamPos);
-preCamera.lookAt(currentLookTarget);
 
 const preGroup = new THREE.Group();
 preScene.add(preGroup);
@@ -800,7 +861,7 @@ const NOSTRADAMUS_PROPHECIES = [
 
 function createNostradamusDiskTexture(dataIdx) {
     const data = NOSTRADAMUS_PROPHECIES[dataIdx % 3];
-    const size = 1024;
+    const size = 2048;
     const canvas = document.createElement('canvas');
     canvas.width = size;
     canvas.height = size;
@@ -810,7 +871,7 @@ function createNostradamusDiskTexture(dataIdx) {
     const cx = size / 2, cy = size / 2;
 
     ctx.strokeStyle = 'rgba(212, 175, 55, 0.45)';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.arc(cx, cy, size * 0.46, 0, Math.PI * 2);
     ctx.arc(cx, cy, size * 0.41, 0, Math.PI * 2);
@@ -818,14 +879,15 @@ function createNostradamusDiskTexture(dataIdx) {
     ctx.arc(cx, cy, size * 0.29, 0, Math.PI * 2);
     ctx.stroke();
 
-    for (let i = 0; i < 72; i++) {
-        const ang = (i / 72) * Math.PI * 2;
-        const isMajor = (i % 6 === 0);
-        const len = isMajor ? 18 : 9;
+    for (let i = 0; i < 144; i++) {
+        const ang = (i / 144) * Math.PI * 2;
+        const isMajor = (i % 12 === 0);
+        const isMid = (i % 6 === 0);
+        const len = isMajor ? 32 : (isMid ? 20 : 10);
         const r1 = size * 0.46;
         const r2 = r1 - len;
         ctx.strokeStyle = isMajor ? 'rgba(255, 215, 0, 0.85)' : 'rgba(212, 175, 55, 0.3)';
-        ctx.lineWidth = isMajor ? 2 : 1;
+        ctx.lineWidth = isMajor ? 3 : 1.2;
         ctx.beginPath();
         ctx.moveTo(cx + Math.cos(ang) * r1, cy + Math.sin(ang) * r1);
         ctx.lineTo(cx + Math.cos(ang) * r2, cy + Math.sin(ang) * r2);
@@ -844,14 +906,16 @@ function createNostradamusDiskTexture(dataIdx) {
             ctx.save();
             ctx.translate(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
             ctx.rotate(angle + Math.PI / 2);
+            ctx.shadowColor = 'rgba(212, 175, 55, 0.7)';
+            ctx.shadowBlur = 6;
             ctx.fillText(chars[i], 0, 0);
             ctx.restore();
         }
     }
 
-    drawCurvedText(data.outerRing, size * 0.435, 'italic 600 13px "Cormorant Garamond", Georgia, serif', '#ffd700');
-    drawCurvedText(data.zodiac, size * 0.38, '12px "JetBrains Mono", monospace', 'rgba(244, 241, 234, 0.8)');
-    drawCurvedText(data.innerRing, size * 0.32, 'italic 700 14px "Cormorant Garamond", Georgia, serif', '#d4af37');
+    drawCurvedText(data.outerRing, size * 0.435, 'italic 600 25px "Cormorant Garamond", Georgia, serif', '#ffd700');
+    drawCurvedText(data.zodiac, size * 0.38, '400 24px "JetBrains Mono", monospace', 'rgba(244, 241, 234, 0.8)');
+    drawCurvedText(data.innerRing, size * 0.32, 'italic 700 26px "Cormorant Garamond", Georgia, serif', '#d4af37');
 
     const tex = new THREE.CanvasTexture(canvas);
     tex.wrapS = THREE.ClampToEdgeWrapping;
@@ -859,20 +923,19 @@ function createNostradamusDiskTexture(dataIdx) {
     tex.minFilter = THREE.LinearFilter;
     tex.magFilter = THREE.LinearFilter;
     tex.generateMipmaps = false;
-    tex.needsUpdate = true;
     return tex;
 }
 
 /* ВОССТАНОВЛЕННАЯ ПОЛНАЯ СТРУКТУРА ГИГАНТСКИХ КОЛЕЦ */
 function createCyclopeanTrussRing(mainRadius, tubeWidth, tubeDepth, segments, nostradamusIdx = 0) {
     const group = new THREE.Group();
-    group.add(new THREE.Mesh(new THREE.TorusGeometry(mainRadius, tubeWidth * 0.45, 8, segments), megaRingWireMat));
+    group.add(new THREE.Mesh(new THREE.TorusGeometry(mainRadius, tubeWidth * 0.45, 12, segments), megaRingWireMat));
     
-    const diskGeo = new THREE.RingGeometry(mainRadius - tubeWidth * 2.5, mainRadius + tubeWidth * 2.2, 72);
+    const diskGeo = new THREE.RingGeometry(mainRadius - tubeWidth * 2.5, mainRadius + tubeWidth * 2.2, 96);
     const diskMat = new THREE.MeshBasicMaterial({
         map: createNostradamusDiskTexture(nostradamusIdx),
         transparent: true,
-        opacity: 0.14,
+        opacity: 0.12,
         side: THREE.DoubleSide,
         depthWrite: false
     });
@@ -911,9 +974,11 @@ function createCyclopeanTrussRing(mainRadius, tubeWidth, tubeDepth, segments, no
         if (i % 2 === 0) {
             linePts.push(p1_topOut, p2_botOut);
             linePts.push(p1_topIn, p2_botIn);
+            linePts.push(p1_topOut, p2_topIn);
         } else {
             linePts.push(p1_botOut, p2_topOut);
-            linePts.push(p1_botIn, p2_botIn);
+            linePts.push(p1_botIn, p2_topIn);
+            linePts.push(p1_botOut, p2_botIn);
         }
 
         if (i % 3 === 0) {
@@ -924,14 +989,14 @@ function createCyclopeanTrussRing(mainRadius, tubeWidth, tubeDepth, segments, no
         }
     }
     group.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(linePts), megaRingWireMat));
-    group.add(new THREE.Mesh(new THREE.TorusGeometry(mainRadius - tubeWidth * 1.6, tubeWidth * 0.18, 6, Math.floor(segments * 0.6)), secondaryWireMat));
+    group.add(new THREE.Mesh(new THREE.TorusGeometry(mainRadius - tubeWidth * 1.6, tubeWidth * 0.18, 8, Math.floor(segments * 0.75)), secondaryWireMat));
     return group;
 }
 
 const astrolabeRings = [];
-const aRing1 = createCyclopeanTrussRing(340, 18.0, 12.0, 120, 0);
-const aRing2 = createCyclopeanTrussRing(255, 14.0, 10.0, 96, 1);
-const aRing3 = createCyclopeanTrussRing(175, 11.0, 8.0, 80, 2);
+const aRing1 = createCyclopeanTrussRing(340, 18.0, 12.0, 180, 0);
+const aRing2 = createCyclopeanTrussRing(255, 14.0, 10.0, 150, 1);
+const aRing3 = createCyclopeanTrussRing(175, 11.0, 8.0, 130, 2);
 aRing2.rotation.x = Math.PI / 3.4; aRing2.rotation.z = Math.PI / 6.0; aRing3.rotation.y = Math.PI / 3.0;
 preGroup.add(aRing1); preGroup.add(aRing2); preGroup.add(aRing3);
 astrolabeRings.push(
@@ -941,113 +1006,8 @@ astrolabeRings.push(
 );
 
 /* =========================================================================
-   ИЗОБРАЖЕНИЯ ОТКРЫТИЙ: ЗАГРУЗЧИК + ПРОЦЕДУРНЫЕ ЧЕРТЕЖИ ДА ВИНЧИ
+   ИЗОБРАЖЕНИЯ ОТКРЫТИЙ (ГОЛОГРАФИЧЕСКИЕ ЧЕРТЕЖИ ДА ВИНЧИ)
    ========================================================================= */
-function createProceduralDaVinciTexture(cardIdx) {
-    const canvas = document.createElement('canvas');
-    canvas.width = 512; canvas.height = 512;
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, 512, 512);
-
-    ctx.strokeStyle = 'rgba(212, 175, 55, 0.85)';
-    ctx.fillStyle = '#ffd700';
-    ctx.lineWidth = 1.6;
-
-    // Рамка чертежа и угловые засечки
-    ctx.strokeRect(20, 20, 472, 472);
-    ctx.strokeRect(28, 28, 456, 456);
-
-    const cx = 256, cy = 256;
-
-    if (cardIdx === 0) {
-        // [0] Тяга и масштабирование: Воздушный винт (Архимедова спираль)
-        ctx.beginPath();
-        for (let a = 0; a < Math.PI * 6; a += 0.08) {
-            const r = a * 12;
-            const x = cx + Math.cos(a) * r;
-            const y = cy + Math.sin(a) * r * 0.65;
-            if (a === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-        }
-        ctx.stroke();
-        // Вертикальная ось и вектор тяги
-        ctx.beginPath();
-        ctx.moveTo(cx, 70); ctx.lineTo(cx, 440);
-        ctx.moveTo(cx - 50, 400); ctx.lineTo(cx + 50, 400);
-        ctx.stroke();
-        ctx.font = '14px monospace';
-        ctx.fillText('VITE AEREA // PROPULSIO', 45, 460);
-    } else if (cardIdx === 1) {
-        // [1] Механика оборачиваемости: Шестеренчатая передача
-        function drawGear(gx, gy, gr, teeth) {
-            ctx.beginPath();
-            for (let i = 0; i < teeth * 2; i++) {
-                const ang = (i / (teeth * 2)) * Math.PI * 2;
-                const rad = i % 2 === 0 ? gr : gr - 10;
-                const px = gx + Math.cos(ang) * rad;
-                const py = gy + Math.sin(ang) * rad;
-                if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-            }
-            ctx.closePath();
-            ctx.stroke();
-            ctx.beginPath(); ctx.arc(gx, gy, 12, 0, Math.PI * 2); ctx.stroke();
-        }
-        drawGear(cx - 55, cy - 35, 95, 18);
-        drawGear(cx + 65, cy + 60, 65, 12);
-        ctx.font = '14px monospace';
-        ctx.fillText('ROTA DENTATA // RATIO', 45, 460);
-    } else if (cardIdx === 2) {
-        // [2] Аэродинамика кассовых разрывов: Крыло орнитоптера
-        ctx.beginPath();
-        ctx.moveTo(60, 320);
-        ctx.quadraticCurveTo(160, 110, 440, 150);
-        ctx.quadraticCurveTo(320, 260, 60, 320);
-        ctx.stroke();
-        // Ребра крыла
-        for (let i = 1; i <= 6; i++) {
-            const t = i / 7;
-            const topX = 60 + (440 - 60) * t;
-            const topY = 110 + (150 - 110) * t;
-            ctx.beginPath(); ctx.moveTo(topX, topY); ctx.lineTo(60 + 20 * i, 320); ctx.stroke();
-        }
-        ctx.font = '14px monospace';
-        ctx.fillText('ALA MECHANICA // AERO', 45, 460);
-    } else if (cardIdx === 3) {
-        // [3] Золотая пропорция (Канон): Витрувианская геометрия
-        ctx.beginPath(); ctx.arc(cx, cy, 160, 0, Math.PI * 2); ctx.stroke();
-        ctx.strokeRect(cx - 130, cy - 130, 260, 260);
-        ctx.beginPath();
-        ctx.moveTo(cx - 130, cy - 130); ctx.lineTo(cx + 130, cy + 130);
-        ctx.moveTo(cx + 130, cy - 130); ctx.lineTo(cx - 130, cy + 130);
-        ctx.stroke();
-        ctx.font = '14px monospace';
-        ctx.fillText('AUREA RATIO // 1 : 1.618', 45, 460);
-    } else {
-        // [4] Защита резервов и баланс: Самонесущий мост
-        ctx.beginPath();
-        ctx.arc(cx, 380, 230, Math.PI * 1.15, Math.PI * 1.85);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(cx, 400, 250, Math.PI * 1.15, Math.PI * 1.85);
-        ctx.stroke();
-        for (let a = Math.PI * 1.18; a <= Math.PI * 1.82; a += 0.08) {
-            const x1 = cx + Math.cos(a) * 230, y1 = 380 + Math.sin(a) * 230;
-            const x2 = cx + Math.cos(a) * 250, y2 = 400 + Math.sin(a) * 250;
-            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-        }
-        ctx.font = '14px monospace';
-        ctx.fillText('PONS CURVUS // FIRMITAS', 45, 460);
-    }
-
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.wrapS = THREE.ClampToEdgeWrapping;
-    tex.wrapT = THREE.ClampToEdgeWrapping;
-    tex.minFilter = THREE.LinearFilter;
-    tex.magFilter = THREE.LinearFilter;
-    tex.generateMipmaps = false;
-    tex.needsUpdate = true;
-    return tex;
-}
-
 function createDaVinciHoloMaterial(texture) {
     return new THREE.ShaderMaterial({
         uniforms: { uTex: { value: texture }, uHover: { value: 0.0 }, uTime: { value: 0.0 } },
@@ -1067,14 +1027,13 @@ function createDaVinciHoloMaterial(texture) {
             void main() {
                 vec4 tex = texture2D(uTex, vUv);
                 float lum = dot(tex.rgb, vec3(0.299, 0.587, 0.114));
-                float stroke = smoothstep(0.06, 0.55, lum);
+                float stroke = smoothstep(0.10, 0.60, lum);
+                if (lum > 0.88) stroke = 1.0 - stroke;
                 vec3 baseGold = vec3(0.85, 0.71, 0.25);
                 vec3 highlight = vec3(1.0, 0.95, 0.78);
                 float wave = sin((vUv.x + vUv.y) * 12.0 - uTime * 4.0) * 0.5 + 0.5;
                 vec3 finalColor = mix(baseGold, highlight, wave * 0.4 + uHover * 0.6);
-                float alpha = clamp(stroke * (0.85 + uHover * 0.15), 0.0, 1.0);
-                if (alpha < 0.02) discard;
-                gl_FragColor = vec4(finalColor, alpha);
+                gl_FragColor = vec4(finalColor, stroke * (0.65 + uHover * 0.35));
             }
         `,
         transparent: true, side: THREE.DoubleSide, depthWrite: false
@@ -1108,7 +1067,7 @@ function createBlueprintWireMaterial() {
     });
 }
 
-function createSafeVolumetricBlueprintCard(imageSource, cardIdx = 0) {
+function createSafeVolumetricBlueprintCard(imageSource) {
     const cardGroup = new THREE.Group();
     const w = 58, h = 58, d = 26;
     const pts = [];
@@ -1123,45 +1082,30 @@ function createSafeVolumetricBlueprintCard(imageSource, cardIdx = 0) {
     const wireframeMesh = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), createBlueprintWireMaterial());
     cardGroup.add(wireframeMesh);
 
-    // Функция монтирования плоскости чертежа в центр куба
-    function attachBlueprintPlane(tex) {
-        const holoMat = createDaVinciHoloMaterial(tex);
-        const plane = new THREE.Mesh(new THREE.PlaneGeometry(48, 48), holoMat);
-        cardGroup.add(plane);
-        cardGroup.holoMat = holoMat;
+    if (imageSource && typeof imageSource === 'string' && imageSource.length > 2) {
+        try {
+            const textureLoader = new THREE.TextureLoader();
+            textureLoader.load(imageSource, function(texture) {
+                texture.wrapS = THREE.ClampToEdgeWrapping;
+                texture.wrapT = THREE.ClampToEdgeWrapping;
+                texture.minFilter = THREE.LinearFilter;
+                texture.magFilter = THREE.LinearFilter;
+                texture.generateMipmaps = false;
+                const holoMat = createDaVinciHoloMaterial(texture);
+                cardGroup.add(new THREE.Mesh(new THREE.PlaneGeometry(50, 50), holoMat));
+                cardGroup.holoMat = holoMat;
+            });
+        } catch(e) {}
     }
-
-    // Если в USER_IMAGES передан валидный путь или base64 — загружаем его, иначе используем процедурный чертеж
-    if (imageSource && typeof imageSource === 'string' && imageSource.length > 5) {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = function() {
-            const texture = new THREE.Texture(img);
-            texture.wrapS = THREE.ClampToEdgeWrapping;
-            texture.wrapT = THREE.ClampToEdgeWrapping;
-            texture.minFilter = THREE.LinearFilter;
-            texture.magFilter = THREE.LinearFilter;
-            texture.generateMipmaps = false;
-            texture.needsUpdate = true;
-            attachBlueprintPlane(texture);
-        };
-        img.onerror = function() {
-            attachBlueprintPlane(createProceduralDaVinciTexture(cardIdx));
-        };
-        img.src = imageSource;
-    } else {
-        attachBlueprintPlane(createProceduralDaVinciTexture(cardIdx));
-    }
-
     return cardGroup;
 }
 
 const floatingInventions = [
-    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[0], 0), basePos: new THREE.Vector3(-110, 34, 45), rotSpeed: new THREE.Vector3(0.0016, 0.0014, -0.0008) },
-    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[1], 1), basePos: new THREE.Vector3(115, -28, -40), rotSpeed: new THREE.Vector3(0.0012, 0.0018, 0.0010) },
-    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[2], 2), basePos: new THREE.Vector3(90, 36, 75), rotSpeed: new THREE.Vector3(-0.0014, 0.0016, 0.0009) },
-    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[3], 3), basePos: new THREE.Vector3(-36, -42, -35), rotSpeed: new THREE.Vector3(0.0008, 0.0012, 0.0006) },
-    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[4], 4), basePos: new THREE.Vector3(-85, -25, 80), rotSpeed: new THREE.Vector3(-0.0012, 0.0015, -0.0007) }
+    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[0]), basePos: new THREE.Vector3(-110, 34, 45), rotSpeed: new THREE.Vector3(0.0016, 0.0014, -0.0008) },
+    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[1]), basePos: new THREE.Vector3(115, -28, -40), rotSpeed: new THREE.Vector3(0.0012, 0.0018, 0.0010) },
+    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[2]), basePos: new THREE.Vector3(90, 36, 75), rotSpeed: new THREE.Vector3(-0.0014, 0.0016, 0.0009) },
+    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[3]), basePos: new THREE.Vector3(-36, -42, -35), rotSpeed: new THREE.Vector3(0.0008, 0.0012, 0.0006) },
+    { group: createSafeVolumetricBlueprintCard(USER_IMAGES[4]), basePos: new THREE.Vector3(-85, -25, 80), rotSpeed: new THREE.Vector3(-0.0012, 0.0015, -0.0007) }
 ];
 
 const hoverTargets = [];
@@ -1242,6 +1186,864 @@ window.applySelectedPresetAndEnter = function(e) {
 };
 
 /* =========================================================================
-   ВЫСОКОДЕТАЛИЗИРОВАННАЯ 3D-МОДЕЛЬ СПУТНИКА (BLUEPRINT WIREFRAME ПО ФОТО)
+   3D СПУТНИК (1793046110105.jpg) БЕЗ РАМОК, МИГАЮЩИЙ МАЯК И СИГНАЛ
    ========================================================================= */
-function createDetailedSputnik
+function createSputnikModel() {
+    const sputnikGroup = new THREE.Group();
+    
+    const textureLoader = new THREE.TextureLoader();
+    const photoTex = textureLoader.load('__SPUTNIK_TEXTURE_SRC__', function(tex) {
+        tex.wrapS = THREE.ClampToEdgeWrapping;
+        tex.wrapT = THREE.ClampToEdgeWrapping;
+        tex.minFilter = THREE.LinearFilter;
+        tex.magFilter = THREE.LinearFilter;
+        tex.generateMipmaps = false;
+        tex.needsUpdate = true;
+    });
+    photoTex.wrapS = THREE.ClampToEdgeWrapping;
+    photoTex.wrapT = THREE.ClampToEdgeWrapping;
+    photoTex.minFilter = THREE.LinearFilter;
+    photoTex.generateMipmaps = false;
+    
+    const cutoutMat = new THREE.ShaderMaterial({
+        uniforms: {
+            uTex: { value: photoTex },
+            uThreshold: { value: 0.08 }
+        },
+        vertexShader: `
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `,
+        fragmentShader: `
+            precision mediump float;
+            uniform sampler2D uTex;
+            uniform float uThreshold;
+            varying vec2 vUv;
+            void main() {
+                vec4 tex = texture2D(uTex, vUv);
+                float brightness = max(tex.r, max(tex.g, tex.b));
+                float alpha = smoothstep(uThreshold, uThreshold + 0.16, brightness);
+                if (alpha < 0.02) discard;
+                gl_FragColor = vec4(tex.rgb * 1.15, alpha);
+            }
+        `,
+        transparent: true,
+        side: THREE.DoubleSide,
+        depthWrite: false
+    });
+
+    const photoPlaneGeo = new THREE.PlaneGeometry(38, 38);
+    const photoPlane1 = new THREE.Mesh(photoPlaneGeo, cutoutMat);
+    sputnikGroup.add(photoPlane1);
+
+    const photoPlane2 = new THREE.Mesh(photoPlaneGeo, cutoutMat);
+    photoPlane2.rotation.y = Math.PI / 2;
+    sputnikGroup.add(photoPlane2);
+
+    const sphereMat = new THREE.MeshStandardMaterial({
+        map: photoTex,
+        metalness: 0.88,
+        roughness: 0.22,
+        transparent: true,
+        opacity: 0.88
+    });
+    const sphereGeo = new THREE.SphereGeometry(12.5, 32, 32);
+    const sphereMesh = new THREE.Mesh(sphereGeo, sphereMat);
+    sputnikGroup.add(sphereMesh);
+
+    const beltGeo = new THREE.TorusGeometry(12.8, 0.45, 12, 48);
+    const beltMat = new THREE.MeshBasicMaterial({ color: 0xd4af37 });
+    const beltMesh = new THREE.Mesh(beltGeo, beltMat);
+    beltMesh.rotation.x = Math.PI / 2;
+    sputnikGroup.add(beltMesh);
+
+    const beaconGeo = new THREE.SphereGeometry(2.4, 16, 16);
+    const beaconMat = new THREE.MeshBasicMaterial({ color: 0xff1122 });
+    const beaconMesh = new THREE.Mesh(beaconGeo, beaconMat);
+    beaconMesh.position.set(0, 13.8, 0);
+    sputnikGroup.add(beaconMesh);
+    sputnikGroup.beaconMesh = beaconMesh;
+
+    const glowGeo = new THREE.SphereGeometry(5.2, 16, 16);
+    const glowMat = new THREE.MeshBasicMaterial({ color: 0xff3333, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending });
+    const glowMesh = new THREE.Mesh(glowGeo, glowMat);
+    glowMesh.position.set(0, 13.8, 0);
+    sputnikGroup.add(glowMesh);
+    sputnikGroup.glowMesh = glowMesh;
+
+    const antMat = new THREE.LineBasicMaterial({ color: 0xdddddd, linewidth: 2 });
+    const antLen = 85;
+    [Math.PI * 0.25, Math.PI * 0.75, Math.PI * 1.25, Math.PI * 1.75].forEach(ang => {
+        const rootX = Math.cos(ang) * 12.0, rootY = Math.sin(ang) * 12.0, rootZ = -2;
+        const tipX = Math.cos(ang) * (13 + antLen * 0.42), tipY = Math.sin(ang) * (13 + antLen * 0.42), tipZ = -antLen;
+        const pts = [
+            new THREE.Vector3(rootX, rootY, rootZ),
+            new THREE.Vector3(rootX * 1.35, rootY * 1.35, rootZ - 20),
+            new THREE.Vector3(tipX, tipY, tipZ)
+        ];
+        sputnikGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), antMat));
+    });
+
+    sputnikGroup.scale.set(0.85, 0.85, 0.85);
+    sputnikGroup.visible = false;
+    return sputnikGroup;
+}
+
+const sputnik = createSputnikModel();
+preScene.add(sputnik);
+
+function playSputnikBeep(volumeRatio = 1.0) {
+    try {
+        if (!renaissanceAudio.ctx) renaissanceAudio.init();
+        const ctx = renaissanceAudio.ctx;
+        if (!ctx || ctx.state !== 'running') return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1080, ctx.currentTime);
+        
+        const peakGain = THREE.MathUtils.clamp(0.065 * volumeRatio, 0.001, 0.085);
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(peakGain, ctx.currentTime + 0.02);
+        gain.gain.setValueAtTime(peakGain, ctx.currentTime + 0.16);
+        gain.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + 0.22);
+        
+        osc.connect(gain);
+        gain.connect(renaissanceAudio.masterGain || ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.24);
+        osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+    } catch (_) {}
+}
+
+let sputnikFlight = { 
+    active: false, 
+    startTime: 0, 
+    duration: 11.0, 
+    startP: new THREE.Vector3(), 
+    endP: new THREE.Vector3(), 
+    lastBeep: 0 
+};
+
+function launchSputnik() {
+    if (preloaderDismissed || isObscuraTransition || sputnikFlight.active) return;
+    
+    const sideX = (Math.random() - 0.5) * 480;
+    const sideY = (Math.random() - 0.5) * 340;
+    sputnikFlight.startP.set(sideX, sideY, -850);
+    sputnikFlight.endP.set(-sideX * 1.25 + (Math.random() - 0.5) * 150, -sideY * 1.25 + (Math.random() - 0.5) * 150, 750);
+    
+    sputnikFlight.active = true;
+    sputnikFlight.startTime = performance.now();
+    sputnikFlight.lastBeep = performance.now();
+    sputnik.visible = true;
+    sputnik.position.copy(sputnikFlight.startP);
+}
+
+let sputnikTimerStarted = false;
+function checkSputnikScheduler(now) {
+    if (preloaderDismissed || isObscuraTransition) return;
+    const idleSeconds = (now - preloaderStartTime) * 0.001;
+    if (idleSeconds >= 30.0 && !sputnikTimerStarted) {
+        sputnikTimerStarted = true;
+        launchSputnik();
+        setInterval(() => {
+            if (!preloaderDismissed && !isObscuraTransition) launchSputnik();
+        }, 60000);
+    }
+}
+
+const raycaster = new THREE.Raycaster();
+const mouseVec = new THREE.Vector2(-999, -999);
+
+function performRaycastSelection(isExplicitClick = false) {
+    if (preloaderDismissed || isObscuraTransition) return;
+    if (!isExplicitClick && (isProgrammaticNav || window.innerWidth < 768)) return;
+
+    raycaster.setFromCamera(mouseVec, preCamera);
+    const candidateMeshes = isExplicitClick 
+        ? hoverTargets.map(h => h.hitMesh) 
+        : hoverTargets.filter((_, i) => i !== currentSlideIndex).map(h => h.hitMesh);
+
+    const intersects = raycaster.intersectObjects(candidateMeshes, false);
+    if (intersects.length > 0) {
+        const hit = intersects[0].object;
+        const targetIdx = hit.userData.slideIdx;
+        if (typeof targetIdx === 'number' && targetIdx !== currentSlideIndex) {
+            focusSlide(targetIdx);
+        }
+    }
+}
+
+window.addEventListener('mousemove', (e) => {
+    mouseVec.x = (e.clientX / window.innerWidth) * 2 - 1;
+    mouseVec.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    performRaycastSelection(false);
+});
+
+window.addEventListener('pointerdown', (e) => {
+    if (e.target && e.target.id === 'preloader-webgl') {
+        mouseVec.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouseVec.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        performRaycastSelection(true);
+    }
+});
+
+let touchStartX = 0, touchStartY = 0;
+window.addEventListener('touchstart', (e) => {
+    if (e.touches.length > 0) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+    }
+}, { passive: true });
+
+window.addEventListener('touchend', (e) => {
+    if (e.changedTouches.length > 0) {
+        const diffX = e.changedTouches[0].clientX - touchStartX;
+        const diffY = e.changedTouches[0].clientY - touchStartY;
+        if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
+            if (diffX < 0) nextSlide();
+            else prevSlide();
+        }
+    }
+}, { passive: true });
+
+function triggerCameraObscuraTransition(event) {
+    if (isObscuraTransition) return;
+    isObscuraTransition = true;
+    obscuraStartTime = performance.now();
+    playGearSpinUpSound(OBSCURA_DURATION);
+
+    const hud = document.querySelector('.preloader-fixed-hud');
+    if (hud) hud.style.opacity = '0';
+
+    targetCamPos.set(0, 0, baseCamZ + 15);
+    targetLookTarget.set(0, 0, 0);
+
+    astrolabeRings.forEach(ring => {
+        ring.startRotX = ring.group.rotation.x;
+        ring.startRotY = ring.group.rotation.y;
+        ring.startRotZ = ring.group.rotation.z;
+    });
+
+    hoverTargets.forEach((item) => {
+        item.startPos = item.group.position.clone();
+        item.startRot = item.group.rotation.clone();
+    });
+}
+
+function triggerShutterBlink() {
+    playCathedralFocusTone();
+    const flash = document.getElementById('shutter-flash');
+    if (flash) {
+        flash.style.transition = 'none';
+        flash.style.opacity = '0.75';
+        setTimeout(() => {
+            dismissPreloader();
+            flash.style.transition = 'opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1)';
+            flash.style.opacity = '0';
+        }, 60);
+    } else {
+        dismissPreloader();
+    }
+}
+
+function animatePreloader() {
+    if (preloaderDismissed) return;
+    requestAnimationFrame(animatePreloader);
+
+    try {
+        const now = performance.now();
+        const elapsed = now - preloaderStartTime;
+        const t = elapsed * 0.001;
+
+        checkSputnikScheduler(now);
+
+        if (sputnikFlight.active) {
+            const flightP = (now - sputnikFlight.startTime) / (sputnikFlight.duration * 1000);
+            if (flightP < 1.0) {
+                sputnik.position.lerpVectors(sputnikFlight.startP, sputnikFlight.endP, flightP);
+                sputnik.position.y += Math.sin(flightP * Math.PI) * 55;
+                sputnik.rotation.y += 0.015;
+                sputnik.rotation.x += 0.010;
+                
+                const blinkState = (Math.floor(now / 300) % 2 === 0);
+                if (sputnik.beaconMesh) sputnik.beaconMesh.visible = blinkState;
+                if (sputnik.glowMesh) sputnik.glowMesh.visible = blinkState;
+                
+                if (now - sputnikFlight.lastBeep > 950) {
+                    const distToCenter = Math.sin(flightP * Math.PI);
+                    playSputnikBeep(distToCenter);
+                    sputnikFlight.lastBeep = now;
+                }
+            } else {
+                sputnikFlight.active = false;
+                sputnik.visible = false;
+            }
+        }
+
+        if (isObscuraTransition) {
+            const obsElapsed = (now - obscuraStartTime) * 0.001;
+            const progress = Math.min(obsElapsed / OBSCURA_DURATION, 1.0);
+
+            const alignP = Math.min(progress / 0.44, 1.0);
+            const easeAlign = 0.5 - 0.5 * Math.cos(alignP * Math.PI);
+
+            const accelCurve = Math.pow(progress, 3.4);
+            const currentSpeed = 0.0003 + accelCurve * 0.17;
+
+            const shrinkP = Math.max(0, (progress - 0.42) / 0.58);
+            const easeShrink = Math.pow(shrinkP, 3.6);
+
+            hoverTargets.forEach((item, idx) => {
+                if (item.startPos) {
+                    const pull = Math.pow(progress, 1.85);
+                    const vortexAngle = progress * Math.PI * 3.4 + idx * (Math.PI * 2 / 5);
+                    const currentRadius = (1.0 - pull) * 125.0;
+                    
+                    item.group.position.x = Math.cos(vortexAngle) * currentRadius;
+                    item.group.position.y = Math.sin(vortexAngle) * currentRadius;
+                    item.group.position.z = THREE.MathUtils.lerp(item.startPos.z, 0, pull);
+
+                    item.group.rotation.z += 0.02 + progress * 0.07;
+                    item.group.rotation.x = THREE.MathUtils.lerp(item.startRot.x, 0, alignP);
+                    item.group.rotation.y = THREE.MathUtils.lerp(item.startRot.y, 0, alignP);
+
+                    const s = Math.max((1.0 - pull * 1.05), 0.001);
+                    item.group.scale.set(s, s, s);
+
+                    item.group.traverse(child => {
+                        if (child.material) child.material.opacity = Math.max(1.0 - progress * 1.25, 0.0);
+                    });
+                }
+            });
+
+            const positions = particleGeo.attributes.position.array;
+            for (let i = 0; i < particleCount * 3; i += 3) {
+                positions[i] += (0 - positions[i]) * (0.012 + progress * 0.045);
+                positions[i + 1] += (0 - positions[i + 1]) * (0.012 + progress * 0.045);
+                positions[i + 2] += (0 - positions[i + 2]) * (0.016 + progress * 0.045);
+            }
+            particleGeo.attributes.position.needsUpdate = true;
+            particleMat.opacity = Math.max(0.38 * (1.0 - progress * 0.92), 0.0);
+
+            megaRingWireMat.opacity = THREE.MathUtils.lerp(megaRingWireMat.opacity, 0.92, 0.025);
+            megaRingWireMat.color.lerp(new THREE.Color(0xd4af37), 0.025);
+            secondaryWireMat.color.lerp(new THREE.Color(0xb8860b), 0.025);
+
+            astrolabeRings.forEach((ring, idx) => {
+                ring.group.rotation.x = THREE.MathUtils.lerp(ring.startRotX, 0, easeAlign);
+                ring.group.rotation.y = THREE.MathUtils.lerp(ring.startRotY, 0, easeAlign);
+                
+                const direction = ring.dir || (idx % 2 === 0 ? 1 : -1);
+                ring.group.rotation.z += direction * currentSpeed;
+
+                if (ring.group.diskMesh && ring.group.diskMesh.material) {
+                    ring.group.diskMesh.material.opacity = Math.min(0.12 + easeAlign * 0.78, 0.92) * (1.0 - easeShrink * 0.95);
+                }
+
+                const scaleFactor = Math.max(1.0 - easeShrink * 0.996, 0.004);
+                const zThinness = Math.max(1.0 - easeAlign * 0.90, 0.06);
+                ring.group.scale.set(scaleFactor, scaleFactor, zThinness * scaleFactor);
+            });
+
+            preCamera.position.lerp(targetCamPos, 0.035);
+            currentLookTarget.lerp(targetLookTarget, 0.035);
+            preCamera.lookAt(currentLookTarget);
+
+            preRenderer.clear();
+            preRenderer.render(preScene, preCamera);
+
+            if (progress >= 1.0) triggerShutterBlink();
+            return;
+        }
+
+        dustParticles.rotation.y = t * 0.02;
+        dustParticles.rotation.x = Math.sin(t * 0.015) * 0.1;
+
+        const isFocused = currentSlideIndex !== -1;
+        megaRingWireMat.opacity = THREE.MathUtils.lerp(megaRingWireMat.opacity, isFocused ? 0.12 : 0.38, 0.05);
+
+        astrolabeRings.forEach(item => {
+            item.group.rotation.x += item.sx;
+            item.group.rotation.y += item.sy;
+            item.group.rotation.z += item.sz;
+        });
+
+        hoverTargets.forEach((item, idx) => {
+            if (!item.isHovered) {
+                item.group.position.y = item.basePos.y + Math.sin(t * 1.1 + idx * 1.5) * 7.5;
+                item.group.position.x = item.basePos.x + Math.cos(t * 0.75 + idx * 1.2) * 5.0;
+            }
+            item.group.position.z = THREE.MathUtils.lerp(item.group.position.z, item.targetZ, 0.08);
+            item.hitMesh.position.copy(item.group.position);
+            const sc = THREE.MathUtils.lerp(item.group.scale.x, item.targetScale, 0.1);
+            item.group.scale.set(sc, sc, sc);
+        });
+
+        preCamera.position.lerp(targetCamPos, 0.05);
+        currentLookTarget.lerp(targetLookTarget, 0.05);
+        preCamera.lookAt(currentLookTarget);
+
+        preRenderer.clear();
+        preRenderer.render(preScene, preCamera);
+    } catch(renderErr) {
+        console.error("Frame render pass issue:", renderErr);
+    }
+}
+
+animatePreloader();
+
+setTimeout(() => {
+    if (!preloaderDismissed && currentSlideIndex === -1) focusSlide(0);
+}, 1200);
+
+const CYRILLIC_GLYPHS = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ0123456789§$%*#@!/[]:;';
+const NUMERIC_GLYPHS = '0123456789 ';
+function scrambleElementText(el, finalText, duration = 460, useAlphabet = true) {
+    if (!el) return;
+    const glyphs = useAlphabet ? CYRILLIC_GLYPHS : NUMERIC_GLYPHS;
+    const start = performance.now(), len = finalText.length;
+    if (el._scrambleTimer) cancelAnimationFrame(el._scrambleTimer);
+    function update(now) {
+        const elapsed = now - start, progress = Math.min(elapsed / duration, 1);
+        const revealIdx = Math.floor(progress * len);
+        let out = '';
+        for (let i = 0; i < len; i++) {
+            const char = finalText[i];
+            if (i < revealIdx || ' ₽%.,()/[]:'.includes(char)) out += char;
+            else out += glyphs[Math.floor(Math.random() * glyphs.length)];
+        }
+        el.textContent = out;
+        if (progress < 1) el._scrambleTimer = requestAnimationFrame(update);
+        else el._scrambleTimer = null;
+    }
+    el._scrambleTimer = requestAnimationFrame(update);
+}
+function scrambleNumber(el, finalStr, duration = 400) { scrambleElementText(el, finalStr, duration, false); }
+function scrambleTitle(card) {
+    playClickSound(1600, 0.015);
+    const titleEl = card.querySelector('.metric-title');
+    if (!titleEl) return;
+    const orig = titleEl.getAttribute('data-original') || titleEl.textContent;
+    titleEl.setAttribute('data-original', orig);
+    scrambleElementText(titleEl, orig, 380, true);
+}
+
+function selectTab(index) {
+    playClickSound(1400, 0.025);
+    triggerDashRingTurn();
+    const buttons = document.querySelectorAll('#navTabsContainer .tab-btn');
+    buttons.forEach((btn, idx) => {
+        if (idx === index) { btn.className = 'tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest bg-[#d4af37] text-black font-bold transition shadow-md'; scrambleElementText(btn, TAB_TITLES[idx], 400, true); }
+        else { btn.className = 'tab-btn px-4 py-1.5 font-mono text-[10px] uppercase tracking-widest opacity-70 hover:opacity-100 transition'; btn.textContent = TAB_TITLES[idx]; }
+    });
+    for (let i = 0; i < 4; i++) {
+        const view = document.getElementById(`viewTab${i}`);
+        if (i === index) { view.classList.remove('hidden'); view.classList.remove('tab-view-enter'); void view.offsetWidth; view.classList.add('tab-view-enter'); }
+        else view.classList.add('hidden');
+    }
+}
+
+const TAB_TITLES = ['[01] ОБСЛУЖИВАНИЕ КАПИТАЛА', '[02] СКЛАДСКОЙ ЦИКЛ', '[03] ДЕНЕЖНЫЙ ПОТОК', '[04] ЭКОНОМИКА И ЗАКАЗЫ'];
+let growthMode = 'abs';
+function setGrowthMode(mode) {
+    playClickSound(950, 0.02); growthMode = mode;
+    const btnAbs = document.getElementById('btnModeAbs'), btnPct = document.getElementById('btnModePct');
+    const title = document.getElementById('lblGrowthModeTitle'), slider = document.getElementById('paramGrowthSlider');
+    if (mode === 'abs') { btnAbs.className = 'py-1 font-mono text-[9px] uppercase tracking-wider bg-[#d4af37] text-black font-bold transition'; btnPct.className = 'py-1 font-mono text-[9px] uppercase tracking-wider opacity-60 hover:opacity-100 transition'; title.textContent = 'ПРИРОСТ В МЕСЯЦ'; slider.max = 100; slider.value = 5; }
+    else { btnPct.className = 'py-1 font-mono text-[9px] uppercase tracking-wider bg-[#d4af37] text-black font-bold transition'; btnAbs.className = 'py-1 font-mono text-[9px] uppercase tracking-wider opacity-60 hover:opacity-100 transition'; title.textContent = 'ПРИРОСТ В %'; slider.max = 50; slider.value = 10; }
+    runCalculation();
+}
+
+function parseCleanNum(val) { return typeof val === 'number' ? val : parseFloat(String(val).replace(/[^\d.-]/g, '')) || 0; }
+function formatSpaced(num) { return Math.round(num).toLocaleString('ru-RU').replace(/,/g, ' '); }
+function formatInput(input) {
+    const el = input, cursorPos = el.selectionStart ?? el.value.length;
+    const digitsBefore = el.value.slice(0, cursorPos).replace(/\D/g, '').length;
+    el.value = formatSpaced(parseCleanNum(el.value));
+    let newPos = 0, seen = 0;
+    while (newPos < el.value.length && seen < digitsBefore) {
+        if (/\d/.test(el.value[newPos])) seen++;
+        newPos++;
+    }
+    try { el.setSelectionRange(newPos, newPos); } catch (_) {}
+}
+
+let chartDebtInstance = null, chartStockInstance = null, chartCFInstance = null, chartOrdersInstance = null, chartPieInstance = null, latestCalculatedData = null;
+
+function runCalculation() {
+    const startMonth = parseInt(document.getElementById('paramStartMonth').value);
+    const startYear = parseInt(document.getElementById('paramStartYear').value);
+    const period = parseInt(document.getElementById('paramPeriod').value);
+    const vatRate = parseFloat(document.getElementById('paramVatRate').value);
+    const vatMultiplier = 1 + (vatRate / 100);
+    const marginPct = parseFloat(document.getElementById('paramMargin').value);
+    document.getElementById('lblMarginVal').textContent = `${marginPct}%`;
+    document.getElementById('kpiRevSub').textContent = `Маржа: ${marginPct}%`;
+    const initialPurchase = parseCleanNum(document.getElementById('paramInitialPurchase').value);
+    const batchCycle = parseInt(document.getElementById('paramBatchCycle').value) || 5;
+    const cbRate = parseFloat(document.getElementById('paramCbRate').value) || 14.0;
+    const commMargin = parseFloat(document.getElementById('paramCommMargin').value) || 2.0;
+    const totalRateAnnual = cbRate + commMargin;
+    const monthlyRate = (totalRateAnnual / 100) / 12;
+    document.getElementById('telemetryRate').textContent = `[КАПИТАЛ: ${totalRateAnnual.toFixed(1)}% ГОДОВЫХ]`;
+    document.getElementById('kpiRateSub').textContent = `Ставка ${totalRateAnnual.toFixed(1)}%`;
+    const supplierPrepayPct = parseFloat(document.getElementById('paramSupplierPrepay').value);
+    document.getElementById('lblSupplierPrepVal').textContent = `${supplierPrepayPct}%`;
+    const supplierDelay = parseInt(document.getElementById('paramSupplierDelay').value);
+    document.getElementById('lblSupplierDelayVal').textContent = `${supplierDelay} мес.`;
+    const aov = parseCleanNum(document.getElementById('paramAov').value);
+    const startOrders = parseInt(document.getElementById('paramStartOrders').value) || 40;
+    const growthVal = parseFloat(document.getElementById('paramGrowthSlider').value);
+    document.getElementById('lblGrowthVal').textContent = growthMode === 'abs' ? `+${growthVal} шт.` : `+${growthVal}%`;
+    const maxOrdersCap = parseInt(document.getElementById('paramMaxOrdersCap').value) || 300;
+    const fot = parseCleanNum(document.getElementById('paramFot').value);
+    const wh = parseCleanNum(document.getElementById('paramWh').value);
+    const office = parseCleanNum(document.getElementById('paramOffice').value);
+    const factShare = parseFloat(document.getElementById('paramFactoringShare').value);
+    document.getElementById('lblFactShareVal').textContent = `${factShare}%`;
+    const factAdvance = 0.8;
+
+    const shortMonths = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+    const xLabels = [], orders = [], rev = [];
+    for (let i = 0; i < period; i++) {
+        const mIdx = (startMonth + i) % 12, yOff = Math.floor((startMonth + i) / 12);
+        xLabels.push(`${shortMonths[mIdx]} ${startYear + yOff}`);
+        let curOrders = i === 0 ? startOrders : (growthMode === 'abs' ? orders[i - 1] + growthVal : orders[i - 1] * (1 + growthVal / 100));
+        curOrders = Math.min(curOrders, maxOrdersCap);
+        orders.push(curOrders);
+        rev.push(curOrders * aov);
+    }
+    const cogsPct = 1 - (marginPct / 100);
+    const cogsVat = rev.map(r => r * cogsPct * vatMultiplier);
+    const cogsPayments = new Array(period).fill(0);
+    const inventoryDeliveries = new Array(period).fill(0);
+    cogsPayments[0] += initialPurchase * (supplierPrepayPct / 100);
+    if (supplierDelay < period) cogsPayments[supplierDelay] += initialPurchase * ((100 - supplierPrepayPct) / 100);
+    inventoryDeliveries[0] = initialPurchase;
+    for (let b = batchCycle; b < period; b += batchCycle) {
+        const bEnd = Math.min(b + batchCycle, period);
+        let batchTotal = 0;
+        for (let k = b; k < bEnd; k++) batchTotal += cogsVat[k];
+        inventoryDeliveries[b] = batchTotal;
+        cogsPayments[b] += batchTotal * (supplierPrepayPct / 100);
+        const secondTrancheMonth = b + supplierDelay;
+        if (secondTrancheMonth < period) cogsPayments[secondTrancheMonth] += batchTotal * ((100 - supplierPrepayPct) / 100);
+    }
+    const inventoryBalance = [];
+    let curStock = 0;
+    for (let i = 0; i < period; i++) { curStock += inventoryDeliveries[i] - cogsVat[i]; inventoryBalance.push(Math.max(curStock, 0)); }
+    const inflows = new Array(period).fill(0);
+    for (let i = 0; i < period; i++) {
+        const invVat = rev[i] * vatMultiplier;
+        inflows[i] += invVat * (factShare / 100) * factAdvance;
+        const targetM = i + 2;
+        if (targetM < period) {
+            inflows[targetM] += invVat * ((100 - factShare) / 100);
+            inflows[targetM] += invVat * (factShare / 100) * (1 - factAdvance);
+        }
+    }
+    const opex = [], taxes = rev.map(r => r * 0.05), baseOutflows = [];
+    for (let i = 0; i < period; i++) {
+        const base = 150000 + wh + office + fot;
+        opex.push(i >= 6 ? base * 1.2 : base);
+        baseOutflows.push(cogsPayments[i] + opex[i] + taxes[i]);
+    }
+    const monthlyInvestments = new Array(period).fill(0), interestPayments = new Array(period).fill(0), debtRepayments = new Array(period).fill(0), debtBalance = new Array(period).fill(0), cashBalance = new Array(period).fill(0);
+    let currentDebt = 0, currentCash = 0;
+    for (let i = 0; i < period; i++) {
+        const interestDue = currentDebt * monthlyRate;
+        interestPayments[i] = interestDue;
+        const netBeforeFin = inflows[i] - (baseOutflows[i] + interestDue);
+        const potCash = currentCash + netBeforeFin;
+        if (potCash < 0) {
+            const needed = Math.abs(potCash);
+            monthlyInvestments[i] = needed; currentDebt += needed; currentCash = 0; debtRepayments[i] = 0;
+        } else {
+            monthlyInvestments[i] = 0;
+            const repay = Math.min(potCash, currentDebt);
+            debtRepayments[i] = repay; currentDebt -= repay; currentCash = potCash - repay;
+        }
+        debtBalance[i] = currentDebt; cashBalance[i] = currentCash;
+    }
+    const sumRev = rev.reduce((a, b) => a + b, 0), sumInvestments = monthlyInvestments.reduce((a, b) => a + b, 0), sumInterest = interestPayments.reduce((a, b) => a + b, 0), maxDebt = Math.max(...debtBalance), sumOpex = opex.reduce((a, b) => a + b, 0), sumTaxes = taxes.reduce((a, b) => a + b, 0);
+    const netProfit = sumRev * (marginPct / 100) - sumOpex - sumTaxes - sumInterest;
+    const roi = sumRev > 0 ? (netProfit / sumRev) * 100 : 0;
+    latestCalculatedData = { xLabels, monthlyInvestments, interestPayments, debtRepayments, debtBalance, cashBalance, sumRev, netProfit, roi };
+
+    scrambleNumber(document.getElementById('kpiRev'), `${formatSpaced(sumRev)} ₽`);
+    scrambleNumber(document.getElementById('kpiInjections'), `${formatSpaced(sumInvestments)} ₽`);
+    scrambleNumber(document.getElementById('kpiInterest'), `${formatSpaced(sumInterest)} ₽`);
+    scrambleNumber(document.getElementById('kpiMaxDebt'), `${formatSpaced(maxDebt)} ₽`);
+    scrambleNumber(document.getElementById('kpiProfit'), `${formatSpaced(netProfit)} ₽`);
+    document.getElementById('kpiRoiSub').textContent = `Рентабельность: ${roi.toFixed(1)}%`;
+
+    const tbody = document.getElementById('tableDebtBody');
+    let rows = '';
+    for (let i = 0; i < period; i++) {
+        rows += `<tr class="hover:bg-[var(--bg-cell-hover)] transition"><td class="p-3 font-bold">${xLabels[i]}</td><td class="p-3 text-[#e63946]">${formatSpaced(monthlyInvestments[i])} ₽</td><td class="p-3 text-[#d4af37]">${formatSpaced(interestPayments[i])} ₽</td><td class="p-3 text-[#2a9d8f]">${formatSpaced(debtRepayments[i])} ₽</td><td class="p-3 font-bold">${formatSpaced(debtBalance[i])} ₽</td><td class="p-3">${formatSpaced(cashBalance[i])} ₽</td></tr>`;
+    }
+    tbody.innerHTML = rows;
+
+    const chartText = isDark ? '#8e8a80' : '#6b665c';
+    const chartGrid = isDark ? 'rgba(212,175,55,.08)' : 'rgba(184,134,11,.12)';
+    const fontMono = { family: 'JetBrains Mono', size: 10 };
+
+    if (chartDebtInstance) chartDebtInstance.destroy();
+    chartDebtInstance = new Chart(document.getElementById('chartDebt').getContext('2d'), {
+        type: 'bar',
+        data: { labels: xLabels, datasets: [
+            { label: 'Проценты за месяц', data: interestPayments, backgroundColor: '#d4af37', order: 2 },
+            { label: 'Остаток тела долга', data: debtBalance, type: 'line', borderColor: '#e63946', backgroundColor: '#e63946', borderWidth: 2.5, yAxisID: 'y1', tension: 0.3, order: 1 }
+        ]},
+        options: { responsive: true, maintainAspectRatio: false, scales: {
+            x: { grid: { display: false }, ticks: { color: chartText, font: fontMono } },
+            y: { grid: { color: chartGrid }, ticks: { color: chartText, font: fontMono } },
+            y1: { position: 'right', grid: { display: false }, ticks: { color: '#e63946', font: fontMono } }
+        }, plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } } }
+    });
+
+    if (chartStockInstance) chartStockInstance.destroy();
+    chartStockInstance = new Chart(document.getElementById('chartStock').getContext('2d'), {
+        type: 'bar',
+        data: { labels: xLabels, datasets: [
+            { label: 'Оплата партии поставщику', data: cogsPayments, backgroundColor: isDark ? '#52525b' : '#cbd5e1', order: 2 },
+            { label: 'Остаток склада', data: inventoryBalance, type: 'line', borderColor: '#d4af37', borderWidth: 2.5, yAxisID: 'y1', tension: 0.3, order: 1 }
+        ]},
+        options: { responsive: true, maintainAspectRatio: false, scales: {
+            x: { grid: { display: false }, ticks: { color: chartText, font: fontMono } },
+            y: { grid: { color: chartGrid }, ticks: { color: chartText, font: fontMono } },
+            y1: { position: 'right', grid: { display: false }, ticks: { color: '#d4af37', font: fontMono } }
+        }, plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } } }
+    });
+
+    const totalOutflows = baseOutflows.map((b, idx) => b + interestPayments[idx]);
+    if (chartCFInstance) chartCFInstance.destroy();
+    chartCFInstance = new Chart(document.getElementById('chartCF').getContext('2d'), {
+        type: 'bar',
+        data: { labels: xLabels, datasets: [
+            { label: 'Притоки от продаж', data: inflows, backgroundColor: '#2a9d8f' },
+            { label: 'Выплаты (закупки + OPEX + %)', data: totalOutflows.map(v => -v), backgroundColor: '#e63946' }
+        ]},
+        options: { responsive: true, maintainAspectRatio: false, scales: {
+            x: { grid: { display: false }, ticks: { color: chartText, font: fontMono } },
+            y: { grid: { color: chartGrid }, ticks: { color: chartText, font: fontMono } }
+        }, plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } } }
+    });
+
+    if (chartOrdersInstance) chartOrdersInstance.destroy();
+    chartOrdersInstance = new Chart(document.getElementById('chartOrders').getContext('2d'), {
+        type: 'bar',
+        data: { labels: xLabels, datasets: [
+            { label: 'Заказы, шт.', data: orders, backgroundColor: '#d4af37' },
+            { label: 'Выручка, ₽', data: rev, type: 'line', borderColor: '#2a9d8f', yAxisID: 'y1', borderWidth: 2.5 }
+        ]},
+        options: { responsive: true, maintainAspectRatio: false, scales: {
+            x: { grid: { display: false }, ticks: { color: chartText, font: fontMono } },
+            y: { grid: { color: chartGrid }, ticks: { color: chartText, font: fontMono } },
+            y1: { position: 'right', grid: { display: false }, ticks: { color: '#2a9d8f', font: fontMono } }
+        }, plugins: { legend: { labels: { color: chartText, font: { family: 'JetBrains Mono', size: 11 } } } } }
+    });
+
+    const sumPurchases = cogsPayments.reduce((a, b) => a + b, 0);
+    if (chartPieInstance) chartPieInstance.destroy();
+    chartPieInstance = new Chart(document.getElementById('chartPie').getContext('2d'), {
+        type: 'doughnut',
+        data: { labels: ['Склад', 'Офис', 'ФОТ', 'Налоги 5%', 'Закупки', 'Проценты по долгу'], datasets: [{
+            data: [wh * period, office * period, fot * period, sumTaxes, sumPurchases, sumInterest],
+            backgroundColor: ['#52525b', '#71717a', '#d4af37', '#e63946', '#2a9d8f', '#457b9d']
+        }]},
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: chartText, font: fontMono } } } }
+    });
+}
+
+function exportDataToCsv() {
+    playClickSound(1600, 0.05);
+    if (!latestCalculatedData) return;
+    const { xLabels, monthlyInvestments, interestPayments, debtRepayments, debtBalance, cashBalance } = latestCalculatedData;
+    let csv = '\uFEFF' + "Период;Дотация (дефицит);Проценты по долгу;Погашение долга;Остаток тела долга;Свободный остаток счета\n";
+    for (let i = 0; i < xLabels.length; i++) {
+        csv += `${xLabels[i]};${Math.round(monthlyInvestments[i])};${Math.round(interestPayments[i])};${Math.round(debtRepayments[i])};${Math.round(debtBalance[i])};${Math.round(cashBalance[i])}\n`;
+    }
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url; link.download = 'Finansovaya_Model_Kapital.csv';
+    document.body.appendChild(link); link.click(); link.remove();
+    URL.revokeObjectURL(url);
+}
+
+function generateExecutiveMemo() {
+    playClickSound(1800, 0.04);
+    if (!latestCalculatedData) return;
+    const { sumRev, netProfit, roi } = latestCalculatedData;
+    const memoHtml = `<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Меморандум Капитала // Executive Summary</title>
+<style>
+body { background: #070709; color: #f4f1ea; font-family: 'Georgia', serif; padding: 40px; margin: 0; }
+.memo-card { max-width: 800px; margin: 0 auto; border: 1px solid rgba(212,175,55,0.4); padding: 40px; background: rgba(13,13,18,0.95); box-shadow: 0 0 50px rgba(0,0,0,0.8); }
+h1 { font-family: 'Cormorant Garamond', serif; color: #d4af37; font-style: italic; font-size: 32px; border-bottom: 1px solid rgba(212,175,55,0.3); padding-bottom: 15px; margin-top: 0; }
+.meta { font-family: 'Courier New', monospace; font-size: 11px; color: #8e8a80; margin-bottom: 30px; }
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 30px 0; }
+.metric { border: 1px solid rgba(212,175,55,0.2); padding: 15px; background: rgba(255,255,255,0.02); }
+.val { font-size: 24px; color: #d4af37; font-weight: bold; margin-top: 5px; }
+p { font-size: 14px; line-height: 1.8; color: #ccc; }
+@media print { body { background: white; color: black; } .memo-card { border: none; box-shadow: none; } }
+</style>
+</head>
+<body>
+<div class="memo-card">
+<div class="meta">AUREA PROPORTIO // ФИНАНСОВЫЙ МЕМОРАНДУМ // 1 : 1.618</div>
+<h1>Архитектура Капитала и Ликвидности</h1>
+<p>Настоящий меморандум фиксирует расчётные показатели финансовой модели оборотных средств, партионных поставок и факторингового плеча.</p>
+<div class="grid">
+<div class="metric"><div>СОВОКУПНАЯ ВЫРУЧКА</div><div class="val">${formatSpaced(sumRev)} ₽</div></div>
+<div class="metric"><div>ЧИСТАЯ ПРИБЫЛЬ</div><div class="val">${formatSpaced(netProfit)} ₽</div></div>
+<div class="metric"><div>РЕНТАБЕЛЬНОСТЬ (ROI)</div><div class="val">${roi.toFixed(1)}%</div></div>
+</div>
+<p>Модель учитывает дискретные закупки, отсрочки поставщиков, налог на добавленную стоимость и стоимость заёмного капитала. Сгенерировано автоматически в защищённом контуре моделирования.</p>
+<div style="margin-top: 40px; text-align: right;"><button onclick="window.print()" style="padding: 10px 24px; background: #d4af37; color: black; font-weight: bold; border: none; cursor: pointer;">Печать / Сохранить в PDF</button></div>
+</div>
+</body>
+</html>`;
+    const win = window.open('', '_blank');
+    win.document.write(memoHtml);
+    win.document.close();
+}
+
+let isDark = true;
+function toggleTheme() {
+    isDark = !isDark;
+    document.documentElement.classList.toggle('dark', isDark);
+    const thumb = document.getElementById('sliderThumb'), lblNight = document.getElementById('lblNight'), lblDay = document.getElementById('lblDay');
+    const themeSlider = document.getElementById('themeSlider');
+    if (isDark) {
+        thumb.style.transform = 'translateX(0px)';
+        lblNight.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold text-black';
+        lblDay.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold opacity-70';
+        dashRingMat.color.setHex(0x00aaff); megaRingWireMat.color.setHex(0x00c3ff); secondaryWireMat.color.setHex(0x0077aa);
+        themeSlider.setAttribute('aria-checked', 'true');
+    } else {
+        thumb.style.transform = 'translateX(58px)';
+        lblDay.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold text-white';
+        lblNight.className = 'relative z-10 font-mono text-[9px] uppercase tracking-widest font-bold opacity-70';
+        dashRingMat.color.setHex(0x0055aa); megaRingWireMat.color.setHex(0x0066cc); secondaryWireMat.color.setHex(0x004488);
+        themeSlider.setAttribute('aria-checked', 'false');
+    }
+    playClickSound(900, 0.03);
+    dashRenderer.render(dashScene, dashCamera);
+    runCalculation();
+}
+
+const dashCanvas = document.getElementById('webgl-bg-canvas');
+const dashScene = new THREE.Scene();
+const dashCamera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 2000);
+dashCamera.position.z = 160;
+const dashRenderer = new THREE.WebGLRenderer({ canvas: dashCanvas, alpha: true, antialias: false, powerPreference: "low-power" });
+dashRenderer.setSize(window.innerWidth, window.innerHeight);
+dashRenderer.setPixelRatio(1);
+const dashArmillary = new THREE.Group();
+dashScene.add(dashArmillary);
+const dashRingMat = new THREE.MeshBasicMaterial({ color: 0x00aaff, wireframe: true, transparent: true, opacity: 0.15 });
+const dashRings = [];
+[65, 88, 110].forEach((radius, i) => {
+    const geo = new THREE.TorusGeometry(radius, 8 + i * 2, 14, 100);
+    const ring = new THREE.Mesh(geo, dashRingMat);
+    if (i === 0) ring.rotation.x = Math.PI / 2;
+    if (i === 1) ring.rotation.y = Math.PI / 3;
+    if (i === 2) ring.rotation.z = Math.PI / 4;
+    dashArmillary.add(ring); dashRings.push(ring);
+});
+dashRenderer.render(dashScene, dashCamera);
+let dashTurnProgress = 1.0, dashStartRot = [0, 0, 0], dashTargetRot = [0, 0, 0], dashAnimFrameId = null;
+function triggerDashRingTurn() {
+    dashStartRot = [dashRings[0].rotation.y, dashRings[1].rotation.x, dashRings[2].rotation.z];
+    dashTargetRot = [
+        dashStartRot[0] + (Math.PI / 2.618),
+        dashStartRot[1] - (Math.PI / 3.141),
+        dashStartRot[2] + (Math.PI / 4.0)
+    ];
+    dashTurnProgress = 0.0;
+    if (dashAnimFrameId) cancelAnimationFrame(dashAnimFrameId);
+    animateDashTurn();
+}
+function animateDashTurn() {
+    dashTurnProgress += 0.025;
+    const p = Math.min(dashTurnProgress, 1.0);
+    const ease = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+    dashRings[0].rotation.y = dashStartRot[0] + (dashTargetRot[0] - dashStartRot[0]) * ease;
+    dashRings[1].rotation.x = dashStartRot[1] + (dashTargetRot[1] - dashStartRot[1]) * ease;
+    dashRings[2].rotation.z = dashStartRot[2] + (dashTargetRot[2] - dashStartRot[2]) * ease;
+    dashRenderer.render(dashScene, dashCamera);
+    if (p < 1.0) dashAnimFrameId = requestAnimationFrame(animateDashTurn);
+    else dashAnimFrameId = null;
+}
+
+document.addEventListener('mousemove', (e) => {
+    const coord = document.getElementById('cursorCoordDisplay');
+    if (coord) coord.textContent = `X: ${e.clientX.toString().padStart(4, '0')} / Y: ${e.clientY.toString().padStart(4, '0')}`;
+});
+
+document.querySelectorAll('.tilt-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left, y = e.clientY - rect.top;
+        card.style.setProperty('--mouse-x', `${x}px`);
+        card.style.setProperty('--mouse-y', `${y}px`);
+        const cx = rect.width / 2, cy = rect.height / 2;
+        const rx = ((y - cy) / cy) * -6, ry = ((x - cx) / cx) * 6;
+        card.style.transform = `perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-3px)`;
+    });
+    card.addEventListener('mouseleave', () => {
+        card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)';
+    });
+});
+
+window.addEventListener('resize', () => {
+    preCamera.aspect = window.innerWidth / window.innerHeight;
+    preCamera.updateProjectionMatrix();
+    preRenderer.setSize(window.innerWidth, window.innerHeight);
+    dashCamera.aspect = window.innerWidth / window.innerHeight;
+    dashCamera.updateProjectionMatrix();
+    dashRenderer.setSize(window.innerWidth, window.innerHeight);
+    dashRenderer.render(dashScene, dashCamera);
+});
+
+setInterval(() => {
+    const clock = document.getElementById('telemetryClock');
+    if (clock) clock.textContent = `[${new Date().toTimeString().split(' ')[0]}]`;
+}, 1000);
+
+function resetDefaults() { playClickSound(600, 0.05); document.getElementById('financialInputsForm').reset(); runCalculation(); }
+
+document.getElementById('themeSlider').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleTheme(); }
+});
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => runCalculation());
+else runCalculation();
+</script>
+</body>
+</html>"""
+
+# Инъекция текстуры спутника 1793046110105.jpg (или fallback-заглушки, если файл временно отсутствует)
+sputnik_file = "1793046110105.jpg"
+if os.path.exists(sputnik_file):
+    sputnik_src = encode_image_to_data_uri(sputnik_file)
+else:
+    sputnik_src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+
+html_code = html_code.replace("__SPUTNIK_TEXTURE_SRC__", sputnik_src)
+
+# Инъекция изображений чертежей из папки images/
+discovery_images = load_discovery_images("images")
+html_code = html_code.replace("__JSON_IMAGES_PAYLOAD__", json.dumps(discovery_images))
+
+components.html(html_code, height=1080, scrolling=True)
