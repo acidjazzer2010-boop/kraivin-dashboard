@@ -365,33 +365,7 @@ window.onerror = function(msg, url, line) {
 };
 
 const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const __RAW_PAYLOAD__ = (function() {
-    try {
-        if (typeof __JSON_IMAGES_PAYLOAD__ !== 'undefined' && Array.isArray(__JSON_IMAGES_PAYLOAD__)) {
-            return __JSON_IMAGES_PAYLOAD__;
-        }
-    } catch (_) {}
-    try {
-        const el = document.getElementById('payload-images-json');
-        if (el) {
-            const raw = el.textContent.trim();
-            if (raw && !raw.startsWith('__JSON_')) {
-                const parsed = JSON.parse(raw);
-                if (Array.isArray(parsed)) return parsed;
-            }
-        }
-    } catch (_) {}
-    return [];
-})();
-const USER_IMAGES = __RAW_PAYLOAD__.length > 0
-    ? __RAW_PAYLOAD__
-    : [
-        '1793030578548.jpg',
-        '1793030581888.jpg',
-        '1793030587821.jpg',
-        '1793030589564.jpg',
-        '1793030590445.jpg'
-    ];
+const USER_IMAGES = __JSON_IMAGES_PAYLOAD__;
 
 let isObscuraTransition = false;
 let obscuraStartTime = 0;
@@ -1098,14 +1072,14 @@ function createFallbackBlueprintCanvas(slotIdx) {
     canvas.width = size;
     canvas.height = size;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#08080c';
+    ctx.fillStyle = '#c8b896';
     ctx.fillRect(0, 0, size, size);
     const cx = size / 2, cy = size / 2;
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#18120a';
+    ctx.lineWidth = 4;
     ctx.beginPath(); ctx.arc(cx, cy, 185, 0, Math.PI * 2); ctx.stroke();
     ctx.beginPath(); ctx.arc(cx, cy, 132, 0, Math.PI * 2); ctx.stroke();
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 2;
     for (let i = 0; i < 24; i++) {
         const a = (i / 24) * Math.PI * 2;
         ctx.beginPath();
@@ -1113,7 +1087,7 @@ function createFallbackBlueprintCanvas(slotIdx) {
         ctx.lineTo(cx + Math.cos(a) * 185, cy + Math.sin(a) * 185);
         ctx.stroke();
     }
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 4;
     if (slotIdx === 0) {
         for (let side = -1; side <= 1; side += 2) {
             ctx.beginPath(); ctx.moveTo(cx, cy);
@@ -1154,11 +1128,10 @@ function createFallbackBlueprintCanvas(slotIdx) {
     return canvas;
 }
 
-function attachTextureToCard(cardGroup, sourceElement, slotIdx) {
+function setCardTexture(cardGroup, texture, slotIdx) {
     while (cardGroup.children.length > 0) {
         cardGroup.remove(cardGroup.children[0]);
     }
-    const texture = new THREE.Texture(sourceElement);
     texture.wrapS = THREE.ClampToEdgeWrapping;
     texture.wrapT = THREE.ClampToEdgeWrapping;
     texture.minFilter = THREE.LinearFilter;
@@ -1175,20 +1148,20 @@ function attachTextureToCard(cardGroup, sourceElement, slotIdx) {
 
 function createCleanInventionBlueprint(imageSource, slotIdx) {
     const cardGroup = new THREE.Group();
-    // Сразу ставим процедурный чертёж, чтобы слайд никогда не был пустым
-    attachTextureToCard(cardGroup, createFallbackBlueprintCanvas(slotIdx), slotIdx);
-
     if (imageSource && typeof imageSource === 'string' && imageSource.length > 2) {
-        const img = new Image();
-        if (!imageSource.startsWith('data:')) {
-            img.crossOrigin = 'anonymous';
-        }
-        img.onload = function() {
-            if (img.naturalWidth > 0) {
-                attachTextureToCard(cardGroup, img, slotIdx);
+        const loader = new THREE.TextureLoader();
+        loader.load(
+            imageSource,
+            function(texture) {
+                setCardTexture(cardGroup, texture, slotIdx);
+            },
+            undefined,
+            function() {
+                setCardTexture(cardGroup, new THREE.CanvasTexture(createFallbackBlueprintCanvas(slotIdx)), slotIdx);
             }
-        };
-        img.src = imageSource;
+        );
+    } else {
+        setCardTexture(cardGroup, new THREE.CanvasTexture(createFallbackBlueprintCanvas(slotIdx)), slotIdx);
     }
     return cardGroup;
 }
