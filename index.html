@@ -7,6 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script>if(!window.THREE){document.write('<scr'+'ipt src="https://unpkg.com/three@0.128.0/build/three.min.js"><\/scr'+'ipt>');}</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>if(!window.Chart){document.write('<scr'+'ipt src="https://unpkg.com/chart.js@4.4.1/dist/chart.umd.min.js"><\/scr'+'ipt>');}</script>
 <style>
 :root{
     --bg-space:#070709;
@@ -1015,7 +1019,12 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
             document.documentElement.style.overflow = 'auto';
             document.body.style.overflow = 'auto';
             if (app) app.classList.add('ready', 'camera-obscura-reveal');
-            setTimeout(function() { if (stage) stage.style.display = 'none'; }, 1500);
+            if (stage) {
+                stage.style.pointerEvents = 'none';
+                stage.style.transition = 'opacity 0.65s ease';
+                stage.style.opacity = '0';
+                setTimeout(function() { stage.style.display = 'none'; }, 700);
+            }
         }
 
         function triggerShutter() {
@@ -2579,19 +2588,26 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
         tryNext();
     }
 
-    loadScriptWithFallback([
-        'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
-        'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js'
-    ], function() {
-        if (window.THREE) PreloaderCtrl.attachThree(window.THREE);
-    });
+    if (window.THREE) {
+        PreloaderCtrl.attachThree(window.THREE);
+    } else {
+        loadScriptWithFallback([
+            'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+            'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js'
+        ], function() {
+            if (window.THREE) PreloaderCtrl.attachThree(window.THREE);
+        });
+    }
 
-    loadScriptWithFallback([
-        'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js',
-        'https://unpkg.com/chart.js@4.4.1/dist/chart.umd.min.js'
-    ], function() {
+    if (window.Chart) {
         DashboardApp.refreshCharts();
-    });
+    } else {
+        loadScriptWithFallback([
+            'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js'
+        ], function() {
+            DashboardApp.refreshCharts();
+        });
+    }
 })();
 </script>
 </body>
