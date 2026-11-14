@@ -38,7 +38,6 @@ st.markdown(
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Точный список 5 чертежей изобретений из корня репозитория
 BLUEPRINT_FILES = [
     "1793030578548.jpg",
     "1793030581888.jpg",
@@ -70,13 +69,11 @@ def build_dashboard_html() -> str:
     with open(index_path, "r", encoding="utf-8") as f:
         html_content = f.read()
 
-    # 1. Подстановка текстуры спутника
     sputnik_src = encode_image_to_data_uri(SPUTNIK_FILE)
     if not sputnik_src:
         sputnik_src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
     html_content = html_content.replace("__SPUTNIK_TEXTURE_SRC__", sputnik_src)
 
-    # 2. Подстановка 5 чертежей изобретений
     discovery_images = [
         uri for name in BLUEPRINT_FILES if (uri := encode_image_to_data_uri(name))
     ]
