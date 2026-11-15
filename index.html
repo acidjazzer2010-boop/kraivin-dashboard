@@ -34,6 +34,19 @@ button:focus:not(:focus-visible){outline:none}
 #preloader-stage{position:fixed;top:0;left:0;width:100vw;height:100vh;background:radial-gradient(circle at center,#0d0e17 0%,#030306 100%);z-index:900;overflow:hidden;touch-action:none}
 #preloader-webgl{position:absolute;inset:0;width:100%;height:100%;z-index:10;cursor:grab}
 #preloader-webgl:active{cursor:grabbing}
+#vhs-glitch-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:20;pointer-events:none;mix-blend-mode:screen}
+.vhs-crt-overlay{
+    position:absolute;inset:0;z-index:22;pointer-events:none;
+    background:repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0.22) 0px,
+        rgba(0,0,0,0.22) 1px,
+        transparent 1px,
+        transparent 3px
+    );
+    box-shadow:inset 0 0 90px rgba(0,0,0,0.65);
+    opacity:0.55;
+}
 
 .preloader-fixed-hud{position:absolute;inset:0;width:100%;height:100%;z-index:30;pointer-events:none;user-select:none;transition:opacity 0.8s ease}
 #preloaderTitle{position:absolute;top:28px;left:50%;transform:translateX(-50%);font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:clamp(20px,3.2vw,44px);font-weight:700;letter-spacing:.26em;color:var(--accent-gold);opacity:0;text-shadow:0 0 45px rgba(212,175,55,.85);transition:opacity 1.8s cubic-bezier(.16,1,.3,1);text-align:center;white-space:nowrap}
@@ -122,6 +135,8 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
 <!-- ПРЕЛОАДЕР -->
 <div id="preloader-stage">
     <canvas id="preloader-webgl"></canvas>
+    <canvas id="vhs-glitch-canvas"></canvas>
+    <div class="vhs-crt-overlay" aria-hidden="true"></div>
     
     <div class="preloader-fixed-hud">
         <div id="preloaderTitle">Архитектура финансов</div>
@@ -1867,6 +1882,7 @@ function animatePreloader() {
 
             preRenderer.clear();
             preRenderer.render(preScene, preCamera);
+            VHSGlitchEngine.update(now, t, progress);
 
             if (progress >= 1.0) triggerShutterBlink();
             return;
@@ -1993,10 +2009,160 @@ function animatePreloader() {
 
         preRenderer.clear();
         preRenderer.render(preScene, preCamera);
+        VHSGlitchEngine.update(now, t, 0);
     } catch(renderErr) {
         console.error("Frame render pass issue:", renderErr);
     }
 }
+
+/* =========================================================================
+   VHS / CRT ЭФФЕКТ ИСПОРЧЕННОГО ТЕЛЕВИЗИОННОГО СИГНАЛА (РАНДОМНЫЕ ПОМЕХИ)
+   ========================================================================= */
+const VHSGlitchEngine = (function() {
+    const canvas = document.getElementById('vhs-glitch-canvas');
+    if (!canvas) return { update: () => {}, resize: () => {} };
+    const ctx = canvas.getContext('2d');
+
+    let w = 0, h = 0;
+    function resize() {
+        w = canvas.width = Math.max(1, Math.floor(window.innerWidth * 0.75));
+        h = canvas.height = Math.max(1, Math.floor(window.innerHeight * 0.75));
+    }
+    resize();
+
+    // Предгенерированный тайл мелкого аналогового «снега» (128x128), чтобы не тратить CPU каждый кадр
+    const noiseTile = document.createElement('canvas');
+    noiseTile.width = 128;
+    noiseTile.height = 128;
+    const nCtx = noiseTile.getContext('2d');
+    const nImg = nCtx.createImageData(128, 128);
+    for (let i = 0; i < nImg.data.length; i += 4) {
+        const v = Math.random() > 0.5 ? 255 : 0;
+        nImg.data[i] = v;
+        nImg.data[i + 1] = v;
+        nImg.data[i + 2] = v;
+        nImg.data[i + 3] = Math.floor(Math.random() * 65);
+    }
+    nCtx.putImageData(nImg, 0, 0);
+
+    let burstActive = false;
+    let burstEnd = 0;
+    let nextBurstTime = performance.now() + 1800 + Math.random() * 2500;
+    let burstIntensity = 0;
+    let trackingRollY = 0;
+
+    function playVhsStaticBurst(durationSec, intensity) {
+        try {
+            if (!renaissanceAudio.ctx || renaissanceAudio.ctx.state !== 'running') return;
+            const aCtx = renaissanceAudio.ctx;
+            const bufLen = Math.floor(aCtx.sampleRate * durationSec);
+            const buffer = aCtx.createBuffer(1, bufLen, aCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufLen; i++) {
+                // Характерное потрескивание трекинга VHS + белый шум
+                const spike = Math.random() > 0.985 ? (Math.random() * 2 - 1) * 1.8 : 0;
+                data[i] = ((Math.random() * 2 - 1) * 0.35 + spike);
+            }
+            const src = aCtx.createBufferSource();
+            src.buffer = buffer;
+
+            const bp = aCtx.createBiquadFilter();
+            bp.type = 'bandpass';
+            bp.frequency.setValueAtTime(1600 + Math.random() * 1200, aCtx.currentTime);
+            bp.Q.setValueAtTime(1.4, aCtx.currentTime);
+
+            const gain = aCtx.createGain();
+            const peak = 0.012 + intensity * 0.022;
+            gain.gain.setValueAtTime(0.0001, aCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(peak, aCtx.currentTime + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, aCtx.currentTime + durationSec);
+
+            src.connect(bp);
+            bp.connect(gain);
+            gain.connect(aCtx.destination);
+            src.start();
+            src.onended = () => { try { src.disconnect(); bp.disconnect(); gain.disconnect(); } catch (_) {} };
+        } catch (_) {}
+    }
+
+    function update(now, t, obscuraProgress) {
+        if (REDUCE_MOTION || preloaderDismissed) return;
+        ctx.clearRect(0, 0, w, h);
+
+        // Планировщик случайных вспышек помех VHS
+        if (!burstActive && now >= nextBurstTime) {
+            burstActive = true;
+            const durMs = 140 + Math.random() * 480;
+            burstEnd = now + durMs;
+            burstIntensity = 0.35 + Math.random() * 0.65;
+            nextBurstTime = burstEnd + 1400 + Math.random() * 4200;
+            playVhsStaticBurst(durMs / 1000, burstIntensity);
+        } else if (burstActive && now >= burstEnd) {
+            burstActive = false;
+        }
+
+        const effectiveIntensity = isObscuraTransition
+            ? Math.min(1.0, 0.3 + obscuraProgress * 0.9)
+            : (burstActive ? burstIntensity : 0.0);
+
+        // 1. Медленно ползущая полоса трекинга VHS (всегда едва заметна, усиливается при сбое)
+        trackingRollY = (trackingRollY + (burstActive ? 9.5 : 1.4)) % h;
+        const barH = burstActive ? (14 + Math.random() * 28) : 6;
+        ctx.fillStyle = `rgba(255, 255, 255, ${burstActive ? 0.09 : 0.022})`;
+        ctx.fillRect(0, trackingRollY, w, barH);
+
+        // 2. Тонкие случайные горизонтальные микро-строки (1–2 линии даже в спокойном режиме)
+        const idleLines = burstActive ? Math.floor(8 + effectiveIntensity * 18) : (Math.random() > 0.45 ? 1 : 0);
+        for (let i = 0; i < idleLines; i++) {
+            const ly = Math.random() * h;
+            const lh = 1 + Math.random() * (burstActive ? 3.5 : 1.5);
+            const lx = (Math.random() - 0.5) * 40;
+            const lw = w * (0.35 + Math.random() * 0.75);
+
+            // RGB-расслоение (красный и бирюзовый сдвиг как на старой VHS-кассете)
+            const shift = (Math.random() - 0.5) * (burstActive ? 22 : 6);
+            ctx.fillStyle = `rgba(255, 35, 75, ${0.12 + effectiveIntensity * 0.25})`;
+            ctx.fillRect(lx - shift, ly, lw, lh);
+            ctx.fillStyle = `rgba(0, 235, 255, ${0.12 + effectiveIntensity * 0.25})`;
+            ctx.fillRect(lx + shift, ly + 0.5, lw, lh);
+
+            // Яркая белая/золотистая строка разрыва синхронизации
+            if (Math.random() > 0.35) {
+                ctx.fillStyle = `rgba(244, 241, 234, ${0.18 + effectiveIntensity * 0.42})`;
+                ctx.fillRect(lx, ly, lw * (0.4 + Math.random() * 0.6), Math.max(1, lh * 0.6));
+            }
+        }
+
+        // 3. При вспышке сбоя — «снежный» шум VHS и нижняя полоса зажёванной плёнки (head-switching noise)
+        if (effectiveIntensity > 0.05) {
+            ctx.save();
+            ctx.globalAlpha = effectiveIntensity * 0.24;
+            const ox = -Math.floor(Math.random() * 128);
+            const oy = -Math.floor(Math.random() * 128);
+            for (let x = ox; x < w; x += 128) {
+                for (let y = oy; y < h; y += 128) {
+                    ctx.drawImage(noiseTile, x, y);
+                }
+            }
+            ctx.restore();
+
+            // Нижняя полоса VHS head-switching noise (характерное дрожание у нижнего края кадра)
+            const bottomBandY = h - (6 + Math.random() * 12);
+            for (let s = 0; s < 10; s++) {
+                ctx.fillStyle = s % 2 === 0 ? 'rgba(255,255,255,0.35)' : 'rgba(0,220,255,0.28)';
+                ctx.fillRect(Math.random() * w, bottomBandY + Math.random() * 6, 30 + Math.random() * 140, 2);
+            }
+
+            // Лёгкий горизонтальный рывок самого 3D-холста и заголовка в момент сильного сбоя
+            const jitterX = ((Math.random() - 0.5) * 10 * effectiveIntensity).toFixed(1);
+            preCanvas.style.transform = `translateX(${jitterX}px)`;
+        } else if (preCanvas.style.transform) {
+            preCanvas.style.transform = '';
+        }
+    }
+
+    return { update, resize };
+})();
 
 animatePreloader();
 
@@ -2471,6 +2637,7 @@ window.addEventListener('resize', () => {
     preCamera.aspect = window.innerWidth / window.innerHeight;
     preCamera.updateProjectionMatrix();
     preRenderer.setSize(window.innerWidth, window.innerHeight);
+    VHSGlitchEngine.resize();
     if (!preloaderDismissed && currentSlideIndex !== -1) {
         focusSlide(currentSlideIndex);
     }
