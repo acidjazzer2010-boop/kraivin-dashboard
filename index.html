@@ -366,6 +366,17 @@ window.onerror = function(msg, url, line) {
 
 const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const USER_IMAGES = __JSON_IMAGES_PAYLOAD__;
+const NORMALIZED_IMAGES = (function() {
+    if (Array.isArray(USER_IMAGES) && USER_IMAGES.length > 0) return USER_IMAGES;
+    try {
+        const node = document.getElementById('payload-images-json');
+        if (node) {
+            const parsed = JSON.parse(node.textContent.trim());
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+    } catch (_) {}
+    return [];
+})();
 
 let isObscuraTransition = false;
 let obscuraStartTime = 0;
@@ -948,165 +959,8 @@ let isPredatorMorphActive = false;
 let predatorMorphStrength = 0.0;
 let predatorMorphClock = 0.0;
 
-const LOADED_BG_LUMS = new Array(5).fill(0.85);
-
-function analyzeImagePolarity(sourceElement) {
-    try {
-        const c = document.createElement('canvas');
-        c.width = 64;
-        c.height = 64;
-        const ctx = c.getContext('2d');
-        ctx.drawImage(sourceElement, 0, 0, 64, 64);
-        const data = ctx.getImageData(0, 0, 64, 64).data;
-        // Сэмплируем пиксели по периметру (рамка 4px), чтобы точно определить яркость бумаги/фона
-        let sum = 0, count = 0;
-        for (let y = 0; y < 64; y++) {
-            for (let x = 0; x < 64; x++) {
-                if (x < 4 || x >= 60 || y < 4 || y >= 60) {
-                    const idx = (y * 64 + x) * 4;
-                    const lum = (0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2]) / 255.0;
-                    sum += lum;
-                    count++;
-                }
-            }
-        }
-        return count > 0 ? (sum / count) : 0.85;
-    } catch (_) {
-        return 0.85;
-    }
-}
-
-function createDaVinciHoloMaterial(texture, slotIdx, bgLum) {
-    return new THREE.ShaderMaterial({
-        uniforms: {
-            uTex: { value: texture },
-            uTexNext: { value: texture },
-            uBgLum: { value: bgLum },
-            uBgLumNext: { value: bgLum },
-            uMorphMix: { value: 0.0 },
-            uPredator: { value: 0.0 },
-            uHover: { value: 0.0 },
-            uTime: { value: 0.0 },
-            uSeed: { value: slotIdx * 1.73 }
-        },
-        vertexShader: `
-            uniform float uPredator;
-            uniform float uTime;
-            uniform float uSeed;
-            varying vec2 vUv;
-            void main() {
-                vUv = uv;
-                vec3 pos = position;
-                if (uPredator > 0.001) {
-                    float w1 = sin(pos.x * 0.08 + uTime * 3.2 + uSeed) * cos(pos.y * 0.08 - uTime * 2.6);
-                    float w2 = sin((pos.x - pos.y) * 0.06 + uTime * 4.1 - uSeed);
-                    pos.z += (w1 * 14.0 + w2 * 9.0) * uPredator;
-                    pos.x += sin(pos.y * 0.07 + uTime * 2.8 + uSeed) * 6.5 * uPredator;
-                    pos.y += cos(pos.x * 0.07 - uTime * 2.4 + uSeed) * 6.5 * uPredator;
-                }
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-            }
-        `,
-        fragmentShader: `
-            precision mediump float;
-            uniform sampler2D uTex;
-            uniform sampler2D uTexNext;
-            uniform float uBgLum;
-            uniform float uBgLumNext;
-            uniform float uMorphMix;
-            uniform float uPredator;
-            uniform float uHover;
-            uniform float uTime;
-            uniform float uSeed;
-            varying vec2 vUv;
-
-            vec3 predatorThermalPalette(float t) {
-                vec3 deepViolet = vec3(0.58, 0.02, 1.00);
-                vec3 electroCyan = vec3(0.00, 0.92, 1.00);
-                vec3 acidGreen  = vec3(0.22, 1.00, 0.08);
-                vec3 crimsonRed = vec3(1.00, 0.04, 0.22);
-                if (t < 0.28) {
-                    return mix(deepViolet, electroCyan, t / 0.28);
-                } else if (t < 0.58) {
-                    return mix(electroCyan, acidGreen, (t - 0.28) / 0.30);
-                } else if (t < 0.84) {
-                    return mix(acidGreen, crimsonRed, (t - 0.58) / 0.26);
-                } else {
-                    return mix(crimsonRed, deepViolet, (t - 0.84) / 0.16);
-                }
-            }
-
-            // Полярно-независимое извлечение рисунка: фон всегда 0.0 (прозрачен), штрихи 0.0..1.0 с сохранением тонкой штриховки
-            float extractBlueprintStroke(vec3 rgb, float bgLum) {
-                float lum = dot(rgb, vec3(0.299, 0.587, 0.114));
-                float ink;
-                if (bgLum > 0.5) {
-                    // Светлая бумага/пергамент: всё, что близко к цвету бумаги (bgLum - 0.05), полностью прозрачно!
-                    float paperEdge = max(0.25, bgLum - 0.05);
-                    ink = 1.0 - smoothstep(0.06, paperEdge, lum);
-                } else {
-                    // Тёмный фон: всё, что темнее (bgLum + 0.06), полностью прозрачно!
-                    float darkEdge = min(0.75, bgLum + 0.06);
-                    ink = smoothstep(darkEdge, 0.92, lum);
-                }
-                // Гамма-коррекция для чёткости тонких линий пера да Винчи
-                return pow(clamp(ink, 0.0, 1.0), 0.78);
-            }
-
-            void main() {
-                vec2 uv1 = vUv;
-                vec2 uv2 = vUv;
-
-                if (uPredator > 0.001) {
-                    vec2 flow1 = vec2(
-                        sin(vUv.y * 9.0 + uTime * 2.9 + uSeed) * 0.085 + cos((vUv.x + vUv.y) * 6.0 - uTime * 2.1) * 0.045,
-                        cos(vUv.x * 9.0 - uTime * 2.5 + uSeed) * 0.085 + sin((vUv.x - vUv.y) * 6.0 + uTime * 2.3) * 0.045
-                    );
-                    vec2 flow2 = vec2(
-                        cos(vUv.y * 8.0 - uTime * 3.1 - uSeed) * 0.085,
-                        sin(vUv.x * 8.0 + uTime * 2.7 - uSeed) * 0.085
-                    );
-                    uv1 = clamp(vUv + flow1 * uPredator * (0.4 + uMorphMix * 0.8), 0.001, 0.999);
-                    uv2 = clamp(vUv + flow2 * uPredator * (1.2 - uMorphMix * 0.8), 0.001, 0.999);
-                }
-
-                vec4 tex1 = texture2D(uTex, uv1);
-                vec4 tex2 = texture2D(uTexNext, uv2);
-
-                float s1 = extractBlueprintStroke(tex1.rgb, uBgLum);
-                float s2 = extractBlueprintStroke(tex2.rgb, uBgLumNext);
-                float stroke = mix(s1, s2, uMorphMix * uPredator);
-
-                // Мягкое виньетирование по краям листа, чтобы края холста растворялись в пространстве
-                vec2 edgeDist = smoothstep(vec2(0.0), vec2(0.08), vUv) * smoothstep(vec2(1.0), vec2(0.92), vUv);
-                float vignette = edgeDist.x * edgeDist.y;
-
-                // Благородная градация золота от тёмной бронзы полутеней до яркого сусального золота штриха
-                vec3 bronzeShadow = vec3(0.55, 0.41, 0.12);
-                vec3 pureGold     = vec3(0.92, 0.76, 0.28);
-                vec3 brightEdge   = vec3(1.00, 0.95, 0.76);
-                float wave = sin((vUv.x + vUv.y) * 10.0 - uTime * 3.2) * 0.5 + 0.5;
-                vec3 goldColor = mix(bronzeShadow, pureGold, smoothstep(0.15, 0.75, stroke));
-                goldColor = mix(goldColor, brightEdge, smoothstep(0.65, 1.0, stroke) * (0.35 + wave * 0.25 + uHover * 0.4));
-
-                float thermalField = fract(
-                    stroke * 0.72 +
-                    sin(vUv.x * 5.5 + uTime * 2.2 + uSeed) * 0.22 +
-                    cos(vUv.y * 5.5 - uTime * 1.9) * 0.22 +
-                    uTime * 0.28
-                );
-                vec3 predColor = predatorThermalPalette(thermalField);
-
-                vec3 finalColor = mix(goldColor, predColor, uPredator);
-                float alphaBoost = mix(0.88 + uHover * 0.12, 0.96, uPredator);
-                float alpha = stroke * vignette * alphaBoost;
-                if (alpha < 0.02) discard;
-                gl_FragColor = vec4(finalColor, alpha);
-            }
-        `,
-        transparent: true, side: THREE.DoubleSide, depthWrite: false
-    });
-}
+const GOLD_CARD_TEXTURES = new Array(5).fill(null);
+const PREDATOR_CARD_TEXTURES = new Array(5).fill(null);
 
 function createFallbackBlueprintCanvas(slotIdx) {
     const size = 512;
@@ -1114,10 +968,10 @@ function createFallbackBlueprintCanvas(slotIdx) {
     canvas.width = size;
     canvas.height = size;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#c8b896';
+    ctx.fillStyle = '#e8dcc4';
     ctx.fillRect(0, 0, size, size);
     const cx = size / 2, cy = size / 2;
-    ctx.strokeStyle = '#18120a';
+    ctx.strokeStyle = '#1a120b';
     ctx.lineWidth = 4;
     ctx.beginPath(); ctx.arc(cx, cy, 185, 0, Math.PI * 2); ctx.stroke();
     ctx.beginPath(); ctx.arc(cx, cy, 132, 0, Math.PI * 2); ctx.stroke();
@@ -1170,26 +1024,145 @@ function createFallbackBlueprintCanvas(slotIdx) {
     return canvas;
 }
 
-function setCardTexture(cardGroup, texture, slotIdx) {
-    while (cardGroup.children.length > 0) {
-        cardGroup.remove(cardGroup.children[0]);
-    }
-    texture.wrapS = THREE.ClampToEdgeWrapping;
-    texture.wrapT = THREE.ClampToEdgeWrapping;
-    texture.minFilter = THREE.LinearFilter;
-    texture.magFilter = THREE.LinearFilter;
-    texture.generateMipmaps = false;
-    texture.needsUpdate = true;
-    LOADED_INVENTION_TEXTURES[slotIdx] = texture;
+function buildProcessedCardTextures(sourceEl, slotIdx) {
+    const texSize = 512;
+    const goldCnv = document.createElement('canvas');
+    goldCnv.width = texSize;
+    goldCnv.height = texSize;
+    const gCtx = goldCnv.getContext('2d');
 
-    const imgEl = texture.image;
-    const bgLum = imgEl ? analyzeImagePolarity(imgEl) : 0.85;
-    LOADED_BG_LUMS[slotIdx] = bgLum;
+    const predCnv = document.createElement('canvas');
+    predCnv.width = texSize;
+    predCnv.height = texSize;
+    const pCtx = predCnv.getContext('2d');
+
+    gCtx.drawImage(sourceEl, 0, 0, texSize, texSize);
+    const imgData = gCtx.getImageData(0, 0, texSize, texSize);
+    const d = imgData.data;
+
+    // 1. Определяем среднюю яркость рамки листа (полярность бумаги/фона)
+    let borderSum = 0, borderCnt = 0;
+    for (let y = 0; y < texSize; y += 2) {
+        for (let x = 0; x < texSize; x += 2) {
+            if (x < 24 || x >= texSize - 24 || y < 24 || y >= texSize - 24) {
+                const idx = (y * texSize + x) * 4;
+                const lum = (0.299 * d[idx] + 0.587 * d[idx + 1] + 0.114 * d[idx + 2]) / 255.0;
+                borderSum += lum;
+                borderCnt++;
+            }
+        }
+    }
+    const bgLum = borderCnt > 0 ? (borderSum / borderCnt) : 0.85;
+    const isLightPaper = bgLum > 0.5;
+
+    const predImg = pCtx.createImageData(texSize, texSize);
+    const pd = predImg.data;
+    const half = texSize * 0.5;
+
+    for (let y = 0; y < texSize; y++) {
+        const ny = (y - half) / half;
+        for (let x = 0; x < texSize; x++) {
+            const nx = (x - half) / half;
+            // Плавная виньетка по краям листа без квадратной рамки
+            const edgeX = Math.min(x, texSize - 1 - x) / (texSize * 0.08);
+            const edgeY = Math.min(y, texSize - 1 - y) / (texSize * 0.08);
+            const edgeFade = Math.max(0, Math.min(1, Math.min(edgeX, edgeY)));
+            const vignette = edgeFade * edgeFade * (3.0 - 2.0 * edgeFade);
+
+            const idx = (y * texSize + x) * 4;
+            const lum = (0.299 * d[idx] + 0.587 * d[idx + 1] + 0.114 * d[idx + 2]) / 255.0;
+
+            let ink = 0;
+            if (isLightPaper) {
+                const paperThreshold = Math.max(0.28, bgLum - 0.045);
+                ink = Math.max(0, Math.min(1, (paperThreshold - lum) / Math.max(0.15, paperThreshold - 0.06)));
+            } else {
+                const darkThreshold = Math.min(0.72, bgLum + 0.055);
+                ink = Math.max(0, Math.min(1, (lum - darkThreshold) / Math.max(0.15, 0.94 - darkThreshold)));
+            }
+            ink = Math.pow(ink, 0.72);
+
+            const alpha = ink * vignette;
+            if (alpha < 0.02) {
+                d[idx + 3] = 0;
+                pd[idx + 3] = 0;
+                continue;
+            }
+
+            // Золотая гравировка да Винчи (от бронзовых полутеней до сусального золота)
+            d[idx]     = Math.min(255, Math.round(165 + ink * 90));
+            d[idx + 1] = Math.min(255, Math.round(125 + ink * 105));
+            d[idx + 2] = Math.min(255, Math.round(30 + ink * 95));
+            d[idx + 3] = Math.min(255, Math.round(alpha * 250));
+
+            // 4-цветный тепловизионный спектр Хищника (фиолетовый -> электро-циан -> кислотно-зелёный -> огненно-красный)
+            const wave = Math.sin(nx * 5.0 + slotIdx * 1.4) * 0.25 + Math.cos(ny * 5.0 - slotIdx * 1.1) * 0.25;
+            let tf = (ink * 0.72 + wave + 1.0) % 1.0;
+            let pr, pg, pb;
+            if (tf < 0.28) {
+                const k = tf / 0.28;
+                pr = Math.round(150 * (1 - k));
+                pg = Math.round(10 * (1 - k) + 235 * k);
+                pb = 255;
+            } else if (tf < 0.58) {
+                const k = (tf - 0.28) / 0.30;
+                pr = Math.round(57 * k);
+                pg = 255;
+                pb = Math.round(255 * (1 - k) + 20 * k);
+            } else if (tf < 0.84) {
+                const k = (tf - 0.58) / 0.26;
+                pr = 255;
+                pg = Math.round(255 * (1 - k) + 15 * k);
+                pb = Math.round(20 * (1 - k) + 55 * k);
+            } else {
+                const k = (tf - 0.84) / 0.16;
+                pr = Math.round(255 * (1 - k) + 165 * k);
+                pg = 12;
+                pb = Math.round(55 * (1 - k) + 255 * k);
+            }
+            pd[idx]     = pr;
+            pd[idx + 1] = pg;
+            pd[idx + 2] = pb;
+            pd[idx + 3] = Math.min(255, Math.round(alpha * 255));
+        }
+    }
+
+    gCtx.putImageData(imgData, 0, 0);
+    pCtx.putImageData(predImg, 0, 0);
+
+    const makeTex = (cnv) => {
+        const tex = new THREE.CanvasTexture(cnv);
+        tex.minFilter = THREE.LinearFilter;
+        tex.magFilter = THREE.LinearFilter;
+        tex.generateMipmaps = false;
+        tex.needsUpdate = true;
+        return tex;
+    };
+
+    const gTex = makeTex(goldCnv);
+    const pTex = makeTex(predCnv);
+    GOLD_CARD_TEXTURES[slotIdx] = gTex;
+    PREDATOR_CARD_TEXTURES[slotIdx] = pTex;
+    LOADED_INVENTION_TEXTURES[slotIdx] = gTex;
+    return { goldTex: gTex, predTex: pTex };
+}
+
+function applySourceToCard(cardGroup, sourceEl, slotIdx) {
+    while (cardGroup.children.length > 0) {
+        const child = cardGroup.children[0];
+        if (child.geometry) child.geometry.dispose();
+        if (child.material) child.material.dispose();
+        cardGroup.remove(child);
+    }
+
+    const { goldTex } = buildProcessedCardTextures(sourceEl, slotIdx);
 
     let planeW = INVENTION_BASE_SIZE;
     let planeH = INVENTION_BASE_SIZE;
-    if (imgEl && imgEl.width && imgEl.height) {
-        const aspect = imgEl.width / imgEl.height;
+    const natW = sourceEl.naturalWidth || sourceEl.width || 512;
+    const natH = sourceEl.naturalHeight || sourceEl.height || 512;
+    if (natW > 0 && natH > 0) {
+        const aspect = natW / natH;
         if (aspect >= 1.0) {
             planeW = INVENTION_BASE_SIZE * Math.min(aspect, 1.45);
             planeH = planeW / aspect;
@@ -1199,28 +1172,34 @@ function setCardTexture(cardGroup, texture, slotIdx) {
         }
     }
 
-    const holoMat = createDaVinciHoloMaterial(texture, slotIdx, bgLum);
-    const plane = new THREE.Mesh(new THREE.PlaneGeometry(planeW, planeH, 32, 32), holoMat);
-    cardGroup.add(plane);
-    cardGroup.holoMat = holoMat;
+    const mat = new THREE.MeshBasicMaterial({
+        map: goldTex,
+        transparent: true,
+        opacity: 0.92,
+        side: THREE.DoubleSide,
+        depthWrite: false
+    });
+    const geo = new THREE.PlaneGeometry(planeW, planeH, 28, 28);
+    geo.userData.origPositions = new Float32Array(geo.attributes.position.array);
+    const mesh = new THREE.Mesh(geo, mat);
+    cardGroup.add(mesh);
+    cardGroup.cardMesh = mesh;
+    cardGroup.cardMat = mat;
 }
 
 function createCleanInventionBlueprint(imageSource, slotIdx) {
     const cardGroup = new THREE.Group();
+    // Мгновенно рисуем резервный пергаментный чертёж да Винчи
+    applySourceToCard(cardGroup, createFallbackBlueprintCanvas(slotIdx), slotIdx);
+
     if (imageSource && typeof imageSource === 'string' && imageSource.length > 2) {
-        const loader = new THREE.TextureLoader();
-        loader.load(
-            imageSource,
-            function(texture) {
-                setCardTexture(cardGroup, texture, slotIdx);
-            },
-            undefined,
-            function() {
-                setCardTexture(cardGroup, new THREE.CanvasTexture(createFallbackBlueprintCanvas(slotIdx)), slotIdx);
+        const img = new Image();
+        img.onload = function() {
+            if (img.naturalWidth > 0) {
+                applySourceToCard(cardGroup, img, slotIdx);
             }
-        );
-    } else {
-        setCardTexture(cardGroup, new THREE.CanvasTexture(createFallbackBlueprintCanvas(slotIdx)), slotIdx);
+        };
+        img.src = imageSource;
     }
     return cardGroup;
 }
@@ -1231,7 +1210,7 @@ const ORBIT_SPEED = 0.042; // Медленное плавное вращение
 
 const hoverTargets = [];
 for (let idx = 0; idx < 5; idx++) {
-    const group = createCleanInventionBlueprint(USER_IMAGES[idx], idx);
+    const group = createCleanInventionBlueprint(NORMALIZED_IMAGES[idx], idx);
     const initialAngle = (idx / 5) * Math.PI * 2;
     preGroup.add(group);
 
@@ -1296,11 +1275,9 @@ function focusSlide(idx) {
         const isCurrent = (i === idx);
         item.isHovered = isCurrent;
         item.targetScale = isCurrent ? activeScale : 0.85;
-        item.group.traverse(child => {
-            if (child.material && child.material.uniforms && child.material.uniforms.uHover) {
-                child.material.uniforms.uHover.value = isCurrent ? 1.0 : 0.0;
-            }
-        });
+        if (item.group.cardMat && !isPredatorMorphActive) {
+            item.group.cardMat.opacity = isCurrent ? 1.0 : 0.72;
+        }
     });
 
     const preset = BLUEPRINT_PRESETS[idx];
@@ -1954,28 +1931,40 @@ function animatePreloader() {
             item.group.quaternion.copy(preCamera.quaternion);
             item.hitMesh.quaternion.copy(preCamera.quaternion);
 
-            if (item.group.holoMat && item.group.holoMat.uniforms) {
-                const u = item.group.holoMat.uniforms;
-                u.uTime.value = t;
-                u.uPredator.value = predatorMorphStrength;
-                u.uMorphMix.value = smoothMorphMix;
+            if (item.group.cardMesh && item.group.cardMat) {
+                const posAttr = item.group.cardMesh.geometry.attributes.position;
+                const orig = item.group.cardMesh.geometry.userData.origPositions;
+                if (orig && predatorMorphStrength > 0.005) {
+                    const seed = idx * 1.73;
+                    for (let v = 0; v < orig.length; v += 3) {
+                        const ox = orig[v], oy = orig[v + 1];
+                        posAttr.array[v]     = ox + Math.sin(oy * 0.075 + t * 2.9 + seed) * 7.5 * predatorMorphStrength;
+                        posAttr.array[v + 1] = oy + Math.cos(ox * 0.075 - t * 2.5 + seed) * 7.5 * predatorMorphStrength;
+                        posAttr.array[v + 2] = Math.sin((ox + oy) * 0.06 + t * 3.6 + seed) * 12.0 * predatorMorphStrength;
+                    }
+                    posAttr.needsUpdate = true;
+                } else if (orig) {
+                    posAttr.array.set(orig);
+                    posAttr.needsUpdate = true;
+                }
 
-                if (validTextures.length > 1 && predatorMorphStrength > 0.01) {
-                    const idxA = (idx + stepFloor) % 5;
-                    const idxB = (idx + stepFloor + 1) % 5;
-                    if (LOADED_INVENTION_TEXTURES[idxA]) {
-                        u.uTex.value = LOADED_INVENTION_TEXTURES[idxA];
-                        u.uBgLum.value = LOADED_BG_LUMS[idxA];
+                if (predatorMorphStrength > 0.12) {
+                    const morphSlot = (idx + stepFloor) % 5;
+                    const pTex = PREDATOR_CARD_TEXTURES[morphSlot] || GOLD_CARD_TEXTURES[morphSlot];
+                    if (pTex && item.group.cardMat.map !== pTex) {
+                        item.group.cardMat.map = pTex;
+                        item.group.cardMat.needsUpdate = true;
                     }
-                    if (LOADED_INVENTION_TEXTURES[idxB]) {
-                        u.uTexNext.value = LOADED_INVENTION_TEXTURES[idxB];
-                        u.uBgLumNext.value = LOADED_BG_LUMS[idxB];
+                    const waveOp = 0.32 + 0.56 * (0.5 + 0.5 * Math.sin(smoothMorphMix * Math.PI * 2 + idx * 1.25));
+                    item.group.cardMat.opacity = THREE.MathUtils.lerp(item.group.cardMat.opacity, waveOp, 0.15);
+                } else {
+                    const gTex = GOLD_CARD_TEXTURES[idx];
+                    if (gTex && item.group.cardMat.map !== gTex) {
+                        item.group.cardMat.map = gTex;
+                        item.group.cardMat.needsUpdate = true;
                     }
-                } else if (LOADED_INVENTION_TEXTURES[idx]) {
-                    u.uTex.value = LOADED_INVENTION_TEXTURES[idx];
-                    u.uTexNext.value = LOADED_INVENTION_TEXTURES[idx];
-                    u.uBgLum.value = LOADED_BG_LUMS[idx];
-                    u.uBgLumNext.value = LOADED_BG_LUMS[idx];
+                    const targetOp = item.isHovered ? 1.0 : 0.72;
+                    item.group.cardMat.opacity = THREE.MathUtils.lerp(item.group.cardMat.opacity, targetOp, 0.12);
                 }
             }
 
