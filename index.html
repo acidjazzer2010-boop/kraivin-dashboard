@@ -34,18 +34,25 @@ button:focus:not(:focus-visible){outline:none}
 #preloader-stage{position:fixed;top:0;left:0;width:100vw;height:100vh;background:radial-gradient(circle at center,#0d0e17 0%,#030306 100%);z-index:900;overflow:hidden;touch-action:none}
 #preloader-webgl{position:absolute;inset:0;width:100%;height:100%;z-index:10;cursor:grab}
 #preloader-webgl:active{cursor:grabbing}
-#vhs-glitch-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:20;pointer-events:none;mix-blend-mode:screen}
+#vhs-video-overlay{
+    position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+    z-index:19;pointer-events:none;
+    mix-blend-mode:screen;opacity:0.42;
+    filter:contrast(1.25) brightness(0.95);
+    display:none;
+}
+#vhs-glitch-canvas{
+    position:absolute;inset:0;width:100%;height:100%;
+    z-index:20;pointer-events:none;
+    mix-blend-mode:screen;opacity:0.78;
+}
 .vhs-crt-overlay{
     position:absolute;inset:0;z-index:22;pointer-events:none;
-    background:repeating-linear-gradient(
-        0deg,
-        rgba(0,0,0,0.22) 0px,
-        rgba(0,0,0,0.22) 1px,
-        transparent 1px,
-        transparent 3px
-    );
-    box-shadow:inset 0 0 90px rgba(0,0,0,0.65);
-    opacity:0.55;
+    background-image:
+        repeating-linear-gradient(0deg, rgba(0,0,0,0.28) 0px, rgba(0,0,0,0.28) 1px, transparent 1px, transparent 3px),
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 3px);
+    box-shadow:inset 0 0 110px rgba(0,0,0,0.78);
+    opacity:0.65;
 }
 
 .preloader-fixed-hud{position:absolute;inset:0;width:100%;height:100%;z-index:30;pointer-events:none;user-select:none;transition:opacity 0.8s ease}
@@ -135,6 +142,7 @@ select.mono-input option{background:#0d0d12;color:#f4f1ea}
 <!-- ПРЕЛОАДЕР -->
 <div id="preloader-stage">
     <canvas id="preloader-webgl"></canvas>
+    <video id="vhs-video-overlay" muted loop playsinline preload="auto" aria-hidden="true"></video>
     <canvas id="vhs-glitch-canvas"></canvas>
     <div class="vhs-crt-overlay" aria-hidden="true"></div>
     
@@ -381,6 +389,14 @@ window.onerror = function(msg, url, line) {
 
 const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const USER_IMAGES = __JSON_IMAGES_PAYLOAD__;
+const VHS_VIDEO_SRC = (function() {
+    try {
+        if (typeof __VHS_VIDEO_PAYLOAD__ === 'string' && __VHS_VIDEO_PAYLOAD__.length > 5) {
+            return __VHS_VIDEO_PAYLOAD__;
+        }
+    } catch (_) {}
+    return 'video_1.mp4';
+})();
 const NORMALIZED_IMAGES = (function() {
     if (Array.isArray(USER_IMAGES) && USER_IMAGES.length > 0) return USER_IMAGES;
     try {
@@ -732,6 +748,7 @@ function dismissPreloader() {
                 if (o.geometry) o.geometry.dispose();
                 if (o.material) { Array.isArray(o.material) ? o.material.forEach(m => m.dispose()) : o.material.dispose(); }
             });
+            VHSGlitchEngine.stop();
             preRenderer.dispose(); preRenderer.forceContextLoss();
         } catch (e) {}
     }, 1500);
@@ -2016,152 +2033,184 @@ function animatePreloader() {
 }
 
 /* =========================================================================
-   VHS / CRT ЭФФЕКТ ИСПОРЧЕННОГО ТЕЛЕВИЗИОННОГО СИГНАЛА (РАНДОМНЫЕ ПОМЕХИ)
+   МОНОХРОМНЫЙ АНАЛОГОВЫЙ VHS / ЭЛТ-ЭФФЕКТ (ВИДЕО-ОВЕРЛЕЙ + СИНТЕЗ РАЗВЁРТКИ)
    ========================================================================= */
 const VHSGlitchEngine = (function() {
+    const videoEl = document.getElementById('vhs-video-overlay');
     const canvas = document.getElementById('vhs-glitch-canvas');
-    if (!canvas) return { update: () => {}, resize: () => {} };
+    let videoReady = false;
+
+    if (videoEl && VHS_VIDEO_SRC && !REDUCE_MOTION) {
+        videoEl.src = VHS_VIDEO_SRC;
+        videoEl.addEventListener('loadeddata', () => {
+            videoReady = true;
+            videoEl.style.display = 'block';
+            videoEl.play().catch(() => {});
+        });
+        videoEl.addEventListener('error', () => {
+            videoReady = false;
+            videoEl.style.display = 'none';
+        });
+        // Повторная попытка запуска при первом взаимодействии, если автоплей был ограничен
+        ['click', 'touchstart', 'keydown'].forEach(evt => {
+            window.addEventListener(evt, () => {
+                if (videoReady && videoEl.paused && !preloaderDismissed) {
+                    videoEl.play().catch(() => {});
+                }
+            }, { once: true });
+        });
+    }
+
+    if (!canvas) return { update: () => {}, resize: () => {}, stop: () => {} };
     const ctx = canvas.getContext('2d');
 
     let w = 0, h = 0;
     function resize() {
-        w = canvas.width = Math.max(1, Math.floor(window.innerWidth * 0.75));
-        h = canvas.height = Math.max(1, Math.floor(window.innerHeight * 0.75));
+        w = canvas.width = Math.max(1, Math.floor(window.innerWidth * 0.65));
+        h = canvas.height = Math.max(1, Math.floor(window.innerHeight * 0.65));
     }
     resize();
 
-    // Предгенерированный тайл мелкого аналогового «снега» (128x128), чтобы не тратить CPU каждый кадр
-    const noiseTile = document.createElement('canvas');
-    noiseTile.width = 128;
-    noiseTile.height = 128;
-    const nCtx = noiseTile.getContext('2d');
-    const nImg = nCtx.createImageData(128, 128);
-    for (let i = 0; i < nImg.data.length; i += 4) {
-        const v = Math.random() > 0.5 ? 255 : 0;
-        nImg.data[i] = v;
-        nImg.data[i + 1] = v;
-        nImg.data[i + 2] = v;
-        nImg.data[i + 3] = Math.floor(Math.random() * 65);
+    // Предгенерированный тайл мелкого монохромного ЭЛТ-зерна (128x128)
+    const grainTile = document.createElement('canvas');
+    grainTile.width = 128;
+    grainTile.height = 128;
+    const gCtx = grainTile.getContext('2d');
+    const gImg = gCtx.createImageData(128, 128);
+    for (let y = 0; y < 128; y++) {
+        for (let x = 0; x < 128; x++) {
+            const idx = (y * 128 + x) * 4;
+            const dotMask = ((x % 2 === 0) && (y % 2 === 0)) ? 1.0 : 0.35;
+            const val = Math.floor((Math.random() * 210 + 30) * dotMask);
+            gImg.data[idx] = val;
+            gImg.data[idx + 1] = val;
+            gImg.data[idx + 2] = val;
+            gImg.data[idx + 3] = Math.floor(Math.random() * 55);
+        }
     }
-    nCtx.putImageData(nImg, 0, 0);
+    gCtx.putImageData(gImg, 0, 0);
 
-    let burstActive = false;
-    let burstEnd = 0;
-    let nextBurstTime = performance.now() + 1800 + Math.random() * 2500;
-    let burstIntensity = 0;
-    let trackingRollY = 0;
+    let state = 'calm'; // 'calm' | 'smear' | 'zigzag' | 'blackout'
+    let stateEnd = performance.now() + 2200;
+    let stateIntensity = 0.0;
+    let rollY = 0;
 
-    function playVhsStaticBurst(durationSec, intensity) {
-        try {
-            if (!renaissanceAudio.ctx || renaissanceAudio.ctx.state !== 'running') return;
-            const aCtx = renaissanceAudio.ctx;
-            const bufLen = Math.floor(aCtx.sampleRate * durationSec);
-            const buffer = aCtx.createBuffer(1, bufLen, aCtx.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let i = 0; i < bufLen; i++) {
-                // Характерное потрескивание трекинга VHS + белый шум
-                const spike = Math.random() > 0.985 ? (Math.random() * 2 - 1) * 1.8 : 0;
-                data[i] = ((Math.random() * 2 - 1) * 0.35 + spike);
-            }
-            const src = aCtx.createBufferSource();
-            src.buffer = buffer;
-
-            const bp = aCtx.createBiquadFilter();
-            bp.type = 'bandpass';
-            bp.frequency.setValueAtTime(1600 + Math.random() * 1200, aCtx.currentTime);
-            bp.Q.setValueAtTime(1.4, aCtx.currentTime);
-
-            const gain = aCtx.createGain();
-            const peak = 0.012 + intensity * 0.022;
-            gain.gain.setValueAtTime(0.0001, aCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(peak, aCtx.currentTime + 0.02);
-            gain.gain.exponentialRampToValueAtTime(0.0001, aCtx.currentTime + durationSec);
-
-            src.connect(bp);
-            bp.connect(gain);
-            gain.connect(aCtx.destination);
-            src.start();
-            src.onended = () => { try { src.disconnect(); bp.disconnect(); gain.disconnect(); } catch (_) {} };
-        } catch (_) {}
+    function nextState(now) {
+        const r = Math.random();
+        if (state !== 'calm') {
+            state = 'calm';
+            stateIntensity = 0.0;
+            stateEnd = now + 1800 + Math.random() * 3400;
+            return;
+        }
+        if (r < 0.45) {
+            // Горизонтальное размазывание люминанса и трекинг-полоса
+            state = 'smear';
+            stateIntensity = 0.45 + Math.random() * 0.55;
+            stateEnd = now + 260 + Math.random() * 620;
+        } else if (r < 0.80) {
+            // Пилообразный срыв строчной развёртки (зигзаг-волна как на 0:13–0:16 видео)
+            state = 'zigzag';
+            stateIntensity = 0.55 + Math.random() * 0.45;
+            stateEnd = now + 320 + Math.random() * 750;
+        } else {
+            // Кратковременный провал сигнала с одиночной бегущей волной
+            state = 'blackout';
+            stateIntensity = 0.75;
+            stateEnd = now + 180 + Math.random() * 340;
+        }
     }
 
     function update(now, t, obscuraProgress) {
         if (REDUCE_MOTION || preloaderDismissed) return;
         ctx.clearRect(0, 0, w, h);
 
-        // Планировщик случайных вспышек помех VHS
-        if (!burstActive && now >= nextBurstTime) {
-            burstActive = true;
-            const durMs = 140 + Math.random() * 480;
-            burstEnd = now + durMs;
-            burstIntensity = 0.35 + Math.random() * 0.65;
-            nextBurstTime = burstEnd + 1400 + Math.random() * 4200;
-            playVhsStaticBurst(durMs / 1000, burstIntensity);
-        } else if (burstActive && now >= burstEnd) {
-            burstActive = false;
-        }
+        if (now >= stateEnd) nextState(now);
 
-        const effectiveIntensity = isObscuraTransition
-            ? Math.min(1.0, 0.3 + obscuraProgress * 0.9)
-            : (burstActive ? burstIntensity : 0.0);
+        // Если видеофайл `video_1.mp4` успешно загружен и играет, ослабляем процедурный слой, чтобы он лишь дополнял видео
+        const baseScale = videoReady ? 0.35 : 1.0;
+        const boost = isObscuraTransition ? (1.0 + obscuraProgress * 0.8) : 1.0;
+        const activeLevel = (state === 'calm' ? 0.08 : stateIntensity) * baseScale * boost;
 
-        // 1. Медленно ползущая полоса трекинга VHS (всегда едва заметна, усиливается при сбое)
-        trackingRollY = (trackingRollY + (burstActive ? 9.5 : 1.4)) % h;
-        const barH = burstActive ? (14 + Math.random() * 28) : 6;
-        ctx.fillStyle = `rgba(255, 255, 255, ${burstActive ? 0.09 : 0.022})`;
-        ctx.fillRect(0, trackingRollY, w, barH);
+        // 1. Медленно ползущая широкая полупрозрачная полоса кадровой синхронизации (как на 0:05–0:06)
+        rollY = (rollY + (state === 'calm' ? 0.9 : 5.5)) % h;
+        const bandH = Math.max(12, h * 0.07);
+        const grad = ctx.createLinearGradient(0, rollY - bandH, 0, rollY + bandH);
+        grad.addColorStop(0, 'rgba(255,255,255,0)');
+        grad.addColorStop(0.5, `rgba(220,220,220,${0.035 + activeLevel * 0.11})`);
+        grad.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, rollY - bandH, w, bandH * 2);
 
-        // 2. Тонкие случайные горизонтальные микро-строки (1–2 линии даже в спокойном режиме)
-        const idleLines = burstActive ? Math.floor(8 + effectiveIntensity * 18) : (Math.random() > 0.45 ? 1 : 0);
-        for (let i = 0; i < idleLines; i++) {
-            const ly = Math.random() * h;
-            const lh = 1 + Math.random() * (burstActive ? 3.5 : 1.5);
-            const lx = (Math.random() - 0.5) * 40;
-            const lw = w * (0.35 + Math.random() * 0.75);
-
-            // RGB-расслоение (красный и бирюзовый сдвиг как на старой VHS-кассете)
-            const shift = (Math.random() - 0.5) * (burstActive ? 22 : 6);
-            ctx.fillStyle = `rgba(255, 35, 75, ${0.12 + effectiveIntensity * 0.25})`;
-            ctx.fillRect(lx - shift, ly, lw, lh);
-            ctx.fillStyle = `rgba(0, 235, 255, ${0.12 + effectiveIntensity * 0.25})`;
-            ctx.fillRect(lx + shift, ly + 0.5, lw, lh);
-
-            // Яркая белая/золотистая строка разрыва синхронизации
-            if (Math.random() > 0.35) {
-                ctx.fillStyle = `rgba(244, 241, 234, ${0.18 + effectiveIntensity * 0.42})`;
-                ctx.fillRect(lx, ly, lw * (0.4 + Math.random() * 0.6), Math.max(1, lh * 0.6));
-            }
-        }
-
-        // 3. При вспышке сбоя — «снежный» шум VHS и нижняя полоса зажёванной плёнки (head-switching noise)
-        if (effectiveIntensity > 0.05) {
+        // 2. Текстура ЭЛТ-зерна (монохромная матрица)
+        if (activeLevel > 0.04) {
             ctx.save();
-            ctx.globalAlpha = effectiveIntensity * 0.24;
+            ctx.globalAlpha = Math.min(0.32, activeLevel * 0.28);
             const ox = -Math.floor(Math.random() * 128);
             const oy = -Math.floor(Math.random() * 128);
             for (let x = ox; x < w; x += 128) {
                 for (let y = oy; y < h; y += 128) {
-                    ctx.drawImage(noiseTile, x, y);
+                    ctx.drawImage(grainTile, x, y);
                 }
             }
             ctx.restore();
+        }
 
-            // Нижняя полоса VHS head-switching noise (характерное дрожание у нижнего края кадра)
-            const bottomBandY = h - (6 + Math.random() * 12);
-            for (let s = 0; s < 10; s++) {
-                ctx.fillStyle = s % 2 === 0 ? 'rgba(255,255,255,0.35)' : 'rgba(0,220,255,0.28)';
-                ctx.fillRect(Math.random() * w, bottomBandY + Math.random() * 6, 30 + Math.random() * 140, 2);
+        // 3. Горизонтальные размазанные шлейфы люминанса (smear-полосы без цветных полос!)
+        if (state === 'smear' || isObscuraTransition) {
+            const count = Math.floor(6 + activeLevel * 18);
+            for (let i = 0; i < count; i++) {
+                const y = Math.random() * h;
+                const lh = 1 + Math.random() * 4.5;
+                const xStart = Math.random() * w * 0.6;
+                const len = w * (0.25 + Math.random() * 0.75);
+                const lum = Math.floor(170 + Math.random() * 85);
+                const alpha = (0.06 + Math.random() * 0.22) * activeLevel;
+                ctx.fillStyle = `rgba(${lum},${lum},${lum},${alpha})`;
+                ctx.fillRect(xStart, y, len, lh);
             }
+            preCanvas.style.transform = `translateX(${((Math.random() - 0.5) * 6 * activeLevel).toFixed(1)}px)`;
+        }
 
-            // Лёгкий горизонтальный рывок самого 3D-холста и заголовка в момент сильного сбоя
-            const jitterX = ((Math.random() - 0.5) * 10 * effectiveIntensity).toFixed(1);
-            preCanvas.style.transform = `translateX(${jitterX}px)`;
-        } else if (preCanvas.style.transform) {
+        // 4. Пилообразная зигзаг-волна развёртки (как на 0:13–0:16 видео)
+        if (state === 'zigzag' || state === 'blackout') {
+            const waveCount = state === 'blackout' ? 1 : (2 + Math.floor(Math.random() * 3));
+            for (let wIdx = 0; wIdx < waveCount; wIdx++) {
+                const baseY = state === 'blackout'
+                    ? (h * (0.35 + Math.random() * 0.35))
+                    : (Math.random() * h);
+                const amp = (4 + Math.random() * 10) * activeLevel;
+                const freq = 0.14 + Math.random() * 0.12;
+                const phase = t * 28 + wIdx * 2.1;
+
+                ctx.beginPath();
+                ctx.strokeStyle = `rgba(235,235,235,${0.18 + activeLevel * 0.35})`;
+                ctx.lineWidth = 1.2 + Math.random() * 1.4;
+                for (let x = 0; x <= w; x += 4) {
+                    // Пилообразный / треугольный профиль как на аналоговом осциллографе
+                    const raw = ((x * freq + phase) % (Math.PI * 2)) / (Math.PI * 2);
+                    const saw = (raw < 0.5 ? (raw * 4 - 1) : (3 - raw * 4));
+                    const y = baseY + saw * amp;
+                    if (x === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+            preCanvas.style.transform = `translateX(${((Math.random() - 0.5) * 9 * activeLevel).toFixed(1)}px)`;
+        }
+
+        if (state === 'calm' && !isObscuraTransition && preCanvas.style.transform) {
             preCanvas.style.transform = '';
         }
     }
 
-    return { update, resize };
+    function stop() {
+        if (videoEl) {
+            try { videoEl.pause(); videoEl.removeAttribute('src'); videoEl.load(); } catch (_) {}
+        }
+    }
+
+    return { update, resize, stop };
 })();
 
 animatePreloader();
