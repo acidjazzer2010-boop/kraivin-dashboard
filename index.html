@@ -948,11 +948,41 @@ let isPredatorMorphActive = false;
 let predatorMorphStrength = 0.0;
 let predatorMorphClock = 0.0;
 
-function createDaVinciHoloMaterial(texture, slotIdx) {
+const LOADED_BG_LUMS = new Array(5).fill(0.85);
+
+function analyzeImagePolarity(sourceElement) {
+    try {
+        const c = document.createElement('canvas');
+        c.width = 64;
+        c.height = 64;
+        const ctx = c.getContext('2d');
+        ctx.drawImage(sourceElement, 0, 0, 64, 64);
+        const data = ctx.getImageData(0, 0, 64, 64).data;
+        // Сэмплируем пиксели по периметру (рамка 4px), чтобы точно определить яркость бумаги/фона
+        let sum = 0, count = 0;
+        for (let y = 0; y < 64; y++) {
+            for (let x = 0; x < 64; x++) {
+                if (x < 4 || x >= 60 || y < 4 || y >= 60) {
+                    const idx = (y * 64 + x) * 4;
+                    const lum = (0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2]) / 255.0;
+                    sum += lum;
+                    count++;
+                }
+            }
+        }
+        return count > 0 ? (sum / count) : 0.85;
+    } catch (_) {
+        return 0.85;
+    }
+}
+
+function createDaVinciHoloMaterial(texture, slotIdx, bgLum) {
     return new THREE.ShaderMaterial({
         uniforms: {
             uTex: { value: texture },
             uTexNext: { value: texture },
+            uBgLum: { value: bgLum },
+            uBgLumNext: { value: bgLum },
             uMorphMix: { value: 0.0 },
             uPredator: { value: 0.0 },
             uHover: { value: 0.0 },
@@ -981,6 +1011,8 @@ function createDaVinciHoloMaterial(texture, slotIdx) {
             precision mediump float;
             uniform sampler2D uTex;
             uniform sampler2D uTexNext;
+            uniform float uBgLum;
+            uniform float uBgLumNext;
             uniform float uMorphMix;
             uniform float uPredator;
             uniform float uHover;
@@ -1004,14 +1036,21 @@ function createDaVinciHoloMaterial(texture, slotIdx) {
                 }
             }
 
-            float extractBlueprintStroke(vec3 rgb) {
+            // Полярно-независимое извлечение рисунка: фон всегда 0.0 (прозрачен), штрихи 0.0..1.0 с сохранением тонкой штриховки
+            float extractBlueprintStroke(vec3 rgb, float bgLum) {
                 float lum = dot(rgb, vec3(0.299, 0.587, 0.114));
-                // Автоматическая адаптация под светлый пергамент (тёмные чернила) и тёмный фон (светлые линии)
-                float darkInk = 1.0 - smoothstep(0.18, 0.85, lum);
-                float lightInk = smoothstep(0.12, 0.75, lum);
-                // Выбираем контрастный штрих, сохраняя полутона рисунка
-                float contrast = abs(lum - 0.5) * 2.0;
-                return clamp(max(darkInk * 0.95, lightInk * 0.85) * (0.45 + contrast * 0.75), 0.12, 1.0);
+                float ink;
+                if (bgLum > 0.5) {
+                    // Светлая бумага/пергамент: всё, что близко к цвету бумаги (bgLum - 0.05), полностью прозрачно!
+                    float paperEdge = max(0.25, bgLum - 0.05);
+                    ink = 1.0 - smoothstep(0.06, paperEdge, lum);
+                } else {
+                    // Тёмный фон: всё, что темнее (bgLum + 0.06), полностью прозрачно!
+                    float darkEdge = min(0.75, bgLum + 0.06);
+                    ink = smoothstep(darkEdge, 0.92, lum);
+                }
+                // Гамма-коррекция для чёткости тонких линий пера да Винчи
+                return pow(clamp(ink, 0.0, 1.0), 0.78);
             }
 
             void main() {
@@ -1034,21 +1073,24 @@ function createDaVinciHoloMaterial(texture, slotIdx) {
                 vec4 tex1 = texture2D(uTex, uv1);
                 vec4 tex2 = texture2D(uTexNext, uv2);
 
-                float s1 = extractBlueprintStroke(tex1.rgb);
-                float s2 = extractBlueprintStroke(tex2.rgb);
+                float s1 = extractBlueprintStroke(tex1.rgb, uBgLum);
+                float s2 = extractBlueprintStroke(tex2.rgb, uBgLumNext);
                 float stroke = mix(s1, s2, uMorphMix * uPredator);
 
-                // Плавное затухание по краям без жёсткой рамки
-                vec2 edgeDist = smoothstep(vec2(0.0), vec2(0.10), vUv) * smoothstep(vec2(1.0), vec2(0.90), vUv);
+                // Мягкое виньетирование по краям листа, чтобы края холста растворялись в пространстве
+                vec2 edgeDist = smoothstep(vec2(0.0), vec2(0.08), vUv) * smoothstep(vec2(1.0), vec2(0.92), vUv);
                 float vignette = edgeDist.x * edgeDist.y;
 
-                vec3 baseGold = vec3(0.88, 0.73, 0.28);
-                vec3 highlight = vec3(1.0, 0.95, 0.78);
-                float wave = sin((vUv.x + vUv.y) * 12.0 - uTime * 4.0) * 0.5 + 0.5;
-                vec3 goldColor = mix(baseGold, highlight, wave * 0.35 + uHover * 0.55);
+                // Благородная градация золота от тёмной бронзы полутеней до яркого сусального золота штриха
+                vec3 bronzeShadow = vec3(0.55, 0.41, 0.12);
+                vec3 pureGold     = vec3(0.92, 0.76, 0.28);
+                vec3 brightEdge   = vec3(1.00, 0.95, 0.76);
+                float wave = sin((vUv.x + vUv.y) * 10.0 - uTime * 3.2) * 0.5 + 0.5;
+                vec3 goldColor = mix(bronzeShadow, pureGold, smoothstep(0.15, 0.75, stroke));
+                goldColor = mix(goldColor, brightEdge, smoothstep(0.65, 1.0, stroke) * (0.35 + wave * 0.25 + uHover * 0.4));
 
                 float thermalField = fract(
-                    stroke * 0.65 +
+                    stroke * 0.72 +
                     sin(vUv.x * 5.5 + uTime * 2.2 + uSeed) * 0.22 +
                     cos(vUv.y * 5.5 - uTime * 1.9) * 0.22 +
                     uTime * 0.28
@@ -1056,9 +1098,9 @@ function createDaVinciHoloMaterial(texture, slotIdx) {
                 vec3 predColor = predatorThermalPalette(thermalField);
 
                 vec3 finalColor = mix(goldColor, predColor, uPredator);
-                float alphaBoost = mix(0.78 + uHover * 0.22, 0.94, uPredator);
+                float alphaBoost = mix(0.88 + uHover * 0.12, 0.96, uPredator);
                 float alpha = stroke * vignette * alphaBoost;
-                if (alpha < 0.01) discard;
+                if (alpha < 0.02) discard;
                 gl_FragColor = vec4(finalColor, alpha);
             }
         `,
@@ -1140,8 +1182,25 @@ function setCardTexture(cardGroup, texture, slotIdx) {
     texture.needsUpdate = true;
     LOADED_INVENTION_TEXTURES[slotIdx] = texture;
 
-    const holoMat = createDaVinciHoloMaterial(texture, slotIdx);
-    const plane = new THREE.Mesh(new THREE.PlaneGeometry(INVENTION_BASE_SIZE, INVENTION_BASE_SIZE, 32, 32), holoMat);
+    const imgEl = texture.image;
+    const bgLum = imgEl ? analyzeImagePolarity(imgEl) : 0.85;
+    LOADED_BG_LUMS[slotIdx] = bgLum;
+
+    let planeW = INVENTION_BASE_SIZE;
+    let planeH = INVENTION_BASE_SIZE;
+    if (imgEl && imgEl.width && imgEl.height) {
+        const aspect = imgEl.width / imgEl.height;
+        if (aspect >= 1.0) {
+            planeW = INVENTION_BASE_SIZE * Math.min(aspect, 1.45);
+            planeH = planeW / aspect;
+        } else {
+            planeH = INVENTION_BASE_SIZE * Math.min(1.0 / aspect, 1.45);
+            planeW = planeH * aspect;
+        }
+    }
+
+    const holoMat = createDaVinciHoloMaterial(texture, slotIdx, bgLum);
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(planeW, planeH, 32, 32), holoMat);
     cardGroup.add(plane);
     cardGroup.holoMat = holoMat;
 }
@@ -1902,13 +1961,21 @@ function animatePreloader() {
                 u.uMorphMix.value = smoothMorphMix;
 
                 if (validTextures.length > 1 && predatorMorphStrength > 0.01) {
-                    const texA = validTextures[(idx + stepFloor) % validTextures.length];
-                    const texB = validTextures[(idx + stepFloor + 1) % validTextures.length];
-                    if (texA) u.uTex.value = texA;
-                    if (texB) u.uTexNext.value = texB;
+                    const idxA = (idx + stepFloor) % 5;
+                    const idxB = (idx + stepFloor + 1) % 5;
+                    if (LOADED_INVENTION_TEXTURES[idxA]) {
+                        u.uTex.value = LOADED_INVENTION_TEXTURES[idxA];
+                        u.uBgLum.value = LOADED_BG_LUMS[idxA];
+                    }
+                    if (LOADED_INVENTION_TEXTURES[idxB]) {
+                        u.uTexNext.value = LOADED_INVENTION_TEXTURES[idxB];
+                        u.uBgLumNext.value = LOADED_BG_LUMS[idxB];
+                    }
                 } else if (LOADED_INVENTION_TEXTURES[idx]) {
                     u.uTex.value = LOADED_INVENTION_TEXTURES[idx];
                     u.uTexNext.value = LOADED_INVENTION_TEXTURES[idx];
+                    u.uBgLum.value = LOADED_BG_LUMS[idx];
+                    u.uBgLumNext.value = LOADED_BG_LUMS[idx];
                 }
             }
 
